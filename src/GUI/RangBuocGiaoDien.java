@@ -1,39 +1,64 @@
 package GUI;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 /**
- * Bang mau va thong so thiet ke chuan cua he thong SALALA Pet Shop
+ * Lớp RangBuocGiaoDien:
+ * Quy định toàn bộ ràng buộc và thông số chuẩn của hệ thống SALALA Pet Shop:
+ * - Kích thước tối thiểu và mặc định (Màn hình chính, Tab nội dung)
+ * - Bảng màu chủ đạo, màu nền, màu đường viền, màu chữ, huy hiệu trạng thái
+ * - Font chữ chuẩn hệ thống và hỗ trợ khử răng cưa đồ họa
  */
-public class GiaoDienMau {
-    // Mau chu dao thuong hieu SALALA Pet Shop (Xanh mong ket / Teal)
+public class RangBuocGiaoDien {
+
+    // =========================================================================
+    // 1. QUY ĐỊNH KÍCH THƯỚC CHUẨN MÀN HÌNH CHÍNH & NỘI DUNG TAB
+    // Phù hợp từ laptop màn hình nhỏ (1366x768) đến Full HD (1920x1080), 2K (2560x1440)
+    // =========================================================================
+    public static final int MAN_HINH_RONG_TOI_THIEU = 1100;
+    public static final int MAN_HINH_CAO_TOI_THIEU = 650;
+    public static final int MAN_HINH_RONG_MAC_DINH = 1280;
+    public static final int MAN_HINH_CAO_MAC_DINH = 750;
+
+    public static final Dimension KICH_THUOC_TOI_THIEU = new Dimension(MAN_HINH_RONG_TOI_THIEU, MAN_HINH_CAO_TOI_THIEU);
+    public static final Dimension KICH_THUOC_MAC_DINH = new Dimension(MAN_HINH_RONG_MAC_DINH, MAN_HINH_CAO_MAC_DINH);
+
+    public static final int TAB_RONG_TOI_THIEU = 1100;
+    public static final int TAB_CAO_TOI_THIEU = 550;
+    public static final Dimension KICH_THUOC_TAB_TOI_THIEU = new Dimension(TAB_RONG_TOI_THIEU, TAB_CAO_TOI_THIEU);
+
+    // =========================================================================
+    // 2. BẢNG MÀU CHUẨN HỆ THỐNG SALALA PET SHOP
+    // =========================================================================
+    // Màu chủ đạo thương hiệu (Xanh mòng két / Teal)
     public static final Color MAU_CHU_DAO = new Color(14, 116, 101);          // #0E7465
-    public static final Color MAU_CHU_DAO_RE_CHUOT = new Color(11, 95, 83);   // Khi re chuot
-    public static final Color MAU_CHU_DAO_NHAT = new Color(230, 244, 241);     // Nen nhe
+    public static final Color MAU_CHU_DAO_RE_CHUOT = new Color(11, 95, 83);   // Khi rê chuột
+    public static final Color MAU_CHU_DAO_NHAT = new Color(230, 244, 241);     // Nền nhẹ
     public static final Color MAU_VIEN_CHU_DAO = new Color(178, 222, 215);
 
-    // Mau nen va khung the
+    // Màu nền và khung thẻ
     public static final Color MAU_NEN_TRANG = new Color(248, 250, 252);       // #F8FAFC
     public static final Color MAU_NEN_THE = Color.WHITE;
     public static final Color MAU_DUONG_VIEN = new Color(226, 232, 240);       // #E2E8F0
 
-    // Mau chu
+    // Màu chữ
     public static final Color MAU_CHU_CHINH = new Color(30, 41, 59);          // #1E293B
     public static final Color MAU_CHU_PHU = new Color(100, 116, 139);         // #64748B
     public static final Color MAU_CHU_GOI_Y = new Color(148, 163, 184);       // #94A3B8
 
-    // Mau Bang Du Lieu
+    // Màu Bảng Dữ Liệu
     public static final Color MAU_TIEU_DE_BANG = new Color(248, 250, 252);
     public static final Color MAU_DONG_RE_CHUOT = new Color(241, 245, 249);
     public static final Color MAU_DONG_XEN_KE = new Color(254, 254, 255);
     public static final Color MAU_LUOI_BANG = new Color(241, 245, 249);
     public static final Color MAU_LIEN_KET = new Color(14, 116, 101);
 
-    // Mau Huy Hieu Trang Thai
+    // Màu Huy Hiệu Trạng Thái
     public static final Color MAU_THANH_CONG_NEN = new Color(220, 252, 231);
     public static final Color MAU_THANH_CONG_CHU = new Color(21, 128, 61);
     public static final Color MAU_THANH_CONG_CHAM = new Color(34, 197, 94);
@@ -54,7 +79,9 @@ public class GiaoDienMau {
     public static final Color MAU_TRUNG_TINH_CHU = new Color(71, 85, 105);
     public static final Color MAU_TRUNG_TINH_CHAM = new Color(148, 163, 184);
 
-    // Font chu chuan he thong
+    // =========================================================================
+    // 3. FONT CHỮ CHUẨN HỆ THỐNG
+    // =========================================================================
     private static final String TEN_FONT = "Segoe UI";
 
     public static Font fontThuong(float kichThuoc) {
@@ -70,7 +97,7 @@ public class GiaoDienMau {
     }
 
     /**
-     * Bat khu rang cua muot ma cho Graphics2D
+     * Bật khử răng cưa mượt mà cho Graphics2D
      */
     public static void batKhuRangCua(Graphics doHoa) {
         if (doHoa instanceof Graphics2D) {
