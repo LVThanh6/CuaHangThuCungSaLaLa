@@ -15,7 +15,8 @@ import javax.swing.border.MatteBorder;
 
 /**
  * Class HeaderGUI: Thanh tiêu đề và điều hướng của SALALA Pet Shop.
- * Đọc thông tin người dùng và hiển thị thanh header, phân quyền danh sách tab theo vai trò.
+ * Đọc thông tin người dùng và hiển thị thanh header, phân quyền danh sách tab
+ * theo vai trò.
  */
 public class HeaderGUI extends JPanel {
 
@@ -50,7 +51,7 @@ public class HeaderGUI extends JPanel {
         this.tenNguoiDung = (tenNguoiDung != null && !tenNguoiDung.trim().isEmpty()) ? tenNguoiDung : "Người dùng";
         this.chucVu = (chucVu != null && !chucVu.trim().isEmpty()) ? chucVu : "Quản lý";
         this.danhSachNutTab = new ArrayList<>();
-        
+
         khoiTaoMenuConMacDinh();
         thietLapTheoVaiTro(this.chucVu);
         khoiTaoGiaoDien();
@@ -66,33 +67,36 @@ public class HeaderGUI extends JPanel {
     // ==========================================
     private void khoiTaoMenuConMacDinh() {
         menuConMap = new HashMap<>();
-        menuConMap.put("Nhân viên", new String[]{"Danh sách nhân viên", "Danh sách bác sĩ", "Thống kê"});
-        menuConMap.put("Thú cưng", new String[]{"Hồ sơ thú cưng", "Loại thú cưng", "Lịch sử khám"});
-        menuConMap.put("Khách hàng", new String[]{"Danh sách khách hàng", "Thẻ thành viên"});
-        menuConMap.put("Hóa đơn", new String[]{"Tạo hóa đơn mới", "Danh sách hóa đơn"});
-        menuConMap.put("Vật tư", new String[]{"Kho thuốc", "Dụng cụ y tế"});
-        menuConMap.put("Lịch hẹn", new String[]{"Lịch hôm nay", "Đặt lịch mới"});
-        menuConMap.put("Dịch vụ", new String[]{"Bảng giá dịch vụ", "Gói chăm sóc"});
+        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Danh sách bác sĩ", "Thống kê" });
+        menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Loại thú cưng", "Lịch sử khám" });
+        menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý thẻ thành viên" });
+        menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
+        menuConMap.put("Vật tư", new String[] { "Kho thuốc", "Dụng cụ y tế" });
+        menuConMap.put("Lịch hẹn", new String[] { "Lịch hôm nay", "Đặt lịch mới" });
+        menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Gói chăm sóc" });
     }
 
     /**
-     * Tự động điều chỉnh danh sách Tabs hiển thị dựa theo vai trò (chức vụ) người dùng.
+     * Tự động điều chỉnh danh sách Tabs hiển thị dựa theo vai trò (chức vụ) người
+     * dùng.
+     * 
      * @param vaiTro Vai trò người dùng (ví dụ: "Quản lý", "Nhân viên", "Bác sĩ")
      */
     public void thietLapTheoVaiTro(String vaiTro) {
         this.chucVu = vaiTro;
-        
+
         // Cắt chữ cái viết tắt đại diện cho Avatar
         capNhatChuCaiAvatar();
 
         // Phân quyền Tab hiển thị theo vai trò
         if ("Bác sĩ".equalsIgnoreCase(vaiTro) || "Bác sĩ thú y".equalsIgnoreCase(vaiTro)) {
-            this.danhSachTabs = new String[]{"Thú cưng", "Khách hàng", "Vật tư", "Lịch hẹn", "Dịch vụ"};
+            this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Vật tư", "Lịch hẹn", "Dịch vụ" };
         } else if ("Nhân viên".equalsIgnoreCase(vaiTro) || "Thu ngân".equalsIgnoreCase(vaiTro)) {
-            this.danhSachTabs = new String[]{"Thú cưng", "Khách hàng", "Hóa đơn", "Lịch hẹn", "Dịch vụ"};
+            this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Hóa đơn", "Lịch hẹn", "Dịch vụ" };
         } else {
             // Mặc định là Quản lý / Toàn quyền
-            this.danhSachTabs = new String[]{"Nhân viên", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch hẹn", "Dịch vụ"};
+            this.danhSachTabs = new String[] { "Nhân viên", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch hẹn",
+                    "Dịch vụ" };
         }
 
         if (danhSachTabs.length > 0) {
@@ -103,7 +107,8 @@ public class HeaderGUI extends JPanel {
     private void capNhatChuCaiAvatar() {
         String[] parts = tenNguoiDung.trim().split("\\s+");
         if (parts.length >= 2) {
-            chuCaiAvatar = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+            chuCaiAvatar = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1))
+                    .toUpperCase();
         } else if (parts.length == 1 && !parts[0].isEmpty()) {
             chuCaiAvatar = parts[0].substring(0, 1).toUpperCase();
         } else {
@@ -146,8 +151,11 @@ public class HeaderGUI extends JPanel {
                 g2.fillOval(18, 8, 6, 6);
                 g2.fillOval(13, 17, 7, 7);
             }
+
             @Override
-            public Dimension getPreferredSize() { return new Dimension(32, 32); }
+            public Dimension getPreferredSize() {
+                return new Dimension(32, 32);
+            }
         };
 
         JLabel lblTenThuongHieu = new JLabel("SALALA Pet Shop");
@@ -181,8 +189,11 @@ public class HeaderGUI extends JPanel {
                 int textH = fm.getAscent();
                 g2.drawString(chuCaiAvatar, (36 - textW) / 2, (36 + textH) / 2 - 2);
             }
+
             @Override
-            public Dimension getPreferredSize() { return new Dimension(36, 36); }
+            public Dimension getPreferredSize() {
+                return new Dimension(36, 36);
+            }
         };
 
         JPanel thongTin = new JPanel();
@@ -219,7 +230,8 @@ public class HeaderGUI extends JPanel {
     }
 
     private void veLaiCacNutTab() {
-        if (panelTabContainer == null) return;
+        if (panelTabContainer == null)
+            return;
         panelTabContainer.removeAll();
         danhSachNutTab.clear();
 
@@ -246,7 +258,8 @@ public class HeaderGUI extends JPanel {
             };
 
             nut.setFont(RangBuocGiaoDien.fontVua(13));
-            nut.setForeground(tenTab.equals(tabHienTai) ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_CHINH);
+            nut.setForeground(
+                    tenTab.equals(tabHienTai) ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_CHINH);
             nut.setFocusPainted(false);
             nut.setBorderPainted(false);
             nut.setContentAreaFilled(false);
@@ -278,7 +291,8 @@ public class HeaderGUI extends JPanel {
     // Popup Menu sổ xuống cho từng tab
     private JPopupMenu taoPopupMenu(String tenTab) {
         String[] cacCon = menuConMap.get(tenTab);
-        if (cacCon == null || cacCon.length == 0) return null;
+        if (cacCon == null || cacCon.length == 0)
+            return null;
 
         JPopupMenu menu = new JPopupMenu();
         menu.setBackground(Color.WHITE);
@@ -337,7 +351,8 @@ public class HeaderGUI extends JPanel {
     // CẬP NHẬT THÔNG TIN NGƯỜI DÙNG & VAI TRÒ
     // ==========================================
     /**
-     * Cập nhật thông tin người dùng và tự động làm mới giao diện Header theo vai trò mới
+     * Cập nhật thông tin người dùng và tự động làm mới giao diện Header theo vai
+     * trò mới
      */
     public void setThongTinNguoiDung(String ten, String chucVu) {
         this.tenNguoiDung = ten;
@@ -437,7 +452,8 @@ public class HeaderGUI extends JPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Kiểm thử HeaderGUI theo vai trò người dùng");
