@@ -273,6 +273,7 @@ public class GiaoDienChinhGUI extends JPanel {
     public void hienThiTabHoaDon() {
         // TODO: Nhúng class giao diện Hóa đơn vào đây
         // Ví dụ: setNoiDung(new HoaDonGUI());
+    	
     }
 
     /** Tab 5: Vật tư */
@@ -337,10 +338,21 @@ public class GiaoDienChinhGUI extends JPanel {
     // --- Tab Hóa đơn ---
     public void hienThiTaoHoaDonMoi() {
         // TODO: Nhúng class giao diện Tạo hóa đơn mới vào đây
+    	panelNoiDung.removeAll();
+        panelNoiDung.setLayout(new BorderLayout());
+
+        panelNoiDung.add(
+            new LapHoaDonPanel(),
+            BorderLayout.CENTER
+        );
+
+        panelNoiDung.revalidate();
+        panelNoiDung.repaint();
     }
 
     public void hienThiDanhSachHoaDon() {
         // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
+    	setNoiDung( new HoaDonPanel());
     }
 
     // --- Tab Vật tư ---
