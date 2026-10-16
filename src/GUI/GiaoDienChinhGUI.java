@@ -267,7 +267,12 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 3: Khách hàng - Mặc định hiển thị Danh sách khách hàng */
     public void hienThiTabKhachHang() {
-        setNoiDung(new DanhSachKhachHangGUI());
+        try {
+            setNoiDung(new DanhSachKhachHangGUI());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage());
+        }
     }
 
     /** Tab 4: Hóa đơn */
@@ -328,7 +333,12 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Khách hàng ---
     public void hienThiDanhSachKhachHang() {
-        setNoiDung(new DanhSachKhachHangGUI());
+        try {
+            setNoiDung(new DanhSachKhachHangGUI());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage());
+        }
     }
 
     public void hienThiTheThanhVien() {
@@ -336,7 +346,12 @@ public class GiaoDienChinhGUI extends JPanel {
     }
 
     public void hienThiQuanLyHangThanhVien() {
-        setNoiDung(new QuanLyHangThanhVienGUI());
+        try {
+            setNoiDung(new QuanLyHangThanhVienGUI());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            hienThiNoiDungMacDinh("Lỗi hiển thị Hạng thành viên: " + t.getMessage());
+        }
     }
 
     // --- Tab Hóa đơn ---
@@ -440,6 +455,12 @@ public class GiaoDienChinhGUI extends JPanel {
         }
 
         SwingUtilities.invokeLater(() -> {
+            // Khởi tạo kết nối CSDL SALALA
+            try {
+                connectDB.ConnectDB.getInstance().connect();
+            } catch (Exception ignored) {
+            }
+
             JFrame frame = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
