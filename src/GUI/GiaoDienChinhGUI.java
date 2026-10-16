@@ -342,7 +342,7 @@ public class GiaoDienChinhGUI extends JPanel {
         panelNoiDung.setLayout(new BorderLayout());
 
         panelNoiDung.add(
-            new LapHoaDonPanel(),
+            new LapHoaDon_gui(),
             BorderLayout.CENTER
         );
 
@@ -352,7 +352,7 @@ public class GiaoDienChinhGUI extends JPanel {
 
     public void hienThiDanhSachHoaDon() {
         // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
-    	setNoiDung( new HoaDonPanel());
+    	setNoiDung( new DSHoaDon_gui());
     }
 
     // --- Tab Vật tư ---

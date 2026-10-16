@@ -17,7 +17,7 @@ import java.util.List;
  *   JPanel center = new HoaDonPanel();
  *   mainPanel.add(center, BorderLayout.CENTER);
  */
-public class HoaDonPanel extends JPanel {
+public class DSHoaDon_gui extends JPanel {
     private static final Color BG = new Color(247, 249, 252);
     private static final Color BORDER = new Color(225, 232, 240);
     private static final Color TEXT = new Color(38, 49, 66);
@@ -39,7 +39,7 @@ public class HoaDonPanel extends JPanel {
     private int currentPage = 1;
     private final int pageSize = 8;
 
-    public HoaDonPanel() {
+    public DSHoaDon_gui() {
         setLayout(new BorderLayout());
         setBackground(BG);
         setOpaque(true);

@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-
+import GUI.RangBuocGiaoDien;
 /**
  * Panel lập hóa đơn bán hàng cho SALALA Pet Shop.
  * Panel độc lập, có thể nhúng vào vùng CENTER của giao diện chính.
@@ -17,7 +17,7 @@ import java.awt.*;
  *
  * Khu vực sản phẩm để trống để tích hợp dữ liệu từ Database/DAO sau.
  */
-public class LapHoaDonPanel extends JPanel {
+public class LapHoaDon_gui extends JPanel {
 
     private final Color mauNen = RangBuocGiaoDien.MAU_NEN_TRANG;
     private final Color mauThe = RangBuocGiaoDien.MAU_NEN_THE;
@@ -47,7 +47,7 @@ public class LapHoaDonPanel extends JPanel {
 
     private String phuongThucThanhToan = "Tiền mặt";
 
-    public LapHoaDonPanel() {
+    public LapHoaDon_gui() {
         setLayout(new BorderLayout());
         setBackground(mauNen);
         setBorder(new EmptyBorder(12, 16, 12, 16));
