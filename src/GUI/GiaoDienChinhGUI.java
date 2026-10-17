@@ -47,7 +47,8 @@ public class GiaoDienChinhGUI extends JPanel {
         panelNoiDung = new JPanel(new BorderLayout());
         panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         panelNoiDung.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TAB_TOI_THIEU);
-        panelNoiDung.setPreferredSize(new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
+        panelNoiDung.setPreferredSize(
+                new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
         add(panelNoiDung, BorderLayout.CENTER);
 
         // 3. LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ HEADER
@@ -208,6 +209,7 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Danh sách khách hàng":
                 hienThiDanhSachKhachHang();
                 break;
+            case "Quản lý hạng thành viên":
             case "Thẻ thành viên":
                 hienThiTheThanhVien();
                 break;
@@ -263,10 +265,9 @@ public class GiaoDienChinhGUI extends JPanel {
         // Ví dụ: setNoiDung(new ThuCungGUI());
     }
 
-    /** Tab 3: Khách hàng */
+    /** Tab 3: Khách hàng - Mặc định hiển thị Danh sách khách hàng */
     public void hienThiTabKhachHang() {
-        // TODO: Nhúng class giao diện Khách hàng vào đây
-        // Ví dụ: setNoiDung(new KhachHangGUI());
+        setNoiDung(new DanhSachKhachHangGUI());
     }
 
     /** Tab 4: Hóa đơn */
@@ -328,11 +329,15 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Khách hàng ---
     public void hienThiDanhSachKhachHang() {
-        // TODO: Nhúng class giao diện Danh sách khách hàng vào đây
+        setNoiDung(new DanhSachKhachHangGUI());
     }
 
     public void hienThiTheThanhVien() {
-        // TODO: Nhúng class giao diện Thẻ thành viên vào đây
+        hienThiQuanLyHangThanhVien();
+    }
+
+    public void hienThiQuanLyHangThanhVien() {
+        setNoiDung(new QuanLyHangThanhVienGUI());
     }
 
     // --- Tab Hóa đơn ---
