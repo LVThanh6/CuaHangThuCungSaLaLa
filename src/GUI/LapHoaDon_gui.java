@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import GUI.RangBuocGiaoDien;
 /**
  * Panel lập hóa đơn bán hàng cho SALALA Pet Shop.
  * Panel độc lập, có thể nhúng vào vùng CENTER của giao diện chính.
