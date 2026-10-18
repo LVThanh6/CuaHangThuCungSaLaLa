@@ -336,23 +336,16 @@ public class GiaoDienChinhGUI extends JPanel {
     }
 
     // --- Tab Hóa đơn ---
+ // Hiển thị màn hình lập hóa đơn
     public void hienThiTaoHoaDonMoi() {
-        // TODO: Nhúng class giao diện Tạo hóa đơn mới vào đây
-    	panelNoiDung.removeAll();
-        panelNoiDung.setLayout(new BorderLayout());
-
-        panelNoiDung.add(
-            new LapHoaDon_gui(),
-            BorderLayout.CENTER
-        );
-
-        panelNoiDung.revalidate();
-        panelNoiDung.repaint();
+        setNoiDung(new LapHoaDon_gui());
     }
 
+    // Hiển thị danh sách hóa đơn
     public void hienThiDanhSachHoaDon() {
-        // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
-    	setNoiDung( new DSHoaDon_gui());
+        setNoiDung(new DSHoaDon_gui(
+                () -> hienThiTaoHoaDonMoi()
+        ));
     }
 
     // --- Tab Vật tư ---
