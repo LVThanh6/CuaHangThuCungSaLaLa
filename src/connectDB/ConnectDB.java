@@ -14,7 +14,7 @@ public class ConnectDB {
     private static final String PORT = "1433";
     private static final String DATABASE = "SALALA";
     private static final String USER = "sa";
-    private static final String PASSWORD = "123456789";
+    private static final String PASSWORD = "sapassword";
 
     private static final String URL =
             "jdbc:sqlserver://" + SERVER_NAME + ":" + PORT

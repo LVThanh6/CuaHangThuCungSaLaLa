@@ -1,4 +1,3 @@
-
 package GUI;
 
 import dao.HoaDon_Dao;
@@ -246,7 +245,22 @@ public class DSHoaDon_gui extends JPanel {
                 FlowLayout.RIGHT, 6, 0));
         benPhai.setOpaque(false);
 
-       
+        // Nút Xóa (nằm bên trái nút Xuất Danh Sách)
+        JButton btnXoa = new JButton("Xóa");
+
+        btnXoa.setFont(new Font("Arial", Font.BOLD, 12));
+        btnXoa.setForeground(Color.WHITE);
+        btnXoa.setBackground(new Color(220, 38, 38));
+        btnXoa.setOpaque(true);
+        btnXoa.setContentAreaFilled(true);
+        btnXoa.setBorderPainted(false);
+        btnXoa.setFocusPainted(false);
+        btnXoa.setBorder(new EmptyBorder(9, 16, 9, 16));
+        btnXoa.setCursor(Cursor.getPredefinedCursor(
+                Cursor.HAND_CURSOR));
+
+        btnXoa.addActionListener(e -> xoaHoaDon());
+
         JButton btnXuat = new JButton("Xuất Danh Sách");
 
         btnXuat.setFont(new Font("Arial", Font.BOLD, 12));
@@ -259,10 +273,10 @@ public class DSHoaDon_gui extends JPanel {
         btnXuat.setForeground(CHU);
         btnXuat.setBorder(new LineBorder(VIEN, 1, true));
 
-        
-
         btnXuat.addActionListener(e -> xuatCSV());
 
+        // Thứ tự add: Xóa trước, Xuất sau => Xóa nằm bên trái
+        benPhai.add(btnXoa);
         benPhai.add(btnXuat);
 
         panel.add(benTrai, BorderLayout.CENTER);
@@ -343,8 +357,6 @@ public class DSHoaDon_gui extends JPanel {
                     }
                 });
     }
-
-    
 
     // ==================== SỰ KIỆN ====================
 
@@ -528,50 +540,66 @@ public class DSHoaDon_gui extends JPanel {
 
     private void hienThiChiTiet(String maHD) {
 
-        HoaDon_entity hd = null;
+        // Mở màn hình chi tiết của đúng hóa đơn ở dòng được chọn
+        ChiTietHoaDon_gui.hienThi(this, maHD);
+    }
 
-        for (HoaDon_entity item : danhSach) {
+    // ==================== XÓA HÓA ĐƠN ====================
 
-            if (item.getMaHD() != null
-                    && item.getMaHD().equals(maHD)) {
+    private void xoaHoaDon() {
 
-                hd = item;
-                break;
-            }
-        }
+        int viewRow = table.getSelectedRow();
 
-        if (hd == null) {
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng chọn một hóa đơn cần xóa.",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE
+            );
             return;
         }
 
-        String noiDung = """
-                MÃ HÓA ĐƠN: %s
-                Ngày lập: %s
-                Trạng thái: %s
+        // Đổi chỉ số dòng hiển thị sang chỉ số model (do có sort/lọc)
+        int modelRow = table.convertRowIndexToModel(viewRow);
+        String maHD = model.getValueAt(modelRow, 0).toString();
 
-                Mã khách hàng: %s
-                Mã nhân viên: %s
-                Mã khuyến mãi: %s
-                Mã thuế: %s
-                Mã thanh toán: %s
-                """.formatted(
-                hd.getMaHD(),
-                hd.getNgayLap() == null
-                        ? "" : hd.getNgayLap().format(DMY),
-                hd.getTrangThai(),
-                layMa(hd.getMaKH()),
-                layMa(hd.getMaNhanVien()),
-                layMa(hd.getMaKM()),
-                layMa(hd.getMaThue()),
-                layMa(hd.getMaThanhToan())
-        );
-
-        JOptionPane.showMessageDialog(
+        int xacNhan = JOptionPane.showConfirmDialog(
                 this,
-                noiDung,
-                "Chi tiết hóa đơn",
-                JOptionPane.INFORMATION_MESSAGE
+                "Bạn có chắc muốn xóa hóa đơn " + maHD + " không?\n"
+                        + "Các chi tiết của hóa đơn cũng sẽ bị xóa.",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
         );
+
+        if (xacNhan != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        if (hoaDonDAO.xoaHD(maHD)) {
+
+            // Tải lại dữ liệu từ CSDL, cập nhật thống kê
+            taiDuLieu();
+
+            // Giữ nguyên bộ lọc đang áp dụng
+            locDuLieu();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Đã xóa hóa đơn " + maHD + ".",
+                    "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+        } else {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không thể xóa hóa đơn " + maHD + ".",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 
     // ==================== XUẤT DANH SÁCH CSV ====================
