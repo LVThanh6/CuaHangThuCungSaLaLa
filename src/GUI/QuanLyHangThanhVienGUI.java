@@ -18,11 +18,17 @@ import java.util.List;
 /**
  * Giao diện Quản lý hạng thành viên:
  * Hiển thị các tiêu chuẩn hạng thành viên, quyền lợi, ưu đãi và phân nhóm khách
+<<<<<<< Updated upstream
  * hàng.
  * Tích hợp toàn bộ chức năng: Xem danh sách thành viên theo từng hạng, Thêm/Tùy
  * chỉnh hạng, Thống kê từ CSDL SALALA.
+=======
+ * hàng
+ * Theo chuẩn thiết kế hệ thống SALALA Pet Shop từ Figma.
+>>>>>>> Stashed changes
  */
 public class QuanLyHangThanhVienGUI extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     // =========================================================================
     // 1. KHAI BÁO CÁC BIẾN GIAO DIỆN LÊN ĐẦU FILE
@@ -124,6 +130,11 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         btnThemHang.setFocusPainted(false);
         btnThemHang.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btnThemHang.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnThemHang.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                    "Chức năng mở biểu mẫu Thiết lập Hạng thành viên mới.",
+                    "Thêm hạng thành viên", JOptionPane.INFORMATION_MESSAGE);
+        });
 
         JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         panelPhai.setOpaque(false);
@@ -167,7 +178,21 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         the.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         the.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
+<<<<<<< Updated upstream
                 BorderFactory.createEmptyBorder(14, 18, 14, 18)));
+=======
+                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
+
+        // Icon bên trái
+        JLabel lblIcon = new JLabel(bieuTuong);
+        lblIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+        lblIcon.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        lblIcon.setOpaque(true);
+        lblIcon.setBackground(RangBuocGiaoDien.MAU_CHU_DAO_NHAT);
+        lblIcon.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcon.setPreferredSize(new Dimension(46, 46));
+        lblIcon.setBorder(BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_VIEN_CHU_DAO, 1));
+>>>>>>> Stashed changes
 
         // Thông tin số liệu
         JPanel panelThongTin = new JPanel();
@@ -274,6 +299,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         // 4 Thẻ hạng thành viên tương ứng
         theHangDong = taoTheHang(
+<<<<<<< Updated upstream
                 "Đồng", "Tổng chi tiêu dưới 5.000.000 ₫",
                 "2%", soDong + " khách hàng", String.format("%.1f%% tổng khách", (soDong * 100.0 / tongKH)),
                 qlDong, new Color(245, 158, 11), new Color(254, 243, 199));
@@ -291,6 +317,25 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         theHangKimCuong = taoTheHang(
                 "Kim cương", "Tổng chi tiêu từ 30.000.000 ₫",
                 "15%", soKC + " khách hàng", String.format("%.1f%% tổng khách", (soKC * 100.0 / tongKH)),
+=======
+                "🥉", "Đồng", "Tổng chi tiêu dưới 5.000.000 ₫",
+                "2%", "42 khách hàng", "43,8% tổng khách",
+                qlDong, new Color(245, 158, 11), new Color(254, 243, 199));
+
+        theHangBac = taoTheHang(
+                "🥈", "Bạc", "Từ 5.000.000 ₫ đến dưới 15.000.000 ₫",
+                "5%", "25 khách hàng", "26,0% tổng khách",
+                qlBac, new Color(100, 116, 139), new Color(241, 245, 249));
+
+        theHangVang = taoTheHang(
+                "👑", "Vàng", "Từ 15.000.000 ₫ đến dưới 30.000.000 ₫",
+                "10%", "21 khách hàng", "21,9% tổng khách",
+                qlVang, new Color(217, 119, 6), new Color(254, 240, 138));
+
+        theHangKimCuong = taoTheHang(
+                "💎", "Kim cương", "Tổng chi tiêu từ 30.000.000 ₫",
+                "15%", "8 khách hàng", "8,3% tổng khách",
+>>>>>>> Stashed changes
                 qlKimCuong, new Color(2, 132, 199), new Color(224, 242, 254));
 
         panelDanhSachHang.add(theHangDong);
@@ -305,7 +350,11 @@ public class QuanLyHangThanhVienGUI extends JPanel {
     }
 
     private JPanel taoTheHang(
+<<<<<<< Updated upstream
             String tenHang, String dieuKienChiTieu,
+=======
+            String bieuTuong, String tenHang, String dieuKienChiTieu,
+>>>>>>> Stashed changes
             String mucGiamGia, String soKhachHang, String tiLeKhachHang,
             String[] danhSachQuyenLoi, Color mauVienTop, Color mauNenNhe) {
         JPanel the = new JPanel();
@@ -381,12 +430,21 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelThongSo.add(colGiamGia);
 
         // Cột phải: Số lượng khách hàng
+<<<<<<< Updated upstream
         JPanel colKhachHang = new JPanel();
         colKhachHang.setLayout(new BoxLayout(colKhachHang, BoxLayout.Y_AXIS));
         colKhachHang.setBackground(Color.WHITE);
         colKhachHang.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
                 BorderFactory.createEmptyBorder(10, 12, 10, 12)));
+=======
+        JPanel cotPhai = new JPanel();
+        cotPhai.setLayout(new BoxLayout(cotPhai, BoxLayout.Y_AXIS));
+        cotPhai.setOpaque(false);
+        cotPhai.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 1, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
+                new EmptyBorder(0, 12, 0, 0)));
+>>>>>>> Stashed changes
 
         JLabel lblSoKhach = new JLabel(soKhachHang);
         lblSoKhach.setFont(RangBuocGiaoDien.fontDam(14));
@@ -467,6 +525,49 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         the.add(Box.createVerticalGlue());
 
+<<<<<<< Updated upstream
+=======
+        // 6. Khối nút Thao tác phía dưới (Chỉnh sửa + Xóa)
+        JPanel panelThaoTac = new JPanel(new GridLayout(1, 2, 10, 0));
+        panelThaoTac.setOpaque(false);
+        panelThaoTac.setBorder(new EmptyBorder(12, 16, 16, 16));
+
+        JButton btnSua = new JButton("✏ Chỉnh sửa");
+        btnSua.setFont(RangBuocGiaoDien.fontDam(12));
+        btnSua.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnSua.setBackground(Color.WHITE);
+        btnSua.setFocusPainted(false);
+        btnSua.setBorder(BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
+        btnSua.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnSua.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                    "Chỉnh sửa chính sách và quyền lợi cho hạng: " + tenHang,
+                    "Chỉnh sửa hạng thành viên", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        JButton btnXoa = new JButton("🗑 Xóa");
+        btnXoa.setFont(RangBuocGiaoDien.fontDam(12));
+        btnXoa.setForeground(RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
+        btnXoa.setBackground(Color.WHITE);
+        btnXoa.setFocusPainted(false);
+        btnXoa.setBorder(BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
+        btnXoa.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnXoa.addActionListener(e -> {
+            int xacNhan = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn xóa chính sách hạng: " + tenHang + "?",
+                    "Xác nhận xóa hạng", JOptionPane.YES_NO_OPTION);
+            if (xacNhan == JOptionPane.YES_OPTION) {
+                JOptionPane.showMessageDialog(this,
+                        "Đã xóa cấu hình hạng " + tenHang + " thành công.",
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        panelThaoTac.add(btnSua);
+        panelThaoTac.add(btnXoa);
+        the.add(panelThaoTac);
+
+>>>>>>> Stashed changes
         return the;
     }
 

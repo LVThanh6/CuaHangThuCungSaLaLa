@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
  * Lớp PanelQuanLyMau: Tích hợp TableMau cùng Thanh tìm kiếm, Bộ lọc, Nút xuất file và Phân trang chuẩn giao diện SALALA.
  */
 public class QuanLyTable extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private TableMau bangDuLieu;
     private JTextField txtTimKiem;
@@ -176,6 +177,7 @@ public class QuanLyTable extends JPanel {
         return btn;
     }
 
+<<<<<<< Updated upstream
     public DefaultTableModel getModel() {
         return model;
     }
@@ -267,52 +269,85 @@ public class QuanLyTable extends JPanel {
     // --- TÍCH HỢP CLASS TableMau ---
     public static class TableMau extends JTable {
         private DefaultTableModel model;
+=======
+    // --- CÁC PHƯƠNG THỨC TIỆN ÍCH CHO BẢNG ---
+    public TableMau getBangDuLieu() {
+        return bangDuLieu;
+    }
+>>>>>>> Stashed changes
 
-        public TableMau(String[] tenCot, Object[][] duLieu) {
-            super(new DefaultTableModel(duLieu, tenCot) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            });
-            this.model = (DefaultTableModel) getModel();
-            khoiTaoGiaoDien();
+    public DefaultTableModel getModel() {
+        return model;
+    }
+
+    public JTextField getTxtTimKiem() {
+        return txtTimKiem;
+    }
+
+    public TableRowSorter<DefaultTableModel> getRowSorter() {
+        return rowSorter;
+    }
+
+    public void datLaiDuLieu(Object[][] duLieuMoi, String[] tenCotMoi) {
+        if (bangDuLieu != null) {
+            bangDuLieu.datLaiDuLieu(duLieuMoi, tenCotMoi);
+            this.model = (DefaultTableModel) bangDuLieu.getModel();
+            rowSorter.setModel(model);
+        }
+    }
+
+    /**
+     * Tiện ích khởi tạo nhanh giao diện Quản lý Danh sách nhân viên
+     */
+    public static QuanLyTable taoBangNhanVien() {
+        String[] tieuDe = {"Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái", "Thao tác"};
+        Object[][] duLieu = {
+            {"NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc", "👁 Xem  ✏ Sửa  🗑 Xóa"},
+            {"NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc", "👁 Xem  ✏ Sửa  🗑 Xóa"},
+            {"NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc", "👁 Xem  ✏ Sửa  🗑 Xóa"},
+            {"NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc", "👁 Xem  ✏ Sửa  🗑 Xóa"},
+            {"NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ", "👁 Xem  ✏ Sửa  🗑 Xóa"},
+            {"NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc", "👁 Xem  ✏ Sửa  🗑 Xóa"}
+        };
+        String[] danhSachBoLoc = {"Vai trò: Tất cả", "Trạng thái: Tất cả"};
+        return new QuanLyTable(tieuDe, duLieu, "Tìm theo tên, mã nhân viên, số điện thoại...", danhSachBoLoc);
+    }
+
+    /**
+     * Tiện ích khởi tạo nhanh giao diện Quản lý Danh sách bác sĩ từ CSDL SALALA
+     */
+    public static QuanLyTable taoBangBacSi() {
+        String[] tieuDe = {"Mã bác sĩ", "Họ và tên", "Chuyên khoa", "Số điện thoại", "Email", "Giới tính", "Tài khoản"};
+        java.util.List<Object[]> rows = new java.util.ArrayList<>();
+
+        try {
+            dao.BacSy_DAO bsDAO = new dao.BacSy_DAO();
+            java.util.ArrayList<model.BacSyThuY> ds = bsDAO.getAllBacSy();
+            for (model.BacSyThuY bs : ds) {
+                rows.add(new Object[]{
+                        bs.getMaBacSi(),
+                        bs.getHoTen(),
+                        bs.getTenChuyenNganh(),
+                        bs.getSdt(),
+                        bs.getEmail(),
+                        bs.getGioiTinh(),
+                        (bs.getMaTK() != null ? bs.getMaTK() : "Chưa cấp")
+                });
+            }
+        } catch (Exception ignored) {
         }
 
-        private void khoiTaoGiaoDien() {
-            setRowHeight(42);
-            setShowVerticalLines(false);
-            setShowHorizontalLines(true);
-            setGridColor(new Color(226, 232, 240));
-            setSelectionBackground(new Color(230, 244, 241));
-            setSelectionForeground(new Color(30, 41, 59));
-            setFont(new Font("Segoe UI", Font.PLAIN, 13));
-            setForeground(new Color(30, 41, 59));
-            setBackground(Color.WHITE);
-            setFillsViewportHeight(true);
-
-            JTableHeader header = getTableHeader();
-            header.setPreferredSize(new Dimension(0, 40));
-            header.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            header.setForeground(new Color(100, 116, 139));
-            header.setBackground(new Color(248, 250, 252));
-            header.setReorderingAllowed(false);
-
-            setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                    Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                    if (c instanceof JLabel) {
-                        JLabel label = (JLabel) c;
-                        label.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
-                        if (!isSelected) {
-                            c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
-                        }
-                    }
-                    return c;
-                }
-            });
+        Object[][] duLieu;
+        if (!rows.isEmpty()) {
+            duLieu = rows.toArray(new Object[0][]);
+        } else {
+            duLieu = new Object[][]{
+                {"BS001", "Nguyễn Hữu Tài", "Ngoại khoa", "0903000001", "bacsi001@salala.vn", "Nam", "TK031"},
+                {"BS002", "Trần Thị Uyên", "Da liễu thú y", "0903000002", "bacsi002@salala.vn", "Nữ", "TK032"}
+            };
         }
+        String[] danhSachBoLoc = {"Chuyên khoa: Tất cả", "Giới tính: Tất cả"};
+        return new QuanLyTable(tieuDe, duLieu, "Tìm theo tên bác sĩ, chuyên khoa, sđt...", danhSachBoLoc);
     }
 
     // --- HÀM MAIN CHẠY THỬ KIỂM THỬ ĐỘC LẬP ---

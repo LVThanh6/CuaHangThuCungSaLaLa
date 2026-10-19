@@ -6,8 +6,12 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+<<<<<<< Updated upstream
 	<classpathentry kind="src" path="lib"/>
 	<classpathentry kind="src" path="sql"/>
 	<classpathentry kind="lib" path="lib/sqljdbc42.jar"/>
+=======
+	<classpathentry kind="lib" path="lib/mssql-jdbc.jar"/>
+>>>>>>> Stashed changes
 	<classpathentry kind="output" path="bin"/>
 </classpath>

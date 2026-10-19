@@ -19,12 +19,18 @@ import javax.swing.border.MatteBorder;
  * theo vai trò.
  */
 public class HeaderGUI extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     public interface TabSelectionListener {
         void onTabSelected(String tenTab, String menuCon);
     }
 
+    public interface LogoutListener {
+        void onLogout();
+    }
+
     // --- Thông tin người dùng ---
+    private model.TaiKhoan taiKhoan;
     private String tenNguoiDung;
     private String chucVu;
     private String chuCaiAvatar;
@@ -38,6 +44,7 @@ public class HeaderGUI extends JPanel {
     private List<JButton> danhSachNutTab;
     private JPanel panelTabContainer;
     private TabSelectionListener tabSelectionListener;
+    private LogoutListener logoutListener;
     private Consumer<String> onTabChanged;
 
     // ==========================================
@@ -48,8 +55,13 @@ public class HeaderGUI extends JPanel {
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu) {
+        this(null, tenNguoiDung, chucVu);
+    }
+
+    public HeaderGUI(model.TaiKhoan taiKhoan, String tenNguoiDung, String chucVu) {
+        this.taiKhoan = taiKhoan;
         this.tenNguoiDung = (tenNguoiDung != null && !tenNguoiDung.trim().isEmpty()) ? tenNguoiDung : "Người dùng";
-        this.chucVu = (chucVu != null && !chucVu.trim().isEmpty()) ? chucVu : "Quản lý";
+        this.chucVu = (chucVu != null && !chucVu.trim().isEmpty()) ? chucVu : (taiKhoan != null ? taiKhoan.getVaiTro() : "Quản lý");
         this.danhSachNutTab = new ArrayList<>();
 
         khoiTaoMenuConMacDinh();
@@ -58,7 +70,7 @@ public class HeaderGUI extends JPanel {
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu, TabSelectionListener listener) {
-        this(tenNguoiDung, chucVu);
+        this(null, tenNguoiDung, chucVu);
         this.tabSelectionListener = listener;
     }
 
@@ -67,7 +79,7 @@ public class HeaderGUI extends JPanel {
     // ==========================================
     private void khoiTaoMenuConMacDinh() {
         menuConMap = new HashMap<>();
-        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Danh sách bác sĩ", "Thống kê" });
+        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Quản lý tài khoản", "Danh sách bác sĩ", "Thống kê" });
         menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Loại thú cưng", "Lịch sử khám" });
         menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
         menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
@@ -88,10 +100,14 @@ public class HeaderGUI extends JPanel {
         // Cắt chữ cái viết tắt đại diện cho Avatar
         capNhatChuCaiAvatar();
 
-        // Phân quyền Tab hiển thị theo vai trò
+        // Phân quyền Tab hiển thị theo vai trò đúng theo CSDL SALALA
         if ("Bác sĩ".equalsIgnoreCase(vaiTro) || "Bác sĩ thú y".equalsIgnoreCase(vaiTro)) {
             this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Vật tư", "Lịch hẹn", "Dịch vụ" };
-        } else if ("Nhân viên".equalsIgnoreCase(vaiTro) || "Thu ngân".equalsIgnoreCase(vaiTro)) {
+        } else if (vaiTro != null && vaiTro.toLowerCase().contains("kho")) {
+            this.danhSachTabs = new String[] { "Vật tư", "Hóa đơn" };
+        } else if (vaiTro != null && vaiTro.toLowerCase().contains("dịch vụ")) {
+            this.danhSachTabs = new String[] { "Thú cưng", "Lịch hẹn", "Dịch vụ" };
+        } else if (vaiTro != null && (vaiTro.toLowerCase().contains("bán hàng") || vaiTro.toLowerCase().contains("thu ngân") || vaiTro.toLowerCase().contains("nhân viên"))) {
             this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Hóa đơn", "Lịch hẹn", "Dịch vụ" };
         } else {
             // Mặc định là Quản lý / Toàn quyền
@@ -214,10 +230,71 @@ public class HeaderGUI extends JPanel {
 
         khoiNguoiDung.add(avatarNguoiDung);
         khoiNguoiDung.add(thongTin);
+
+        // Sự kiện click vào khối người dùng để mở menu tùy chọn
+        khoiNguoiDung.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                hienThiMenuNguoiDung(khoiNguoiDung);
+            }
+        });
+
         panelPhai.add(khoiNguoiDung);
 
         hangTren.add(panelPhai, BorderLayout.EAST);
         return hangTren;
+    }
+
+    private void hienThiMenuNguoiDung(Component comp) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBackground(Color.WHITE);
+        menu.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
+
+        JMenuItem itemProfile = new JMenuItem("👤 Thông tin tài khoản");
+        itemProfile.setFont(RangBuocGiaoDien.fontThuong(13));
+        itemProfile.setBackground(Color.WHITE);
+        itemProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        itemProfile.addActionListener(e -> {
+            Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
+            new ThongTinTaiKhoanDialog(parent, taiKhoan, tenNguoiDung).setVisible(true);
+        });
+        menu.add(itemProfile);
+
+        JMenuItem itemDoiPass = new JMenuItem("🔑 Đổi mật khẩu");
+        itemDoiPass.setFont(RangBuocGiaoDien.fontThuong(13));
+        itemDoiPass.setBackground(Color.WHITE);
+        itemDoiPass.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        itemDoiPass.addActionListener(e -> {
+            Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
+            new DoiMatKhauDialog(parent, taiKhoan).setVisible(true);
+        });
+        menu.add(itemDoiPass);
+
+        menu.addSeparator();
+
+        JMenuItem itemDangXuat = new JMenuItem("🚪 Đăng xuất");
+        itemDangXuat.setFont(RangBuocGiaoDien.fontDam(13));
+        itemDangXuat.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
+        itemDangXuat.setBackground(Color.WHITE);
+        itemDangXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        itemDangXuat.addActionListener(e -> {
+            int opt = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc muốn đăng xuất khỏi hệ thống?",
+                    "Xác nhận đăng xuất",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (opt == JOptionPane.YES_OPTION) {
+                if (logoutListener != null) {
+                    logoutListener.onLogout();
+                } else {
+                    Window w = SwingUtilities.getWindowAncestor(this);
+                    if (w != null) w.dispose();
+                    new DangNhapGUI().setVisible(true);
+                }
+            }
+        });
+        menu.add(itemDangXuat);
+
+        menu.show(comp, 0, comp.getHeight() + 4);
     }
 
     // 2. HÀNG ĐIỀU HƯỚNG TAB
@@ -444,6 +521,22 @@ public class HeaderGUI extends JPanel {
 
     public void setOnTabChanged(Consumer<String> onTabChanged) {
         this.onTabChanged = onTabChanged;
+    }
+
+    public model.TaiKhoan getTaiKhoan() {
+        return taiKhoan;
+    }
+
+    public void setTaiKhoan(model.TaiKhoan taiKhoan) {
+        this.taiKhoan = taiKhoan;
+    }
+
+    public LogoutListener getLogoutListener() {
+        return logoutListener;
+    }
+
+    public void setLogoutListener(LogoutListener logoutListener) {
+        this.logoutListener = logoutListener;
     }
 
     // ==========================================

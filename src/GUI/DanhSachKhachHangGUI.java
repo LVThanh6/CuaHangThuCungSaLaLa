@@ -19,6 +19,7 @@ import java.util.List;
  * từ CSDL SALALA.
  */
 public class DanhSachKhachHangGUI extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     // =========================================================================
     // 1. KHAI BÁO CÁC BIẾN GIAO DIỆN LÊN ĐẦU FILE
@@ -120,6 +121,11 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnThemKhachHang.setFocusPainted(false);
         btnThemKhachHang.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btnThemKhachHang.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnThemKhachHang.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                    "Chức năng mở biểu mẫu Thêm mới khách hàng & đăng ký thú cưng.",
+                    "Thêm khách hàng", JOptionPane.INFORMATION_MESSAGE);
+        });
 
         JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         panelPhai.setOpaque(false);
