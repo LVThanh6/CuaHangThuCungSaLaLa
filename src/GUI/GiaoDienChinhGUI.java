@@ -357,10 +357,12 @@ public class GiaoDienChinhGUI extends JPanel {
     // --- Tab Hóa đơn ---
     public void hienThiTaoHoaDonMoi() {
         // TODO: Nhúng class giao diện Tạo hóa đơn mới vào đây
+    	setNoiDung(new LapHoaDon_gui());
     }
 
     public void hienThiDanhSachHoaDon() {
         // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
+    	setNoiDung(new DSHoaDon_gui());
     }
 
     // --- Tab Vật tư ---
