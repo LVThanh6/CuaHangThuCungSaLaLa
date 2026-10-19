@@ -283,6 +283,12 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 5: Vật tư */
     public void hienThiTabVatTu() {
+            try {
+            setNoiDung(new VatTu());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            hienThiNoiDungMacDinh("Lỗi hiển thị Vật tư: " + t.getMessage());
+        }
         // TODO: Nhúng class giao diện Vật tư vào đây
         // Ví dụ: setNoiDung(new VatTuGUI());
     }
