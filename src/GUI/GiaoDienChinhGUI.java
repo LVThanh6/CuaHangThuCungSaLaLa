@@ -257,6 +257,8 @@ public class GiaoDienChinhGUI extends JPanel {
     public void hienThiTabNhanVien() {
         // TODO: Nhúng class giao diện Nhân viên vào đây
         // Ví dụ: setNoiDung(new NhanVienGUI());
+    	
+    	setNoiDung(new NhanVienGUI());
     }
 
     /** Tab 2: Thú cưng */
@@ -316,6 +318,7 @@ public class GiaoDienChinhGUI extends JPanel {
         // TODO: Nhúng class ThongKeGUI vào đây
         // Ví dụ (khi ThongKeGUI kế thừa JPanel/Component):
         // setNoiDung(new ThongKeGUI());
+    	setNoiDung(new ThongKeGUI());
     }
 
     // --- Tab Thú cưng ---
