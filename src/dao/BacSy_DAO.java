@@ -1,6 +1,6 @@
 package dao;
 
-import connectDB.DBConnection;
+import connectDB.ConnectDB;
 import model.BacSyThuY;
 
 import java.sql.*;
@@ -19,7 +19,7 @@ public class BacSy_DAO {
      */
     public ArrayList<BacSyThuY> getAllBacSy() {
         ArrayList<BacSyThuY> ds = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
 
         if (con != null) {
             String sql = "SELECT maBacSi, maTK, tenChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh FROM BacSyThuY ORDER BY maBacSi ASC";
@@ -48,7 +48,7 @@ public class BacSy_DAO {
      * Lấy bác sĩ theo mã
      */
     public BacSyThuY getBacSyTheoMa(String maBS) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null || maBS == null) return null;
 
         String sql = "SELECT maBacSi, maTK, tenChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh FROM BacSyThuY WHERE maBacSi = ?";

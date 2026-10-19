@@ -28,24 +28,22 @@ public class DSHoaDon_gui extends JPanel {
     private final Color VIEN = new Color(226, 232, 240);
     private final Color CHU = new Color(30, 41, 59);
 
-    private final DateTimeFormatter DMY =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final JTextField txtTimKiem = new JTextField();
 
-    private final JComboBox<String> cboTrangThai =
-            new JComboBox<>(new String[]{
-                    "Tất cả",
-                    "Đã thanh toán",
-                    "Chưa thanh toán"
-            });
+    private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {
+            "Tất cả",
+            "Đã thanh toán",
+            "Chưa thanh toán"
+    });
 
     private final JLabel lblTong = new JLabel("0");
     private final JLabel lblDaThanhToan = new JLabel("0");
     private final JLabel lblChuaThanhToan = new JLabel("0");
 
     private final DefaultTableModel model = new DefaultTableModel(
-            new String[]{
+            new String[] {
                     "Mã Hóa Đơn",
                     "Ngày Lập",
                     "Trạng Thái",
@@ -137,8 +135,7 @@ public class DSHoaDon_gui extends JPanel {
                         this,
                         "Hãy kết nối nút này với màn hình lập hóa đơn.",
                         "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
@@ -163,8 +160,7 @@ public class DSHoaDon_gui extends JPanel {
         khuVucBang.setBackground(Color.WHITE);
         khuVucBang.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(VIEN, 1, true),
-                new EmptyBorder(12, 10, 8, 10)
-        ));
+                new EmptyBorder(12, 10, 8, 10)));
 
         JPanel boLoc = taoBoLoc();
 
@@ -197,8 +193,7 @@ public class DSHoaDon_gui extends JPanel {
 
         the.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(204, 251, 241), 1, true),
-                new EmptyBorder(12, 12, 12, 12)
-        ));
+                new EmptyBorder(12, 12, 12, 12)));
 
         JPanel chu = new JPanel();
         chu.setLayout(new BoxLayout(chu, BoxLayout.Y_AXIS));
@@ -343,7 +338,8 @@ public class DSHoaDon_gui extends JPanel {
                         label.setHorizontalAlignment(SwingConstants.CENTER);
 
                         String tt = value == null
-                                ? "" : value.toString();
+                                ? ""
+                                : value.toString();
 
                         if (laDaThanhToan(tt)) {
                             label.setForeground(new Color(21, 128, 61));
@@ -438,11 +434,12 @@ public class DSHoaDon_gui extends JPanel {
 
         for (HoaDon_entity hd : ds) {
 
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     hd.getMaHD(),
 
                     hd.getNgayLap() == null
-                            ? "" : hd.getNgayLap().format(DMY),
+                            ? ""
+                            : hd.getNgayLap().format(DMY),
 
                     hd.getTrangThai(),
 
@@ -480,8 +477,7 @@ public class DSHoaDon_gui extends JPanel {
         for (String tenGetter : cacGetter) {
 
             try {
-                Method method =
-                        doiTuong.getClass().getMethod(tenGetter);
+                Method method = doiTuong.getClass().getMethod(tenGetter);
 
                 Object ketQua = method.invoke(doiTuong);
 
@@ -504,8 +500,7 @@ public class DSHoaDon_gui extends JPanel {
         String tuKhoa = txtTimKiem.getText()
                 .trim().toLowerCase();
 
-        String trangThaiChon =
-                cboTrangThai.getSelectedItem().toString();
+        String trangThaiChon = cboTrangThai.getSelectedItem().toString();
 
         ArrayList<HoaDon_entity> ketQua = new ArrayList<>();
 
@@ -513,7 +508,8 @@ public class DSHoaDon_gui extends JPanel {
 
             // Tìm theo mã hóa đơn
             String maHD = hd.getMaHD() == null
-                    ? "" : hd.getMaHD().toLowerCase();
+                    ? ""
+                    : hd.getMaHD().toLowerCase();
 
             if (!maHD.contains(tuKhoa)) {
                 continue;
@@ -555,8 +551,7 @@ public class DSHoaDon_gui extends JPanel {
                     this,
                     "Vui lòng chọn một hóa đơn cần xóa.",
                     "Thông báo",
-                    JOptionPane.WARNING_MESSAGE
-            );
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -570,8 +565,7 @@ public class DSHoaDon_gui extends JPanel {
                         + "Các chi tiết của hóa đơn cũng sẽ bị xóa.",
                 "Xác nhận xóa",
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-        );
+                JOptionPane.WARNING_MESSAGE);
 
         if (xacNhan != JOptionPane.YES_OPTION) {
             return;
@@ -589,16 +583,14 @@ public class DSHoaDon_gui extends JPanel {
                     this,
                     "Đã xóa hóa đơn " + maHD + ".",
                     "Thành công",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+                    JOptionPane.INFORMATION_MESSAGE);
 
         } else {
             JOptionPane.showMessageDialog(
                     this,
                     "Không thể xóa hóa đơn " + maHD + ".",
                     "Lỗi",
-                    JOptionPane.ERROR_MESSAGE
-            );
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -611,15 +603,13 @@ public class DSHoaDon_gui extends JPanel {
         chooser.setSelectedFile(
                 new File("DanhSachHoaDon.csv"));
 
-        if (chooser.showSaveDialog(this)
-                != JFileChooser.APPROVE_OPTION) {
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
             return;
         }
 
         File file = chooser.getSelectedFile();
 
-        try (PrintWriter writer =
-                     new PrintWriter(file, "UTF-8")) {
+        try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
 
             // BOM giúp Excel đọc tiếng Việt UTF-8
             writer.write('\uFEFF');
@@ -649,7 +639,8 @@ public class DSHoaDon_gui extends JPanel {
                     Object value = table.getValueAt(r, c);
 
                     String text = value == null
-                            ? "" : value.toString();
+                            ? ""
+                            : value.toString();
 
                     writer.print("\""
                             + text.replace("\"", "\"\"")
@@ -661,8 +652,7 @@ public class DSHoaDon_gui extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Xuất danh sách thành công."
-            );
+                    "Xuất danh sách thành công.");
 
         } catch (Exception ex) {
 
@@ -670,8 +660,7 @@ public class DSHoaDon_gui extends JPanel {
                     this,
                     "Không thể xuất file: " + ex.getMessage(),
                     "Lỗi",
-                    JOptionPane.ERROR_MESSAGE
-            );
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

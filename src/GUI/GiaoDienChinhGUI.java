@@ -14,6 +14,7 @@ import javax.swing.*;
 public class GiaoDienChinhGUI extends JPanel {
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
+    private HeaderGUI headerGUI;
     private JPanel panelNoiDung; // Phần 2: Vùng Main chứa nội dung tab bên trong
     private JLabel nhanNoiDung;
     private String tabHienTai;

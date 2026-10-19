@@ -1,6 +1,6 @@
 package dao;
 
-import connectDB.DBConnection;
+import connectDB.ConnectDB;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -20,27 +20,30 @@ public class ThongKe_DAO {
      * Lấy tổng doanh thu theo khoảng thời gian
      */
     public double getTongDoanhThu(String kyBaoCao) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con != null) {
             String sql = "SELECT ISNULL(SUM(tongThanhToan), 0) FROM vw_TongTienHoaDon";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     double dt = rs.getDouble(1);
-                    if (dt > 0) return dt;
+                    if (dt > 0)
+                        return dt;
                 }
             } catch (SQLException e) {
                 // Fallback nếu view chưa tạo: tính từ ChiTietHoaDon
                 try {
                     String sqlFallback = "SELECT ISNULL(SUM(soLuong * donGia), 0) FROM ChiTietHoaDon";
                     try (Statement stmt2 = con.createStatement();
-                         ResultSet rs2 = stmt2.executeQuery(sqlFallback)) {
+                            ResultSet rs2 = stmt2.executeQuery(sqlFallback)) {
                         if (rs2.next()) {
                             double dt = rs2.getDouble(1);
-                            if (dt > 0) return dt;
+                            if (dt > 0)
+                                return dt;
                         }
                     }
-                } catch (SQLException ignored) {}
+                } catch (SQLException ignored) {
+                }
             }
         }
         return 128450000; // Giá trị mẫu chuẩn
@@ -50,16 +53,18 @@ public class ThongKe_DAO {
      * Lấy tổng số hóa đơn
      */
     public int getTongSoHoaDon() {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM HoaDon";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    if (count > 0) return count;
+                    if (count > 0)
+                        return count;
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
         return 156;
     }
@@ -68,16 +73,18 @@ public class ThongKe_DAO {
      * Lấy số khách hàng
      */
     public int getTongSoKhachHang() {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM KhachHang";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    if (count > 0) return count;
+                    if (count > 0)
+                        return count;
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
         return 96;
     }
@@ -86,16 +93,18 @@ public class ThongKe_DAO {
      * Lấy tổng số thú cưng
      */
     public int getTongSoThuCung() {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM ThuCung";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    if (count > 0) return count;
+                    if (count > 0)
+                        return count;
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
         return 182;
     }
@@ -105,7 +114,7 @@ public class ThongKe_DAO {
      */
     public Map<String, Long> getCoCauDoanhThu() {
         Map<String, Long> map = new HashMap<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         boolean hasData = false;
 
         if (con != null) {
@@ -116,10 +125,12 @@ public class ThongKe_DAO {
                 long tongDV = 0;
                 long tongVT = 0;
                 try (ResultSet rs1 = stmt.executeQuery(sqlDichVu)) {
-                    if (rs1.next()) tongDV = rs1.getLong(1);
+                    if (rs1.next())
+                        tongDV = rs1.getLong(1);
                 }
                 try (ResultSet rs2 = stmt.executeQuery(sqlVatTu)) {
-                    if (rs2.next()) tongVT = rs2.getLong(1);
+                    if (rs2.next())
+                        tongVT = rs2.getLong(1);
                 }
 
                 if (tongDV > 0 || tongVT > 0) {
@@ -129,7 +140,8 @@ public class ThongKe_DAO {
                     map.put("Thuốc & Thực phẩm bổ sung", (long) (tongVT * 0.35));
                     hasData = true;
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
 
         if (!hasData) {
@@ -147,7 +159,7 @@ public class ThongKe_DAO {
      */
     public List<Object[]> getTopDichVuSanPham() {
         List<Object[]> list = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
 
         if (con != null) {
             String sql = "SELECT TOP 5 COALESCE(d.tenDV, v.tenVT) AS ten, "
@@ -159,24 +171,25 @@ public class ThongKe_DAO {
                     + "GROUP BY COALESCE(d.tenDV, v.tenVT) "
                     + "ORDER BY doanhThu DESC";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     String ten = rs.getString("ten");
                     long soLuot = rs.getLong("soLuot");
                     double dt = rs.getDouble("doanhThu");
                     if (ten != null) {
-                        list.add(new Object[]{ten, soLuot + " lượt", String.format("%,.0f ₫", dt)});
+                        list.add(new Object[] { ten, soLuot + " lượt", String.format("%,.0f ₫", dt) });
                     }
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
 
         if (list.isEmpty()) {
-            list.add(new Object[]{"Khám tổng quát định kỳ", "54 lượt", "16.200.000 ₫"});
-            list.add(new Object[]{"Tắm & Cắt tỉa lông toàn diện", "42 lượt", "18.900.000 ₫"});
-            list.add(new Object[]{"Tiêm vắc-xin 7 bệnh cho chó", "38 lượt", "11.400.000 ₫"});
-            list.add(new Object[]{"Thức ăn hạt cao cấp Royal Canin", "31 gói", "15.500.000 ₫"});
-            list.add(new Object[]{"Khách sạn thú cưng (theo ngày)", "22 ngày", "11.000.000 ₫"});
+            list.add(new Object[] { "Khám tổng quát định kỳ", "54 lượt", "16.200.000 ₫" });
+            list.add(new Object[] { "Tắm & Cắt tỉa lông toàn diện", "42 lượt", "18.900.000 ₫" });
+            list.add(new Object[] { "Tiêm vắc-xin 7 bệnh cho chó", "38 lượt", "11.400.000 ₫" });
+            list.add(new Object[] { "Thức ăn hạt cao cấp Royal Canin", "31 gói", "15.500.000 ₫" });
+            list.add(new Object[] { "Khách sạn thú cưng (theo ngày)", "22 ngày", "11.000.000 ₫" });
         }
 
         return list;
@@ -187,7 +200,7 @@ public class ThongKe_DAO {
      */
     public List<Object[]> getDoanhSoNhanVien() {
         List<Object[]> list = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
 
         if (con != null) {
             String sql = "SELECT nv.maNhanVien, nv.hoTen, nv.chucVu, "
@@ -199,7 +212,7 @@ public class ThongKe_DAO {
                     + "GROUP BY nv.maNhanVien, nv.hoTen, nv.chucVu "
                     + "ORDER BY doanhSo DESC";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     String maNV = rs.getString("maNhanVien");
                     String hoTen = rs.getString("hoTen");
@@ -207,17 +220,18 @@ public class ThongKe_DAO {
                     int soDon = rs.getInt("soDon");
                     double ds = rs.getDouble("doanhSo");
 
-                    list.add(new Object[]{maNV, hoTen, chucVu, soDon + " đơn", String.format("%,.0f ₫", ds)});
+                    list.add(new Object[] { maNV, hoTen, chucVu, soDon + " đơn", String.format("%,.0f ₫", ds) });
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
 
         if (list.isEmpty()) {
-            list.add(new Object[]{"NV001", "Trần Quốc Bảo", "Nhân viên bán hàng", "48 đơn", "46.500.000 ₫"});
-            list.add(new Object[]{"NV002", "Nguyễn Thị Cẩm", "Nhân viên bán hàng", "36 đơn", "34.150.000 ₫"});
-            list.add(new Object[]{"NV006", "Đặng Thị Giang", "Nhân viên dịch vụ", "32 đơn", "28.300.000 ₫"});
-            list.add(new Object[]{"NV007", "Bùi Minh Hải", "Nhân viên dịch vụ", "26 đơn", "19.500.000 ₫"});
-            list.add(new Object[]{"NV011", "Lý Quang Minh", "Nhân viên quản lý kho", "18 đơn", "10.000.000 ₫"});
+            list.add(new Object[] { "NV001", "Trần Quốc Bảo", "Nhân viên bán hàng", "48 đơn", "46.500.000 ₫" });
+            list.add(new Object[] { "NV002", "Nguyễn Thị Cẩm", "Nhân viên bán hàng", "36 đơn", "34.150.000 ₫" });
+            list.add(new Object[] { "NV006", "Đặng Thị Giang", "Nhân viên dịch vụ", "32 đơn", "28.300.000 ₫" });
+            list.add(new Object[] { "NV007", "Bùi Minh Hải", "Nhân viên dịch vụ", "26 đơn", "19.500.000 ₫" });
+            list.add(new Object[] { "NV011", "Lý Quang Minh", "Nhân viên quản lý kho", "18 đơn", "10.000.000 ₫" });
         }
 
         return list;
@@ -233,7 +247,7 @@ public class ThongKe_DAO {
             map.put("Th" + i, 0.0);
         }
 
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         boolean coDuLieu = false;
         if (con != null) {
             String sql = "SELECT MONTH(h.ngayLap) AS Thang, SUM(ISNULL(v.tongThanhToan, 0)) AS DoanhThu "
@@ -242,7 +256,7 @@ public class ThongKe_DAO {
                     + "GROUP BY MONTH(h.ngayLap) "
                     + "ORDER BY Thang";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     int th = rs.getInt("Thang");
                     double dt = rs.getDouble("DoanhThu");
@@ -251,12 +265,14 @@ public class ThongKe_DAO {
                         coDuLieu = true;
                     }
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
 
-        // Nếu dữ liệu DB chưa đủ 12 tháng, bù số liệu tăng trưởng mẫu để biểu đồ sinh động
+        // Nếu dữ liệu DB chưa đủ 12 tháng, bù số liệu tăng trưởng mẫu để biểu đồ sinh
+        // động
         if (!coDuLieu || map.values().stream().filter(v -> v > 0).count() <= 3) {
-            double[] mau = {8.5, 11.2, 14.8, 12.6, 17.5, 21.0, 19.8, 24.5, 26.5, 28.2, 31.0, 35.5};
+            double[] mau = { 8.5, 11.2, 14.8, 12.6, 17.5, 21.0, 19.8, 24.5, 26.5, 28.2, 31.0, 35.5 };
             for (int i = 1; i <= 12; i++) {
                 double val = map.get("Th" + i);
                 if (val <= 0) {
@@ -268,16 +284,17 @@ public class ThongKe_DAO {
     }
 
     /**
-     * Thống kê tỷ lệ phân bố số lượng thú cưng theo chủng loại (Chó, Mèo, Thỏ, Hamster...)
+     * Thống kê tỷ lệ phân bố số lượng thú cưng theo chủng loại (Chó, Mèo, Thỏ,
+     * Hamster...)
      */
     public Map<String, Integer> getPhanBoThuCung() {
         Map<String, Integer> map = new java.util.LinkedHashMap<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
 
         if (con != null) {
             String sql = "SELECT loai, COUNT(*) AS SoLuong FROM ThuCung GROUP BY loai ORDER BY SoLuong DESC";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     String loai = rs.getString("loai");
                     int sl = rs.getInt("SoLuong");
@@ -285,7 +302,8 @@ public class ThongKe_DAO {
                         map.put(loai, sl);
                     }
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
 
         if (map.isEmpty()) {
@@ -302,12 +320,12 @@ public class ThongKe_DAO {
      */
     public Map<String, Integer> getThongKeTrangThaiHoaDon() {
         Map<String, Integer> map = new java.util.LinkedHashMap<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
 
         if (con != null) {
             String sql = "SELECT trangThai, COUNT(*) AS SoLuong FROM HoaDon GROUP BY trangThai";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     String tt = rs.getString("trangThai");
                     int sl = rs.getInt("SoLuong");
@@ -315,7 +333,8 @@ public class ThongKe_DAO {
                         map.put(tt, sl);
                     }
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
 
         if (map.isEmpty()) {
