@@ -344,7 +344,7 @@ public class DangNhapGUI extends JFrame {
                     JFrame frameMain = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
                     frameMain.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-                    GiaoDienChinhGUI giaoDienChinh = new GiaoDienChinhGUI(tk, tenHienThi, vaiTro);
+                    GiaoDienChinhGUI giaoDienChinh = new GiaoDienChinhGUI(tenHienThi, vaiTro);
                     frameMain.setContentPane(giaoDienChinh);
                     GiaoDienChinhGUI.caiDatKichThuocCuaSo(frameMain, false);
                     frameMain.setVisible(true);
