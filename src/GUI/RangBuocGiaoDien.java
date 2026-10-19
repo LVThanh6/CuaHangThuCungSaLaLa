@@ -70,7 +70,6 @@ public class RangBuocGiaoDien {
     public static final Color MAU_NGUY_HIEM_NEN = new Color(254, 226, 226);
     public static final Color MAU_NGUY_HIEM_CHU = new Color(185, 28, 28);
     public static final Color MAU_NGUY_HIEM_CHAM = new Color(239, 68, 68);
-    public static final Color MAU_CANH_BAO_DO = MAU_NGUY_HIEM_CHU;
 
     public static final Color MAU_THONG_TIN_NEN = new Color(224, 242, 254);
     public static final Color MAU_THONG_TIN_CHU = new Color(2, 132, 199);
