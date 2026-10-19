@@ -1,150 +1,77 @@
 package GUI;
 
+import dao.KhachHang_DAO;
+import entity.KhachHang;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.ArrayList;
 
-    // =========================================================================
-    // 1. KHAI BÁO CÁC BIẾN GIAO DIỆN LÊN ĐẦU FILE
-    // =========================================================================
-    private JPanel panelTongThe;
-    private JPanel panelPhanTren;
-    private JPanel panelTieuDe;
-    private JLabel lblDuongDan;
-    private JLabel lblTieuDe;
-    private JLabel lblMoTa;
-    private JButton btnThemKhachHang;
+public class DanhSachKhachHangGUI extends JPanel {
+    private static final String[] COLUMNS = {
+            "Mã khách hàng", "Họ tên", "Số điện thoại", "Email",
+            "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu"
+    };
 
-    // Các thẻ thống kê số liệu
-    private JPanel panelThongKe;
-    private JPanel theTongKhachHang;
-    private JPanel theKhachHangMoi;
-    private JPanel theTongThuCung;
-    private JPanel theThanhVienVang;
+    private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private final JPanel panelBang = new JPanel(new BorderLayout());
 
-
-    // Thành phần bảng dữ liệu và bộ lọc
-    private QuanLyTable panelQuanLyTable;
-    private String[] danhSachCot;
-    private Object[][] duLieuKhachHang;
-    private String[] danhSachBoLoc;
-
-
-    // =========================================================================
-    // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
-    // =========================================================================
     public DanhSachKhachHangGUI() {
-
-    }
-
-    // =========================================================================
-    // 3. CÁC HÀM XÂY DỰNG GIAO DIỆN
-    // =========================================================================
-    private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout(0, 16));
         setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         setBorder(new EmptyBorder(16, 24, 16, 24));
 
-        // Khởi tạo khối phía trên (Breadcrumb + Tiêu đề + Nút thêm + 4 thẻ thống kê)
-        khoiTaoPhanTren();
-        add(panelPhanTren, BorderLayout.NORTH);
-
-        // Khởi tạo khối bảng dữ liệu bên dưới
-        khoiTaoBangDuLieu();
-        add(panelQuanLyTable, BorderLayout.CENTER);
-    }
-
-    private void khoiTaoPhanTren() {
-        panelPhanTren = new JPanel();
-        panelPhanTren.setLayout(new BoxLayout(panelPhanTren, BoxLayout.Y_AXIS));
-        panelPhanTren.setOpaque(false);
-
-        // --- Hàng 1: Breadcrumb đường dẫn & Tiêu đề + Nút thêm ---
-        panelTieuDe = new JPanel(new BorderLayout());
+        JPanel panelTieuDe = new JPanel(new BorderLayout(12, 0));
         panelTieuDe.setOpaque(false);
+        JPanel panelNhan = new JPanel();
+        panelNhan.setLayout(new BoxLayout(panelNhan, BoxLayout.Y_AXIS));
+        panelNhan.setOpaque(false);
 
-        JPanel panelTrai = new JPanel();
-        panelTrai.setLayout(new BoxLayout(panelTrai, BoxLayout.Y_AXIS));
-        panelTrai.setOpaque(false);
-
-        lblDuongDan = new JLabel("Khách hàng / Danh sách khách hàng");
+        JLabel lblDuongDan = new JLabel("Khách hàng / Danh sách khách hàng");
         lblDuongDan.setFont(RangBuocGiaoDien.fontThuong(12));
         lblDuongDan.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
-
-        lblTieuDe = new JLabel("Danh sách khách hàng");
+        JLabel lblTieuDe = new JLabel("Danh sách khách hàng");
         lblTieuDe.setFont(RangBuocGiaoDien.fontDam(22));
         lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        panelNhan.add(lblDuongDan);
+        panelNhan.add(Box.createRigidArea(new Dimension(0, 4)));
+        panelNhan.add(lblTieuDe);
+        panelTieuDe.add(panelNhan, BorderLayout.WEST);
 
+        JButton btnLamMoi = new JButton("Làm mới");
+        btnLamMoi.addActionListener(e -> taiDuLieu());
+        panelTieuDe.add(btnLamMoi, BorderLayout.EAST);
 
-        lblMoTa.setFont(RangBuocGiaoDien.fontThuong(13));
-        lblMoTa.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        panelTrai.add(lblDuongDan);
-        panelTrai.add(Box.createRigidArea(new Dimension(0, 4)));
-        panelTrai.add(lblTieuDe);
-        panelTrai.add(Box.createRigidArea(new Dimension(0, 4)));
-        panelTrai.add(lblMoTa);
-        panelTieuDe.add(panelTrai, BorderLayout.WEST);
-
-
-
-        JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        panelPhai.setOpaque(false);
-        panelPhai.add(btnThemKhachHang);
-        panelTieuDe.add(panelPhai, BorderLayout.EAST);
-
-        panelPhanTren.add(panelTieuDe);
-        panelPhanTren.add(Box.createRigidArea(new Dimension(0, 16)));
-
-        // --- Hàng 2: 4 Thẻ thống kê số liệu ---
-        panelThongKe = new JPanel(new GridLayout(1, 4, 16, 0));
-        panelThongKe.setOpaque(false);
-
-
-
-        panelThongKe.add(theTongKhachHang);
-        panelThongKe.add(theKhachHangMoi);
-        panelThongKe.add(theTongThuCung);
-        panelThongKe.add(theThanhVienVang);
-
-        panelPhanTren.add(panelThongKe);
+        add(panelTieuDe, BorderLayout.NORTH);
+        add(panelBang, BorderLayout.CENTER);
+        taiDuLieu();
     }
 
+    private void taiDuLieu() {
+        ArrayList<KhachHang> khachHangs = khachHangDAO.getAllKhachHangDayDu();
+        Object[][] rows = new Object[khachHangs.size()][COLUMNS.length];
+        for (int i = 0; i < khachHangs.size(); i++) {
+            KhachHang khachHang = khachHangs.get(i);
+            rows[i] = new Object[] {
+                    khachHang.getMaKH(),
+                    khachHang.getHoTen(),
+                    khachHang.getSdt(),
+                    khachHang.getEmail(),
+                    khachHang.getDiaChi(),
+                    khachHang.getSoThuCung(),
+                    khachHang.getHangThanhVien(),
+                    String.format("%,.0f ₫", khachHang.getTongChiTieu())
+            };
+        }
 
-        JPanel panelThongTin = new JPanel();
-        panelThongTin.setLayout(new BoxLayout(panelThongTin, BoxLayout.Y_AXIS));
-        panelThongTin.setOpaque(false);
-
-        JLabel lblTenChiSo = new JLabel(tieuDe);
-        lblTenChiSo.setFont(RangBuocGiaoDien.fontThuong(12));
-        lblTenChiSo.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-
-        lblGhiChu.setFont(RangBuocGiaoDien.fontThuong(12));
-        lblGhiChu.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
-
-        panelSoLieu.add(lblSoChinh);
-        panelSoLieu.add(lblGhiChu);
-
-        panelThongTin.add(lblTenChiSo);
-<
-        the.add(panelThongTin, BorderLayout.CENTER);
-
-        return the;
-    }
-
-    private void khoiTaoBangDuLieu() {
-        danhSachCot = new String[] {
-                "Mã khách hàng", "Họ tên", "Số điện thoại", "Email",
-                "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu", "Thao tác"
-        };
-
-
-        danhSachBoLoc = new String[] { "Hạng thành viên: Tất cả" };
-
-        panelQuanLyTable = new QuanLyTable(
-                danhSachCot,
-                duLieuKhachHang,
+        panelBang.removeAll();
+        panelBang.add(new QuanLyTable(
+                COLUMNS,
+                rows,
                 "Tìm theo tên, mã khách hàng, số điện thoại...",
-                danhSachBoLoc);
-
-
+                new String[] { "Hạng thành viên: Tất cả" }), BorderLayout.CENTER);
+        panelBang.revalidate();
+        panelBang.repaint();
+    }
 }

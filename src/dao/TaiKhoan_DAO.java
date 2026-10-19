@@ -1,6 +1,6 @@
 package dao;
 
-import connectDB.DBConnection;
+import connectDB.ConnectDB;
 import model.TaiKhoan;
 
 import java.nio.charset.StandardCharsets;
@@ -80,7 +80,7 @@ public class TaiKhoan_DAO {
             return new KetQuaDangNhap(false, "Vui lòng nhập mật khẩu!", null, null, null);
         }
 
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) {
             return new KetQuaDangNhap(false, "Không thể kết nối đến Cơ sở dữ liệu SALALA!", null, null, null);
         }
@@ -135,7 +135,7 @@ public class TaiKhoan_DAO {
      * @return String[2] = { hoTen, maDoiTuong }
      */
     public String[] getThongTinChuSoHuu(String maTK) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null || maTK == null) return new String[]{"Người dùng", ""};
 
         // 1. Kiểm tra trong QuanLyCuaHang
@@ -218,7 +218,7 @@ public class TaiKhoan_DAO {
      */
     public List<TaiKhoanChiTiet> getAllTaiKhoanChiTiet() {
         List<TaiKhoanChiTiet> list = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return list;
 
         String sql = "SELECT tk.maTK, tk.tenDangNhap, tk.vaiTro, tk.trangThai, tk.maQuanLy, " +
@@ -261,7 +261,7 @@ public class TaiKhoan_DAO {
      * Thêm tài khoản mới, hỗ trợ băm mật khẩu và liên kết trực tiếp đối tượng
      */
     public boolean themTaiKhoan(TaiKhoan tk, String loaiDoiTuong, String maDoiTuong) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
         String hashed = hashPassword(tk.getMatKhau());
@@ -317,7 +317,7 @@ public class TaiKhoan_DAO {
      * Cập nhật thông tin vai trò, trạng thái và quản lý của tài khoản
      */
     public boolean capNhatTaiKhoan(TaiKhoan tk) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
         String sql = "UPDATE TaiKhoan SET vaiTro = ?, trangThai = ?, maQuanLy = ? WHERE maTK = ?";
@@ -341,7 +341,7 @@ public class TaiKhoan_DAO {
      * Đổi mật khẩu tài khoản
      */
     public boolean doiMatKhau(String maTK, String matKhauMoi) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
         String hashed = hashPassword(matKhauMoi);
@@ -360,7 +360,7 @@ public class TaiKhoan_DAO {
      * Khóa hoặc mở khóa tài khoản
      */
     public boolean datTrangThaiTaiKhoan(String maTK, boolean trangThai) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
         String sql = "UPDATE TaiKhoan SET trangThai = ? WHERE maTK = ?";
@@ -378,7 +378,7 @@ public class TaiKhoan_DAO {
      * Xóa tài khoản, tự động gỡ liên kết từ NhanVien/BacSy/QuanLy trước khi xóa
      */
     public boolean xoaTaiKhoan(String maTK) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
         try {
@@ -412,7 +412,7 @@ public class TaiKhoan_DAO {
      * Tự động phát sinh mã tài khoản tiếp theo dạng TK046, TK047...
      */
     public String phatSinhMaTK() {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con != null) {
             String sql = "SELECT TOP 1 maTK FROM TaiKhoan ORDER BY maTK DESC";
             try (Statement stmt = con.createStatement();
@@ -435,7 +435,7 @@ public class TaiKhoan_DAO {
      * Kiểm tra xem tên đăng nhập đã được sử dụng hay chưa
      */
     public boolean isTenDangNhapTonTai(String tenDangNhap, String maTKBoQua) {
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
         String sql = "SELECT COUNT(*) FROM TaiKhoan WHERE tenDangNhap = ?" +
@@ -459,7 +459,7 @@ public class TaiKhoan_DAO {
      */
     public List<Map<String, String>> getDanhSachQuanLy() {
         List<Map<String, String>> list = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return list;
 
         String sql = "SELECT maQuanLy, hoTenQuanLy FROM QuanLyCuaHang ORDER BY maQuanLy ASC";
@@ -480,7 +480,7 @@ public class TaiKhoan_DAO {
      */
     public List<Map<String, String>> getNhanVienChuaCoTaiKhoan() {
         List<Map<String, String>> list = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return list;
 
         String sql = "SELECT maNhanVien, hoTen, chucVu FROM NhanVien WHERE maTK IS NULL ORDER BY maNhanVien ASC";
@@ -503,7 +503,7 @@ public class TaiKhoan_DAO {
      */
     public List<Map<String, String>> getBacSiChuaCoTaiKhoan() {
         List<Map<String, String>> list = new ArrayList<>();
-        Connection con = DBConnection.getInstance().getCon();
+        Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return list;
 
         String sql = "SELECT maBacSi, hoTen, tenChuyenNganh FROM BacSyThuY WHERE maTK IS NULL ORDER BY maBacSi ASC";
