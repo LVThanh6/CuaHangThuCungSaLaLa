@@ -49,7 +49,7 @@ CREATE TABLE QuanLyCuaHang
     diaChi       NVARCHAR(255),
     ngaySinh     DATE,
     gioiTinh     NVARCHAR(20),
-    luongCoBan   DECIMAL(18,2) NOT NULL,
+    luongCoBan   FLOAT NOT NULL,
 
     CONSTRAINT PK_QuanLyCuaHang PRIMARY KEY (maQuanLy),
     CONSTRAINT UQ_QuanLyCuaHang_TaiKhoan UNIQUE (maTK),
@@ -74,7 +74,7 @@ CREATE TABLE NhanVien
     diaChi      NVARCHAR(255),
     ngaySinh    DATE,
     gioiTinh    NVARCHAR(20),
-    luongCoBan  DECIMAL(18,2) NOT NULL,
+    luongCoBan  FLOAT NOT NULL,
 
     CONSTRAINT PK_NhanVien PRIMARY KEY (maNhanVien),
     CONSTRAINT FK_NhanVien_TaiKhoan FOREIGN KEY (maTK) REFERENCES TaiKhoan(maTK),
@@ -158,7 +158,7 @@ CREATE TABLE HoSoSucKhoe
     ngayKham    DATETIME2,
     trieuChung  NVARCHAR(500),
     chuanDoan   NVARCHAR(500),
-    canNang     DECIMAL(10,2),
+    canNang     FLOAT,
 
     CONSTRAINT PK_HoSoSucKhoe PRIMARY KEY (maHSSK),
     CONSTRAINT FK_HoSoSucKhoe_ThuCung FOREIGN KEY (maTC) REFERENCES ThuCung(maTC),
@@ -203,8 +203,8 @@ CREATE TABLE ChiTietDonThuoc
     maCTDT      VARCHAR(20)   NOT NULL,
     maDonThuoc  VARCHAR(20)   NOT NULL,
     maThuoc     VARCHAR(20)   NOT NULL,
-    soLuong     DECIMAL(18,2) NOT NULL,
-    lieuLuong   DECIMAL(18,2) NOT NULL,
+    soLuong     INT NOT NULL,
+    lieuLuong   FLOAT NOT NULL,
 
     CONSTRAINT PK_ChiTietDonThuoc PRIMARY KEY (maCTDT),
     CONSTRAINT FK_ChiTietDonThuoc_DonThuoc FOREIGN KEY (maDonThuoc) REFERENCES DonThuoc(maDonThuoc),
@@ -220,7 +220,7 @@ CREATE TABLE DichVu
     maDV       VARCHAR(20)   NOT NULL,
     tenDV      NVARCHAR(100) NOT NULL,
     moTa       NVARCHAR(500),
-    giaDV      DECIMAL(18,2) NOT NULL,
+    giaDV      FLOAT NOT NULL,
     thoiGian   TIME          NOT NULL,
     trangThai  NVARCHAR(50)  NOT NULL,
 
@@ -256,7 +256,7 @@ CREATE TABLE KhuyenMai
 (
     maKM         VARCHAR(20)   NOT NULL,
     tenKM        NVARCHAR(100) NOT NULL,
-    mucKM        DECIMAL(18,2) NOT NULL,
+    mucKM        FLOAT NOT NULL,
     ngayBatDau   DATETIME2     NOT NULL,
     ngayKetThuc  DATETIME2     NOT NULL,
     dieuKien     NVARCHAR(500),
@@ -272,7 +272,7 @@ CREATE TABLE Thue
 (
     maThue   VARCHAR(20)   NOT NULL,
     tenThue  NVARCHAR(100) NOT NULL,
-    mucThue  DECIMAL(18,2) NOT NULL,
+    mucThue  FLOAT NOT NULL,
 
     CONSTRAINT PK_Thue PRIMARY KEY (maThue),
     CONSTRAINT CK_Thue_Muc CHECK (mucThue >= 0)
@@ -283,7 +283,7 @@ GO
 CREATE TABLE ThanhToan
 (
     maThanhToan  VARCHAR(20)   NOT NULL,
-    soTien       DECIMAL(18,2) NOT NULL,
+    soTien       FLOAT NOT NULL,
     thoiGian     DATETIME2,
     phuongThuc   NVARCHAR(50)  NOT NULL,
     trangThai    NVARCHAR(50)  NOT NULL,
@@ -333,10 +333,10 @@ CREATE TABLE VatTu
     maVT         VARCHAR(20)   NOT NULL,
     maNCC        VARCHAR(20)   NOT NULL, -- Đồng bộ nối đến Nhà cung cấp
     tenVT        NVARCHAR(100) NOT NULL,
-    soLuongTon   DECIMAL(18,2) NOT NULL,
+    soLuongTon   INT NOT NULL,
     trangThai    NVARCHAR(50)  NOT NULL,
-    giaBanCoBan  DECIMAL(18,2) NOT NULL,
-    giaNhap      DECIMAL(18,2) NOT NULL,
+    giaBanCoBan  FLOAT NOT NULL,
+    giaNhap      FLOAT NOT NULL,
 
     CONSTRAINT PK_VatTu PRIMARY KEY (maVT),
     CONSTRAINT FK_VatTu_NhaCungCap FOREIGN KEY (maNCC) REFERENCES NhaCungCap(maNCC),
@@ -353,8 +353,8 @@ CREATE TABLE ChiTietHoaDon
     maHD      VARCHAR(20)   NOT NULL,
     maDV      VARCHAR(20)   NULL,
     maVT      VARCHAR(20)   NULL,
-    soLuong   DECIMAL(18,2) NOT NULL,
-    donGia    DECIMAL(18,2) NOT NULL,
+    soLuong   INT NOT NULL,
+    donGia    FLOAT NOT NULL,
 
     CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY (maCTHD),
     CONSTRAINT FK_ChiTietHoaDon_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
@@ -387,7 +387,7 @@ CREATE TABLE ChiTietPhieuXuatKho
     maCTPXK  VARCHAR(20)   NOT NULL,
     maPXK    VARCHAR(20)   NOT NULL,
     maVT     VARCHAR(20)   NOT NULL,
-    soLuong  DECIMAL(18,2) NOT NULL,
+    soLuong  INT NOT NULL,
 
     CONSTRAINT PK_ChiTietPhieuXuatKho PRIMARY KEY (maCTPXK),
     CONSTRAINT FK_ChiTietPXK_PhieuXuatKho FOREIGN KEY (maPXK) REFERENCES PhieuXuatKho(maPXK),
@@ -418,8 +418,8 @@ CREATE TABLE ChiTietPhieuNhapKho
     maCTPNK  VARCHAR(20)   NOT NULL,
     maPNK    VARCHAR(20)   NOT NULL,
     maVT     VARCHAR(20)   NOT NULL,
-    donGia   DECIMAL(18,2) NOT NULL,
-    soLuong  DECIMAL(18,2) NOT NULL,
+    donGia   FLOAT NOT NULL,
+    soLuong  INT NOT NULL,
 
     CONSTRAINT PK_ChiTietPhieuNhapKho PRIMARY KEY (maCTPNK),
     CONSTRAINT FK_ChiTietPNK_PhieuNhapKho FOREIGN KEY (maPNK) REFERENCES PhieuNhapKho(maPNK),
@@ -440,7 +440,7 @@ SELECT  h.maHD,
         ISNULL(t.mucThue, 0)                            AS mucThue,
         CAST(SUM(c.soLuong * c.donGia)
              * (1 - ISNULL(km.mucKM, 0) / 100.0)
-             * (1 + ISNULL(t.mucThue, 0) / 100.0) AS DECIMAL(18,2)) AS tongThanhToan
+             * (1 + ISNULL(t.mucThue, 0) / 100.0) AS FLOAT) AS tongThanhToan
 FROM HoaDon h
 JOIN ChiTietHoaDon c   ON c.maHD = h.maHD
 LEFT JOIN KhuyenMai km ON km.maKM = h.maKM
@@ -578,7 +578,7 @@ SELECT 'HS' + dbo.fn_C3(n), 'TC' + dbo.fn_C3(n), 'BS' + dbo.fn_C3(n),
                          N'Ho, chảy nước mũi', N'Đi khập khiễng, đau chân'),
        CHOOSE(n % 5 + 1, N'Viêm dạ dày', N'Viêm da dị ứng', N'Rối loạn tiêu hóa',
                          N'Viêm đường hô hấp trên', N'Trật khớp nhẹ'),
-       CAST(2 + n * 0.8 AS DECIMAL(10,2))
+       CAST(2 + n * 0.8 AS FLOAT)
 FROM #N WHERE n <= 15;
 GO
 
@@ -618,7 +618,7 @@ SELECT 'CTDT' + dbo.fn_C3(n),
        'DT' + dbo.fn_C3(((n - 1) % 15) + 1),
        'TH' + dbo.fn_C3(((n * 2 - 1) % 15) + 1),
        5 + n % 10,
-       CAST(0.5 + (n % 4) * 0.5 AS DECIMAL(18,2))
+       CAST(0.5 + (n % 4) * 0.5 AS FLOAT)
 FROM #N WHERE n <= 20;
 GO
 
@@ -649,16 +649,40 @@ JOIN ThuCung tc ON tc.maTC = 'TC' + dbo.fn_C3(n)
 WHERE n <= 15;
 GO
 
--- 14. KhuyenMai: 15 dòng
-INSERT INTO KhuyenMai (maKM, tenKM, mucKM, ngayBatDau, ngayKetThuc, dieuKien)
-SELECT 'KM' + dbo.fn_C3(n),
-       N'Ưu đãi đợt ' + CAST(n AS NVARCHAR(2)),
-       5 + (n % 6) * 5,
-       CAST(DATEADD(MONTH, n - 1, '20250101') AS DATETIME2),
-       CAST(DATEADD(DAY, 29, DATEADD(MONTH, n - 1, '20250101')) AS DATETIME2),
-       N'Áp dụng cho hóa đơn từ ' + CAST((n % 5 + 1) * 200000 AS NVARCHAR(10)) + N'đ'
-FROM #N WHERE n <= 15;
+
+-- 14. KHUYẾN MÃI: 15 dòng
+INSERT INTO KhuyenMai
+    (maKM, tenKM, mucKM, ngayBatDau, ngayKetThuc, dieuKien)
+SELECT
+    'KM' + dbo.fn_C3(n),
+    N'Ưu đãi đợt ' + CAST(n AS NVARCHAR(2)),
+    5 + (n % 6) * 5,
+
+    -- Ngày bắt đầu: chia thành các đợt trong năm 2026
+    DATEADD(
+        DAY,
+        (n - 1) * 20,
+        CAST('20260101' AS DATETIME2)
+    ),
+
+    -- Mỗi chương trình kéo dài 60 ngày
+    DATEADD(
+        DAY,
+        60,
+        DATEADD(
+            DAY,
+            (n - 1) * 20,
+            CAST('20260101' AS DATETIME2)
+        )
+    ),
+
+    N'Áp dụng cho hóa đơn từ '
+        + CAST((n % 5 + 1) * 200000 AS NVARCHAR(10))
+        + N'đ'
+FROM #N
+WHERE n <= 15;
 GO
+
 
 -- 15. Thue: 15 dòng
 INSERT INTO Thue (maThue, tenThue, mucThue)
@@ -715,7 +739,7 @@ SELECT 'VT' + dbo.fn_C3(v.n),
        v.ten,
        v.n * 10 + 20,
        CASE WHEN v.n % 6 = 0 THEN N'Sắp hết' ELSE N'Còn hàng' END,
-       CAST((40000 + v.n * 15000) * 1.3 AS DECIMAL(18,2)),
+       CAST((40000 + v.n * 15000) * 1.3 AS FLOAT),
        40000 + v.n * 15000
 FROM (VALUES
  (1, N'Thức ăn hạt cho chó 2kg'), (2, N'Thức ăn hạt cho mèo 1.5kg'), (3, N'Pate mèo 85g'),
