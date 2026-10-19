@@ -13,6 +13,28 @@ import entity.NhanVien_entity;
 
 public class NhanVien_DAO {
 
+    public String phatSinhMaNhanVien() {
+        String sql = "SELECT ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(maNhanVien, 3, "
+                   + "LEN(maNhanVien)))), 0) + 1 "
+                   + "FROM NhanVien WHERE maNhanVien LIKE 'NV%'";
+        try {
+            Connection con = ConnectDB.getCon();
+            if (con == null) {
+                return null;
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return String.format("NV%03d", rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi tạo mã nhân viên: " + e.getMessage());
+        }
+        return null;
+    }
+
     /**
      * Lấy toàn bộ danh sách nhân viên
      */
