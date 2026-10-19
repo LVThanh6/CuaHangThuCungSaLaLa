@@ -1,6 +1,6 @@
 package dao;
 
-import ConnectDB.DBConnection;
+import connectDB.DBConnection;
 import model.TaiKhoan;
 
 import java.nio.charset.StandardCharsets;

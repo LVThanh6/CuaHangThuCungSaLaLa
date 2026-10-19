@@ -1,6 +1,6 @@
 package dao;
 
-import ConnectDB.DBConnection;
+import connectDB.DBConnection;
 import model.BacSyThuY;
 
 import java.sql.*;
