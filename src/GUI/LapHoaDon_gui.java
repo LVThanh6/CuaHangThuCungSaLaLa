@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+<<<<<<< Updated upstream
 /**
  * Panel lập hóa đơn bán hàng cho SALALA Pet Shop.
  * Panel độc lập, có thể nhúng vào vùng CENTER của giao diện chính.
@@ -16,6 +17,13 @@ import java.awt.*;
  *
  * Khu vực sản phẩm để trống để tích hợp dữ liệu từ Database/DAO sau.
  */
+=======
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+
+>>>>>>> Stashed changes
 public class LapHoaDon_gui extends JPanel {
     private static final long serialVersionUID = 1L;
 
