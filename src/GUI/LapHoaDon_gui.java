@@ -4,26 +4,21 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-<<<<<<< Updated upstream
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+
 /**
  * Panel lập hóa đơn bán hàng cho SALALA Pet Shop.
  * Panel độc lập, có thể nhúng vào vùng CENTER của giao diện chính.
  *
  * Ví dụ:
  *   panelNoiDung.removeAll();
- *   panelNoiDung.add(new LapHoaDonPanel(), BorderLayout.CENTER);
+ *   panelNoiDung.add(new LapHoaDon_gui(), BorderLayout.CENTER);
  *   panelNoiDung.revalidate();
  *   panelNoiDung.repaint();
- *
- * Khu vực sản phẩm để trống để tích hợp dữ liệu từ Database/DAO sau.
  */
-=======
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-
->>>>>>> Stashed changes
 public class LapHoaDon_gui extends JPanel {
     private static final long serialVersionUID = 1L;
 
@@ -131,8 +126,7 @@ public class LapHoaDon_gui extends JPanel {
         p.setOpaque(false);
 
         txtMaHoaDon = new JTextField("Tự động tạo khi lưu");
-        txtNgayLap = new JTextField(java.time.LocalDate.now().format(
-                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        txtNgayLap = new JTextField(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         txtNhanVien = new JTextField();
 
         p.add(taoTheTruong("Mã hóa đơn (tự động)", txtMaHoaDon));
@@ -265,7 +259,6 @@ public class LapHoaDon_gui extends JPanel {
         tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(110);
         tblChiTiet.getColumnModel().getColumn(4).setPreferredWidth(45);
 
-        // Bắt sự kiện click vào cột Xóa (cột 4)
         tblChiTiet.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -378,11 +371,9 @@ public class LapHoaDon_gui extends JPanel {
         actions.setOpaque(false);
         JButton luu = nutPhu("Lưu nháp");
         JButton thanhToan = nutChinh("Thanh toán");
-        luu.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this,
-                    "Hóa đơn nháp đã được lưu thành công vào hệ thống.",
-                    "Lưu nháp thành công", JOptionPane.INFORMATION_MESSAGE);
-        });
+        luu.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                "Hóa đơn nháp đã được lưu thành công vào hệ thống.",
+                "Lưu nháp thành công", JOptionPane.INFORMATION_MESSAGE));
         thanhToan.addActionListener(e -> {
             if (modelChiTiet.getRowCount() == 0) {
                 JOptionPane.showMessageDialog(this,
@@ -416,7 +407,6 @@ public class LapHoaDon_gui extends JPanel {
         dong.add(nhan(ten, 11, mauChuPhu, false), BorderLayout.WEST);
         JLabel value = nhan(giaTri, nhanManh ? 12 : 11, nhanManh ? mauChuDao : mauChu, true);
         dong.add(value, BorderLayout.EAST);
-        // Trả lại label giá trị để có thể cập nhật sau khi nối dữ liệu.
         if ("Tạm tính".equals(ten)) lblTamTinh = value;
         else if ("Giảm giá".equals(ten)) lblGiamGia = value;
         else if ("Thuế VAT".equals(ten)) lblThue = value;
@@ -563,7 +553,6 @@ public class LapHoaDon_gui extends JPanel {
         }
     }
 
-    /** Getter để lấy phương thức thanh toán khi tích hợp xử lý nghiệp vụ. */
     public String getPhuongThucThanhToan() {
         return phuongThucThanhToan;
     }
@@ -576,3 +565,4 @@ public class LapHoaDon_gui extends JPanel {
         return txtTimSanPham;
     }
 }
+

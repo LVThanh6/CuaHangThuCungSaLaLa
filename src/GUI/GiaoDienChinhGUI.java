@@ -14,16 +14,12 @@ import javax.swing.*;
 public class GiaoDienChinhGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
-    private HeaderGUI headerGUI; // Phần 1: Thanh Header
-    private JPanel panelNoiDung; // Phần 2: Vùng Main chứa nội dung tab bên trong
+    private HeaderGUI headerGUI;
+    private JPanel panelNoiDung;
     private JLabel nhanNoiDung;
     private String tabHienTai;
     private model.TaiKhoan taiKhoan;
 
-    // ==========================================
-    // CONSTRUCTORS
-    // ==========================================
     public GiaoDienChinhGUI() {
         this(null, "Lê Văn Thành", "Quản lý");
     }
@@ -37,21 +33,16 @@ public class GiaoDienChinhGUI extends JPanel {
         khoiTaoGiaoDien(tenNguoiDung, chucVu);
     }
 
-    // ==========================================
-    // KHỞI TẠO BỐ CỤC CHÍNH (HEADER + MAIN)
-    // ==========================================
     private void khoiTaoGiaoDien(String tenNguoiDung, String chucVu) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TOI_THIEU);
         setPreferredSize(RangBuocGiaoDien.KICH_THUOC_MAC_DINH);
 
-        // 1. NHÚNG PHẦN HEADER VÀO NORTH
         headerGUI = new HeaderGUI(taiKhoan, tenNguoiDung, chucVu);
         headerGUI.setLogoutListener(() -> dangXuat());
         add(headerGUI, BorderLayout.NORTH);
 
-        // 2. NHÚNG PHẦN MAIN (NỘI DUNG) VÀO CENTER
         panelNoiDung = new JPanel(new BorderLayout());
         panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         panelNoiDung.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TAB_TOI_THIEU);
@@ -59,7 +50,6 @@ public class GiaoDienChinhGUI extends JPanel {
                 new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
         add(panelNoiDung, BorderLayout.CENTER);
 
-        // 3. LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ HEADER
         headerGUI.setTabSelectionListener((tenTab, menuCon) -> {
             if (menuCon != null && !menuCon.isEmpty()) {
                 xuLyChonMenuCon(tenTab, menuCon);
@@ -68,7 +58,6 @@ public class GiaoDienChinhGUI extends JPanel {
             }
         });
 
-        // Hiển thị tab mặc định ban đầu
         try {
             if (headerGUI.getTabHienTai() != null) {
                 xuLyChonTab(headerGUI.getTabHienTai());
@@ -80,30 +69,12 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    // ==========================================
-    // CƠ CHẾ NHÚNG GIAO DIỆN (SET NỘI DUNG)
-    // ==========================================
-    /**
-     * Nhúng một Component (JPanel, JScrollPane, ...) vào vùng nội dung chính.
-     * Mặc định component sẽ co giãn 100% diện tích của tab (phù hợp khi mở full màn
-     * hình hoặc co về kích thước tối thiểu).
-     * 
-     * @param comp Giao diện cần hiển thị
-     */
     public void setNoiDung(Component comp) {
         setNoiDung(comp, false);
     }
 
-    /**
-     * Nhúng một Component vào vùng nội dung chính với tùy chọn cuộn trang tự động.
-     * 
-     * @param comp      Giao diện cần hiển thị
-     * @param cuonTrang Bật thanh cuộn nếu giao diện bên trong có kích thước cố định
-     *                  lớn hơn màn hình
-     */
     public void setNoiDung(Component comp, boolean cuonTrang) {
-        if (panelNoiDung == null)
-            return;
+        if (panelNoiDung == null) return;
         panelNoiDung.removeAll();
         if (comp != null) {
             if (comp instanceof JComponent) {
@@ -133,12 +104,8 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    /**
-     * Hiển thị thông báo giữ chỗ mặc định khi tab chưa nhúng giao diện cụ thể.
-     */
     public void hienThiNoiDungMacDinh(String thongBao) {
-        if (panelNoiDung == null)
-            return;
+        if (panelNoiDung == null) return;
         if (nhanNoiDung == null) {
             nhanNoiDung = new JLabel();
             nhanNoiDung.setHorizontalAlignment(SwingConstants.CENTER);
@@ -157,9 +124,6 @@ public class GiaoDienChinhGUI extends JPanel {
         panelNoiDung.repaint();
     }
 
-    // ==========================================
-    // ĐIỀU HƯỚNG SỰ KIỆN CHỌN TAB & MENU CON
-    // ==========================================
     private void xuLyChonTab(String tenTab) {
         this.tabHienTai = tenTab;
         hienThiNoiDungMacDinh("Đang xem tab: " + tenTab);
@@ -204,7 +168,6 @@ public class GiaoDienChinhGUI extends JPanel {
 
         try {
             switch (tenMenuCon) {
-                // Tab Nhân viên
                 case "Danh sách nhân viên":
                     hienThiDanhSachNhanVien();
                     break;
@@ -218,8 +181,6 @@ public class GiaoDienChinhGUI extends JPanel {
                 case "Thống kê":
                     hienThiThongKe();
                     break;
-
-                // Tab Thú cưng
                 case "Hồ sơ thú cưng":
                     hienThiHoSoThuCung();
                     break;
@@ -229,8 +190,6 @@ public class GiaoDienChinhGUI extends JPanel {
                 case "Lịch sử khám":
                     hienThiLichSuKham();
                     break;
-
-                // Tab Khách hàng
                 case "Danh sách khách hàng":
                     hienThiDanhSachKhachHang();
                     break;
@@ -239,32 +198,24 @@ public class GiaoDienChinhGUI extends JPanel {
                 case "Thẻ thành viên":
                     hienThiTheThanhVien();
                     break;
-
-                // Tab Hóa đơn
                 case "Tạo hóa đơn mới":
                     hienThiTaoHoaDonMoi();
                     break;
                 case "Danh sách hóa đơn":
                     hienThiDanhSachHoaDon();
                     break;
-
-                // Tab Vật tư
                 case "Kho thuốc":
                     hienThiKhoThuoc();
                     break;
                 case "Dụng cụ y tế":
                     hienThiDungCuYTe();
                     break;
-
-                // Tab Lịch hẹn
                 case "Lịch hôm nay":
                     hienThiLichHomNay();
                     break;
                 case "Đặt lịch mới":
                     hienThiDatLichMoi();
                     break;
-
-                // Tab Dịch vụ
                 case "Bảng giá dịch vụ":
                     hienThiBangGiaDichVu();
                     break;
@@ -279,23 +230,14 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    // =========================================================================
-    // CÁC HÀM RỖNG ĐỂ BẠN NHÚNG GIAO DIỆN (PANEL / VIEW) CHO TỪNG TAB
-    // Bạn chỉ cần gọi: setNoiDung(new TenClassGUI());
-    // =========================================================================
-
-    /** Tab 1: Nhân viên */
     public void hienThiTabNhanVien() {
         setNoiDung(new QuanLyNhanVienGUI());
     }
 
-    /** Tab 2: Thú cưng */
     public void hienThiTabThuCung() {
-        // TODO: Nhúng class giao diện Thú cưng vào đây
-        // Ví dụ: setNoiDung(new ThuCungGUI());
+        hienThiNoiDungMacDinh("Tab Thú cưng chưa được nhúng giao diện cụ thể.");
     }
 
-    /** Tab 3: Khách hàng - Mặc định hiển thị Danh sách khách hàng */
     public void hienThiTabKhachHang() {
         try {
             setNoiDung(new DanhSachKhachHangGUI());
@@ -305,39 +247,22 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    /** Tab 4: Hóa đơn */
     public void hienThiTabHoaDon() {
-<<<<<<< Updated upstream
-        // TODO: Nhúng class giao diện Hóa đơn vào đây
-        // Ví dụ: setNoiDung(new HoaDonGUI());
-=======
         setNoiDung(new DSHoaDon_gui());
->>>>>>> Stashed changes
     }
 
-    /** Tab 5: Vật tư */
     public void hienThiTabVatTu() {
-        // TODO: Nhúng class giao diện Vật tư vào đây
-        // Ví dụ: setNoiDung(new VatTuGUI());
+        hienThiNoiDungMacDinh("Tab Vật tư chưa được nhúng giao diện cụ thể.");
     }
 
-    /** Tab 6: Lịch hẹn */
     public void hienThiTabLichHen() {
-        // TODO: Nhúng class giao diện Lịch hẹn vào đây
-        // Ví dụ: setNoiDung(new LichHenGUI());
+        hienThiNoiDungMacDinh("Tab Lịch hẹn chưa được nhúng giao diện cụ thể.");
     }
 
-    /** Tab 7: Dịch vụ */
     public void hienThiTabDichVu() {
-        // TODO: Nhúng class giao diện Dịch vụ vào đây
-        // Ví dụ: setNoiDung(new DichVuGUI());
+        hienThiNoiDungMacDinh("Tab Dịch vụ chưa được nhúng giao diện cụ thể.");
     }
 
-    // =========================================================================
-    // CÁC HÀM RỖNG CHO MENU CON (SUB-MENU) CỦA TỪNG TAB
-    // =========================================================================
-
-    // --- Tab Nhân viên ---
     public void hienThiDanhSachNhanVien() {
         setNoiDung(new QuanLyNhanVienGUI());
     }
@@ -354,20 +279,18 @@ public class GiaoDienChinhGUI extends JPanel {
         setNoiDung(new ThongKeGUI());
     }
 
-    // --- Tab Thú cưng ---
     public void hienThiHoSoThuCung() {
-        // TODO: Nhúng class giao diện Hồ sơ thú cưng vào đây
+        hienThiNoiDungMacDinh("Hồ sơ thú cưng chưa được triển khai.");
     }
 
     public void hienThiLoaiThuCung() {
-        // TODO: Nhúng class giao diện Loại thú cưng vào đây
+        hienThiNoiDungMacDinh("Loại thú cưng chưa được triển khai.");
     }
 
     public void hienThiLichSuKham() {
-        // TODO: Nhúng class giao diện Lịch sử khám vào đây
+        hienThiNoiDungMacDinh("Lịch sử khám chưa được triển khai.");
     }
 
-    // --- Tab Khách hàng ---
     public void hienThiDanhSachKhachHang() {
         try {
             setNoiDung(new DanhSachKhachHangGUI());
@@ -390,56 +313,38 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    // --- Tab Hóa đơn ---
     public void hienThiTaoHoaDonMoi() {
-<<<<<<< Updated upstream
-        // TODO: Nhúng class giao diện Tạo hóa đơn mới vào đây
-    }
-
-    public void hienThiDanhSachHoaDon() {
-        // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
-=======
         setNoiDung(new LapHoaDon_gui());
     }
 
     public void hienThiDanhSachHoaDon() {
         setNoiDung(new DSHoaDon_gui());
->>>>>>> Stashed changes
     }
 
-    // --- Tab Vật tư ---
     public void hienThiKhoThuoc() {
-        // TODO: Nhúng class giao diện Kho thuốc vào đây
+        hienThiNoiDungMacDinh("Kho thuốc chưa được triển khai.");
     }
 
     public void hienThiDungCuYTe() {
-        // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
+        hienThiNoiDungMacDinh("Dụng cụ y tế chưa được triển khai.");
     }
 
-    // --- Tab Lịch hẹn ---
     public void hienThiLichHomNay() {
-        // TODO: Nhúng class giao diện Lịch hôm nay vào đây
+        hienThiNoiDungMacDinh("Lịch hôm nay chưa được triển khai.");
     }
 
     public void hienThiDatLichMoi() {
-        // TODO: Nhúng class giao diện Đặt lịch mới vào đây
+        hienThiNoiDungMacDinh("Đặt lịch mới chưa được triển khai.");
     }
 
-    // --- Tab Dịch vụ ---
     public void hienThiBangGiaDichVu() {
-        // TODO: Nhúng class giao diện Bảng giá dịch vụ vào đây
+        hienThiNoiDungMacDinh("Bảng giá dịch vụ chưa được triển khai.");
     }
 
     public void hienThiGoiChamSoc() {
-        // TODO: Nhúng class giao diện Gói chăm sóc vào đây
+        hienThiNoiDungMacDinh("Gói chăm sóc chưa được triển khai.");
     }
 
-    // ==========================================
-    // TIỆN ÍCH CÀI ĐẶT CỬA SỔ CHUẨN
-    // ==========================================
-    /**
-     * Cài đặt kích thước chuẩn cho JFrame chứa GiaoDienChinhGUI
-     */
     public static void caiDatKichThuocCuaSo(JFrame frame, boolean moFullManHinh) {
         frame.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TOI_THIEU);
         frame.setPreferredSize(RangBuocGiaoDien.KICH_THUOC_MAC_DINH);
@@ -450,9 +355,6 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    // ==========================================
-    // GETTERS & SETTERS
-    // ==========================================
     public HeaderGUI getHeaderGUI() {
         return headerGUI;
     }
@@ -500,22 +402,14 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    /**
-     * Đăng xuất khỏi hệ thống và mở lại giao diện đăng nhập
-     */
     public void dangXuat() {
         Window w = SwingUtilities.getWindowAncestor(this);
         if (w != null) {
             w.dispose();
         }
-        SwingUtilities.invokeLater(() -> {
-            new DangNhapGUI().setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new DangNhapGUI().setVisible(true));
     }
 
-    // ==========================================
-    // MAIN KHỞI ĐỘNG CHƯƠNG TRÌNH
-    // ==========================================
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -523,30 +417,14 @@ public class GiaoDienChinhGUI extends JPanel {
         }
 
         SwingUtilities.invokeLater(() -> {
-<<<<<<< Updated upstream
-            // Khởi tạo kết nối CSDL SALALA
             try {
                 connectDB.ConnectDB.getInstance().connect();
             } catch (Exception ignored) {
             }
 
-            JFrame frame = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-            // Khởi tạo giao diện chính với thông tin người dùng và vai trò
-            GiaoDienChinhGUI giaoDienChinh = new GiaoDienChinhGUI("Lê Văn Thành", "Quản lý");
-            frame.setContentPane(giaoDienChinh);
-
-            // Cấu hình kích thước chuẩn (có thể mở full màn hình hoặc co về kích thước tối
-            // thiểu)
-            caiDatKichThuocCuaSo(frame, false);
-
-            frame.setVisible(true);
-=======
-            // Mở màn hình đăng nhập làm điểm xuất phát chuẩn của hệ thống
             DangNhapGUI login = new DangNhapGUI();
             login.setVisible(true);
->>>>>>> Stashed changes
         });
     }
 }
+
