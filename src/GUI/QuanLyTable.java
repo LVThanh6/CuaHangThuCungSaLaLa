@@ -19,8 +19,6 @@ public class QuanLyTable extends JPanel {
     private JTextField txtTimKiem;
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> rowSorter;
-    private JLabel lblThongTinTrang;
-    private java.util.List<JComboBox<String>> listComboBoxBoLoc = new java.util.ArrayList<>();
 
     public QuanLyTable(String[] tenCot, Object[][] duLieu, String placeholderTimKiem, String[] danhSachBoLoc) {
         setLayout(new BorderLayout(0, 16));
@@ -70,7 +68,6 @@ public class QuanLyTable extends JPanel {
                 cb.setPreferredSize(new Dimension(170, 38));
                 cb.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 cb.setBackground(Color.WHITE);
-                listComboBoxBoLoc.add(cb);
                 panelTrai.add(cb);
             }
         }
@@ -79,7 +76,7 @@ public class QuanLyTable extends JPanel {
         // Bên phải: Nút Xuất danh sách
         JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         panelPhai.setOpaque(false);
-        JButton btnXuat = new JButton("Xuất danh sách");
+        JButton btnXuat = new JButton("📥 Xuất danh sách");
         btnXuat.setPreferredSize(new Dimension(145, 38));
         btnXuat.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnXuat.setForeground(new Color(30, 41, 59));
@@ -87,7 +84,7 @@ public class QuanLyTable extends JPanel {
         btnXuat.setFocusPainted(false);
         btnXuat.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
         btnXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnXuat.addActionListener(e -> xuatFileCSV(this));
+        btnXuat.addActionListener(e -> JOptionPane.showMessageDialog(this, "Đang xuất dữ liệu ra Excel..."));
         panelPhai.add(btnXuat);
         panelThanhCongCu.add(panelPhai, BorderLayout.EAST);
 
@@ -128,7 +125,7 @@ public class QuanLyTable extends JPanel {
         panelPhanTrang.setOpaque(false);
         panelPhanTrang.setBorder(new EmptyBorder(12, 16, 12, 16));
 
-        lblThongTinTrang = new JLabel("Hiển thị 1–" + (duLieu != null ? duLieu.length : 0) + " trong " + (duLieu != null ? duLieu.length : 0) + " bản ghi");
+        JLabel lblThongTinTrang = new JLabel("Hiển thị 1–8 trong 24 bản ghi");
         lblThongTinTrang.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblThongTinTrang.setForeground(new Color(100, 116, 139));
         panelPhanTrang.add(lblThongTinTrang, BorderLayout.WEST);
@@ -174,94 +171,6 @@ public class QuanLyTable extends JPanel {
             btn.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
         }
         return btn;
-    }
-
-    public DefaultTableModel getModel() {
-        return model;
-    }
-
-    public TableMau getBangDuLieu() {
-        return bangDuLieu;
-    }
-
-    public JTextField getTxtTimKiem() {
-        return txtTimKiem;
-    }
-
-    public TableRowSorter<DefaultTableModel> getRowSorter() {
-        return rowSorter;
-    }
-
-    public JComboBox<String> getComboBoxBoLoc(int index) {
-        if (index >= 0 && index < listComboBoxBoLoc.size()) {
-            return listComboBoxBoLoc.get(index);
-        }
-        return null;
-    }
-
-    public void caiDatBoLoc(int index, String[] items, java.util.function.Consumer<String> onSelected) {
-        JComboBox<String> cb = getComboBoxBoLoc(index);
-        if (cb != null) {
-            cb.setModel(new DefaultComboBoxModel<>(items));
-            if (onSelected != null) {
-                cb.addActionListener(e -> {
-                    String selected = (String) cb.getSelectedItem();
-                    onSelected.accept(selected);
-                });
-            }
-        }
-    }
-
-    public void xuatFileCSV(Component parent) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Lưu danh sách ra file CSV");
-        chooser.setSelectedFile(new java.io.File("DanhSach.csv"));
-        if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
-            java.io.File file = chooser.getSelectedFile();
-            try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
-                    new java.io.FileOutputStream(file), java.nio.charset.StandardCharsets.UTF_8)) {
-                // Ghi UTF-8 BOM để Excel hiển thị đúng tiếng Việt có dấu
-                writer.write('\ufeff');
-                int colCount = model.getColumnCount();
-                int exportCols = colCount;
-                if (model.getColumnName(colCount - 1).equalsIgnoreCase("Thao tác")) {
-                    exportCols--;
-                }
-                for (int c = 0; c < exportCols; c++) {
-                    writer.write("\"" + model.getColumnName(c) + "\"" + (c < exportCols - 1 ? "," : ""));
-                }
-                writer.write("\r\n");
-                int rowCount = bangDuLieu.getRowCount();
-                for (int r = 0; r < rowCount; r++) {
-                    for (int c = 0; c < exportCols; c++) {
-                        Object val = bangDuLieu.getValueAt(r, c);
-                        String str = val != null ? val.toString().replace("\"", "\"\"") : "";
-                        writer.write("\"" + str + "\"" + (c < exportCols - 1 ? "," : ""));
-                    }
-                    writer.write("\r\n");
-                }
-                JOptionPane.showMessageDialog(parent, "Xuất file thành công: " + file.getAbsolutePath(), "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(parent, "Lỗi khi xuất file: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    public void capNhatDuLieu(Object[][] duLieuMoi) {
-        if (model != null) {
-            model.setRowCount(0);
-            if (duLieuMoi != null) {
-                for (Object[] row : duLieuMoi) {
-                    model.addRow(row);
-                }
-            }
-            if (lblThongTinTrang != null) {
-                int total = model.getRowCount();
-                lblThongTinTrang.setText("Hiển thị 1–" + total + " trong " + total + " bản ghi");
-            }
-        }
     }
 
     // --- TÍCH HỢP CLASS TableMau ---

@@ -14,7 +14,7 @@ import javax.swing.*;
 public class GiaoDienChinhGUI extends JPanel {
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
-    private HeaderGUI headerGUI; // Phần 1: Thanh Header
+    private HeaderGUI headerGUI;
     private JPanel panelNoiDung; // Phần 2: Vùng Main chứa nội dung tab bên trong
     private JLabel nhanNoiDung;
     private String tabHienTai;
@@ -47,8 +47,7 @@ public class GiaoDienChinhGUI extends JPanel {
         panelNoiDung = new JPanel(new BorderLayout());
         panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         panelNoiDung.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TAB_TOI_THIEU);
-        panelNoiDung.setPreferredSize(
-                new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
+        panelNoiDung.setPreferredSize(new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
         add(panelNoiDung, BorderLayout.CENTER);
 
         // 3. LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ HEADER
@@ -209,7 +208,6 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Danh sách khách hàng":
                 hienThiDanhSachKhachHang();
                 break;
-            case "Quản lý hạng thành viên":
             case "Thẻ thành viên":
                 hienThiTheThanhVien();
                 break;
@@ -265,20 +263,17 @@ public class GiaoDienChinhGUI extends JPanel {
         // Ví dụ: setNoiDung(new ThuCungGUI());
     }
 
-    /** Tab 3: Khách hàng - Mặc định hiển thị Danh sách khách hàng */
+    /** Tab 3: Khách hàng */
     public void hienThiTabKhachHang() {
-        try {
-            setNoiDung(new DanhSachKhachHangGUI());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage());
-        }
+        // TODO: Nhúng class giao diện Khách hàng vào đây
+        // Ví dụ: setNoiDung(new KhachHangGUI());
     }
 
     /** Tab 4: Hóa đơn */
     public void hienThiTabHoaDon() {
         // TODO: Nhúng class giao diện Hóa đơn vào đây
         // Ví dụ: setNoiDung(new HoaDonGUI());
+    	
     }
 
     /** Tab 5: Vật tư */
@@ -333,34 +328,24 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Khách hàng ---
     public void hienThiDanhSachKhachHang() {
-        try {
-            setNoiDung(new DanhSachKhachHangGUI());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage());
-        }
+        // TODO: Nhúng class giao diện Danh sách khách hàng vào đây
     }
 
     public void hienThiTheThanhVien() {
-        hienThiQuanLyHangThanhVien();
-    }
-
-    public void hienThiQuanLyHangThanhVien() {
-        try {
-            setNoiDung(new QuanLyHangThanhVienGUI());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Hạng thành viên: " + t.getMessage());
-        }
+        // TODO: Nhúng class giao diện Thẻ thành viên vào đây
     }
 
     // --- Tab Hóa đơn ---
+ // Hiển thị màn hình lập hóa đơn
     public void hienThiTaoHoaDonMoi() {
-        // TODO: Nhúng class giao diện Tạo hóa đơn mới vào đây
+        setNoiDung(new LapHoaDon_gui());
     }
 
+    // Hiển thị danh sách hóa đơn
     public void hienThiDanhSachHoaDon() {
-        // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
+        setNoiDung(new DSHoaDon_gui(
+                () -> hienThiTaoHoaDonMoi()
+        ));
     }
 
     // --- Tab Vật tư ---
@@ -455,12 +440,6 @@ public class GiaoDienChinhGUI extends JPanel {
         }
 
         SwingUtilities.invokeLater(() -> {
-            // Khởi tạo kết nối CSDL SALALA
-            try {
-                connectDB.ConnectDB.getInstance().connect();
-            } catch (Exception ignored) {
-            }
-
             JFrame frame = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
