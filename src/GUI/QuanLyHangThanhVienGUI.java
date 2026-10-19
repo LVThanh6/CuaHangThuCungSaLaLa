@@ -14,6 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import GUI.QuanLyTable;
+import dao.KhachHang_DAO;
 
 /**
  * Giao diện Quản lý hạng thành viên:
