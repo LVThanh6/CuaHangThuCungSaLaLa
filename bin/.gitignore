@@ -1,4 +1,6 @@
 /GUI/
+/SALALA_Database.sql
 /connectDB/
 /dao/
 /entity/
+/sqljdbc42.jar
