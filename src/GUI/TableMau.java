@@ -11,7 +11,6 @@ import java.awt.*;
  * dễ dàng truyền biến và nhúng vào các chức năng khác nhau.
  */
 public class TableMau extends JTable {
-    private static final long serialVersionUID = 1L;
     
     private DefaultTableModel model;
 
@@ -94,13 +93,6 @@ public class TableMau extends JTable {
      */
     public void datLaiDuLieu(Object[][] duLieuMoi, String[] tenCotMoi) {
         model.setDataVector(duLieuMoi, tenCotMoi);
-    }
-
-    /**
-     * Lấy DefaultTableModel của bảng
-     */
-    public DefaultTableModel getDefaultModel() {
-        return model;
     }
     
     // --- HÀM MAIN CHẠY THỬ ĐỘC LẬP ---
