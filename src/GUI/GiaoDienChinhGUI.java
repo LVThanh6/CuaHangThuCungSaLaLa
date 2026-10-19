@@ -312,6 +312,7 @@ public class GiaoDienChinhGUI extends JPanel {
 
     public void hienThiDanhSachBacSi() {
         // TODO: Nhúng class giao diện Danh sách bác sĩ vào đây
+    	setNoiDung(new BacSiGUI());
     }
 
     public void hienThiThongKe() {

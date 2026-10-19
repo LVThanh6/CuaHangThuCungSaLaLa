@@ -7,6 +7,10 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -20,45 +24,42 @@ import java.util.function.IntConsumer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import dao.ThongKe_DAO;
 
 /**
- * Class ThongKeGUI: Màn hình Thống kê theo mẫu Figma.
- *
- * - Hàng KPI (6 thẻ) phía trên.
- * - Vùng biểu đồ có thể chuyển giữa 1 khung / 2 khung / 4 khung.
- * - MỖI KHUNG tự chọn "Chỉ số" và "Loại biểu đồ" (14 loại) độc lập với nhau.
- *
- * Các KPI và dữ liệu biểu đồ được tải trực tiếp từ cơ sở dữ liệu SALALA.
+ * Class ThongKeGUI: Màn hình Thống kê SALALA với tính năng:
+ *  - Hàng KPI thống kê chung.
+ *  - Giao diện chính hiển thị dữ liệu dạng bảng Excel trực quan.
+ *  - Chức năng "Tạo biểu đồ" mở cửa sổ nhập thông số.
+ *  - Tạo ra các cửa sổ biểu đồ tự do (Free-floating Windows) với nút IN BIỂU ĐỒ.
  */
 public class ThongKeGUI extends JPanel {
 
     // ==========================================
     // HẰNG SỐ: LOẠI BIỂU ĐỒ
     // ==========================================
-    private static final String L_COT_DUNG = "Biểu đồ cột đứng";
-    private static final String L_COT_NGANG = "Biểu đồ cột ngang";
-    private static final String L_COT_NHOM = "Biểu đồ cột nhóm";
-    private static final String L_COT_CHONG = "Biểu đồ cột chồng";
-    private static final String L_DUONG = "Biểu đồ đường";
-    private static final String L_VUNG = "Biểu đồ vùng";
-    private static final String L_VUNG_CHONG = "Biểu đồ vùng chồng";
-    private static final String L_TRON = "Biểu đồ tròn";
-    private static final String L_VANH = "Biểu đồ vành khuyên";
-    private static final String L_PHAN_TAN = "Biểu đồ phân tán";
-    private static final String L_BONG_BONG = "Biểu đồ bong bóng";
-    private static final String L_KET_HOP = "Biểu đồ kết hợp cột và đường";
-    private static final String L_RADAR = "Biểu đồ radar";
-    private static final String L_BANG = "Biểu đồ dạng bảng dữ liệu";
+    public static final String L_COT_DUNG = "Biểu đồ cột đứng";
+    public static final String L_COT_NGANG = "Biểu đồ cột ngang";
+    public static final String L_COT_NHOM = "Biểu đồ cột nhóm";
+    public static final String L_COT_CHONG = "Biểu đồ cột chồng";
+    public static final String L_DUONG = "Biểu đồ đường";
+    public static final String L_VUNG = "Biểu đồ vùng";
+    public static final String L_VUNG_CHONG = "Biểu đồ vùng chồng";
+    public static final String L_TRON = "Biểu đồ tròn";
+    public static final String L_VANH = "Biểu đồ vành khuyên";
+    public static final String L_PHAN_TAN = "Biểu đồ phân tán";
+    public static final String L_BONG_BONG = "Biểu đồ bong bóng";
+    public static final String L_KET_HOP = "Biểu đồ kết hợp cột và đường";
+    public static final String L_RADAR = "Biểu đồ radar";
+    public static final String L_BANG = "Biểu đồ dạng bảng dữ liệu";
 
-    private static final String[] DANH_SACH_LOAI = {
+    public static final String[] DANH_SACH_LOAI = {
             L_COT_DUNG, L_COT_NGANG, L_COT_NHOM, L_COT_CHONG, L_DUONG, L_VUNG, L_VUNG_CHONG,
             L_TRON, L_VANH, L_PHAN_TAN, L_BONG_BONG, L_KET_HOP, L_RADAR, L_BANG
     };
 
-    // Bảng màu các chuỗi dữ liệu (xanh đậm - mint - xám tím - cam - xanh dương -
-    // chàm)
     private static final Color[] PALETTE = {
             RangBuocGiaoDien.MAU_CHU_DAO,
             new Color(94, 234, 212),
@@ -78,9 +79,8 @@ public class ThongKeGUI extends JPanel {
     private JLabel[] lblKpiGiaTri = new JLabel[6];
     private JLabel[] lblKpiGhiChu = new JLabel[6];
 
-    private JPanel vungBieuDo;
-    private final KhungBieuDo[] cacKhung = new KhungBieuDo[4];
-    private int soKhungHienTai = 4;
+    private JTabbedPane tabbedPaneDuLieu;
+    private final List<ChiSo> danhSachChiSoHienTai = new ArrayList<>();
     private int maYeuCauDuLieu;
 
     public ThongKeGUI() {
@@ -94,34 +94,23 @@ public class ThongKeGUI extends JPanel {
 
         add(taoThanhTieuDe(), BorderLayout.NORTH);
 
-        // 4 khung được tạo sẵn và giữ nguyên cấu hình khi chuyển qua lại 1/2/4 khung
-        cacKhung[0] = new KhungBieuDo(0, L_VUNG);
-        cacKhung[1] = new KhungBieuDo(2, L_COT_NGANG);
-        cacKhung[2] = new KhungBieuDo(3, L_COT_CHONG);
-        cacKhung[3] = new KhungBieuDo(4, L_COT_NGANG);
+        JPanel phanChinh = new JPanel(new BorderLayout(0, 14));
+        phanChinh.setOpaque(false);
+        phanChinh.add(taoHangKPI(), BorderLayout.NORTH);
 
-        TrangCuon trang = new TrangCuon();
-        trang.setOpaque(false);
-        trang.add(taoHangKPI(), BorderLayout.NORTH);
+        // Vùng bảng dữ liệu Excel dạng Tab
+        tabbedPaneDuLieu = new JTabbedPane();
+        tabbedPaneDuLieu.setFont(RangBuocGiaoDien.fontVua(13));
+        tabbedPaneDuLieu.setBackground(Color.WHITE);
+        phanChinh.add(tabbedPaneDuLieu, BorderLayout.CENTER);
 
-        vungBieuDo = new JPanel();
-        vungBieuDo.setOpaque(false);
-        trang.add(vungBieuDo, BorderLayout.CENTER);
+        add(phanChinh, BorderLayout.CENTER);
 
-        JScrollPane scroll = new JScrollPane(trang);
-        scroll.setBorder(null);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        add(scroll, BorderLayout.CENTER);
-
-        datSoKhung(4);
-        capNhatMoTaThoiGian(2);
+        capNhatMoTaThoiGian(2); // Mặc định: Tháng này
     }
 
     // ==========================================
-    // A. THANH TIÊU ĐỀ + CHỌN KHOẢNG THỜI GIAN + CHỌN SỐ KHUNG
+    // A. THANH TIÊU ĐỀ + NÚT TẠO BIỂU ĐỒ & BỘ LỌC
     // ==========================================
     private JComponent taoThanhTieuDe() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -136,7 +125,7 @@ public class ThongKeGUI extends JPanel {
         lblDuongDan.setFont(RangBuocGiaoDien.fontThuong(12));
         lblDuongDan.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
-        JLabel lblTieuDe = new JLabel("Thống kê");
+        JLabel lblTieuDe = new JLabel("Thống kê số liệu");
         lblTieuDe.setFont(RangBuocGiaoDien.fontDam(24));
         lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
@@ -156,14 +145,22 @@ public class ThongKeGUI extends JPanel {
         trai.add(lblTrangThai);
         panel.add(trai, BorderLayout.WEST);
 
-        // Nhóm nút bên phải: [1 khung | 2 khung | 4 khung] [Hôm nay | Tuần này | Tháng
-        // này | Năm nay]
+        // Nút bên phải: [+ Tạo biểu đồ] và [Bộ chọn thời gian]
         JPanel phai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         phai.setOpaque(false);
 
-        final int[] soKhungTheoViTri = { 1, 2, 4 };
-        phai.add(taoNhomToggle(new String[] { "1 khung", "2 khung", "4 khung" }, 2,
-                idx -> datSoKhung(soKhungTheoViTri[idx])));
+        JButton btnTaoBieuDo = new JButton("+ Tạo biểu đồ");
+        btnTaoBieuDo.setFont(RangBuocGiaoDien.fontDam(13));
+        btnTaoBieuDo.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnTaoBieuDo.setForeground(Color.WHITE);
+        btnTaoBieuDo.setFocusPainted(false);
+        btnTaoBieuDo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnTaoBieuDo.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(RangBuocGiaoDien.MAU_CHU_DAO, 1, true),
+                new EmptyBorder(8, 16, 8, 16)));
+        btnTaoBieuDo.addActionListener(e -> moDialogTaoBieuDo());
+
+        phai.add(btnTaoBieuDo);
         phai.add(taoNhomToggle(new String[] { "Hôm nay", "Tuần này", "Tháng này", "Năm nay" }, 2,
                 this::capNhatMoTaThoiGian));
 
@@ -175,10 +172,6 @@ public class ThongKeGUI extends JPanel {
         return panel;
     }
 
-    /**
-     * Tạo nhóm nút toggle bo viền (giống bộ chọn "Hôm nay / Tuần này / ..." trong
-     * Figma).
-     */
     private JPanel taoNhomToggle(String[] ten, int chon, IntConsumer khiChon) {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 2));
         p.setBackground(Color.WHITE);
@@ -214,7 +207,6 @@ public class ThongKeGUI extends JPanel {
         }
     }
 
-    /** 0 = Hôm nay, 1 = Tuần này, 2 = Tháng này, 3 = Năm nay. */
     private void capNhatMoTaThoiGian(int chon) {
         LocalDate hn = LocalDate.now();
         LocalDate tu, den;
@@ -259,8 +251,7 @@ public class ThongKeGUI extends JPanel {
                     return;
                 try {
                     capNhatDuLieu(get());
-                    lblMoTa.setText("Tổng quan hoạt động SALALA · "
-                            + f.format(tu) + " – " + f.format(den));
+                    lblMoTa.setText("Bảng tổng hợp dữ liệu SALALA · " + f.format(tu) + " – " + f.format(den));
                     lblTrangThai.setText(" ");
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -283,14 +274,13 @@ public class ThongKeGUI extends JPanel {
         datKPI(4, dinhDangTien.format(duLieu.doanhThu) + " đ", "Trong khoảng thời gian đã chọn");
         datKPI(5, String.valueOf(duLieu.soHoaDon), "Trong khoảng thời gian đã chọn");
 
-        List<ChiSo> cacChiSo = new ArrayList<>();
+        danhSachChiSoHienTai.clear();
         for (ThongKe_DAO.ChiSoThongKe chiSo : duLieu.chiSo) {
-            cacChiSo.add(new ChiSo(chiSo));
+            danhSachChiSoHienTai.add(new ChiSo(chiSo));
         }
-        for (KhungBieuDo khung : cacKhung) {
-            if (khung != null)
-                khung.datDanhSachChiSo(cacChiSo);
-        }
+
+        // Cập nhật lại giao diện Bảng Excel ở giữa
+        capNhatBangExcel();
     }
 
     private void hienLoiTaiDuLieu(String loi) {
@@ -334,7 +324,7 @@ public class ThongKeGUI extends JPanel {
         lblTieuDe.setFont(RangBuocGiaoDien.fontThuong(12));
         lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
-        lblGiaTri.setFont(RangBuocGiaoDien.fontDam(22));
+        lblGiaTri.setFont(RangBuocGiaoDien.fontDam(20));
         lblGiaTri.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
         lblGhiChu.setFont(RangBuocGiaoDien.fontThuong(11));
@@ -348,7 +338,6 @@ public class ThongKeGUI extends JPanel {
         return the;
     }
 
-    /** Cập nhật 1 thẻ KPI (chiSo từ 0 đến 5) khi có dữ liệu thật. */
     public void datKPI(int viTri, String giaTri, String ghiChu) {
         if (viTri < 0 || viTri >= lblKpiGiaTri.length)
             return;
@@ -357,238 +346,91 @@ public class ThongKeGUI extends JPanel {
     }
 
     // ==========================================
-    // C. VÙNG BIỂU ĐỒ: 1 / 2 / 4 KHUNG
+    // C. GIAO DIỆN BẢNG DỮ LIỆU DẠNG EXCEL
     // ==========================================
-    private void datSoKhung(int n) {
-        soKhungHienTai = n;
-        int cot = (n == 1) ? 1 : 2;
-        int hang = (n == 4) ? 2 : 1;
-        int chieuCaoVungBieuDo = (n == 1) ? 440 : (n == 2 ? 350 : 500);
-
-        vungBieuDo.removeAll();
-        vungBieuDo.setLayout(new GridLayout(hang, cot, 16, 16));
-        for (int i = 0; i < n; i++) {
-            vungBieuDo.add(cacKhung[i]);
-        }
-        vungBieuDo.setPreferredSize(new Dimension(0, chieuCaoVungBieuDo));
-        vungBieuDo.revalidate();
-        vungBieuDo.repaint();
-    }
-
-    public int getSoKhungHienTai() {
-        return soKhungHienTai;
-    }
-
-    /**
-     * Trang cuộn: bám theo chiều rộng viewport; kéo giãn chiều cao khi cửa sổ lớn
-     * hơn nội dung.
-     */
-    private static class TrangCuon extends JPanel implements Scrollable {
-        TrangCuon() {
-            super(new BorderLayout(0, 14));
+    private void capNhatBangExcel() {
+        tabbedPaneDuLieu.removeAll();
+        if (danhSachChiSoHienTai.isEmpty()) {
+            JPanel pNull = new JPanel(new GridBagLayout());
+            pNull.setBackground(Color.WHITE);
+            pNull.add(new JLabel("Chưa có dữ liệu thống kê."));
+            tabbedPaneDuLieu.addTab("Số liệu", pNull);
+            return;
         }
 
-        @Override
-        public Dimension getPreferredScrollableViewportSize() {
-            return getPreferredSize();
-        }
-
-        @Override
-        public int getScrollableUnitIncrement(Rectangle r, int orientation, int direction) {
-            return 16;
-        }
-
-        @Override
-        public int getScrollableBlockIncrement(Rectangle r, int orientation, int direction) {
-            return Math.max(16, r.height - 32);
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportWidth() {
-            return true;
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportHeight() {
-            Container pa = getParent();
-            return (pa instanceof JViewport) && pa.getHeight() > getPreferredSize().height;
+        for (ChiSo cs : danhSachChiSoHienTai) {
+            tabbedPaneDuLieu.addTab(cs.ten, taoBangDuLieuExcel(cs));
         }
     }
 
-    // ==========================================
-    // D. MỘT KHUNG BIỂU ĐỒ (tự chọn chỉ số + loại biểu đồ)
-    // ==========================================
-    private static class KhungBieuDo extends JPanel {
-        private final JComboBox<ChiSo> cbChiSo = new JComboBox<>();
-        private final JComboBox<String> cbLoai = new JComboBox<>(DANH_SACH_LOAI);
-        private final JLabel lblTieuDe = new JLabel();
-        private final JLabel lblDonVi = new JLabel();
-        private final JPanel vungVe = new JPanel(new BorderLayout());
-        private final BieuDoCanvas canvas = new BieuDoCanvas();
+    private JComponent taoBangDuLieuExcel(ChiSo cs) {
+        String[] cot = new String[cs.chuoi.length + 1];
+        cot[0] = "Thời gian / Danh mục";
+        System.arraycopy(cs.chuoi, 0, cot, 1, cs.chuoi.length);
 
-        private boolean hienNhan = true, hienLuoi = true, hienChuGiai = true;
-        private final int viTriMacDinh;
-
-        KhungBieuDo(int chiSoMacDinh, String loaiMacDinh) {
-            viTriMacDinh = chiSoMacDinh;
-            setLayout(new BorderLayout(0, 8));
-            setBackground(Color.WHITE);
-            setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
-                    new EmptyBorder(14, 18, 12, 18)));
-
-            // --- Dòng 1: tiêu đề (trái) + đơn vị (phải)
-            lblTieuDe.setFont(RangBuocGiaoDien.fontDam(15));
-            lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
-            lblDonVi.setFont(RangBuocGiaoDien.fontThuong(11));
-            lblDonVi.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-            JPanel hang1 = new JPanel(new BorderLayout());
-            hang1.setOpaque(false);
-            hang1.add(lblTieuDe, BorderLayout.WEST);
-            hang1.add(lblDonVi, BorderLayout.EAST);
-
-            // --- Dòng 2: chọn chỉ số, loại biểu đồ, tùy chọn hiển thị
-            cbChiSo.setFont(RangBuocGiaoDien.fontThuong(12));
-            cbLoai.setFont(RangBuocGiaoDien.fontThuong(12));
-            cbChiSo.setToolTipText("Chỉ số hiển thị trong khung này");
-            cbLoai.setToolTipText("Loại biểu đồ của khung này");
-
-            JPanel haiCombo = new JPanel(new GridLayout(1, 2, 6, 0));
-            haiCombo.setOpaque(false);
-            haiCombo.add(cbChiSo);
-            haiCombo.add(cbLoai);
-
-            JButton btnTuyChon = new JButton("Tùy chọn");
-            btnTuyChon.setFont(RangBuocGiaoDien.fontThuong(12));
-            btnTuyChon.setFocusPainted(false);
-            btnTuyChon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            JPopupMenu menu = new JPopupMenu();
-            menu.add(taoMucCheck("Hiển thị nhãn dữ liệu", hienNhan, v -> {
-                hienNhan = v;
-                capNhat();
-            }));
-            menu.add(taoMucCheck("Hiển thị đường lưới", hienLuoi, v -> {
-                hienLuoi = v;
-                capNhat();
-            }));
-            menu.add(taoMucCheck("Hiển thị chú giải", hienChuGiai, v -> {
-                hienChuGiai = v;
-                capNhat();
-            }));
-            btnTuyChon.addActionListener(e -> menu.show(btnTuyChon, 0, btnTuyChon.getHeight()));
-
-            JPanel hang2 = new JPanel(new BorderLayout(6, 0));
-            hang2.setOpaque(false);
-            hang2.add(haiCombo, BorderLayout.CENTER);
-            hang2.add(btnTuyChon, BorderLayout.EAST);
-
-            JPanel dau = new JPanel();
-            dau.setLayout(new BoxLayout(dau, BoxLayout.Y_AXIS));
-            dau.setOpaque(false);
-            dau.add(hang1);
-            dau.add(Box.createVerticalStrut(8));
-            dau.add(hang2);
-            add(dau, BorderLayout.NORTH);
-
-            // --- Vùng vẽ
-            vungVe.setOpaque(false);
-            add(vungVe, BorderLayout.CENTER);
-
-            cbLoai.setSelectedItem(loaiMacDinh);
-            cbChiSo.addActionListener(e -> capNhat());
-            cbLoai.addActionListener(e -> capNhat());
-            capNhat();
-        }
-
-        private JCheckBoxMenuItem taoMucCheck(String ten, boolean chon, Consumer<Boolean> khiDoi) {
-            JCheckBoxMenuItem m = new JCheckBoxMenuItem(ten, chon);
-            m.addActionListener(e -> khiDoi.accept(m.isSelected()));
-            return m;
-        }
-
-        void datDanhSachChiSo(List<ChiSo> danhSach) {
-            ChiSo dangChon = (ChiSo) cbChiSo.getSelectedItem();
-            String tenDangChon = dangChon == null ? null : dangChon.ten;
-            cbChiSo.removeAllItems();
-            int viTriChon = Math.min(viTriMacDinh, Math.max(0, danhSach.size() - 1));
-            for (int i = 0; i < danhSach.size(); i++) {
-                ChiSo chiSo = danhSach.get(i);
-                cbChiSo.addItem(chiSo);
-                if (chiSo.ten.equals(tenDangChon))
-                    viTriChon = i;
+        DefaultTableModel model = new DefaultTableModel(cot, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
             }
-            if (!danhSach.isEmpty())
-                cbChiSo.setSelectedIndex(viTriChon);
-            capNhat();
-        }
+        };
 
-        /** Vẽ lại khung theo chỉ số / loại biểu đồ / tùy chọn hiện tại. */
-        void capNhat() {
-            ChiSo cs = (ChiSo) cbChiSo.getSelectedItem();
-            String loai = (String) cbLoai.getSelectedItem();
-            if (cs == null || loai == null)
-                return;
-
-            lblTieuDe.setText(cs.tieuDe);
-            lblDonVi.setText(cs.donVi);
-
-            vungVe.removeAll();
-            if (L_BANG.equals(loai)) {
-                vungVe.add(taoBang(cs), BorderLayout.CENTER);
-            } else {
-                canvas.datCauHinh(cs, loai, hienNhan, hienLuoi, hienChuGiai);
-                vungVe.add(canvas, BorderLayout.CENTER);
+        for (int i = 0; i < cs.nhan.length; i++) {
+            Object[] dong = new Object[cot.length];
+            dong[0] = cs.nhan[i];
+            for (int s = 0; s < cs.chuoi.length; s++) {
+                dong[s + 1] = fmt(cs.giaTri[s][i]) + (cs.hauTo.isEmpty() ? "" : " " + cs.hauTo);
             }
-            vungVe.revalidate();
-            vungVe.repaint();
+            model.addRow(dong);
         }
 
-        private JComponent taoBang(ChiSo cs) {
-            String[] cot = new String[cs.chuoi.length + 1];
-            cot[0] = "Danh mục / Thời gian";
-            System.arraycopy(cs.chuoi, 0, cot, 1, cs.chuoi.length);
+        JTable bang = new JTable(model);
+        bang.setFont(RangBuocGiaoDien.fontThuong(13));
+        bang.setRowHeight(32);
+        bang.setShowGrid(true);
+        bang.setGridColor(new Color(226, 232, 240));
+        bang.getTableHeader().setFont(RangBuocGiaoDien.fontDam(13));
+        bang.getTableHeader().setBackground(new Color(241, 245, 249));
+        bang.getTableHeader().setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        bang.getTableHeader().setPreferredSize(new Dimension(0, 36));
 
-            DefaultTableModel model = new DefaultTableModel(cot, 0) {
-                @Override
-                public boolean isCellEditable(int r, int c) {
-                    return false;
-                }
-            };
-            for (int i = 0; i < cs.nhan.length; i++) {
-                Object[] dong = new Object[cot.length];
-                dong[0] = cs.nhan[i];
-                for (int s = 0; s < cs.chuoi.length; s++) {
-                    dong[s + 1] = fmt(cs.giaTri[s][i]) + cs.hauTo;
-                }
-                model.addRow(dong);
-            }
-            JTable bang = new JTable(model);
-            bang.setFont(RangBuocGiaoDien.fontThuong(13));
-            bang.setRowHeight(28);
-            bang.getTableHeader().setFont(RangBuocGiaoDien.fontDam(12));
-            bang.setShowVerticalLines(false);
-
-            JScrollPane sp = new JScrollPane(bang);
-            sp.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
-            return sp;
+        // Format căn lề dòng Excel
+        DefaultTableCellRenderer rendererCanPhai = new DefaultTableCellRenderer();
+        rendererCanPhai.setHorizontalAlignment(SwingConstants.RIGHT);
+        for (int c = 1; c < cot.length; c++) {
+            bang.getColumnModel().getColumn(c).setCellRenderer(rendererCanPhai);
         }
+
+        JScrollPane sp = new JScrollPane(bang);
+        sp.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
+        sp.getViewport().setBackground(Color.WHITE);
+        return sp;
     }
 
     // ==========================================
-    // E. MÔ HÌNH DỮ LIỆU MỘT CHỈ SỐ
+    // D. ĐỐI THOẠI "TẠO BIỂU ĐỒ"
     // ==========================================
-    private static class ChiSo {
-        final String ten; // tên hiển thị trong combobox
-        final String tieuDe; // tiêu đề khung: "Biểu đồ ..."
-        final String donVi; // góc phải trên của khung
-        final String hauTo; // hậu tố cho nhãn dữ liệu (vd: "%")
-        final boolean coTong; // có hiển thị tổng chuỗi ở chú giải không
-        final String[] nhan; // nhãn trục danh mục
-        final String[] chuoi; // tên các chuỗi dữ liệu
-        final double[][] giaTri; // [chuỗi][danh mục]
+    private void moDialogTaoBieuDo() {
+        Window cha = SwingUtilities.getWindowAncestor(this);
+        DialogTaoBieuDo dialog = new DialogTaoBieuDo(cha, danhSachChiSoHienTai);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
 
-        ChiSo(String ten, String donVi, String hauTo, boolean coTong,
+    // ==========================================
+    // E. MÔ HÌNH DỮ LIỆU CHỈ SỐ
+    // ==========================================
+    public static class ChiSo {
+        public final String ten;
+        public final String tieuDe;
+        public final String donVi;
+        public final String hauTo;
+        public final boolean coTong;
+        public final String[] nhan;
+        public final String[] chuoi;
+        public final double[][] giaTri;
+
+        public ChiSo(String ten, String donVi, String hauTo, boolean coTong,
                 String[] nhan, String[] chuoi, double[][] giaTri) {
             this.ten = ten;
             this.tieuDe = "Biểu đồ " + Character.toLowerCase(ten.charAt(0)) + ten.substring(1);
@@ -600,7 +442,7 @@ public class ThongKeGUI extends JPanel {
             this.giaTri = giaTri;
         }
 
-        ChiSo(ThongKe_DAO.ChiSoThongKe duLieu) {
+        public ChiSo(ThongKe_DAO.ChiSoThongKe duLieu) {
             this(duLieu.ten, duLieu.donVi, duLieu.hauTo, true,
                     duLieu.nhan.toArray(new String[0]),
                     duLieu.chuoi.toArray(new String[0]),
@@ -625,23 +467,294 @@ public class ThongKeGUI extends JPanel {
     }
 
     // ==========================================
-    // F. ENGINE VẼ BIỂU ĐỒ (GRAPHICS2D) - DÙNG CHUNG CHO MỌI KHUNG
+    // F. CỬA SỔ ĐIỀN THÔNG SỐ TẠO BIỂU ĐỒ (DIALOG)
     // ==========================================
-    private static class BieuDoCanvas extends JPanel {
+    private static class DialogTaoBieuDo extends JDialog {
+        private JRadioButton rdoCSDL, rdoTuNhap;
+        private JComboBox<ChiSo> cbChiSoCSDL;
+        private JComboBox<String> cbLoaiBieuDo;
+        private JTextField txtTieuDe, txtNhan, txtTenChuoi, txtGiaTri, txtDonVi;
+        private JCheckBox chkNhan, chkLuoi, chkChuGiai;
+
+        DialogTaoBieuDo(Window parent, List<ChiSo> dsChiSo) {
+            super(parent, "Thiết lập tạo biểu đồ mới", ModalityType.APPLICATION_MODAL);
+            setLayout(new BorderLayout());
+            setSize(520, 560);
+            setResizable(false);
+
+            JPanel mainPanel = new JPanel();
+            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+            mainPanel.setBackground(Color.WHITE);
+            mainPanel.setBorder(new EmptyBorder(16, 20, 16, 20));
+
+            // Nguồn dữ liệu
+            rdoCSDL = new JRadioButton("Lấy từ số liệu hệ thống", true);
+            rdoTuNhap = new JRadioButton("Tự nhập số liệu tùy chỉnh", false);
+            ButtonGroup bg = new ButtonGroup();
+            bg.add(rdoCSDL);
+            bg.add(rdoTuNhap);
+
+            rdoCSDL.setBackground(Color.WHITE);
+            rdoTuNhap.setBackground(Color.WHITE);
+
+            JPanel pNguon = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+            pNguon.setOpaque(false);
+            pNguon.add(rdoCSDL);
+            pNguon.add(rdoTuNhap);
+
+            cbChiSoCSDL = new JComboBox<>(dsChiSo.toArray(new ChiSo[0]));
+            cbChiSoCSDL.setFont(RangBuocGiaoDien.fontThuong(13));
+
+            cbLoaiBieuDo = new JComboBox<>(DANH_SACH_LOAI);
+            cbLoaiBieuDo.setFont(RangBuocGiaoDien.fontThuong(13));
+
+            // Nhập tay
+            txtTieuDe = new JTextField("Biểu đồ thống kê tùy chỉnh");
+            txtNhan = new JTextField("Tháng 1, Tháng 2, Tháng 3, Tháng 4");
+            txtTenChuoi = new JTextField("Giá trị");
+            txtGiaTri = new JTextField("12, 19, 15, 25");
+            txtDonVi = new JTextField("lần");
+
+            chkNhan = new JCheckBox("Hiển thị nhãn dữ liệu", true);
+            chkLuoi = new JCheckBox("Hiển thị đường lưới", true);
+            chkChuGiai = new JCheckBox("Hiển thị chú giải", true);
+            chkNhan.setBackground(Color.WHITE);
+            chkLuoi.setBackground(Color.WHITE);
+            chkChuGiai.setBackground(Color.WHITE);
+
+            // Xây dựng Form
+            mainPanel.add(taoNhanForm("1. Chọn nguồn dữ liệu:"));
+            mainPanel.add(pNguon);
+            mainPanel.add(Box.createVerticalStrut(8));
+            mainPanel.add(cbChiSoCSDL);
+
+            mainPanel.add(Box.createVerticalStrut(14));
+            mainPanel.add(taoNhanForm("2. Loại biểu đồ:"));
+            mainPanel.add(cbLoaiBieuDo);
+
+            mainPanel.add(Box.createVerticalStrut(14));
+            mainPanel.add(taoNhanForm("3. Thông số tùy chỉnh (khi chọn Tự nhập):"));
+            mainPanel.add(taoDongForm("Tiêu đề:", txtTieuDe));
+            mainPanel.add(taoDongForm("Danh mục (cách bởi phẩy):", txtNhan));
+            mainPanel.add(taoDongForm("Tên chuỗi:", txtTenChuoi));
+            mainPanel.add(taoDongForm("Giá trị (cách bởi phẩy):", txtGiaTri));
+            mainPanel.add(taoDongForm("Đơn vị tính:", txtDonVi));
+
+            mainPanel.add(Box.createVerticalStrut(10));
+            JPanel pCheck = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+            pCheck.setOpaque(false);
+            pCheck.add(chkNhan);
+            pCheck.add(chkLuoi);
+            pCheck.add(chkChuGiai);
+            mainPanel.add(pCheck);
+
+            add(mainPanel, BorderLayout.CENTER);
+
+            // Nút Thao Tác
+            JPanel pNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
+            pNut.setBackground(new Color(248, 250, 252));
+
+            JButton btnHuy = new JButton("Hủy");
+            btnHuy.setFont(RangBuocGiaoDien.fontVua(13));
+            btnHuy.addActionListener(e -> dispose());
+
+            JButton btnTao = new JButton("Tạo biểu đồ");
+            btnTao.setFont(RangBuocGiaoDien.fontDam(13));
+            btnTao.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+            btnTao.setForeground(Color.WHITE);
+            btnTao.setFocusPainted(false);
+            btnTao.addActionListener(e -> xuLyTao());
+
+            pNut.add(btnHuy);
+            pNut.add(btnTao);
+            add(pNut, BorderLayout.SOUTH);
+
+            capNhatTrangThaiForm();
+            rdoCSDL.addActionListener(e -> capNhatTrangThaiForm());
+            rdoTuNhap.addActionListener(e -> capNhatTrangThaiForm());
+        }
+
+        private JLabel taoNhanForm(String text) {
+            JLabel l = new JLabel(text);
+            l.setFont(RangBuocGiaoDien.fontDam(13));
+            l.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+            return l;
+        }
+
+        private JPanel taoDongForm(String label, JTextField txt) {
+            JPanel p = new JPanel(new BorderLayout(8, 0));
+            p.setOpaque(false);
+            JLabel l = new JLabel(label);
+            l.setPreferredSize(new Dimension(160, 26));
+            l.setFont(RangBuocGiaoDien.fontThuong(12));
+            p.add(l, BorderLayout.WEST);
+            p.add(txt, BorderLayout.CENTER);
+            p.setBorder(new EmptyBorder(2, 0, 2, 0));
+            return p;
+        }
+
+        private void capNhatTrangThaiForm() {
+            boolean tuNhap = rdoTuNhap.isSelected();
+            cbChiSoCSDL.setEnabled(!tuNhap);
+            txtTieuDe.setEnabled(tuNhap);
+            txtNhan.setEnabled(tuNhap);
+            txtTenChuoi.setEnabled(tuNhap);
+            txtGiaTri.setEnabled(tuNhap);
+            txtDonVi.setEnabled(tuNhap);
+        }
+
+        private void xuLyTao() {
+            ChiSo cs;
+            if (rdoCSDL.isSelected()) {
+                cs = (ChiSo) cbChiSoCSDL.getSelectedItem();
+                if (cs == null) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn chỉ số dữ liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            } else {
+                try {
+                    String[] nhanArr = txtNhan.getText().split(",");
+                    for (int i = 0; i < nhanArr.length; i++) nhanArr[i] = nhanArr[i].trim();
+
+                    String[] valStrArr = txtGiaTri.getText().split(",");
+                    double[][] valArr = new double[1][nhanArr.length];
+                    for (int i = 0; i < Math.min(nhanArr.length, valStrArr.length); i++) {
+                        valArr[0][i] = Double.parseDouble(valStrArr[i].trim());
+                    }
+
+                    cs = new ChiSo(txtTieuDe.getText().trim(),
+                            txtDonVi.getText().trim(),
+                            "",
+                            true,
+                            nhanArr,
+                            new String[]{txtTenChuoi.getText().trim()},
+                            valArr);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Số liệu tự nhập không hợp lệ. Vui lòng kiểm tra lại!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            String loai = (String) cbLoaiBieuDo.getSelectedItem();
+            boolean nhan = chkNhan.isSelected();
+            boolean luoi = chkLuoi.isSelected();
+            boolean chuGiai = chkChuGiai.isSelected();
+
+            // Mở cửa sổ biểu đồ tự do
+            CuaSoBieuDo win = new CuaSoBieuDo(cs, loai, nhan, luoi, chuGiai);
+            win.setVisible(true);
+            dispose();
+        }
+    }
+
+    // ==========================================
+    // G. CỬA SỔ BIỂU ĐỒ TỰ DO DẠNG WINDOW (TẠO NHIỀU CÙNG LÚC + CÓ NÚT IN)
+    // ==========================================
+ // ==========================================
+    // G. CỬA SỔ BIỂU ĐỒ TỰ DO DẠNG WINDOW (TẠO NHIỀU CÙNG LÚC + CÓ NÚT IN)
+    // ==========================================
+    public static class CuaSoBieuDo extends JFrame {
+        private final BieuDoCanvas canvas;
+        private final ChiSo chiSo;
+
+        public CuaSoBieuDo(ChiSo cs, String loai, boolean nhan, boolean luoi, boolean chuGiai) {
+            super("Biểu đồ: " + cs.tieuDe);
+            this.chiSo = cs;
+            setSize(680, 480);
+            setLocationRelativeTo(null);
+            setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            
+            // ⭐ Thêm dòng này để ưu tiên nổi lên trên cùng các GUI khác
+            setAlwaysOnTop(true);
+
+            setLayout(new BorderLayout());
+
+            // Thanh công cụ phía trên Cửa sổ
+            JToolBar toolBar = new JToolBar();
+            toolBar.setFloatable(false);
+            toolBar.setBackground(Color.WHITE);
+            toolBar.setBorder(new EmptyBorder(8, 12, 8, 12));
+
+            JLabel lblTieuDe = new JLabel(cs.tieuDe + " (" + loai + ")");
+            lblTieuDe.setFont(RangBuocGiaoDien.fontDam(14));
+            lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+
+            JButton btnIn = new JButton("🖨 In biểu đồ thống kê");
+            btnIn.setFont(RangBuocGiaoDien.fontVua(12));
+            btnIn.setBackground(new Color(241, 245, 249));
+            btnIn.setFocusPainted(false);
+            btnIn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btnIn.addActionListener(e -> inBieuDo());
+
+            toolBar.add(lblTieuDe);
+            toolBar.add(Box.createHorizontalGlue());
+            toolBar.add(btnIn);
+
+            add(toolBar, BorderLayout.NORTH);
+
+            // Vùng vẽ biểu đồ chính
+            canvas = new BieuDoCanvas();
+            canvas.datCauHinh(cs, loai, nhan, luoi, chuGiai);
+
+            JPanel pContainer = new JPanel(new BorderLayout());
+            pContainer.setBackground(Color.WHITE);
+            pContainer.setBorder(new EmptyBorder(12, 16, 12, 16));
+            pContainer.add(canvas, BorderLayout.CENTER);
+
+            add(pContainer, BorderLayout.CENTER);
+        }
+
+        /**
+         * Chức năng in biểu đồ chuẩn qua PrinterJob
+         */
+        private void inBieuDo() {
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setJobName("In Biểu Đồ - " + chiSo.tieuDe);
+
+            job.setPrintable((graphics, pageFormat, pageIndex) -> {
+                if (pageIndex > 0) return Printable.NO_SUCH_PAGE;
+
+                Graphics2D g2d = (Graphics2D) graphics;
+                g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+
+                double scaleX = pageFormat.getImageableWidth() / canvas.getWidth();
+                double scaleY = pageFormat.getImageableHeight() / canvas.getHeight();
+                double scale = Math.min(scaleX, scaleY);
+
+                g2d.scale(scale, scale);
+                canvas.printAll(g2d);
+
+                return Printable.PAGE_EXISTS;
+            });
+
+            if (job.printDialog()) {
+                try {
+                    job.print();
+                    JOptionPane.showMessageDialog(this, "Đã gửi lệnh in thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                } catch (PrinterException ex) {
+                    JOptionPane.showMessageDialog(this, "Lỗi khi in biểu đồ: " + ex.getMessage(), "Lỗi in ấn", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+
+    // ==========================================
+    // H. ENGINE VẼ BIỂU ĐỒ GRAPHICS2D (14 LOẠI)
+    // ==========================================
+    public static class BieuDoCanvas extends JPanel {
         private ChiSo cs;
         private String loai = L_COT_DUNG;
         private boolean nhan = true, luoi = true, chuGiai = true;
 
-        // Hình học vùng vẽ hiện tại (dùng cho các biểu đồ tọa độ)
         private Rectangle p;
         private double slot, tran;
         private int n, soChuoi;
 
-        BieuDoCanvas() {
+        public BieuDoCanvas() {
             setOpaque(false);
         }
 
-        void datCauHinh(ChiSo cs, String loai, boolean nhan, boolean luoi, boolean chuGiai) {
+        public void datCauHinh(ChiSo cs, String loai, boolean nhan, boolean luoi, boolean chuGiai) {
             this.cs = cs;
             this.loai = loai;
             this.nhan = nhan;
@@ -654,10 +767,6 @@ public class ThongKeGUI extends JPanel {
             return L_TRON.equals(loai) || L_VANH.equals(loai);
         }
 
-        /**
-         * Số chuỗi được vẽ: cột đứng / vùng / tròn / vành khuyên chỉ lấy chuỗi đầu
-         * tiên.
-         */
         private int soChuoiHienThi() {
             boolean mot = L_COT_DUNG.equals(loai) || L_VUNG.equals(loai) || laTron();
             return mot ? 1 : cs.chuoi.length;
@@ -694,7 +803,6 @@ public class ThongKeGUI extends JPanel {
             g2.dispose();
         }
 
-        // ---------- Biểu đồ trục tọa độ đứng ----------
         private void veTruc(Graphics2D g2, Rectangle v) {
             n = cs.nhan.length;
             soChuoi = soChuoiHienThi();
@@ -864,11 +972,6 @@ public class ThongKeGUI extends JPanel {
                 for (int i = 0; i < n - 1; i++) {
                     g2.drawLine((int) cx(i), yv(cum[s][i]), (int) cx(i + 1), yv(cum[s][i + 1]));
                 }
-                if (!chong) {
-                    for (int i = 0; i < n; i++) {
-                        g2.fillOval((int) cx(i) - 3, yv(cum[s][i]) - 3, 6, 6);
-                    }
-                }
             }
             if (nhan) {
                 g2.setColor(RangBuocGiaoDien.MAU_CHU_CHINH);
@@ -905,8 +1008,6 @@ public class ThongKeGUI extends JPanel {
             for (int s = 0; s < soChuoi; s++) {
                 double lech = (s - (soChuoi - 1) / 2.0) * 18;
                 for (int i = 0; i < n; i++) {
-                    // Kích thước bong bóng: theo chuỗi kế tiếp (nếu có), ngược lại theo chính giá
-                    // trị
                     double kt = soChuoi > 1 ? cs.giaTri[(s + 1) % soChuoi][i] : cs.giaTri[s][i];
                     double d = 16 + 40 * (kt / maxKichThuoc);
                     double x = cx(i) + lech;
@@ -923,10 +1024,6 @@ public class ThongKeGUI extends JPanel {
             }
         }
 
-        /**
-         * Cột = chuỗi đầu tiên; đường = các chuỗi còn lại (nếu chỉ có 1 chuỗi thì đường
-         * nối đỉnh các cột).
-         */
         private void veKetHop(Graphics2D g2) {
             int day = p.y + p.height;
             double bw = Math.min(slot * 0.5, 56);
@@ -943,7 +1040,6 @@ public class ThongKeGUI extends JPanel {
             }
         }
 
-        // ---------- Cột ngang ----------
         private void veCotNgang(Graphics2D g2, Rectangle v) {
             n = cs.nhan.length;
             soChuoi = soChuoiHienThi();
@@ -997,7 +1093,6 @@ public class ThongKeGUI extends JPanel {
             }
         }
 
-        // ---------- Tròn / Vành khuyên ----------
         private void veTron(Graphics2D g2, Rectangle v) {
             int soDM = cs.nhan.length;
             double[] gt = cs.giaTri[0];
@@ -1052,7 +1147,6 @@ public class ThongKeGUI extends JPanel {
             }
         }
 
-        // ---------- Radar ----------
         private void veRadar(Graphics2D g2, Rectangle v) {
             int soTruc = cs.nhan.length;
             int soC = cs.chuoi.length;
@@ -1137,7 +1231,6 @@ public class ThongKeGUI extends JPanel {
             g2.setStroke(new BasicStroke(1f));
         }
 
-        // ---------- Chú giải ----------
         private void veChuGiai(Graphics2D g2, int w, int yTren) {
             int soMuc = laTron() ? cs.nhan.length : soChuoiHienThi();
             FontMetrics fm = g2.getFontMetrics();
@@ -1168,7 +1261,7 @@ public class ThongKeGUI extends JPanel {
     }
 
     // ==========================================
-    // TIỆN ÍCH CHUNG
+    // TIỆN ÍCH PHỤ TRỢ
     // ==========================================
     private static Color mau(int i) {
         return PALETTE[i % PALETTE.length];
@@ -1188,10 +1281,6 @@ public class ThongKeGUI extends JPanel {
         return String.format(VN, "%.1f", v);
     }
 
-    /**
-     * Làm tròn trần trục giá trị sao cho chia 4 khoảng đều và đẹp (0, 15, 30, 45,
-     * 60...).
-     */
     private static double niceMax(double max) {
         if (max <= 0)
             return 4;
