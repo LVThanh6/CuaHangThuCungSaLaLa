@@ -1,4 +1,3 @@
-
 package GUI;
 
 import dao.KhachHang_DAO;
@@ -1159,4 +1158,3 @@ public class LapHoaDon_gui extends JPanel {
         return String.format("%,.0f đ", tien);
     }
 }
-
