@@ -223,12 +223,12 @@ public class GiaoDienChinhGUI extends JPanel {
                 break;
 
             // Tab Vật tư
-            case "Kho thuốc":
-                hienThiKhoThuoc();
-                break;
-            case "Dụng cụ y tế":
-                hienThiDungCuYTe();
-                break;
+//            case "Kho thuốc":
+//                hienThiKhoThuoc();
+//                break;
+//            case "Dụng cụ y tế":
+//                hienThiDungCuYTe();
+//                break;
 
             // Tab Lịch hẹn
             case "Lịch hôm nay":
