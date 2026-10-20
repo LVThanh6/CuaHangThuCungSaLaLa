@@ -68,11 +68,11 @@ public class HeaderGUI extends JPanel {
     private void khoiTaoMenuConMacDinh() {
         menuConMap = new HashMap<>();
         menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Danh sách bác sĩ", "Thống kê" });
-        menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Loại thú cưng", "Lịch sử khám" });
+        menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
         menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
         menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
         menuConMap.put("Vật tư", new String[] { "Kho thuốc", "Dụng cụ y tế" });
-        menuConMap.put("Lịch hẹn", new String[] { "Lịch hôm nay", "Đặt lịch mới" });
+        menuConMap.put("Lịch hẹn", new String[] { "Xem lịch", "Đặt lịch mới" });
         menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Gói chăm sóc" });
     }
 
