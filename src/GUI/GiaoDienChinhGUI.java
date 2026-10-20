@@ -223,12 +223,12 @@ public class GiaoDienChinhGUI extends JPanel {
                 break;
 
             // Tab Vật tư
-            case "Kho thuốc":
-                hienThiKhoThuoc();
-                break;
-            case "Dụng cụ y tế":
-                hienThiDungCuYTe();
-                break;
+//            case "Kho thuốc":
+//                hienThiKhoThuoc();
+//                break;
+//            case "Dụng cụ y tế":
+//                hienThiDungCuYTe();
+//                break;
 
             // Tab Lịch hẹn
             case "Lịch hôm nay":
@@ -285,6 +285,12 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 5: Vật tư */
     public void hienThiTabVatTu() {
+            try {
+            setNoiDung(new VatTu());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            hienThiNoiDungMacDinh("Lỗi hiển thị Vật tư: " + t.getMessage());
+        }
         // TODO: Nhúng class giao diện Vật tư vào đây
         // Ví dụ: setNoiDung(new VatTuGUI());
     }
@@ -297,6 +303,12 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 7: Dịch vụ */
     public void hienThiTabDichVu() {
+    	try {
+            setNoiDung(new DichVu());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            hienThiNoiDungMacDinh("Lỗi hiển thị Dịch vụ: " + t.getMessage());
+        }
         // TODO: Nhúng class giao diện Dịch vụ vào đây
         // Ví dụ: setNoiDung(new DichVuGUI());
     }
@@ -369,14 +381,14 @@ public class GiaoDienChinhGUI extends JPanel {
     	setNoiDung(new DSHoaDon_gui());
     }
 
-    // --- Tab Vật tư ---
-    public void hienThiKhoThuoc() {
-        // TODO: Nhúng class giao diện Kho thuốc vào đây
-    }
-
-    public void hienThiDungCuYTe() {
-        // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
-    }
+//    // --- Tab Vật tư ---
+//    public void hienThiKhoThuoc() {
+//        // TODO: Nhúng class giao diện Kho thuốc vào đây
+//    }
+//
+//    public void hienThiDungCuYTe() {
+//        // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
+//    }
 
     // --- Tab Lịch hẹn ---
     public void hienThiLichHomNay() {
