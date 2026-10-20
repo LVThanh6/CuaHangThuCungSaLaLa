@@ -222,14 +222,13 @@ public class GiaoDienChinhGUI extends JPanel {
                 hienThiDanhSachHoaDon();
                 break;
 
-            // Tab Vật tư
-//            case "Kho thuốc":
-//                hienThiKhoThuoc();
-//                break;
-//            case "Dụng cụ y tế":
-//                hienThiDungCuYTe();
-//                break;
-
+             // Tab Vật tư
+            case "Quản lý xuất kho":
+                hienThiQuanLyXuatKho();
+                break;
+            case "Quản lý nhập kho":
+                hienThiQuanLyNhapKho();
+                break;
             // Tab Lịch hẹn
             case "Xem lịch":
                 hienThiXemLich();
@@ -248,11 +247,6 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    // =========================================================================
-    // TAB CHÍNH → MẶC ĐỊNH MỞ MENU CON ĐẦU TIÊN (ĐỒNG BỘ VỚI NAV)
-    // Giao diện chỉ được nhúng ở hàm menu con; hàm tab chính chỉ gọi lại.
-    // TUYỆT ĐỐI KHÔNG để hàm tự gọi chính nó (sẽ gây StackOverflowError).
-    // =========================================================================
 
     /** Tab 1: Nhân viên → Danh sách nhân viên */
     public void hienThiTabNhanVien() {
