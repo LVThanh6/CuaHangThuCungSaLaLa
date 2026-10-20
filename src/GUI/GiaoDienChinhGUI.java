@@ -321,14 +321,17 @@ public class GiaoDienChinhGUI extends JPanel {
     // --- Tab Thú cưng ---
     public void hienThiHoSoThuCung() {
         // TODO: Nhúng class giao diện Hồ sơ thú cưng vào đây
+    	setNoiDung(new HoSoThuCungGUI());
     }
 
     public void hienThiLoaiThuCung() {
         // TODO: Nhúng class giao diện Loại thú cưng vào đây
+    	setNoiDung(new LoaiThuCungGUI());
     }
 
     public void hienThiLichSuKham() {
         // TODO: Nhúng class giao diện Lịch sử khám vào đây
+    	setNoiDung(new LichSuKhamGUI());
     }
 
     // --- Tab Khách hàng ---
