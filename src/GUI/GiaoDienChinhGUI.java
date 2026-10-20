@@ -223,12 +223,12 @@ public class GiaoDienChinhGUI extends JPanel {
                 break;
 
             // Tab Vật tư
-            case "Kho thuốc":
-                hienThiKhoThuoc();
-                break;
-            case "Dụng cụ y tế":
-                hienThiDungCuYTe();
-                break;
+//            case "Kho thuốc":
+//                hienThiKhoThuoc();
+//                break;
+//            case "Dụng cụ y tế":
+//                hienThiDungCuYTe();
+//                break;
 
             // Tab Lịch hẹn
             case "Xem lịch":
@@ -249,79 +249,66 @@ public class GiaoDienChinhGUI extends JPanel {
     }
 
     // =========================================================================
-    // CÁC HÀM RỖNG ĐỂ BẠN NHÚNG GIAO DIỆN (PANEL / VIEW) CHO TỪNG TAB
-    // Bạn chỉ cần gọi: setNoiDung(new TenClassGUI());
+    // TAB CHÍNH → MẶC ĐỊNH MỞ MENU CON ĐẦU TIÊN (ĐỒNG BỘ VỚI NAV)
+    // Giao diện chỉ được nhúng ở hàm menu con; hàm tab chính chỉ gọi lại.
+    // TUYỆT ĐỐI KHÔNG để hàm tự gọi chính nó (sẽ gây StackOverflowError).
     // =========================================================================
 
-    /** Tab 1: Nhân viên */
+    /** Tab 1: Nhân viên → Danh sách nhân viên */
     public void hienThiTabNhanVien() {
-        // TODO: Nhúng class giao diện Nhân viên vào đây
-        // Ví dụ: setNoiDung(new NhanVienGUI());
+        hienThiDanhSachNhanVien();
     }
 
-    /** Tab 2: Thú cưng */
+    /** Tab 2: Thú cưng → Hồ sơ thú cưng */
     public void hienThiTabThuCung() {
-        // TODO: Nhúng class giao diện Thú cưng vào đây
-        // Ví dụ: setNoiDung(new ThuCungGUI());
+        hienThiHoSoThuCung();
     }
 
-    /** Tab 3: Khách hàng - Mặc định hiển thị Danh sách khách hàng */
+    /** Tab 3: Khách hàng → Danh sách khách hàng */
     public void hienThiTabKhachHang() {
-        try {
-            setNoiDung(new DanhSachKhachHangGUI());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage());
-        }
+        hienThiDanhSachKhachHang();
     }
 
-    /** Tab 4: Hóa đơn */
+    /** Tab 4: Hóa đơn → Danh sách hóa đơn */
     public void hienThiTabHoaDon() {
-        // TODO: Nhúng class giao diện Hóa đơn vào đây
-        // Ví dụ: setNoiDung(new HoaDonGUI());
+        hienThiDanhSachHoaDon();
     }
 
-    /** Tab 5: Vật tư */
+    /** Tab 5: Vật tư (hiện chưa có menu con nên nhúng trực tiếp) */
     public void hienThiTabVatTu() {
-        // TODO: Nhúng class giao diện Vật tư vào đây
-        // Ví dụ: setNoiDung(new VatTuGUI());
+        setNoiDung(new VatTu());
     }
 
-    /** Tab 6: Lịch hẹn */
+    /** Tab 6: Lịch hẹn → Lịch hôm nay */
     public void hienThiTabLichHen() {
-        // TODO: Nhúng class giao diện Lịch hẹn vào đây
-        // Ví dụ: setNoiDung(new LichHenGUI());
+        hienThiLichHomNay();
     }
 
-    /** Tab 7: Dịch vụ */
+    /** Tab 7: Dịch vụ → Bảng giá dịch vụ */
     public void hienThiTabDichVu() {
-        // TODO: Nhúng class giao diện Dịch vụ vào đây
-        // Ví dụ: setNoiDung(new DichVuGUI());
+        hienThiBangGiaDichVu();
     }
 
     // =========================================================================
-    // CÁC HÀM RỖNG CHO MENU CON (SUB-MENU) CỦA TỪNG TAB
+    // CÁC HÀM CHO MENU CON (SUB-MENU) CỦA TỪNG TAB - NƠI NHÚNG GIAO DIỆN
     // =========================================================================
 
     // --- Tab Nhân viên ---
     public void hienThiDanhSachNhanVien() {
-        // TODO: Nhúng class giao diện Danh sách nhân viên vào đây
+        setNoiDung(new NhanVienGUI());
     }
 
     public void hienThiDanhSachBacSi() {
-        // TODO: Nhúng class giao diện Danh sách bác sĩ vào đây
+        setNoiDung(new BacSiGUI());
     }
 
     public void hienThiThongKe() {
-        // TODO: Nhúng class ThongKeGUI vào đây
-        // Ví dụ (khi ThongKeGUI kế thừa JPanel/Component):
-        // setNoiDung(new ThongKeGUI());
+        setNoiDung(new ThongKeGUI());
     }
 
     // --- Tab Thú cưng ---
     public void hienThiHoSoThuCung() {
-        // TODO: Nhúng class giao diện Hồ sơ thú cưng vào đây
-    	setNoiDung(new HoSoThuCungGUI());
+
     }
 
     public void hienThiDonThuoc() {
@@ -359,28 +346,26 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Hóa đơn ---
     public void hienThiTaoHoaDonMoi() {
-        // TODO: Nhúng class giao diện Tạo hóa đơn mới vào đây
-    	setNoiDung(new LapHoaDon_gui());
+        setNoiDung(new LapHoaDon_gui());
     }
 
     public void hienThiDanhSachHoaDon() {
-        // TODO: Nhúng class giao diện Danh sách hóa đơn vào đây
-    	setNoiDung(new DSHoaDon_gui());
+        setNoiDung(new DSHoaDon_gui());
     }
 
-    // --- Tab Vật tư ---
-    public void hienThiKhoThuoc() {
-        // TODO: Nhúng class giao diện Kho thuốc vào đây
-    }
-
-    public void hienThiDungCuYTe() {
-        // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
-    }
+//    // --- Tab Vật tư ---
+//    public void hienThiKhoThuoc() {
+//        // TODO: Nhúng class giao diện Kho thuốc vào đây
+//    }
+//
+//    public void hienThiDungCuYTe() {
+//        // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
+//    }
 
     // --- Tab Lịch hẹn ---
     public void hienThiXemLich() {
         // TODO: Nhúng class giao diện Lịch hôm nay vào đây
-    	setNoiDung(new XemLichGUI());
+
     }
 
     public void hienThiDatLichMoi() {
@@ -390,7 +375,7 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Dịch vụ ---
     public void hienThiBangGiaDichVu() {
-        // TODO: Nhúng class giao diện Bảng giá dịch vụ vào đây
+        setNoiDung(new DichVu());
     }
 
     public void hienThiGoiChamSoc() {
