@@ -198,8 +198,8 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Hồ sơ thú cưng":
                 hienThiHoSoThuCung();
                 break;
-            case "Loại thú cưng":
-                hienThiLoaiThuCung();
+            case "Đơn Thuốc":
+                hienThiDonThuoc();
                 break;
             case "Lịch sử khám":
                 hienThiLichSuKham();
@@ -231,8 +231,8 @@ public class GiaoDienChinhGUI extends JPanel {
                 break;
 
             // Tab Lịch hẹn
-            case "Lịch hôm nay":
-                hienThiLichHomNay();
+            case "Xem lịch":
+                hienThiXemLich();
                 break;
             case "Đặt lịch mới":
                 hienThiDatLichMoi();
@@ -324,9 +324,9 @@ public class GiaoDienChinhGUI extends JPanel {
     	setNoiDung(new HoSoThuCungGUI());
     }
 
-    public void hienThiLoaiThuCung() {
+    public void hienThiDonThuoc() {
         // TODO: Nhúng class giao diện Loại thú cưng vào đây
-    	setNoiDung(new LoaiThuCungGUI());
+    	setNoiDung(new DonThuocGUI());
     }
 
     public void hienThiLichSuKham() {
@@ -378,12 +378,14 @@ public class GiaoDienChinhGUI extends JPanel {
     }
 
     // --- Tab Lịch hẹn ---
-    public void hienThiLichHomNay() {
+    public void hienThiXemLich() {
         // TODO: Nhúng class giao diện Lịch hôm nay vào đây
+    	setNoiDung(new XemLichGUI());
     }
 
     public void hienThiDatLichMoi() {
         // TODO: Nhúng class giao diện Đặt lịch mới vào đây
+    	setNoiDung(new DatLichMoiGUI());
     }
 
     // --- Tab Dịch vụ ---
