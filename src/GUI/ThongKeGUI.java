@@ -152,7 +152,7 @@ public class ThongKeGUI extends JPanel {
         JButton btnTaoBieuDo = new JButton("+ Tạo biểu đồ");
         btnTaoBieuDo.setFont(RangBuocGiaoDien.fontDam(13));
         btnTaoBieuDo.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
-        btnTaoBieuDo.setForeground(Color.WHITE);
+        btnTaoBieuDo.setForeground(Color.BLACK);
         btnTaoBieuDo.setFocusPainted(false);
         btnTaoBieuDo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnTaoBieuDo.setBorder(BorderFactory.createCompoundBorder(
@@ -561,7 +561,7 @@ public class ThongKeGUI extends JPanel {
             JButton btnTao = new JButton("Tạo biểu đồ");
             btnTao.setFont(RangBuocGiaoDien.fontDam(13));
             btnTao.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
-            btnTao.setForeground(Color.WHITE);
+            btnTao.setForeground(Color.BLACK);
             btnTao.setFocusPainted(false);
             btnTao.addActionListener(e -> xuLyTao());
 
