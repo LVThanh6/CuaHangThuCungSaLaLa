@@ -285,12 +285,7 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 5: Vật tư */
     public void hienThiTabVatTu() {
-            try {
             setNoiDung(new VatTu());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Vật tư: " + t.getMessage());
-        }
         // TODO: Nhúng class giao diện Vật tư vào đây
         // Ví dụ: setNoiDung(new VatTuGUI());
     }
@@ -303,12 +298,9 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 7: Dịch vụ */
     public void hienThiTabDichVu() {
-    	try {
+    
             setNoiDung(new DichVu());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Dịch vụ: " + t.getMessage());
-        }
+      
         // TODO: Nhúng class giao diện Dịch vụ vào đây
         // Ví dụ: setNoiDung(new DichVuGUI());
     }
