@@ -222,14 +222,13 @@ public class GiaoDienChinhGUI extends JPanel {
                 hienThiDanhSachHoaDon();
                 break;
 
-            // Tab Vật tư
-//            case "Kho thuốc":
-//                hienThiKhoThuoc();
-//                break;
-//            case "Dụng cụ y tế":
-//                hienThiDungCuYTe();
-//                break;
-
+             // Tab Vật tư
+            case "Quản lý xuất kho":
+                hienThiQuanLyXuatKho();
+                break;
+            case "Quản lý nhập kho":
+                hienThiQuanLyNhapKho();
+                break;
             // Tab Lịch hẹn
             case "Lịch hôm nay":
                 hienThiLichHomNay();
@@ -248,7 +247,17 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    // =========================================================================
+    private void hienThiQuanLyNhapKho() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void hienThiQuanLyXuatKho() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	// =========================================================================
     // CÁC HÀM RỖNG ĐỂ BẠN NHÚNG GIAO DIỆN (PANEL / VIEW) CHO TỪNG TAB
     // Bạn chỉ cần gọi: setNoiDung(new TenClassGUI());
     // =========================================================================
