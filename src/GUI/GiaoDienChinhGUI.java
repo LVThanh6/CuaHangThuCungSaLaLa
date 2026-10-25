@@ -281,7 +281,7 @@ public class GiaoDienChinhGUI extends JPanel {
 
     /** Tab 6: Lịch hẹn → Lịch hôm nay */
     public void hienThiTabLichHen() {
-        hienThiLichHomNay();
+        hienThiXemLich();
     }
 
     /** Tab 7: Dịch vụ → Bảng giá dịch vụ */
