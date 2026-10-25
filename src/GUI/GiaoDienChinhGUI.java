@@ -223,12 +223,12 @@ public class GiaoDienChinhGUI extends JPanel {
                 break;
 
             // Tab Vật tư
-//            case "Kho thuốc":
-//                hienThiKhoThuoc();
-//                break;
-//            case "Dụng cụ y tế":
-//                hienThiDungCuYTe();
-//                break;
+            // case "Kho thuốc":
+            // hienThiKhoThuoc();
+            // break;
+            // case "Dụng cụ y tế":
+            // hienThiDungCuYTe();
+            // break;
 
             // Tab Lịch hẹn
             case "Xem lịch":
@@ -295,11 +295,11 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Nhân viên ---
     public void hienThiDanhSachNhanVien() {
-        setNoiDung(new NhanVienGUI());
+        setNoiDung(new NhanSuGUI(NhanSuGUI.CHE_DO_NHAN_VIEN));
     }
 
     public void hienThiDanhSachBacSi() {
-        setNoiDung(new BacSiGUI());
+        setNoiDung(new NhanSuGUI(NhanSuGUI.CHE_DO_BAC_SI));
     }
 
     public void hienThiThongKe() {
@@ -308,17 +308,18 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Thú cưng ---
     public void hienThiHoSoThuCung() {
+        setNoiDung(new HoSoThuCungGUI());
 
     }
 
     public void hienThiDonThuoc() {
         // TODO: Nhúng class giao diện Loại thú cưng vào đây
-    	setNoiDung(new DonThuocGUI());
+        setNoiDung(new DonThuocGUI());
     }
 
     public void hienThiLichSuKham() {
         // TODO: Nhúng class giao diện Lịch sử khám vào đây
-    	setNoiDung(new LichSuKhamGUI());
+        setNoiDung(new LichSuKhamGUI());
     }
 
     // --- Tab Khách hàng ---
@@ -353,24 +354,25 @@ public class GiaoDienChinhGUI extends JPanel {
         setNoiDung(new DSHoaDon_gui());
     }
 
-//    // --- Tab Vật tư ---
-//    public void hienThiKhoThuoc() {
-//        // TODO: Nhúng class giao diện Kho thuốc vào đây
-//    }
-//
-//    public void hienThiDungCuYTe() {
-//        // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
-//    }
+    // // --- Tab Vật tư ---
+    // public void hienThiKhoThuoc() {
+    // // TODO: Nhúng class giao diện Kho thuốc vào đây
+    // }
+    //
+    // public void hienThiDungCuYTe() {
+    // // TODO: Nhúng class giao diện Dụng cụ y tế vào đây
+    // }
 
     // --- Tab Lịch hẹn ---
     public void hienThiXemLich() {
         // TODO: Nhúng class giao diện Lịch hôm nay vào đây
+        setNoiDung(new XemLichGUI());
 
     }
 
     public void hienThiDatLichMoi() {
         // TODO: Nhúng class giao diện Đặt lịch mới vào đây
-    	setNoiDung(new DatLichMoiGUI());
+        setNoiDung(new DatLichMoiGUI());
     }
 
     // --- Tab Dịch vụ ---

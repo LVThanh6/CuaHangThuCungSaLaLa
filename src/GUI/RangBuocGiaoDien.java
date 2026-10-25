@@ -18,7 +18,8 @@ public class RangBuocGiaoDien {
 
     // =========================================================================
     // 1. QUY ĐỊNH KÍCH THƯỚC CHUẨN MÀN HÌNH CHÍNH & NỘI DUNG TAB
-    // Phù hợp từ laptop màn hình nhỏ (1366x768) đến Full HD (1920x1080), 2K (2560x1440)
+    // Phù hợp từ laptop màn hình nhỏ (1366x768) đến Full HD (1920x1080), 2K
+    // (2560x1440)
     // =========================================================================
     public static final int MAN_HINH_RONG_TOI_THIEU = 1100;
     public static final int MAN_HINH_CAO_TOI_THIEU = 650;
@@ -36,20 +37,20 @@ public class RangBuocGiaoDien {
     // 2. BẢNG MÀU CHUẨN HỆ THỐNG SALALA PET SHOP
     // =========================================================================
     // Màu chủ đạo thương hiệu (Xanh mòng két / Teal)
-    public static final Color MAU_CHU_DAO = new Color(14, 116, 101);          // #0E7465
-    public static final Color MAU_CHU_DAO_RE_CHUOT = new Color(11, 95, 83);   // Khi rê chuột
-    public static final Color MAU_CHU_DAO_NHAT = new Color(230, 244, 241);     // Nền nhẹ
+    public static final Color MAU_CHU_DAO = new Color(14, 116, 101); // #0E7465
+    public static final Color MAU_CHU_DAO_RE_CHUOT = new Color(11, 95, 83); // Khi rê chuột
+    public static final Color MAU_CHU_DAO_NHAT = new Color(230, 244, 241); // Nền nhẹ
     public static final Color MAU_VIEN_CHU_DAO = new Color(178, 222, 215);
 
     // Màu nền và khung thẻ
-    public static final Color MAU_NEN_TRANG = new Color(248, 250, 252);       // #F8FAFC
+    public static final Color MAU_NEN_TRANG = new Color(248, 250, 252); // #F8FAFC
     public static final Color MAU_NEN_THE = Color.WHITE;
-    public static final Color MAU_DUONG_VIEN = new Color(226, 232, 240);       // #E2E8F0
+    public static final Color MAU_DUONG_VIEN = new Color(226, 232, 240); // #E2E8F0
 
     // Màu chữ
-    public static final Color MAU_CHU_CHINH = new Color(30, 41, 59);          // #1E293B
-    public static final Color MAU_CHU_PHU = new Color(100, 116, 139);         // #64748B
-    public static final Color MAU_CHU_GOI_Y = new Color(148, 163, 184);       // #94A3B8
+    public static final Color MAU_CHU_CHINH = new Color(30, 41, 59); // #1E293B
+    public static final Color MAU_CHU_PHU = new Color(100, 116, 139); // #64748B
+    public static final Color MAU_CHU_GOI_Y = new Color(148, 163, 184); // #94A3B8
 
     // Màu Bảng Dữ Liệu
     public static final Color MAU_TIEU_DE_BANG = new Color(248, 250, 252);

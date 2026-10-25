@@ -71,8 +71,7 @@ public class DangNhapGUI extends JFrame {
                 // Gradient nền chuyển sắc nhẹ nhàng
                 GradientPaint gp = new GradientPaint(
                         0, 0, new Color(13, 148, 136),
-                        getWidth(), getHeight(), new Color(15, 118, 110)
-                );
+                        getWidth(), getHeight(), new Color(15, 118, 110));
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
 
@@ -189,8 +188,7 @@ public class DangNhapGUI extends JFrame {
         txtTenDangNhap.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtTenDangNhap.setBorder(new CompoundBorder(
                 new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
-                new EmptyBorder(0, 12, 0, 12)
-        ));
+                new EmptyBorder(0, 12, 0, 12)));
         txtTenDangNhap.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(txtTenDangNhap);
         form.add(Box.createVerticalStrut(16));
@@ -209,8 +207,7 @@ public class DangNhapGUI extends JFrame {
         txtMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtMatKhau.setBorder(new CompoundBorder(
                 new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
-                new EmptyBorder(0, 12, 0, 12)
-        ));
+                new EmptyBorder(0, 12, 0, 12)));
         txtMatKhau.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(txtMatKhau);
         form.add(Box.createVerticalStrut(8));
@@ -297,8 +294,7 @@ public class DangNhapGUI extends JFrame {
         b.setBackground(new Color(240, 253, 250));
         b.setBorder(new CompoundBorder(
                 new LineBorder(new Color(204, 251, 241), 1, true),
-                new EmptyBorder(2, 6, 2, 6)
-        ));
+                new EmptyBorder(2, 6, 2, 6)));
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.addActionListener(e -> {
