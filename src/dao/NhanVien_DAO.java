@@ -203,4 +203,49 @@ public class NhanVien_DAO {
         }
         return null;
     }
+
+    public ArrayList<NhanVien_entity> getAllNhanVien() {
+        try {
+            return getAll();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public String phatSinhMaNhanVien() {
+        try {
+            return getMaTiepTheo();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean createNhanVien(NhanVien_entity nv) {
+        try {
+            return them(nv);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateNhanVien(NhanVien_entity nv) {
+        try {
+            return capNhat(nv);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteNhanVien(String maNV) {
+        try {
+            return xoa(maNV);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
