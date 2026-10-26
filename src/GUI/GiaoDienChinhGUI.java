@@ -1,6 +1,9 @@
 package GUI;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import GUI.BacSi.BacSiGUI;
@@ -26,16 +29,96 @@ import GUI.VatTu.VatTu;
  * Bao gồm 2 phần:
  * 1. Header (HeaderGUI): Hiển thị logo, thông tin và phân quyền tabs theo vai
  * trò người dùng (BorderLayout.NORTH).
- * 2. Main (panelNoiDung): Vùng nội dung chính hiển thị các tab, chừa sẵn các
- * hàm rỗng để nhúng class khác (BorderLayout.CENTER).
+ * 2. Main (panelNoiDung): Vùng nội dung chính hiển thị các tab, có ảnh nền
+ * (BorderLayout.CENTER).
  */
 public class GiaoDienChinhGUI extends JPanel {
+
+    // ==========================================
+    // CẤU HÌNH ẢNH NỀN
+    // ==========================================
+    /** Thư mục chứa ảnh (tương đối so với thư mục dự án CuaHangThuCungSaLaLa). */
+    private static final String THU_MUC_ANH = "img";
+    /** Tên file ảnh nền. Đổi lại cho khớp với file thực tế trong thư mục img. */
+    private static final String TEN_ANH_NEN = "background.jpg";
+    /** Độ mờ lớp phủ trắng lên ảnh nền (0 = không phủ, 255 = trắng hoàn toàn). */
+    private static final int DO_MO_LOP_PHU = 150;
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
     private HeaderGUI headerGUI; // Phần 1: Thanh Header
     private JPanel panelNoiDung; // Phần 2: Vùng Main chứa nội dung tab bên trong
     private JLabel nhanNoiDung;
     private String tabHienTai;
+
+    // ==========================================
+    // PANEL VẼ ẢNH NỀN
+    // ==========================================
+    /**
+     * Panel vẽ ảnh nền co giãn theo kích thước vùng nội dung.
+     * Các component con cần setOpaque(false) để ảnh nền hiện xuyên qua.
+     */
+    private static class PanelAnhNen extends JPanel {
+        private BufferedImage anhNen;
+
+        public PanelAnhNen(BufferedImage anhNen) {
+            super(new BorderLayout());
+            this.anhNen = anhNen;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (anhNen == null)
+                return;
+
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            g2.drawImage(anhNen, 0, 0, getWidth(), getHeight(), null);
+
+            if (DO_MO_LOP_PHU > 0) {
+                g2.setColor(new Color(255, 255, 255, DO_MO_LOP_PHU));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+            g2.dispose();
+        }
+    }
+
+    /**
+     * Đọc ảnh nền từ thư mục img. Nếu không thấy file đã chỉ định thì lấy ảnh
+     * (png/jpg/jpeg) đầu tiên tìm được trong thư mục. Trả về null nếu không có.
+     */
+    private static BufferedImage docAnhNen() {
+        try {
+            File fileAnh = new File("img", "background.jpg");
+
+            System.out.println("Thư mục đang chạy: "
+                    + System.getProperty("user.dir"));
+            System.out.println("Đường dẫn ảnh: "
+                    + fileAnh.getAbsolutePath());
+            System.out.println("Ảnh có tồn tại: "
+                    + fileAnh.exists());
+
+            if (!fileAnh.exists()) {
+                System.err.println("Không tìm thấy file ảnh nền!");
+                return null;
+            }
+
+            BufferedImage anh = ImageIO.read(fileAnh);
+
+            if (anh == null) {
+                System.err.println("Không đọc được định dạng ảnh!");
+            }
+
+            return anh;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     // ==========================================
     // CONSTRUCTORS
@@ -61,9 +144,9 @@ public class GiaoDienChinhGUI extends JPanel {
         headerGUI = new HeaderGUI(tenNguoiDung, chucVu);
         add(headerGUI, BorderLayout.NORTH);
 
-        // 2. NHÚNG PHẦN MAIN (NỘI DUNG) VÀO CENTER
-        panelNoiDung = new JPanel(new BorderLayout());
-        panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        // 2. NHÚNG PHẦN MAIN (NỘI DUNG) VÀO CENTER - CÓ ẢNH NỀN
+        panelNoiDung = new PanelAnhNen(docAnhNen());
+        panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG); // màu dự phòng nếu không có ảnh
         panelNoiDung.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TAB_TOI_THIEU);
         panelNoiDung.setPreferredSize(
                 new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
@@ -117,7 +200,8 @@ public class GiaoDienChinhGUI extends JPanel {
             if (cuonTrang && !(comp instanceof JScrollPane)) {
                 JScrollPane scrollPane = new JScrollPane(comp);
                 scrollPane.setBorder(null);
-                scrollPane.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+                scrollPane.setOpaque(false); // cho ảnh nền hiện xuyên qua
+                scrollPane.getViewport().setOpaque(false); // cho ảnh nền hiện xuyên qua
                 scrollPane.getVerticalScrollBar().setUnitIncrement(16);
                 scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
                 panelNoiDung.add(scrollPane, BorderLayout.CENTER);
@@ -152,7 +236,7 @@ public class GiaoDienChinhGUI extends JPanel {
         nhanNoiDung.setText(thongBao);
 
         JPanel vungMacDinh = new JPanel(new GridBagLayout());
-        vungMacDinh.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        vungMacDinh.setOpaque(false); // cho ảnh nền hiện xuyên qua
         vungMacDinh.add(nhanNoiDung);
 
         panelNoiDung.removeAll();
@@ -327,16 +411,13 @@ public class GiaoDienChinhGUI extends JPanel {
     // --- Tab Thú cưng ---
     public void hienThiHoSoThuCung() {
         setNoiDung(new HoSoThuCungGUI());
-
     }
 
     public void hienThiDonThuoc() {
-        // TODO: Nhúng class giao diện Loại thú cưng vào đây
         setNoiDung(new DonThuocGUI());
     }
 
     public void hienThiLichSuKham() {
-        // TODO: Nhúng class giao diện Lịch sử khám vào đây
         setNoiDung(new LichSuKhamGUI());
     }
 
@@ -383,13 +464,10 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Lịch hẹn ---
     public void hienThiXemLich() {
-        // TODO: Nhúng class giao diện Lịch hôm nay vào đây
         setNoiDung(new XemLichGUI());
-
     }
 
     public void hienThiDatLichMoi() {
-        // TODO: Nhúng class giao diện Đặt lịch mới vào đây
         setNoiDung(new DatLichMoiGUI());
     }
 
