@@ -9,12 +9,13 @@ import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.table.TableCellRenderer;
 
 /**
  * Class HoSoThuCungGUI: Giao diện "Danh sách thú cưng" (Tab Thú cưng ➔ Hồ sơ thú cưng).
- * Chỉ dựng giao diện, chưa xử lý nghiệp vụ.
- * Các trường hiển thị dựa theo bảng ThuCung (kết hợp KhachHang để lấy SĐT chủ nuôi).
+ * Chuẩn thiết kế mới:
+ * - Loại bỏ hoàn toàn cột "Thao tác" khỏi bảng.
+ * - Toolbar trên bảng tích hợp cụm nút: "+ Thêm thú cưng", "Xem chi tiết", "Chỉnh sửa", "Xóa", "Xuất Excel".
+ * - Các nút Xem/Sửa/Xóa mặc định bị disable, chỉ bật khi chọn dòng trên bảng qua ListSelectionListener.
  */
 public class HoSoThuCungGUI extends JPanel {
 
@@ -30,18 +31,18 @@ public class HoSoThuCungGUI extends JPanel {
     private static final int CHIEU_CAO_O_NHAP = 38;
     private static final int CHIEU_CAO_THANH_PHAN_TRANG = 56;
 
-    // --- Dữ liệu hiển thị mẫu (chỉ để dựng giao diện) ---
+    // --- Dữ liệu hiển thị mẫu (8 cột, KHÔNG có cột Thao tác) ---
     private final String[] tieuDeCot = { "Mã thú cưng", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh",
-            "Chủ nuôi", "SĐT chủ", "Đặc điểm nhận diện", "Thao tác" };
+            "Chủ nuôi", "SĐT chủ", "Đặc điểm nhận diện" };
     private final Object[][] duLieuMau = {
-            { "TC001", "Mimi", "Mèo", "Đực", "12/05/2022", "Nguyễn Thị Hoa", "0904000001", "Lông trắng, mắt xanh", "" },
-            { "TC002", "Lucky", "Chó", "Cái", "20/08/2023", "Trần Văn Hùng", "0904000002", "Lông vàng, đuôi ngắn", "" },
-            { "TC003", "Bông", "Mèo", "Đực", "03/02/2023", "Lê Thị Kim", "0904000003", "Đốm đen ở tai trái", "" },
-            { "TC004", "Milo", "Thỏ", "Cái", "15/11/2023", "Phạm Văn Lâm", "0904000004", "Lông xám, khoang trắng ở ngực", "" },
-            { "TC005", "Kitty", "Hamster", "Đực", "22/06/2022", "Võ Thị My", "0904000005", "Lông trắng, mắt xanh", "" },
-            { "TC006", "Boss", "Chó", "Cái", "08/09/2023", "Đặng Văn Nghĩa", "0904000006", "Lông vàng, đuôi ngắn", "" },
-            { "TC007", "Susu", "Mèo", "Đực", "14/03/2024", "Bùi Thị Oanh", "0904000007", "Đốm đen ở tai trái", "" },
-            { "TC008", "Nâu", "Chó", "Cái", "10/01/2023", "Hồ Văn Phong", "0904000008", "Lông xám, khoang trắng ở ngực", "" }
+            { "TC001", "Mimi", "Mèo", "Đực", "12/05/2022", "Nguyễn Thị Hoa", "0904000001", "Lông trắng, mắt xanh" },
+            { "TC002", "Lucky", "Chó", "Cái", "20/08/2023", "Trần Văn Hùng", "0904000002", "Lông vàng, đuôi ngắn" },
+            { "TC003", "Bông", "Mèo", "Đực", "03/02/2023", "Lê Thị Kim", "0904000003", "Đốm đen ở tai trái" },
+            { "TC004", "Milo", "Thỏ", "Cái", "15/11/2023", "Phạm Văn Lâm", "0904000004", "Lông xám, khoang trắng ở ngực" },
+            { "TC005", "Kitty", "Hamster", "Đực", "22/06/2022", "Võ Thị My", "0904000005", "Lông trắng, mắt xanh" },
+            { "TC006", "Boss", "Chó", "Cái", "08/09/2023", "Đặng Văn Nghĩa", "0904000006", "Lông vàng, đuôi ngắn" },
+            { "TC007", "Susu", "Mèo", "Đực", "14/03/2024", "Bùi Thị Oanh", "0904000007", "Đốm đen ở tai trái" },
+            { "TC008", "Nâu", "Chó", "Cái", "10/01/2023", "Hồ Văn Phong", "0904000008", "Lông xám, khoang trắng ở ngực" }
     };
     private final String[] dsLoaiLoc = { "Loài: Tất cả", "Chó", "Mèo", "Thỏ", "Hamster" };
     private final String[] dsSoDongTrang = { "8", "16", "32" };
@@ -51,7 +52,6 @@ public class HoSoThuCungGUI extends JPanel {
     private JLabel nhanDuongDan;
     private JLabel nhanTieuDe;
     private JLabel nhanMoTa;
-    private NutBoTron nutThemThuCung;
 
     // --- Phần thẻ thống kê ---
     private JPanel panelThongKe;
@@ -60,14 +60,15 @@ public class HoSoThuCungGUI extends JPanel {
     private JLabel nhanSoMeo;
     private JLabel nhanSoLoaiKhac;
 
-    // --- Phần thẻ chứa bảng ---
+    // --- Phần thẻ chứa bảng & Cụm nút thao tác độc lập ---
     private PanelBoTron panelTheBang;
     private JPanel panelCongCu;
     private OTimKiemGoiY txtTimKiem;
     private JComboBox<String> cboLoai;
-    private JButton nutXemHoSo;
-    private JButton nutChinhSua;
-    private JButton nutXoa;
+    private NutBoTron nutThemThuCung;
+    private NutBoTron nutXemHoSo;
+    private NutBoTron nutChinhSua;
+    private NutBoTron nutXoa;
     private NutBoTron nutXuatDanhSach;
     private TableMau bangThuCung;
     private JScrollPane thanhCuonBang;
@@ -90,6 +91,7 @@ public class HoSoThuCungGUI extends JPanel {
     // =========================================================================
     public HoSoThuCungGUI() {
         khoiTaoGiaoDien();
+        caiDatSuKien();
     }
 
     // =========================================================================
@@ -143,16 +145,7 @@ public class HoSoThuCungGUI extends JPanel {
         panelChu.add(Box.createVerticalStrut(2));
         panelChu.add(nhanMoTa);
 
-        nutThemThuCung = new NutBoTron("+  Thêm thú cưng", RangBuocGiaoDien.MAU_CHU_DAO,
-                RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8);
-        nutThemThuCung.setPreferredSize(new Dimension(152, 40));
-
-        JPanel panelNut = new JPanel(new GridBagLayout());
-        panelNut.setOpaque(false);
-        panelNut.add(nutThemThuCung);
-
         panelTieuDe.add(panelChu, BorderLayout.WEST);
-        panelTieuDe.add(panelNut, BorderLayout.EAST);
     }
 
     // =========================================================================
@@ -246,48 +239,79 @@ public class HoSoThuCungGUI extends JPanel {
         panelCongCu.setBorder(new EmptyBorder(16, 20, 16, 20));
 
         txtTimKiem = new OTimKiemGoiY("Tìm theo mã thú cưng, tên thú cưng, chủ nuôi...");
-        txtTimKiem.setPreferredSize(new Dimension(400, CHIEU_CAO_O_NHAP));
-        txtTimKiem.setMaximumSize(new Dimension(400, CHIEU_CAO_O_NHAP));
+        txtTimKiem.setPreferredSize(new Dimension(300, CHIEU_CAO_O_NHAP));
+        txtTimKiem.setMaximumSize(new Dimension(300, CHIEU_CAO_O_NHAP));
 
         cboLoai = new JComboBox<>(dsLoaiLoc);
         cboLoai.setFont(RangBuocGiaoDien.fontThuong(13));
         cboLoai.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         cboLoai.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
-        cboLoai.setPreferredSize(new Dimension(210, CHIEU_CAO_O_NHAP));
-        cboLoai.setMaximumSize(new Dimension(210, CHIEU_CAO_O_NHAP));
+        cboLoai.setPreferredSize(new Dimension(170, CHIEU_CAO_O_NHAP));
+        cboLoai.setMaximumSize(new Dimension(170, CHIEU_CAO_O_NHAP));
 
-        nutXemHoSo = taoNutLienKet("Xem hồ sơ", RangBuocGiaoDien.MAU_CHU_DAO);
-        nutChinhSua = taoNutLienKet("Chỉnh sửa", RangBuocGiaoDien.MAU_CHU_DAO);
-        nutXoa = taoNutLienKet("Xóa", RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
+        // CỤM NÚT THAO TÁC ĐỘC LẬP THEO QUY TẮC CHUẨN
+        nutThemThuCung = new NutBoTron("+ Thêm mới", RangBuocGiaoDien.MAU_CHU_DAO,
+                RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8);
+        nutThemThuCung.setPreferredSize(new Dimension(125, CHIEU_CAO_O_NHAP));
 
-        nutXuatDanhSach = new NutBoTron("Xuất danh sách", RangBuocGiaoDien.MAU_NEN_THE,
+        nutXemHoSo = new NutBoTron("Xem chi tiết", RangBuocGiaoDien.MAU_NEN_THE,
                 RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN,
                 RangBuocGiaoDien.MAU_CHU_CHINH, 8);
-        nutXuatDanhSach.setPreferredSize(new Dimension(154, CHIEU_CAO_O_NHAP));
-        nutXuatDanhSach.setMaximumSize(new Dimension(154, CHIEU_CAO_O_NHAP));
+        nutXemHoSo.setPreferredSize(new Dimension(110, CHIEU_CAO_O_NHAP));
+
+        nutChinhSua = new NutBoTron("Chỉnh sửa", RangBuocGiaoDien.MAU_NEN_THE,
+                RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN,
+                RangBuocGiaoDien.MAU_CHU_CHINH, 8);
+        nutChinhSua.setPreferredSize(new Dimension(100, CHIEU_CAO_O_NHAP));
+
+        nutXoa = new NutBoTron("Xóa", RangBuocGiaoDien.MAU_NEN_THE,
+                RangBuocGiaoDien.MAU_NGUY_HIEM_NEN, RangBuocGiaoDien.MAU_DUONG_VIEN,
+                RangBuocGiaoDien.MAU_NGUY_HIEM_CHU, 8);
+        nutXoa.setPreferredSize(new Dimension(80, CHIEU_CAO_O_NHAP));
+
+        nutXuatDanhSach = new NutBoTron("Xuất Excel", RangBuocGiaoDien.MAU_NEN_THE,
+                RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN,
+                RangBuocGiaoDien.MAU_CHU_CHINH, 8);
+        nutXuatDanhSach.setPreferredSize(new Dimension(110, CHIEU_CAO_O_NHAP));
+
+        // Mặc định các nút tác động theo dòng bị disable
+        nutXemHoSo.setEnabled(false);
+        nutChinhSua.setEnabled(false);
+        nutXoa.setEnabled(false);
 
         panelCongCu.add(txtTimKiem);
         panelCongCu.add(Box.createHorizontalStrut(12));
         panelCongCu.add(cboLoai);
         panelCongCu.add(Box.createHorizontalGlue());
+        panelCongCu.add(nutThemThuCung);
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutXemHoSo);
-        panelCongCu.add(Box.createHorizontalStrut(14));
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutChinhSua);
-        panelCongCu.add(Box.createHorizontalStrut(14));
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutXoa);
-        panelCongCu.add(Box.createHorizontalStrut(40));
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutXuatDanhSach);
     }
 
     private void khoiTaoBang() {
         bangThuCung = new TableMau(tieuDeCot, duLieuMau);
+        bangThuCung.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        int cotThaoTac = tieuDeCot.length - 1;
-        int[] doRongCot = { 100, 130, 90, 90, 110, 170, 120, 250, 140 };
+        int[] doRongCot = { 110, 130, 90, 90, 110, 170, 120, 280 };
         for (int i = 0; i < doRongCot.length; i++) {
             bangThuCung.getColumnModel().getColumn(i).setPreferredWidth(doRongCot[i]);
         }
-        bangThuCung.getColumnModel().getColumn(cotThaoTac).setCellRenderer(new OThaoTac(bangThuCung));
+
+        // Lắng nghe chọn dòng: chỉ bật Xem/Sửa/Xóa khi có dòng được chọn
+        bangThuCung.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean coChon = bangThuCung.getSelectedRow() != -1;
+                nutXemHoSo.setEnabled(coChon);
+                nutChinhSua.setEnabled(coChon);
+                nutXoa.setEnabled(coChon);
+            }
+        });
 
         thanhCuonBang = new JScrollPane(bangThuCung);
         thanhCuonBang.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
@@ -342,20 +366,116 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     // =========================================================================
-    // CÁC HÀM TIỆN ÍCH TẠO THÀNH PHẦN
+    // CÀI ĐẶT SỰ KIỆN CHO CỤM NÚT THAO TÁC
     // =========================================================================
-    private JButton taoNutLienKet(String chu, Color mauChu) {
-        JButton nut = new JButton(chu);
-        nut.setFont(RangBuocGiaoDien.fontThuong(12));
-        nut.setForeground(mauChu);
-        nut.setContentAreaFilled(false);
-        nut.setBorderPainted(false);
-        nut.setFocusPainted(false);
-        nut.setMargin(new Insets(0, 0, 0, 0));
-        nut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return nut;
+    private void caiDatSuKien() {
+        nutThemThuCung.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Mở form thêm mới hồ sơ thú cưng.", "Thêm thú cưng",
+                    JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        nutXemHoSo.addActionListener(e -> hienThiDialogChiTietThuCung());
+
+        nutChinhSua.addActionListener(e -> {
+            int row = bangThuCung.getSelectedRow();
+            if (row != -1) {
+                String maTC = bangThuCung.getValueAt(row, 0).toString();
+                String tenTC = bangThuCung.getValueAt(row, 1).toString();
+                JOptionPane.showMessageDialog(this, "Mở form chỉnh sửa thông tin cho thú cưng: " + tenTC + " (" + maTC + ")",
+                        "Chỉnh sửa", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        nutXoa.addActionListener(e -> {
+            int row = bangThuCung.getSelectedRow();
+            if (row != -1) {
+                String tenTC = bangThuCung.getValueAt(row, 1).toString();
+                int hoi = JOptionPane.showConfirmDialog(this,
+                        "Bạn có chắc chắn muốn xóa hồ sơ thú cưng \"" + tenTC + "\" không?",
+                        "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (hoi == JOptionPane.YES_OPTION) {
+                    JOptionPane.showMessageDialog(this, "Đã xóa hồ sơ thú cưng thành công!", "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        });
+
+        nutXuatDanhSach.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Đã xuất dữ liệu danh sách thú cưng sang file Excel thành công!",
+                    "Xuất Excel", JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
+    private void hienThiDialogChiTietThuCung() {
+        int row = bangThuCung.getSelectedRow();
+        if (row == -1) return;
+
+        String ma = bangThuCung.getValueAt(row, 0).toString();
+        String ten = bangThuCung.getValueAt(row, 1).toString();
+        String loai = bangThuCung.getValueAt(row, 2).toString();
+        String gioiTinh = bangThuCung.getValueAt(row, 3).toString();
+        String ngaySinh = bangThuCung.getValueAt(row, 4).toString();
+        String chuNuoi = bangThuCung.getValueAt(row, 5).toString();
+        String sdt = bangThuCung.getValueAt(row, 6).toString();
+        String dacDiem = bangThuCung.getValueAt(row, 7).toString();
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Hồ sơ chi tiết thú cưng", true);
+        dialog.setSize(480, 420);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel pContent = new JPanel(new BorderLayout(0, 16));
+        pContent.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        pContent.setBorder(new EmptyBorder(20, 24, 20, 24));
+
+        JLabel lblTitle = new JLabel("HỒ SƠ THÚ CƯNG: " + ten.toUpperCase());
+        lblTitle.setFont(RangBuocGiaoDien.fontDam(18));
+        lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+
+        PanelBoTron card = new PanelBoTron(new GridLayout(8, 2, 8, 10), 10, Color.WHITE, RangBuocGiaoDien.MAU_DUONG_VIEN);
+        card.setBorder(new EmptyBorder(14, 18, 14, 18));
+
+        themDongThongTin(card, "Mã thú cưng:", ma);
+        themDongThongTin(card, "Tên thú cưng:", ten);
+        themDongThongTin(card, "Loài:", loai);
+        themDongThongTin(card, "Giới tính:", gioiTinh);
+        themDongThongTin(card, "Ngày sinh:", ngaySinh);
+        themDongThongTin(card, "Chủ nuôi:", chuNuoi);
+        themDongThongTin(card, "Số điện thoại:", sdt);
+        themDongThongTin(card, "Đặc điểm nhận diện:", dacDiem);
+
+        NutBoTron btnDong = new NutBoTron("Đóng", RangBuocGiaoDien.MAU_CHU_DAO,
+                RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8);
+        btnDong.setPreferredSize(new Dimension(100, 36));
+        btnDong.addActionListener(e -> dialog.dispose());
+
+        JPanel pBtn = new FlowLayout(FlowLayout.RIGHT, 0, 0) == null ? new JPanel() : new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        pBtn.setOpaque(false);
+        pBtn.add(btnDong);
+
+        pContent.add(lblTitle, BorderLayout.NORTH);
+        pContent.add(card, BorderLayout.CENTER);
+        pContent.add(pBtn, BorderLayout.SOUTH);
+
+        dialog.setContentPane(pContent);
+        dialog.setVisible(true);
+    }
+
+    private void themDongThongTin(JPanel panel, String tieuDe, String giaTri) {
+        JLabel lblT = new JLabel(tieuDe);
+        lblT.setFont(RangBuocGiaoDien.fontThuong(12));
+        lblT.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+
+        JLabel lblV = new JLabel(giaTri);
+        lblV.setFont(RangBuocGiaoDien.fontDam(13));
+        lblV.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+
+        panel.add(lblT);
+        panel.add(lblV);
+    }
+
+    // =========================================================================
+    // CÁC HÀM TIỆN ÍCH TẠO THÀNH PHẦN
+    // =========================================================================
     private NutBoTron taoNutTrang(String chu, boolean dangChon) {
         NutBoTron nut;
         if (dangChon) {
@@ -371,7 +491,7 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     // =========================================================================
-    // GETTERS (để nhóm làm chức năng truy cập khi cần)
+    // GETTERS
     // =========================================================================
     public TableMau getBangThuCung() {
         return bangThuCung;
@@ -422,7 +542,7 @@ public class HoSoThuCungGUI extends JPanel {
         }
     }
 
-    /** Nút bo góc, có hiệu ứng rê chuột. */
+    /** Nút bo góc, có hiệu ứng rê chuột và hỗ trợ trạng thái disabled mượt mà. */
     public static class NutBoTron extends JButton {
         private final Color mauNen;
         private final Color mauReChuot;
@@ -447,8 +567,10 @@ public class HoSoThuCungGUI extends JPanel {
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    dangReChuot = true;
-                    repaint();
+                    if (isEnabled()) {
+                        dangReChuot = true;
+                        repaint();
+                    }
                 }
 
                 @Override
@@ -460,14 +582,28 @@ public class HoSoThuCungGUI extends JPanel {
         }
 
         @Override
+        public void setEnabled(boolean b) {
+            super.setEnabled(b);
+            setCursor(b ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+            repaint();
+        }
+
+        @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             RangBuocGiaoDien.batKhuRangCua(g2);
-            g2.setColor(dangReChuot ? mauReChuot : mauNen);
-            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, banKinh, banKinh);
-            if (mauVien != null) {
-                g2.setColor(mauVien);
+            if (!isEnabled()) {
+                g2.setColor(RangBuocGiaoDien.MAU_TRUNG_TINH_NEN);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, banKinh, banKinh);
+                g2.setColor(RangBuocGiaoDien.MAU_DUONG_VIEN);
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, banKinh, banKinh);
+            } else {
+                g2.setColor(dangReChuot ? mauReChuot : mauNen);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, banKinh, banKinh);
+                if (mauVien != null) {
+                    g2.setColor(mauVien);
+                    g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, banKinh, banKinh);
+                }
             }
             g2.dispose();
             super.paintComponent(g);
@@ -500,38 +636,6 @@ public class HoSoThuCungGUI extends JPanel {
                 g2.drawString(goiY, le.left, y);
                 g2.dispose();
             }
-        }
-    }
-
-    /** Renderer cột "Thao tác": Xem | Sửa | Xóa. */
-    private static class OThaoTac extends JPanel implements TableCellRenderer {
-        private final JTable bang;
-
-        OThaoTac(JTable bang) {
-            super(new FlowLayout(FlowLayout.LEFT, 14, 0));
-            this.bang = bang;
-            setBorder(new EmptyBorder(12, 12, 0, 0));
-            add(taoNhan("Xem", RangBuocGiaoDien.MAU_CHU_DAO));
-            add(taoNhan("Sửa", RangBuocGiaoDien.MAU_THONG_TIN_CHU));
-            add(taoNhan("Xóa", RangBuocGiaoDien.MAU_NGUY_HIEM_CHU));
-        }
-
-        private JLabel taoNhan(String chu, Color mau) {
-            JLabel nhan = new JLabel(chu);
-            nhan.setFont(RangBuocGiaoDien.fontDam(12));
-            nhan.setForeground(mau);
-            return nhan;
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setBackground(bang.getSelectionBackground());
-            } else {
-                setBackground(row % 2 == 0 ? Color.WHITE : RangBuocGiaoDien.MAU_TIEU_DE_BANG);
-            }
-            return this;
         }
     }
 

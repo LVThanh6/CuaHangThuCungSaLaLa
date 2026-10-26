@@ -3,7 +3,6 @@ package GUI.LichHen;
 import GUI.Chung.TableMau;
 import GUI.Chung.RangBuocGiaoDien;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -18,25 +17,24 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.event.ActionListener;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
 import javax.swing.plaf.basic.BasicComboBoxUI;
@@ -47,12 +45,14 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  * Class XemLichGUI: Giao diện "Lịch khám sức khỏe" (Xem lịch) của hệ thống SALALA Pet Shop.
- * Bố cục gồm:
- * 1. Phần đầu trang: đường dẫn, tiêu đề, mô tả và nút "Tạo lịch khám".
+ * Bố cục chuẩn thiết kế mới:
+ * 1. Phần đầu trang: đường dẫn, tiêu đề, mô tả.
  * 2. Hàng thẻ thống kê nhanh (hôm nay, chờ khám, đang khám, đã khám / đã hủy).
- * 3. Thẻ danh sách: thanh bộ lọc (ngày, bác sĩ, trạng thái, chế độ xem),
- *    bảng lịch khám (dùng TableMau) và chân bảng phân trang.
- * Chỉ dựng giao diện, chưa xử lý nghiệp vụ.
+ * 3. Thẻ danh sách: 
+ *    - Thanh bộ lọc: bộ lọc ngày, bác sĩ, trạng thái (đã loại bỏ cụm Tháng|Tuần|Danh sách).
+ *    - Cụm nút thao tác độc lập phía trên bảng: [+ Tạo lịch khám], [Xem chi tiết], [Sửa lịch], [Hủy lịch].
+ *    - Bảng lịch khám (loại bỏ cột Thao tác cũ, dùng ListSelectionListener điều khiển các nút).
+ *    - Chân bảng phân trang.
  */
 public class XemLichGUI extends JPanel {
 
@@ -67,23 +67,23 @@ public class XemLichGUI extends JPanel {
 
     private static final int COT_THOI_GIAN = 0;
     private static final int COT_TRANG_THAI = 5;
-    private static final int COT_THAO_TAC = 6;
 
+    // Loại bỏ cột Thao tác - Bảng gồm 6 cột tinh gọn
     private static final String[] TIEU_DE_BANG = {
-            "Thời gian", "Tên thú cưng", "Chủ nuôi", "Bác sĩ", "Nội dung khám", "Trạng thái", "Thao tác"
+            "Thời gian", "Tên thú cưng", "Chủ nuôi", "Bác sĩ", "Nội dung khám", "Trạng thái"
     };
-    private static final int[] DO_RONG_COT = { 170, 150, 215, 190, 300, 165, 150 };
+    private static final int[] DO_RONG_COT = { 170, 160, 220, 190, 320, 150 };
 
-    // Dữ liệu mẫu minh họa (sau này thay bằng dữ liệu từ lịch hẹn trong CSDL)
+    // Dữ liệu mẫu minh họa không có cột thao tác
     private static final Object[][] DU_LIEU_MAU = {
-            { "05/10/2026 · 09:00", "Bánh Bao", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tái khám viêm da dị ứng", "Chờ khám", "Xem chi tiết" },
-            { "05/10/2026 · 09:30", "Milu", "Nguyễn Văn A", "BS. Bùi Anh Tuấn", "Khám tổng quát", "Đang khám", "Xem chi tiết" },
-            { "05/10/2026 · 08:00", "Miu Miu", "Lê Văn D", "BS. Nguyễn Thảo Vy", "Kiểm tra da và lông", "Đã khám", "Xem chi tiết" },
-            { "05/10/2026 · 11:00", "Cục Bông", "Trần Thị Mai", "BS. Lê Minh", "Khám định kỳ", "Đã hủy", "Xem chi tiết" },
-            { "06/10/2026 · 09:00", "Khoai Lang", "Phạm Quốc Hưng", "BS. Bùi Anh Tuấn", "Tiêm phòng nhắc lại", "Chờ khám", "Xem chi tiết" },
-            { "07/10/2026 · 10:00", "Bơ", "Hoàng Văn Tú", "BS. Nguyễn Thảo Vy", "Khám tổng quát", "Chờ khám", "Xem chi tiết" },
-            { "08/10/2026 · 14:00", "Đậu Đậu", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tư vấn dinh dưỡng", "Chờ khám", "Xem chi tiết" },
-            { "09/10/2026 · 15:00", "Bông Tuyết", "Trần Thị Mai", "BS. Bùi Anh Tuấn", "Kiểm tra răng miệng", "Chờ khám", "Xem chi tiết" }
+            { "05/10/2026 · 09:00", "Bánh Bao", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tái khám viêm da dị ứng", "Chờ khám" },
+            { "05/10/2026 · 09:30", "Milu", "Nguyễn Văn A", "BS. Bùi Anh Tuấn", "Khám tổng quát", "Đang khám" },
+            { "05/10/2026 · 08:00", "Miu Miu", "Lê Văn D", "BS. Nguyễn Thảo Vy", "Kiểm tra da và lông", "Đã khám" },
+            { "05/10/2026 · 11:00", "Cục Bông", "Trần Thị Mai", "BS. Lê Minh", "Khám định kỳ", "Đã hủy" },
+            { "06/10/2026 · 09:00", "Khoai Lang", "Phạm Quốc Hưng", "BS. Bùi Anh Tuấn", "Tiêm phòng nhắc lại", "Chờ khám" },
+            { "07/10/2026 · 10:00", "Bơ", "Hoàng Văn Tú", "BS. Nguyễn Thảo Vy", "Khám tổng quát", "Chờ khám" },
+            { "08/10/2026 · 14:00", "Đậu Đậu", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tư vấn dinh dưỡng", "Chờ khám" },
+            { "09/10/2026 · 15:00", "Bông Tuyết", "Trần Thị Mai", "BS. Bùi Anh Tuấn", "Kiểm tra răng miệng", "Chờ khám" }
     };
 
     private static final String[] DANH_SACH_BAC_SI = {
@@ -103,7 +103,6 @@ public class XemLichGUI extends JPanel {
     private JLabel nhanDuongDan;
     private JLabel nhanTieuDe;
     private JLabel nhanMoTa;
-    private NutBo nutTaoLichKham;
 
     // --- Hàng thẻ thống kê ---
     private JPanel panelThongKe;
@@ -115,16 +114,18 @@ public class XemLichGUI extends JPanel {
     // --- Thẻ danh sách ---
     private TheBoGoc theDanhSach;
 
-    // Thanh bộ lọc
+    // Thanh bộ lọc & cụm nút thao tác độc lập
     private JPanel panelThanhCongCu;
     private TheBoGoc oChonNgay;
     private JLabel nhanNgayLoc;
     private ComboHienDai cboBacSi;
     private ComboHienDai cboTrangThai;
-    private TheBoGoc panelCheDoXem;
-    private NutBo nutThang;
-    private NutBo nutTuan;
-    private NutBo nutDanhSach;
+
+    // Cụm nút thao tác mới đưa lên thanh công cụ
+    private NutBo nutTaoLichKham;
+    private NutBo nutXemChiTiet;
+    private NutBo nutSuaLich;
+    private NutBo nutHuyLich;
 
     // Bảng lịch khám
     private TableMau bangLichKham;
@@ -148,6 +149,7 @@ public class XemLichGUI extends JPanel {
     // =========================================================================
     public XemLichGUI() {
         khoiTaoGiaoDien();
+        ganSuKien();
     }
 
     private void khoiTaoGiaoDien() {
@@ -190,36 +192,22 @@ public class XemLichGUI extends JPanel {
         khoiTieuDe.add(nhanTieuDe, BorderLayout.NORTH);
         khoiTieuDe.add(nhanMoTa, BorderLayout.CENTER);
 
-        nutTaoLichKham = new NutBo("Tạo lịch khám", NutBo.KIEU_CHINH);
-        nutTaoLichKham.setFont(RangBuocGiaoDien.fontDam(13));
-        nutTaoLichKham.datBieuTuong(new BieuTuong(BieuTuong.LICH_THEM, 18, Color.WHITE));
-        nutTaoLichKham.setPreferredSize(new Dimension(145, 40));
-
-        JPanel khoiNut = new JPanel(new GridBagLayout());
-        khoiNut.setOpaque(false);
-        khoiNut.add(nutTaoLichKham);
-
-        JPanel hangTieuDe = new JPanel(new BorderLayout());
-        hangTieuDe.setOpaque(false);
-        hangTieuDe.add(khoiTieuDe, BorderLayout.WEST);
-        hangTieuDe.add(khoiNut, BorderLayout.EAST);
-
         panelDauTrang.add(nhanDuongDan, BorderLayout.NORTH);
-        panelDauTrang.add(hangTieuDe, BorderLayout.CENTER);
+        panelDauTrang.add(khoiTieuDe, BorderLayout.CENTER);
         return panelDauTrang;
     }
 
     // -------------------------------------------------------------------------
-    // HÀNG THẺ THỐNG KÊ
+    // HÀNG THẺ THỐNG KÊ (Sử dụng Text/Emoji thay cho Graphics2D icon)
     // -------------------------------------------------------------------------
     private JPanel taoHangThongKe() {
         panelThongKe = new JPanel(new GridLayout(1, 4, KHOANG_CACH, 0));
         panelThongKe.setOpaque(false);
 
-        theLichHomNay = new TheThongKe(BieuTuong.LICH, "Lịch khám hôm nay", "4", "Ngày 05/10/2026");
-        theChoKham = new TheThongKe(BieuTuong.DONG_HO, "Chờ khám", "1", "Chưa tiếp nhận");
-        theDangKham = new TheThongKe(BieuTuong.ONG_NGHE, "Đang khám", "1", "Đang xử lý");
-        theDaKhamDaHuy = new TheThongKe(BieuTuong.BANG_GHI, "Đã khám / đã hủy", "1 / 1", "Trong hôm nay");
+        theLichHomNay = new TheThongKe("📅", "Lịch khám hôm nay", "4", "Ngày 05/10/2026");
+        theChoKham = new TheThongKe("⏱", "Chờ khám", "1", "Chưa tiếp nhận");
+        theDangKham = new TheThongKe("🩺", "Đang khám", "1", "Đang xử lý");
+        theDaKhamDaHuy = new TheThongKe("📋", "Đã khám / đã hủy", "1 / 1", "Trong hôm nay");
 
         panelThongKe.add(theLichHomNay);
         panelThongKe.add(theChoKham);
@@ -240,66 +228,63 @@ public class XemLichGUI extends JPanel {
     }
 
     private JPanel taoThanhCongCu() {
-        panelThanhCongCu = new JPanel(new BorderLayout());
+        panelThanhCongCu = new JPanel(new BorderLayout(16, 0));
         panelThanhCongCu.setOpaque(false);
         panelThanhCongCu.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
 
-        // --- Ô chọn khoảng ngày ---
+        // --- Ô chọn khoảng ngày & bộ lọc ---
         oChonNgay = new TheBoGoc(BAN_KINH_O, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
         oChonNgay.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
-        oChonNgay.setPreferredSize(new Dimension(255, CHIEU_CAO_O));
+        oChonNgay.setPreferredSize(new Dimension(240, CHIEU_CAO_O));
         nhanNgayLoc = new JLabel("Ngày: 05/10 – 09/10/2026");
         nhanNgayLoc.setFont(RangBuocGiaoDien.fontThuong(13));
         nhanNgayLoc.setForeground(RangBuocGiaoDien.MAU_TRUNG_TINH_CHU);
         oChonNgay.add(nhanNgayLoc, BorderLayout.CENTER);
-        oChonNgay.add(new JLabel(new BieuTuong(BieuTuong.LICH, 16, RangBuocGiaoDien.MAU_CHU_PHU)), BorderLayout.EAST);
+
+        JLabel lblIconLich = new JLabel("📅");
+        lblIconLich.setFont(RangBuocGiaoDien.fontThuong(13));
+        lblIconLich.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        oChonNgay.add(lblIconLich, BorderLayout.EAST);
 
         // --- Combo bác sĩ & trạng thái ---
-        cboBacSi = new ComboHienDai(DANH_SACH_BAC_SI, 240, CHIEU_CAO_O);
-        cboTrangThai = new ComboHienDai(DANH_SACH_TRANG_THAI, 230, CHIEU_CAO_O);
+        cboBacSi = new ComboHienDai(DANH_SACH_BAC_SI, 190, CHIEU_CAO_O);
+        cboTrangThai = new ComboHienDai(DANH_SACH_TRANG_THAI, 175, CHIEU_CAO_O);
 
         JPanel nhomBoLoc = new JPanel();
         nhomBoLoc.setOpaque(false);
         nhomBoLoc.setLayout(new BoxLayout(nhomBoLoc, BoxLayout.X_AXIS));
         nhomBoLoc.add(oChonNgay);
-        nhomBoLoc.add(Box.createHorizontalStrut(12));
+        nhomBoLoc.add(Box.createHorizontalStrut(10));
         nhomBoLoc.add(cboBacSi);
-        nhomBoLoc.add(Box.createHorizontalStrut(12));
+        nhomBoLoc.add(Box.createHorizontalStrut(10));
         nhomBoLoc.add(cboTrangThai);
 
-        // --- Nhóm nút chuyển chế độ xem: Tháng / Tuần / Danh sách ---
-        panelCheDoXem = new TheBoGoc(BAN_KINH_O, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
-        panelCheDoXem.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        panelCheDoXem.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        // --- CỤM NÚT THAO TÁC MỚI (Thay thế hoàn toàn cụm Tháng|Tuần|Danh sách cũ) ---
+        JPanel panelThaoTac = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        panelThaoTac.setOpaque(false);
 
-        nutThang = new NutBo("Tháng", NutBo.KIEU_PHANG);
-        nutTuan = new NutBo("Tuần", NutBo.KIEU_PHANG);
-        nutDanhSach = new NutBo("Danh sách", NutBo.KIEU_PHANG);
-        nutThang.setPreferredSize(new Dimension(72, 30));
-        nutTuan.setPreferredSize(new Dimension(58, 30));
-        nutDanhSach.setPreferredSize(new Dimension(92, 30));
-        nutDanhSach.datChon(true);
+        nutTaoLichKham = new NutBo("+ Tạo lịch khám", NutBo.KIEU_CHINH);
+        nutTaoLichKham.setPreferredSize(new Dimension(145, CHIEU_CAO_O));
 
-        // Chỉ đổi trạng thái hiển thị của nút đang chọn (chưa xử lý nghiệp vụ)
-        ActionListener chonCheDoXem = e -> {
-            nutThang.datChon(e.getSource() == nutThang);
-            nutTuan.datChon(e.getSource() == nutTuan);
-            nutDanhSach.datChon(e.getSource() == nutDanhSach);
-        };
-        nutThang.addActionListener(chonCheDoXem);
-        nutTuan.addActionListener(chonCheDoXem);
-        nutDanhSach.addActionListener(chonCheDoXem);
+        nutXemChiTiet = new NutBo("Xem chi tiết", NutBo.KIEU_VIEN);
+        nutXemChiTiet.setPreferredSize(new Dimension(115, CHIEU_CAO_O));
+        nutXemChiTiet.setEnabled(false);
 
-        panelCheDoXem.add(nutThang);
-        panelCheDoXem.add(nutTuan);
-        panelCheDoXem.add(nutDanhSach);
+        nutSuaLich = new NutBo("Sửa lịch", NutBo.KIEU_VIEN);
+        nutSuaLich.setPreferredSize(new Dimension(95, CHIEU_CAO_O));
+        nutSuaLich.setEnabled(false);
 
-        JPanel khoiPhai = new JPanel(new GridBagLayout());
-        khoiPhai.setOpaque(false);
-        khoiPhai.add(panelCheDoXem);
+        nutHuyLich = new NutBo("Hủy lịch", NutBo.KIEU_NGUY_HIEM);
+        nutHuyLich.setPreferredSize(new Dimension(95, CHIEU_CAO_O));
+        nutHuyLich.setEnabled(false);
+
+        panelThaoTac.add(nutTaoLichKham);
+        panelThaoTac.add(nutXemChiTiet);
+        panelThaoTac.add(nutSuaLich);
+        panelThaoTac.add(nutHuyLich);
 
         panelThanhCongCu.add(nhomBoLoc, BorderLayout.WEST);
-        panelThanhCongCu.add(khoiPhai, BorderLayout.EAST);
+        panelThanhCongCu.add(panelThaoTac, BorderLayout.EAST);
         return panelThanhCongCu;
     }
 
@@ -307,7 +292,7 @@ public class XemLichGUI extends JPanel {
         bangLichKham = new TableMau(TIEU_DE_BANG, DU_LIEU_MAU);
         bangLichKham.getTableHeader().setDefaultRenderer(new RendererTieuDe());
         bangLichKham.getTableHeader().setPreferredSize(new Dimension(0, 42));
-        bangLichKham.setIntercellSpacing(new Dimension(0, 1)); // Bỏ khe dọc giữa các cột để dòng xen kẽ liền mạch
+        bangLichKham.setIntercellSpacing(new Dimension(0, 1));
 
         for (int i = 0; i < DO_RONG_COT.length; i++) {
             bangLichKham.getColumnModel().getColumn(i).setPreferredWidth(DO_RONG_COT[i]);
@@ -316,8 +301,16 @@ public class XemLichGUI extends JPanel {
                 .setCellRenderer(new RendererVanBanMau(RangBuocGiaoDien.MAU_LIEN_KET));
         bangLichKham.getColumnModel().getColumn(COT_TRANG_THAI)
                 .setCellRenderer(new RendererTrangThai());
-        bangLichKham.getColumnModel().getColumn(COT_THAO_TAC)
-                .setCellRenderer(new RendererVanBanMau(RangBuocGiaoDien.MAU_LIEN_KET));
+
+        // Lắng nghe sự kiện chọn dòng trên bảng để bật/tắt các nút thao tác
+        bangLichKham.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean coChon = bangLichKham.getSelectedRow() != -1;
+                nutXemChiTiet.setEnabled(coChon);
+                nutSuaLich.setEnabled(coChon);
+                nutHuyLich.setEnabled(coChon);
+            }
+        });
 
         khungCuonBang = new JScrollPane(bangLichKham);
         khungCuonBang.setBorder(null);
@@ -338,7 +331,7 @@ public class XemLichGUI extends JPanel {
         nhanThongTinHienThi.setFont(RangBuocGiaoDien.fontThuong(12));
         nhanThongTinHienThi.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
-        nhanGoiYChon = new JLabel("Chọn lịch khám để xem hồ sơ sức khỏe và tiến hành khám.");
+        nhanGoiYChon = new JLabel("Chọn một lịch khám để Xem chi tiết, Sửa lịch hoặc Hủy lịch.");
         nhanGoiYChon.setFont(RangBuocGiaoDien.fontThuong(11));
         nhanGoiYChon.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
 
@@ -354,15 +347,14 @@ public class XemLichGUI extends JPanel {
 
         cboSoDong = new ComboHienDai(DANH_SACH_SO_DONG, 66, 34);
 
-        nutTrangTruoc = taoNutTrang("‹");
+        nutTrangTruoc = taoNutTrang("<");
         nutTrang1 = taoNutTrang("1");
         nutTrang2 = taoNutTrang("2");
         nutTrang3 = taoNutTrang("3");
-        nutTrangCham = taoNutTrang("…");
-        nutTrangSau = taoNutTrang("›");
+        nutTrangCham = taoNutTrang("...");
+        nutTrangSau = taoNutTrang(">");
         nutTrang1.datChon(true);
 
-        // Chỉ đổi trạng thái hiển thị của số trang đang chọn
         ActionListener chonTrang = e -> {
             nutTrang1.datChon(e.getSource() == nutTrang1);
             nutTrang2.datChon(e.getSource() == nutTrang2);
@@ -397,11 +389,197 @@ public class XemLichGUI extends JPanel {
     }
 
     // =========================================================================
-    // 4. PHƯƠNG THỨC TIỆN ÍCH CÔNG KHAI (để nhúng dữ liệu sau này)
+    // 4. XỬ LÝ SỰ KIỆN CÁC NÚT THAO TÁC MỚI
     // =========================================================================
+    private void ganSuKien() {
+        nutTaoLichKham.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                    "Mở chức năng lập lịch khám mới cho thú cưng.",
+                    "Tạo lịch khám",
+                    JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        nutXemChiTiet.addActionListener(e -> hienThiDialogChiTietLich());
+        nutSuaLich.addActionListener(e -> hienThiDialogSuaLich());
+        nutHuyLich.addActionListener(e -> xuLyHuyLich());
+    }
+
     /**
-     * Cập nhật 4 thẻ thống kê phía trên bảng.
+     * Mở Dialog hiển thị chi tiết lịch khám khi chọn dòng
      */
+    private void hienThiDialogChiTietLich() {
+        int row = bangLichKham.getSelectedRow();
+        if (row == -1) return;
+
+        String thoiGian = String.valueOf(bangLichKham.getValueAt(row, 0));
+        String thuCung = String.valueOf(bangLichKham.getValueAt(row, 1));
+        String chuNuoi = String.valueOf(bangLichKham.getValueAt(row, 2));
+        String bacSi = String.valueOf(bangLichKham.getValueAt(row, 3));
+        String noiDung = String.valueOf(bangLichKham.getValueAt(row, 4));
+        String trangThai = String.valueOf(bangLichKham.getValueAt(row, 5));
+
+        JDialog dialog = new JDialog((java.awt.Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết lịch khám - " + thuCung, true);
+        dialog.setSize(520, 430);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel pnlNoiDung = new JPanel();
+        pnlNoiDung.setLayout(new BoxLayout(pnlNoiDung, BoxLayout.Y_AXIS));
+        pnlNoiDung.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        pnlNoiDung.setBackground(Color.WHITE);
+
+        JLabel lblHeader = new JLabel("THÔNG TIN LỊCH KHÁM CHI TIẾT");
+        lblHeader.setFont(RangBuocGiaoDien.fontDam(16));
+        lblHeader.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        lblHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        pnlNoiDung.add(lblHeader);
+        pnlNoiDung.add(Box.createVerticalStrut(16));
+        pnlNoiDung.add(taoDongChiTiet("Thời gian hẹn:", thoiGian));
+        pnlNoiDung.add(Box.createVerticalStrut(10));
+        pnlNoiDung.add(taoDongChiTiet("Tên thú cưng:", thuCung));
+        pnlNoiDung.add(Box.createVerticalStrut(10));
+        pnlNoiDung.add(taoDongChiTiet("Chủ nuôi:", chuNuoi));
+        pnlNoiDung.add(Box.createVerticalStrut(10));
+        pnlNoiDung.add(taoDongChiTiet("Bác sĩ phụ trách:", bacSi));
+        pnlNoiDung.add(Box.createVerticalStrut(10));
+        pnlNoiDung.add(taoDongChiTiet("Nội dung khám:", noiDung));
+        pnlNoiDung.add(Box.createVerticalStrut(10));
+        pnlNoiDung.add(taoDongChiTiet("Trạng thái:", trangThai));
+
+        JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
+        pnlBottom.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
+        pnlBottom.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
+
+        JButton btnDong = new JButton("Đóng");
+        btnDong.setFont(RangBuocGiaoDien.fontVua(13));
+        btnDong.setPreferredSize(new Dimension(90, 36));
+        btnDong.addActionListener(e -> dialog.dispose());
+        pnlBottom.add(btnDong);
+
+        dialog.add(pnlNoiDung, BorderLayout.CENTER);
+        dialog.add(pnlBottom, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    private JPanel taoDongChiTiet(String nhan, String giaTri) {
+        JPanel p = new JPanel(new BorderLayout(12, 0));
+        p.setOpaque(false);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblNhan = new JLabel(nhan);
+        lblNhan.setFont(RangBuocGiaoDien.fontDam(13));
+        lblNhan.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        lblNhan.setPreferredSize(new Dimension(140, 24));
+
+        JLabel lblGiaTri = new JLabel(giaTri);
+        lblGiaTri.setFont(RangBuocGiaoDien.fontThuong(13));
+        lblGiaTri.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+
+        p.add(lblNhan, BorderLayout.WEST);
+        p.add(lblGiaTri, BorderLayout.CENTER);
+        return p;
+    }
+
+    /**
+     * Mở Dialog chỉnh sửa thông tin lịch khám
+     */
+    private void hienThiDialogSuaLich() {
+        int row = bangLichKham.getSelectedRow();
+        if (row == -1) return;
+
+        String thoiGianHienTai = String.valueOf(bangLichKham.getValueAt(row, 0));
+        String thuCung = String.valueOf(bangLichKham.getValueAt(row, 1));
+        String bacSiHienTai = String.valueOf(bangLichKham.getValueAt(row, 3));
+        String noiDungHienTai = String.valueOf(bangLichKham.getValueAt(row, 4));
+
+        JDialog dialog = new JDialog((java.awt.Frame) SwingUtilities.getWindowAncestor(this), "Sửa lịch khám - " + thuCung, true);
+        dialog.setSize(480, 340);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel pnlForm = new JPanel(new GridLayout(4, 2, 10, 14));
+        pnlForm.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        pnlForm.setBackground(Color.WHITE);
+
+        pnlForm.add(new JLabel("Thời gian khám:"));
+        JTextField txtThoiGian = new JTextField(thoiGianHienTai);
+        pnlForm.add(txtThoiGian);
+
+        pnlForm.add(new JLabel("Bác sĩ phụ trách:"));
+        JComboBox<String> cboBs = new JComboBox<>(new String[] { "BS. Lê Minh", "BS. Bùi Anh Tuấn", "BS. Nguyễn Thảo Vy" });
+        cboBs.setSelectedItem(bacSiHienTai);
+        pnlForm.add(cboBs);
+
+        pnlForm.add(new JLabel("Nội dung khám:"));
+        JTextField txtNoiDung = new JTextField(noiDungHienTai);
+        pnlForm.add(txtNoiDung);
+
+        pnlForm.add(new JLabel("Trạng thái:"));
+        JComboBox<String> cboTt = new JComboBox<>(new String[] { "Chờ khám", "Đang khám", "Đã khám", "Đã hủy" });
+        cboTt.setSelectedItem(String.valueOf(bangLichKham.getValueAt(row, COT_TRANG_THAI)));
+        pnlForm.add(cboTt);
+
+        JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 12));
+        pnlBottom.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
+        pnlBottom.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
+
+        JButton btnLuu = new JButton("Lưu thay đổi");
+        btnLuu.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnLuu.setForeground(Color.WHITE);
+        btnLuu.setFocusPainted(false);
+
+        JButton btnHuy = new JButton("Hủy bỏ");
+        btnHuy.addActionListener(e -> dialog.dispose());
+
+        btnLuu.addActionListener(e -> {
+            bangLichKham.getModel().setValueAt(txtThoiGian.getText().trim(), row, 0);
+            bangLichKham.getModel().setValueAt(cboBs.getSelectedItem().toString(), row, 3);
+            bangLichKham.getModel().setValueAt(txtNoiDung.getText().trim(), row, 4);
+            bangLichKham.getModel().setValueAt(cboTt.getSelectedItem().toString(), row, COT_TRANG_THAI);
+            bangLichKham.repaint();
+            dialog.dispose();
+            JOptionPane.showMessageDialog(this, "Đã cập nhật thông tin lịch khám thành công!");
+        });
+
+        pnlBottom.add(btnHuy);
+        pnlBottom.add(btnLuu);
+
+        dialog.add(pnlForm, BorderLayout.CENTER);
+        dialog.add(pnlBottom, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    /**
+     * Xác nhận và thực hiện hủy lịch khám
+     */
+    private void xuLyHuyLich() {
+        int row = bangLichKham.getSelectedRow();
+        if (row == -1) return;
+
+        String thuCung = String.valueOf(bangLichKham.getValueAt(row, 1));
+        String trangThaiHienTai = String.valueOf(bangLichKham.getValueAt(row, COT_TRANG_THAI));
+        if ("Đã hủy".equalsIgnoreCase(trangThaiHienTai)) {
+            JOptionPane.showMessageDialog(this, "Lịch khám này đã ở trạng thái 'Đã hủy'!");
+            return;
+        }
+
+        int opt = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn hủy lịch khám của thú cưng '" + thuCung + "'?",
+                "Xác nhận hủy lịch",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (opt == JOptionPane.YES_OPTION) {
+            bangLichKham.getModel().setValueAt("Đã hủy", row, COT_TRANG_THAI);
+            bangLichKham.repaint();
+            JOptionPane.showMessageDialog(this, "Đã hủy lịch khám thành công.");
+        }
+    }
+
+    // =========================================================================
+    // 5. PHƯƠNG THỨC TIỆN ÍCH CÔNG KHAI
+    // =========================================================================
     public void capNhatThongKe(String ngayHienThi, int soHomNay, int soChoKham, int soDangKham, int soDaKham,
             int soDaHuy) {
         theLichHomNay.datGiaTri(String.valueOf(soHomNay), "Ngày " + ngayHienThi);
@@ -418,6 +596,18 @@ public class XemLichGUI extends JPanel {
         return nutTaoLichKham;
     }
 
+    public JButton getNutXemChiTiet() {
+        return nutXemChiTiet;
+    }
+
+    public JButton getNutSuaLich() {
+        return nutSuaLich;
+    }
+
+    public JButton getNutHuyLich() {
+        return nutHuyLich;
+    }
+
     public JComboBox<String> getCboBacSi() {
         return cboBacSi;
     }
@@ -427,10 +617,10 @@ public class XemLichGUI extends JPanel {
     }
 
     // =========================================================================
-    // 5. CÁC LỚP CON HỖ TRỢ VẼ GIAO DIỆN
+    // 6. CÁC LỚP CON HỖ TRỢ VẼ GIAO DIỆN
     // =========================================================================
 
-    /** Màu huy hiệu trạng thái: {nền, chữ, chấm} theo bảng màu của RangBuocGiaoDien. */
+    /** Màu huy hiệu trạng thái: {nền, chữ, chấm} */
     private static Color[] layMauTrangThai(String trangThai) {
         switch (trangThai) {
             case "Chờ khám":
@@ -451,9 +641,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Thẻ bo góc (dùng cho thẻ thống kê, thẻ danh sách, ô nhập, nhóm nút)
-    // -------------------------------------------------------------------------
+    /** Thẻ bo góc tổng quát */
     private static class TheBoGoc extends JPanel {
         private int banKinh;
         private Color mauNen;
@@ -484,23 +672,21 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Thẻ thống kê nhanh: [biểu tượng] nhãn / giá trị + chú thích
-    // -------------------------------------------------------------------------
+    /** Thẻ thống kê nhanh dùng Text icon */
     private static class TheThongKe extends TheBoGoc {
         private JLabel nhanTieuDe;
         private JLabel nhanGiaTri;
         private JLabel nhanChuThich;
 
-        TheThongKe(int loaiBieuTuong, String tieuDe, String giaTri, String chuThich) {
+        TheThongKe(String kyHieuText, String tieuDe, String giaTri, String chuThich) {
             super(BAN_KINH_THE, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
             setLayout(new BorderLayout(14, 0));
             setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
 
-            HopBieuTuong hopBieuTuong = new HopBieuTuong(loaiBieuTuong);
+            HopKyHieu hopKyHieu = new HopKyHieu(kyHieuText);
             JPanel khoiIcon = new JPanel(new GridBagLayout());
             khoiIcon.setOpaque(false);
-            khoiIcon.add(hopBieuTuong);
+            khoiIcon.add(hopKyHieu);
 
             nhanTieuDe = new JLabel(tieuDe);
             nhanTieuDe.setFont(RangBuocGiaoDien.fontThuong(12));
@@ -545,13 +731,17 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    /** Ô vuông bo góc chứa biểu tượng của thẻ thống kê. */
-    private static class HopBieuTuong extends JComponent {
-        private BieuTuong bieuTuong;
-
-        HopBieuTuong(int loai) {
-            this.bieuTuong = new BieuTuong(loai, 22, RangBuocGiaoDien.MAU_CHU_DAO);
+    /** Ô vuông bo góc hiển thị ký hiệu text */
+    private static class HopKyHieu extends JPanel {
+        HopKyHieu(String kyHieu) {
+            setLayout(new GridBagLayout());
+            setOpaque(false);
             setPreferredSize(new Dimension(44, 44));
+
+            JLabel lbl = new JLabel(kyHieu, SwingConstants.CENTER);
+            lbl.setFont(RangBuocGiaoDien.fontDam(18));
+            lbl.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+            add(lbl);
         }
 
         @Override
@@ -559,24 +749,21 @@ public class XemLichGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             RangBuocGiaoDien.batKhuRangCua(g2);
             g2.setColor(RangBuocGiaoDien.MAU_CHU_DAO_NHAT);
-            g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20));
-            bieuTuong.paintIcon(this, g2, (getWidth() - bieuTuong.getIconWidth()) / 2,
-                    (getHeight() - bieuTuong.getIconHeight()) / 2);
+            g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 16, 16));
             g2.dispose();
+            super.paintComponent(g);
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Nút bấm bo góc: 3 kiểu (chính - nền teal, viền - nền trắng, phẳng - không viền)
-    // -------------------------------------------------------------------------
+    /** Nút bấm bo góc hỗ trợ trạng thái Enabled/Disabled và kiểu Nguy hiểm */
     private static class NutBo extends JButton {
         static final int KIEU_CHINH = 0;
         static final int KIEU_VIEN = 1;
         static final int KIEU_PHANG = 2;
+        static final int KIEU_NGUY_HIEM = 3;
 
         private int kieu;
         private boolean chon;
-        private Icon bieuTuongNut;
 
         NutBo(String chu, int kieu) {
             super(chu);
@@ -596,8 +783,10 @@ public class XemLichGUI extends JPanel {
             repaint();
         }
 
-        void datBieuTuong(Icon bieuTuongNut) {
-            this.bieuTuongNut = bieuTuongNut;
+        @Override
+        public void setEnabled(boolean b) {
+            super.setEnabled(b);
+            setCursor(b ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
             repaint();
         }
 
@@ -606,12 +795,21 @@ public class XemLichGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             RangBuocGiaoDien.batKhuRangCua(g2);
 
-            boolean reChuot = getModel().isRollover();
+            boolean reChuot = getModel().isRollover() && isEnabled();
             boolean noi = (kieu == KIEU_CHINH) || chon;
             Color nen;
             Color vien;
             Color chu;
-            if (noi) {
+
+            if (!isEnabled()) {
+                nen = RangBuocGiaoDien.MAU_TRUNG_TINH_NEN;
+                vien = RangBuocGiaoDien.MAU_DUONG_VIEN;
+                chu = RangBuocGiaoDien.MAU_CHU_GOI_Y;
+            } else if (kieu == KIEU_NGUY_HIEM) {
+                nen = reChuot ? new Color(254, 226, 226) : RangBuocGiaoDien.MAU_NEN_THE;
+                vien = RangBuocGiaoDien.MAU_NGUY_HIEM_CHU;
+                chu = RangBuocGiaoDien.MAU_NGUY_HIEM_CHU;
+            } else if (noi) {
                 nen = reChuot ? RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT : RangBuocGiaoDien.MAU_CHU_DAO;
                 vien = nen;
                 chu = Color.WHITE;
@@ -627,7 +825,7 @@ public class XemLichGUI extends JPanel {
 
             int rong = getWidth();
             int cao = getHeight();
-            RoundRectangle2D.Double hinh = new RoundRectangle2D.Double(0.5, 0.5, rong - 1, cao - 1, 12, 12);
+            RoundRectangle2D.Double hinh = new RoundRectangle2D.Double(0.5, 0.5, rong - 1, cao - 1, 10, 10);
             if (nen != null) {
                 g2.setColor(nen);
                 g2.fill(hinh);
@@ -640,21 +838,14 @@ public class XemLichGUI extends JPanel {
             g2.setFont(getFont());
             FontMetrics fm = g2.getFontMetrics();
             int rongChu = fm.stringWidth(getText());
-            int rongIcon = (bieuTuongNut != null) ? bieuTuongNut.getIconWidth() + 8 : 0;
-            int x = (rong - rongChu - rongIcon) / 2;
-            if (bieuTuongNut != null) {
-                bieuTuongNut.paintIcon(this, g2, x, (cao - bieuTuongNut.getIconHeight()) / 2);
-                x += rongIcon;
-            }
+            int x = (rong - rongChu) / 2;
             g2.setColor(chu);
             g2.drawString(getText(), x, (cao + fm.getAscent() - fm.getDescent()) / 2);
             g2.dispose();
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Combo box hiện đại: bo góc, mũi tên chevron, danh sách thả xuống đồng bộ màu
-    // -------------------------------------------------------------------------
+    /** Combo box hiện đại bo góc */
     private static class ComboHienDai extends JComboBox<String> {
 
         ComboHienDai(String[] mucChon, int rong, int cao) {
@@ -702,8 +893,10 @@ public class XemLichGUI extends JPanel {
     private static class GiaoDienCombo extends BasicComboBoxUI {
         @Override
         protected javax.swing.JButton createArrowButton() {
-            JButton nut = new JButton(new BieuTuong(BieuTuong.MUI_TEN_XUONG, 14, RangBuocGiaoDien.MAU_CHU_PHU));
-            nut.setBorder(BorderFactory.createEmptyBorder());
+            JButton nut = new JButton("v");
+            nut.setFont(RangBuocGiaoDien.fontDam(9));
+            nut.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+            nut.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
             nut.setContentAreaFilled(false);
             nut.setFocusPainted(false);
             nut.setOpaque(false);
@@ -712,7 +905,6 @@ public class XemLichGUI extends JPanel {
 
         @Override
         public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
-            // Không tô nền: phần nền bo góc đã được vẽ trong ComboHienDai
         }
 
         @Override
@@ -736,10 +928,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Renderer cho bảng
-    // -------------------------------------------------------------------------
-    /** Tiêu đề cột: nền xám nhạt, chữ đậm, viền trên/dưới theo mẫu Figma. */
+    /** Tiêu đề cột */
     private static class RendererTieuDe extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -756,7 +945,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    /** Ô văn bản có màu chữ riêng (cột Thời gian, cột Thao tác dạng liên kết). */
+    /** Ô văn bản có màu chữ */
     private static class RendererVanBanMau extends DefaultTableCellRenderer {
         private Color mauChu;
 
@@ -777,7 +966,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    /** Ô trạng thái: vẽ huy hiệu bo tròn có chấm màu (Chờ khám / Đang khám / Đã khám / Đã hủy). */
+    /** Ô trạng thái dạng pill badge */
     private static class RendererTrangThai extends JPanel implements TableCellRenderer {
         private String trangThai = "";
 
@@ -820,108 +1009,6 @@ public class XemLichGUI extends JPanel {
             g2.fill(new Ellipse2D.Double(x + 10, y + (cao - 6) / 2.0, 6, 6));
             g2.setColor(mau[1]);
             g2.drawString(trangThai, x + 22, y + (cao + fm.getAscent() - fm.getDescent()) / 2);
-            g2.dispose();
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Bộ biểu tượng vẽ bằng Graphics2D (lưới 24 x 24)
-    // -------------------------------------------------------------------------
-    private static class BieuTuong implements Icon {
-        static final int LICH = 0;
-        static final int LICH_THEM = 1;
-        static final int DONG_HO = 2;
-        static final int ONG_NGHE = 3;
-        static final int BANG_GHI = 4;
-        static final int MUI_TEN_XUONG = 5;
-
-        private int loai;
-        private int kichThuoc;
-        private Color mau;
-
-        BieuTuong(int loai, int kichThuoc, Color mau) {
-            this.loai = loai;
-            this.kichThuoc = kichThuoc;
-            this.mau = mau;
-        }
-
-        @Override
-        public int getIconWidth() {
-            return kichThuoc;
-        }
-
-        @Override
-        public int getIconHeight() {
-            return kichThuoc;
-        }
-
-        private void veDuongGap(Graphics2D g2, double... toaDo) {
-            Path2D.Double duong = new Path2D.Double();
-            duong.moveTo(toaDo[0], toaDo[1]);
-            for (int i = 2; i < toaDo.length; i += 2) {
-                duong.lineTo(toaDo[i], toaDo[i + 1]);
-            }
-            g2.draw(duong);
-        }
-
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            RangBuocGiaoDien.batKhuRangCua(g2);
-            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-            g2.translate(x, y);
-            double tyLe = kichThuoc / 24.0;
-            g2.scale(tyLe, tyLe);
-            g2.setColor(mau);
-            g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-
-            switch (loai) {
-                case LICH:
-                    g2.draw(new RoundRectangle2D.Double(3.5, 5, 17, 15.5, 4, 4));
-                    veDuongGap(g2, 3.5, 10, 20.5, 10);
-                    veDuongGap(g2, 8, 3, 8, 7);
-                    veDuongGap(g2, 16, 3, 16, 7);
-                    g2.fill(new Ellipse2D.Double(7.2, 13.2, 1.8, 1.8));
-                    g2.fill(new Ellipse2D.Double(11.1, 13.2, 1.8, 1.8));
-                    g2.fill(new Ellipse2D.Double(15, 13.2, 1.8, 1.8));
-                    g2.fill(new Ellipse2D.Double(7.2, 16.6, 1.8, 1.8));
-                    g2.fill(new Ellipse2D.Double(11.1, 16.6, 1.8, 1.8));
-                    break;
-                case LICH_THEM:
-                    g2.draw(new RoundRectangle2D.Double(3.5, 5, 17, 15.5, 4, 4));
-                    veDuongGap(g2, 3.5, 10, 20.5, 10);
-                    veDuongGap(g2, 8, 3, 8, 7);
-                    veDuongGap(g2, 16, 3, 16, 7);
-                    veDuongGap(g2, 12, 12.5, 12, 18);
-                    veDuongGap(g2, 9.25, 15.25, 14.75, 15.25);
-                    break;
-                case DONG_HO:
-                    g2.draw(new Ellipse2D.Double(3, 3, 18, 18));
-                    veDuongGap(g2, 12, 7, 12, 12, 15.5, 14);
-                    break;
-                case ONG_NGHE:
-                    veDuongGap(g2, 6, 3, 6, 9);
-                    g2.draw(new Arc2D.Double(6, 5, 8, 8, 180, 180, Arc2D.OPEN));
-                    veDuongGap(g2, 14, 9, 14, 3);
-                    veDuongGap(g2, 10, 13, 10, 16);
-                    Path2D.Double day = new Path2D.Double();
-                    day.moveTo(10, 16);
-                    day.curveTo(10, 20.5, 18, 20.5, 18, 16.7);
-                    g2.draw(day);
-                    g2.draw(new Ellipse2D.Double(15.8, 12.3, 4.4, 4.4));
-                    break;
-                case BANG_GHI:
-                    g2.draw(new RoundRectangle2D.Double(5, 4.5, 14, 17, 4, 4));
-                    g2.draw(new RoundRectangle2D.Double(9, 2.5, 6, 4, 2, 2));
-                    veDuongGap(g2, 9, 13.5, 11.2, 15.8, 15, 11.5);
-                    break;
-                case MUI_TEN_XUONG:
-                    g2.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                    veDuongGap(g2, 6, 9, 12, 15, 18, 9);
-                    break;
-                default:
-                    break;
-            }
             g2.dispose();
         }
     }

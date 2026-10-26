@@ -12,10 +12,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
 
 /**
- * Class DonThuocGUI: Giao diện "Đơn thuốc" (thay thế giao diện Loại thú cưng).
- * Chỉ dựng giao diện, chưa xử lý nghiệp vụ.
- * Các trường hiển thị dựa theo bảng DonThuoc (kết hợp ThuCung, BacSyThuY, ChiTietDonThuoc).
- * Dùng lại các thành phần PanelBoTron, NutBoTron, OTimKiemGoiY của HoSoThuCungGUI.
+ * Class DonThuocGUI: Giao diện "Đơn thuốc" (Tab Thú cưng ➔ Đơn thuốc).
+ * Chuẩn thiết kế mới:
+ * - Loại bỏ hoàn toàn cột "Thao tác" khỏi bảng.
+ * - Toolbar tích hợp cụm nút: "+ Kê đơn thuốc", "Xem chi tiết", "Chỉnh sửa", "Xóa", "Xuất Excel".
+ * - Các nút Xem/Sửa/Xóa mặc định bị disable, chỉ bật sáng khi click chọn 1 dòng trên bảng.
  */
 public class DonThuocGUI extends JPanel {
 
@@ -31,18 +32,18 @@ public class DonThuocGUI extends JPanel {
     private static final int CHIEU_CAO_O_NHAP = 38;
     private static final int CHIEU_CAO_THANH_PHAN_TRANG = 56;
 
-    // --- Dữ liệu hiển thị mẫu (chỉ để dựng giao diện) ---
+    // --- Dữ liệu hiển thị mẫu (8 cột, KHÔNG có cột Thao tác) ---
     private final String[] tieuDeCot = { "Mã đơn thuốc", "Thú cưng", "Mã hồ sơ", "Bác sĩ kê đơn", "Ngày kê đơn",
-            "Số loại thuốc", "Ghi chú", "Trạng thái", "Thao tác" };
+            "Số loại thuốc", "Ghi chú", "Trạng thái" };
     private final Object[][] duLieuMau = {
-            { "DT001", "Mimi (TC001)", "HS001", "Nguyễn Hữu Tài", "06/06/2025 09:00", "2", "Theo dõi ăn uống", "Chờ lấy thuốc", "" },
-            { "DT002", "Lucky (TC002)", "HS002", "Trần Thị Uyên", "11/06/2025 10:00", "1", "Cho uống đủ liều", "Hoàn thành", "" },
-            { "DT003", "Bông (TC003)", "HS003", "Lê Minh Vinh", "16/06/2025 11:00", "3", "Tái khám sau 7 ngày", "Đã cấp thuốc", "" },
-            { "DT004", "Milo (TC004)", "HS004", "Phạm Thị Xuân", "21/06/2025 12:00", "2", "Theo dõi ăn uống", "Chờ lấy thuốc", "" },
-            { "DT005", "Kitty (TC005)", "HS005", "Võ Thanh Tùng", "26/06/2025 13:00", "1", "Cho uống đủ liều", "Hoàn thành", "" },
-            { "DT006", "Boss (TC006)", "HS006", "Đặng Thị Yến", "01/07/2025 14:00", "2", "Tái khám sau 7 ngày", "Đã cấp thuốc", "" },
-            { "DT007", "Susu (TC007)", "HS007", "Bùi Văn Khánh", "06/07/2025 15:00", "1", "Theo dõi ăn uống", "Chờ lấy thuốc", "" },
-            { "DT008", "Nâu (TC008)", "HS008", "Hồ Thị Diệp", "11/07/2025 16:00", "4", "Cho uống đủ liều", "Hoàn thành", "" }
+            { "DT001", "Mimi (TC001)", "HS001", "Nguyễn Hữu Tài", "06/06/2025 09:00", "2", "Theo dõi ăn uống", "Chờ lấy thuốc" },
+            { "DT002", "Lucky (TC002)", "HS002", "Trần Thị Uyên", "11/06/2025 10:00", "1", "Cho uống đủ liều", "Hoàn thành" },
+            { "DT003", "Bông (TC003)", "HS003", "Lê Minh Vinh", "16/06/2025 11:00", "3", "Tái khám sau 7 ngày", "Đã cấp thuốc" },
+            { "DT004", "Milo (TC004)", "HS004", "Phạm Thị Xuân", "21/06/2025 12:00", "2", "Theo dõi ăn uống", "Chờ lấy thuốc" },
+            { "DT005", "Kitty (TC005)", "HS005", "Võ Thanh Tùng", "26/06/2025 13:00", "1", "Cho uống đủ liều", "Hoàn thành" },
+            { "DT006", "Boss (TC006)", "HS006", "Đặng Thị Yến", "01/07/2025 14:00", "2", "Tái khám sau 7 ngày", "Đã cấp thuốc" },
+            { "DT007", "Susu (TC007)", "HS007", "Bùi Văn Khánh", "06/07/2025 15:00", "1", "Theo dõi ăn uống", "Chờ lấy thuốc" },
+            { "DT008", "Nâu (TC008)", "HS008", "Hồ Thị Diệp", "11/07/2025 16:00", "4", "Cho uống đủ liều", "Hoàn thành" }
     };
     private final String[] dsTrangThaiLoc = { "Trạng thái: Tất cả", "Đã cấp thuốc", "Chờ lấy thuốc", "Hoàn thành" };
     private final String[] dsThoiGianLoc = { "Thời gian: Tất cả", "Hôm nay", "7 ngày qua", "Tháng này" };
@@ -53,7 +54,6 @@ public class DonThuocGUI extends JPanel {
     private JLabel nhanDuongDan;
     private JLabel nhanTieuDe;
     private JLabel nhanMoTa;
-    private NutBoTron nutKeDonThuoc;
 
     // --- Phần thẻ thống kê ---
     private JPanel panelThongKe;
@@ -62,15 +62,16 @@ public class DonThuocGUI extends JPanel {
     private JLabel nhanSoChoLayThuoc;
     private JLabel nhanSoHoanThanh;
 
-    // --- Phần thẻ chứa bảng ---
+    // --- Phần thẻ chứa bảng & Cụm nút thao tác ---
     private PanelBoTron panelTheBang;
     private JPanel panelCongCu;
     private OTimKiemGoiY txtTimKiem;
     private JComboBox<String> cboTrangThai;
     private JComboBox<String> cboThoiGian;
-    private JButton nutXemChiTiet;
-    private JButton nutChinhSua;
-    private JButton nutXoa;
+    private NutBoTron nutKeDonThuoc;
+    private NutBoTron nutXemChiTiet;
+    private NutBoTron nutChinhSua;
+    private NutBoTron nutXoa;
     private NutBoTron nutXuatDanhSach;
     private TableMau bangDonThuoc;
     private JScrollPane thanhCuonBang;
@@ -92,6 +93,7 @@ public class DonThuocGUI extends JPanel {
     // =========================================================================
     public DonThuocGUI() {
         khoiTaoGiaoDien();
+        caiDatSuKien();
     }
 
     // =========================================================================
@@ -128,11 +130,11 @@ public class DonThuocGUI extends JPanel {
         nhanDuongDan.setFont(RangBuocGiaoDien.fontThuong(12));
         nhanDuongDan.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
-        nhanTieuDe = new JLabel("Đơn thuốc");
+        nhanTieuDe = new JLabel("Danh sách đơn thuốc");
         nhanTieuDe.setFont(RangBuocGiaoDien.fontDam(26));
         nhanTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
-        nhanMoTa = new JLabel("Quản lý đơn thuốc do bác sĩ kê cho thú cưng sau mỗi lượt khám.");
+        nhanMoTa = new JLabel("Theo dõi lịch sử kê đơn thuốc, bác sĩ phụ trách và tình trạng phát thuốc.");
         nhanMoTa.setFont(RangBuocGiaoDien.fontThuong(12));
         nhanMoTa.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
@@ -145,16 +147,7 @@ public class DonThuocGUI extends JPanel {
         panelChu.add(Box.createVerticalStrut(2));
         panelChu.add(nhanMoTa);
 
-        nutKeDonThuoc = new NutBoTron("+  Kê đơn thuốc", RangBuocGiaoDien.MAU_CHU_DAO,
-                RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8);
-        nutKeDonThuoc.setPreferredSize(new Dimension(146, 40));
-
-        JPanel panelNut = new JPanel(new GridBagLayout());
-        panelNut.setOpaque(false);
-        panelNut.add(nutKeDonThuoc);
-
         panelTieuDe.add(panelChu, BorderLayout.WEST);
-        panelTieuDe.add(panelNut, BorderLayout.EAST);
     }
 
     // =========================================================================
@@ -165,15 +158,15 @@ public class DonThuocGUI extends JPanel {
         panelThongKe.setOpaque(false);
         panelThongKe.setPreferredSize(new Dimension(0, CHIEU_CAO_THE_THONG_KE));
 
-        nhanSoTongDon = new JLabel("15");
-        nhanSoDaCapThuoc = new JLabel("5");
-        nhanSoChoLayThuoc = new JLabel("5");
-        nhanSoHoanThanh = new JLabel("5");
+        nhanSoTongDon = new JLabel("142");
+        nhanSoDaCapThuoc = new JLabel("98");
+        nhanSoChoLayThuoc = new JLabel("12");
+        nhanSoHoanThanh = new JLabel("32");
 
-        panelThongKe.add(taoTheThongKe("ĐT", "Tổng đơn thuốc", nhanSoTongDon, "Đơn đã kê"));
-        panelThongKe.add(taoTheThongKe("CT", "Đã cấp thuốc", nhanSoDaCapThuoc, "Đã giao thuốc"));
-        panelThongKe.add(taoTheThongKe("CL", "Chờ lấy thuốc", nhanSoChoLayThuoc, "Cần xử lý"));
-        panelThongKe.add(taoTheThongKe("HT", "Hoàn thành", nhanSoHoanThanh, "Đã kết thúc"));
+        panelThongKe.add(taoTheThongKe("DT", "Tổng số đơn", nhanSoTongDon, "Tất cả đơn thuốc"));
+        panelThongKe.add(taoTheThongKe("ĐC", "Đã cấp thuốc", nhanSoDaCapThuoc, "Đã giao cho khách"));
+        panelThongKe.add(taoTheThongKe("CL", "Chờ lấy thuốc", nhanSoChoLayThuoc, "Cần chuẩn bị gấp"));
+        panelThongKe.add(taoTheThongKe("HT", "Hoàn thành", nhanSoHoanThanh, "Đã xong điều trị"));
     }
 
     private PanelBoTron taoTheThongKe(String bieuTuong, String tieuDe, JLabel nhanSo, String moTa) {
@@ -248,48 +241,79 @@ public class DonThuocGUI extends JPanel {
         panelCongCu.setBorder(new EmptyBorder(16, 20, 16, 20));
 
         txtTimKiem = new OTimKiemGoiY("Tìm theo mã đơn, thú cưng, bác sĩ...");
-        txtTimKiem.setPreferredSize(new Dimension(340, CHIEU_CAO_O_NHAP));
-        txtTimKiem.setMaximumSize(new Dimension(340, CHIEU_CAO_O_NHAP));
+        txtTimKiem.setPreferredSize(new Dimension(280, CHIEU_CAO_O_NHAP));
+        txtTimKiem.setMaximumSize(new Dimension(280, CHIEU_CAO_O_NHAP));
 
-        cboTrangThai = taoOChon(dsTrangThaiLoc, 180);
-        cboThoiGian = taoOChon(dsThoiGianLoc, 180);
+        cboTrangThai = taoOChon(dsTrangThaiLoc, 150);
+        cboThoiGian = taoOChon(dsThoiGianLoc, 140);
 
-        nutXemChiTiet = taoNutLienKet("Xem chi tiết", RangBuocGiaoDien.MAU_CHU_DAO);
-        nutChinhSua = taoNutLienKet("Chỉnh sửa", RangBuocGiaoDien.MAU_CHU_DAO);
-        nutXoa = taoNutLienKet("Xóa", RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
+        // CỤM NÚT THAO TÁC ĐỘC LẬP
+        nutKeDonThuoc = new NutBoTron("+ Kê đơn thuốc", RangBuocGiaoDien.MAU_CHU_DAO,
+                RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8);
+        nutKeDonThuoc.setPreferredSize(new Dimension(135, CHIEU_CAO_O_NHAP));
 
-        nutXuatDanhSach = new NutBoTron("Xuất danh sách", RangBuocGiaoDien.MAU_NEN_THE,
+        nutXemChiTiet = new NutBoTron("Xem chi tiết", RangBuocGiaoDien.MAU_NEN_THE,
                 RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN,
                 RangBuocGiaoDien.MAU_CHU_CHINH, 8);
-        nutXuatDanhSach.setPreferredSize(new Dimension(154, CHIEU_CAO_O_NHAP));
-        nutXuatDanhSach.setMaximumSize(new Dimension(154, CHIEU_CAO_O_NHAP));
+        nutXemChiTiet.setPreferredSize(new Dimension(110, CHIEU_CAO_O_NHAP));
+
+        nutChinhSua = new NutBoTron("Chỉnh sửa", RangBuocGiaoDien.MAU_NEN_THE,
+                RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN,
+                RangBuocGiaoDien.MAU_CHU_CHINH, 8);
+        nutChinhSua.setPreferredSize(new Dimension(100, CHIEU_CAO_O_NHAP));
+
+        nutXoa = new NutBoTron("Xóa", RangBuocGiaoDien.MAU_NEN_THE,
+                RangBuocGiaoDien.MAU_NGUY_HIEM_NEN, RangBuocGiaoDien.MAU_DUONG_VIEN,
+                RangBuocGiaoDien.MAU_NGUY_HIEM_CHU, 8);
+        nutXoa.setPreferredSize(new Dimension(75, CHIEU_CAO_O_NHAP));
+
+        nutXuatDanhSach = new NutBoTron("Xuất Excel", RangBuocGiaoDien.MAU_NEN_THE,
+                RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN,
+                RangBuocGiaoDien.MAU_CHU_CHINH, 8);
+        nutXuatDanhSach.setPreferredSize(new Dimension(110, CHIEU_CAO_O_NHAP));
+
+        // Mặc định disable các nút tác động theo dòng
+        nutXemChiTiet.setEnabled(false);
+        nutChinhSua.setEnabled(false);
+        nutXoa.setEnabled(false);
 
         panelCongCu.add(txtTimKiem);
-        panelCongCu.add(Box.createHorizontalStrut(12));
+        panelCongCu.add(Box.createHorizontalStrut(10));
         panelCongCu.add(cboTrangThai);
-        panelCongCu.add(Box.createHorizontalStrut(12));
+        panelCongCu.add(Box.createHorizontalStrut(10));
         panelCongCu.add(cboThoiGian);
         panelCongCu.add(Box.createHorizontalGlue());
+        panelCongCu.add(nutKeDonThuoc);
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutXemChiTiet);
-        panelCongCu.add(Box.createHorizontalStrut(14));
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutChinhSua);
-        panelCongCu.add(Box.createHorizontalStrut(14));
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutXoa);
-        panelCongCu.add(Box.createHorizontalStrut(24));
+        panelCongCu.add(Box.createHorizontalStrut(8));
         panelCongCu.add(nutXuatDanhSach);
     }
 
     private void khoiTaoBang() {
         bangDonThuoc = new TableMau(tieuDeCot, duLieuMau);
+        bangDonThuoc.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        int cotTrangThai = tieuDeCot.length - 2;
-        int cotThaoTac = tieuDeCot.length - 1;
-        int[] doRongCot = { 100, 120, 80, 150, 140, 100, 160, 130, 140 };
+        int cotTrangThai = tieuDeCot.length - 1; // Cột số 7
+        int[] doRongCot = { 110, 130, 90, 160, 150, 100, 180, 140 };
         for (int i = 0; i < doRongCot.length; i++) {
             bangDonThuoc.getColumnModel().getColumn(i).setPreferredWidth(doRongCot[i]);
         }
         bangDonThuoc.getColumnModel().getColumn(cotTrangThai).setCellRenderer(new OTrangThai(bangDonThuoc));
-        bangDonThuoc.getColumnModel().getColumn(cotThaoTac).setCellRenderer(new OThaoTac(bangDonThuoc));
+
+        // Lắng nghe chọn dòng: chỉ bật nút khi người dùng click chọn 1 dòng
+        bangDonThuoc.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean coChon = bangDonThuoc.getSelectedRow() != -1;
+                nutXemChiTiet.setEnabled(coChon);
+                nutChinhSua.setEnabled(coChon);
+                nutXoa.setEnabled(coChon);
+            }
+        });
 
         thanhCuonBang = new JScrollPane(bangDonThuoc);
         thanhCuonBang.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
@@ -305,7 +329,7 @@ public class DonThuocGUI extends JPanel {
                 BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
                 new EmptyBorder(0, 20, 0, 20)));
 
-        nhanThongTinTrang = new JLabel("Hiển thị 1–8 trong 15 đơn thuốc");
+        nhanThongTinTrang = new JLabel("Hiển thị 1–8 trong 142 đơn thuốc");
         nhanThongTinTrang.setFont(RangBuocGiaoDien.fontThuong(12));
         nhanThongTinTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
@@ -322,7 +346,7 @@ public class DonThuocGUI extends JPanel {
         nutTrang1 = taoNutTrang("1", true);
         nutTrang2 = taoNutTrang("2", false);
         nutTrangRutGon = taoNutTrang("...", false);
-        nutTrangCuoi = taoNutTrang("2", false);
+        nutTrangCuoi = taoNutTrang("18", false);
         nutTrangSau = taoNutTrang(">", false);
 
         JPanel panelBenPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 11));
@@ -333,10 +357,119 @@ public class DonThuocGUI extends JPanel {
         panelBenPhai.add(nutTrangTruoc);
         panelBenPhai.add(nutTrang1);
         panelBenPhai.add(nutTrang2);
+        panelBenPhai.add(nutTrangRutGon);
+        panelBenPhai.add(nutTrangCuoi);
         panelBenPhai.add(nutTrangSau);
 
         panelPhanTrang.add(nhanThongTinTrang, BorderLayout.WEST);
         panelPhanTrang.add(panelBenPhai, BorderLayout.EAST);
+    }
+
+    // =========================================================================
+    // CÀI ĐẶT SỰ KIỆN CHO CỤM NÚT THAO TÁC
+    // =========================================================================
+    private void caiDatSuKien() {
+        nutKeDonThuoc.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Mở form lập đơn thuốc mới cho thú cưng.", "Kê đơn thuốc",
+                    JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        nutXemChiTiet.addActionListener(e -> hienThiDialogChiTietDonThuoc());
+
+        nutChinhSua.addActionListener(e -> {
+            int row = bangDonThuoc.getSelectedRow();
+            if (row != -1) {
+                String maDT = bangDonThuoc.getValueAt(row, 0).toString();
+                JOptionPane.showMessageDialog(this, "Mở form chỉnh sửa đơn thuốc: " + maDT,
+                        "Chỉnh sửa", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        nutXoa.addActionListener(e -> {
+            int row = bangDonThuoc.getSelectedRow();
+            if (row != -1) {
+                String maDT = bangDonThuoc.getValueAt(row, 0).toString();
+                int hoi = JOptionPane.showConfirmDialog(this,
+                        "Bạn có chắc chắn muốn xóa đơn thuốc \"" + maDT + "\" không?",
+                        "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (hoi == JOptionPane.YES_OPTION) {
+                    JOptionPane.showMessageDialog(this, "Đã xóa đơn thuốc thành công!", "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        });
+
+        nutXuatDanhSach.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Đã xuất dữ liệu danh sách đơn thuốc sang Excel thành công!",
+                    "Xuất Excel", JOptionPane.INFORMATION_MESSAGE);
+        });
+    }
+
+    private void hienThiDialogChiTietDonThuoc() {
+        int row = bangDonThuoc.getSelectedRow();
+        if (row == -1) return;
+
+        String maDT = bangDonThuoc.getValueAt(row, 0).toString();
+        String thuCung = bangDonThuoc.getValueAt(row, 1).toString();
+        String maHS = bangDonThuoc.getValueAt(row, 2).toString();
+        String bacSi = bangDonThuoc.getValueAt(row, 3).toString();
+        String ngayKe = bangDonThuoc.getValueAt(row, 4).toString();
+        String soThuoc = bangDonThuoc.getValueAt(row, 5).toString();
+        String ghiChu = bangDonThuoc.getValueAt(row, 6).toString();
+        String trangThai = bangDonThuoc.getValueAt(row, 7).toString();
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết đơn thuốc", true);
+        dialog.setSize(480, 420);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel pContent = new JPanel(new BorderLayout(0, 16));
+        pContent.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        pContent.setBorder(new EmptyBorder(20, 24, 20, 24));
+
+        JLabel lblTitle = new JLabel("CHI TIẾT ĐƠN THUỐC: " + maDT);
+        lblTitle.setFont(RangBuocGiaoDien.fontDam(18));
+        lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+
+        PanelBoTron card = new PanelBoTron(new GridLayout(8, 2, 8, 10), 10, Color.WHITE, RangBuocGiaoDien.MAU_DUONG_VIEN);
+        card.setBorder(new EmptyBorder(14, 18, 14, 18));
+
+        themDongThongTin(card, "Mã đơn thuốc:", maDT);
+        themDongThongTin(card, "Thú cưng:", thuCung);
+        themDongThongTin(card, "Mã hồ sơ:", maHS);
+        themDongThongTin(card, "Bác sĩ kê đơn:", bacSi);
+        themDongThongTin(card, "Ngày kê đơn:", ngayKe);
+        themDongThongTin(card, "Số loại thuốc:", soThuoc);
+        themDongThongTin(card, "Ghi chú điều trị:", ghiChu);
+        themDongThongTin(card, "Trạng thái:", trangThai);
+
+        NutBoTron btnDong = new NutBoTron("Đóng", RangBuocGiaoDien.MAU_CHU_DAO,
+                RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8);
+        btnDong.setPreferredSize(new Dimension(100, 36));
+        btnDong.addActionListener(e -> dialog.dispose());
+
+        JPanel pBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        pBtn.setOpaque(false);
+        pBtn.add(btnDong);
+
+        pContent.add(lblTitle, BorderLayout.NORTH);
+        pContent.add(card, BorderLayout.CENTER);
+        pContent.add(pBtn, BorderLayout.SOUTH);
+
+        dialog.setContentPane(pContent);
+        dialog.setVisible(true);
+    }
+
+    private void themDongThongTin(JPanel panel, String tieuDe, String giaTri) {
+        JLabel lblT = new JLabel(tieuDe);
+        lblT.setFont(RangBuocGiaoDien.fontThuong(12));
+        lblT.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+
+        JLabel lblV = new JLabel(giaTri);
+        lblV.setFont(RangBuocGiaoDien.fontDam(13));
+        lblV.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+
+        panel.add(lblT);
+        panel.add(lblV);
     }
 
     // =========================================================================
@@ -350,18 +483,6 @@ public class DonThuocGUI extends JPanel {
         o.setPreferredSize(new Dimension(doRong, CHIEU_CAO_O_NHAP));
         o.setMaximumSize(new Dimension(doRong, CHIEU_CAO_O_NHAP));
         return o;
-    }
-
-    private JButton taoNutLienKet(String chu, Color mauChu) {
-        JButton nut = new JButton(chu);
-        nut.setFont(RangBuocGiaoDien.fontThuong(12));
-        nut.setForeground(mauChu);
-        nut.setContentAreaFilled(false);
-        nut.setBorderPainted(false);
-        nut.setFocusPainted(false);
-        nut.setMargin(new Insets(0, 0, 0, 0));
-        nut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return nut;
     }
 
     private NutBoTron taoNutTrang(String chu, boolean dangChon) {
@@ -379,7 +500,7 @@ public class DonThuocGUI extends JPanel {
     }
 
     // =========================================================================
-    // GETTERS (để nhóm làm chức năng truy cập khi cần)
+    // GETTERS
     // =========================================================================
     public TableMau getBangDonThuoc() {
         return bangDonThuoc;
@@ -402,7 +523,7 @@ public class DonThuocGUI extends JPanel {
     }
 
     // =========================================================================
-    // LỚP PHỤ TRỢ: Renderer cột "Trạng thái" (huy hiệu màu)
+    // LỚP PHỤ TRỢ: Renderer cột "Trạng thái" (dạng pill badge)
     // =========================================================================
     private static class OTrangThai extends JPanel implements TableCellRenderer {
         private final JTable bang;
@@ -412,34 +533,30 @@ public class DonThuocGUI extends JPanel {
 
         OTrangThai(JTable bang) {
             this.bang = bang;
+            setOpaque(true);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                 boolean hasFocus, int row, int column) {
-            chu = value == null ? "" : value.toString();
-            switch (chu) {
-                case "Hoàn thành":
-                    mauNen = RangBuocGiaoDien.MAU_THANH_CONG_NEN;
-                    mauChu = RangBuocGiaoDien.MAU_THANH_CONG_CHU;
-                    break;
-                case "Chờ lấy thuốc":
-                    mauNen = RangBuocGiaoDien.MAU_CANH_BAO_NEN;
-                    mauChu = RangBuocGiaoDien.MAU_CANH_BAO_CHU;
-                    break;
-                case "Đã cấp thuốc":
-                    mauNen = RangBuocGiaoDien.MAU_THONG_TIN_NEN;
-                    mauChu = RangBuocGiaoDien.MAU_THONG_TIN_CHU;
-                    break;
-                default:
-                    mauNen = RangBuocGiaoDien.MAU_TRUNG_TINH_NEN;
-                    mauChu = RangBuocGiaoDien.MAU_TRUNG_TINH_CHU;
-                    break;
-            }
+            this.chu = value != null ? value.toString() : "";
             if (isSelected) {
                 setBackground(bang.getSelectionBackground());
             } else {
                 setBackground(row % 2 == 0 ? Color.WHITE : RangBuocGiaoDien.MAU_TIEU_DE_BANG);
+            }
+            if ("Đã cấp thuốc".equals(chu)) {
+                mauNen = RangBuocGiaoDien.MAU_THONG_TIN_NEN;
+                mauChu = RangBuocGiaoDien.MAU_THONG_TIN_CHU;
+            } else if ("Chờ lấy thuốc".equals(chu)) {
+                mauNen = RangBuocGiaoDien.MAU_CANH_BAO_NEN;
+                mauChu = RangBuocGiaoDien.MAU_CANH_BAO_CHU;
+            } else if ("Hoàn thành".equals(chu)) {
+                mauNen = RangBuocGiaoDien.MAU_THANH_CONG_NEN;
+                mauChu = RangBuocGiaoDien.MAU_THANH_CONG_CHU;
+            } else {
+                mauNen = RangBuocGiaoDien.MAU_TRUNG_TINH_NEN;
+                mauChu = RangBuocGiaoDien.MAU_TRUNG_TINH_CHU;
             }
             return this;
         }
@@ -461,40 +578,6 @@ public class DonThuocGUI extends JPanel {
             g2.fillOval(x + 9, y + cao / 2 - 3, 6, 6);
             g2.drawString(chu, x + 20, y + (cao - doDo.getHeight()) / 2 + doDo.getAscent());
             g2.dispose();
-        }
-    }
-
-    // =========================================================================
-    // LỚP PHỤ TRỢ: Renderer cột "Thao tác" (Xem | Sửa | Xóa)
-    // =========================================================================
-    private static class OThaoTac extends JPanel implements TableCellRenderer {
-        private final JTable bang;
-
-        OThaoTac(JTable bang) {
-            super(new FlowLayout(FlowLayout.LEFT, 14, 0));
-            this.bang = bang;
-            setBorder(new EmptyBorder(12, 12, 0, 0));
-            add(taoNhan("Xem", RangBuocGiaoDien.MAU_CHU_DAO));
-            add(taoNhan("Sửa", RangBuocGiaoDien.MAU_THONG_TIN_CHU));
-            add(taoNhan("Xóa", RangBuocGiaoDien.MAU_NGUY_HIEM_CHU));
-        }
-
-        private JLabel taoNhan(String chu, Color mau) {
-            JLabel nhan = new JLabel(chu);
-            nhan.setFont(RangBuocGiaoDien.fontDam(12));
-            nhan.setForeground(mau);
-            return nhan;
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setBackground(bang.getSelectionBackground());
-            } else {
-                setBackground(row % 2 == 0 ? Color.WHITE : RangBuocGiaoDien.MAU_TIEU_DE_BANG);
-            }
-            return this;
         }
     }
 

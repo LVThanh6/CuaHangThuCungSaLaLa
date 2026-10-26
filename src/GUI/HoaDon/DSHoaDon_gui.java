@@ -42,6 +42,12 @@ public class DSHoaDon_gui extends JPanel {
     private final JLabel lblDaThanhToan = new JLabel("0");
     private final JLabel lblChuaThanhToan = new JLabel("0");
 
+    // Cụm nút thao tác độc lập trên toolbar
+    private final JButton btnLapHoaDon = new JButton("+ Lập Hóa Đơn");
+    private final JButton btnXemChiTiet = new JButton("Xem chi tiết");
+    private final JButton btnXoa = new JButton("Xóa");
+    private final JButton btnXuat = new JButton("Xuất Excel");
+
     private final DefaultTableModel model = new DefaultTableModel(
             new String[] {
                     "Mã Hóa Đơn",
@@ -51,8 +57,7 @@ public class DSHoaDon_gui extends JPanel {
                     "Mã Nhân Viên",
                     "Mã Khuyến Mãi",
                     "Mã Thuế",
-                    "Mã Thanh Toán",
-                    "Thao tác"
+                    "Mã Thanh Toán"
             }, 0) {
 
         @Override
@@ -114,33 +119,7 @@ public class DSHoaDon_gui extends JPanel {
         thongTinTieuDe.add(Box.createVerticalStrut(4));
         thongTinTieuDe.add(lblMoTa);
 
-        JButton btnLapHoaDon = new JButton("Lập Hóa Đơn");
-
-        btnLapHoaDon.setFont(new Font("Arial", Font.BOLD, 12));
-        btnLapHoaDon.setForeground(Color.WHITE);
-        btnLapHoaDon.setBackground(Color.decode("#0F766E"));
-
-        // Ép Swing sử dụng màu nền đã đặt
-        btnLapHoaDon.setOpaque(true);
-        btnLapHoaDon.setContentAreaFilled(true);
-        btnLapHoaDon.setBorderPainted(false);
-        btnLapHoaDon.setFocusPainted(false);
-        btnLapHoaDon.setCursor(Cursor.getPredefinedCursor(
-                Cursor.HAND_CURSOR));
-        btnLapHoaDon.addActionListener(e -> {
-            if (hanhDongLapHoaDon != null) {
-                hanhDongLapHoaDon.run();
-            } else {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Hãy kết nối nút này với màn hình lập hóa đơn.",
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
         tieuDe.add(thongTinTieuDe, BorderLayout.CENTER);
-        tieuDe.add(btnLapHoaDon, BorderLayout.EAST);
 
         // Ba thẻ thống kê
         JPanel thongKe = new JPanel(new GridLayout(1, 3, 12, 0));
@@ -237,40 +216,48 @@ public class DSHoaDon_gui extends JPanel {
         benTrai.add(cboTrangThai);
 
         JPanel benPhai = new JPanel(new FlowLayout(
-                FlowLayout.RIGHT, 6, 0));
+                FlowLayout.RIGHT, 8, 0));
         benPhai.setOpaque(false);
 
-        // Nút Xóa (nằm bên trái nút Xuất Danh Sách)
-        JButton btnXoa = new JButton("Xóa");
+        btnLapHoaDon.setFont(new Font("Arial", Font.BOLD, 12));
+        btnLapHoaDon.setForeground(Color.WHITE);
+        btnLapHoaDon.setBackground(Color.decode("#0F766E"));
+        btnLapHoaDon.setOpaque(true);
+        btnLapHoaDon.setContentAreaFilled(true);
+        btnLapHoaDon.setBorderPainted(false);
+        btnLapHoaDon.setFocusPainted(false);
+        btnLapHoaDon.setBorder(new EmptyBorder(8, 14, 8, 14));
+        btnLapHoaDon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        btnXoa.setFont(new Font("Arial", Font.BOLD, 12));
-        btnXoa.setForeground(Color.WHITE);
-        btnXoa.setBackground(new Color(220, 38, 38));
-        btnXoa.setOpaque(true);
-        btnXoa.setContentAreaFilled(true);
-        btnXoa.setBorderPainted(false);
+        btnXemChiTiet.setFont(new Font("Arial", Font.PLAIN, 12));
+        btnXemChiTiet.setForeground(CHU);
+        btnXemChiTiet.setBackground(Color.WHITE);
+        btnXemChiTiet.setFocusPainted(false);
+        btnXemChiTiet.setBorder(new LineBorder(VIEN, 1, true));
+        btnXemChiTiet.setPreferredSize(new Dimension(105, 34));
+        btnXemChiTiet.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btnXoa.setFont(new Font("Arial", Font.PLAIN, 12));
+        btnXoa.setForeground(new Color(220, 38, 38));
+        btnXoa.setBackground(Color.WHITE);
         btnXoa.setFocusPainted(false);
-        btnXoa.setBorder(new EmptyBorder(9, 16, 9, 16));
-        btnXoa.setCursor(Cursor.getPredefinedCursor(
-                Cursor.HAND_CURSOR));
+        btnXoa.setBorder(new LineBorder(new Color(254, 202, 202), 1, true));
+        btnXoa.setPreferredSize(new Dimension(75, 34));
+        btnXoa.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        btnXoa.addActionListener(e -> xoaHoaDon());
-
-        JButton btnXuat = new JButton("Xuất Danh Sách");
-
-        btnXuat.setFont(new Font("Arial", Font.BOLD, 12));
-        btnXuat.setForeground(Color.BLACK);
+        btnXuat.setFont(new Font("Arial", Font.PLAIN, 12));
+        btnXuat.setForeground(CHU);
         btnXuat.setBackground(Color.WHITE);
         btnXuat.setFocusPainted(false);
-        btnXuat.setBorder(new EmptyBorder(9, 12, 9, 12));
-        btnXuat.setCursor(Cursor.getPredefinedCursor(
-                Cursor.HAND_CURSOR));
-        btnXuat.setForeground(CHU);
         btnXuat.setBorder(new LineBorder(VIEN, 1, true));
+        btnXuat.setPreferredSize(new Dimension(105, 34));
+        btnXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        btnXuat.addActionListener(e -> xuatCSV());
+        btnXemChiTiet.setEnabled(false);
+        btnXoa.setEnabled(false);
 
-        // Thứ tự add: Xóa trước, Xuất sau => Xóa nằm bên trái
+        benPhai.add(btnLapHoaDon);
+        benPhai.add(btnXemChiTiet);
         benPhai.add(btnXoa);
         benPhai.add(btnXuat);
 
@@ -293,6 +280,7 @@ public class DSHoaDon_gui extends JPanel {
         table.setGridColor(new Color(241, 245, 249));
         table.setFillsViewportHeight(true);
         table.setAutoCreateRowSorter(true);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JTableHeader header = table.getTableHeader();
         header.setPreferredSize(new Dimension(0, 36));
@@ -300,26 +288,6 @@ public class DSHoaDon_gui extends JPanel {
         header.setBackground(new Color(241, 245, 249));
         header.setForeground(new Color(71, 85, 105));
         header.setReorderingAllowed(false);
-
-        // Nút Xem
-        table.getColumnModel().getColumn(8).setCellRenderer(
-                new DefaultTableCellRenderer() {
-
-                    @Override
-                    public Component getTableCellRendererComponent(
-                            JTable t, Object value, boolean selected,
-                            boolean focus, int row, int column) {
-
-                        JButton btnXem = new JButton("Xem");
-                        btnXem.setFont(new Font("Arial", Font.PLAIN, 11));
-                        btnXem.setForeground(XANH);
-                        btnXem.setBackground(new Color(240, 253, 250));
-                        btnXem.setBorder(new LineBorder(
-                                new Color(204, 251, 241), 1, true));
-                        btnXem.setFocusPainted(false);
-                        return btnXem;
-                    }
-                });
 
         // Màu trạng thái
         table.getColumnModel().getColumn(2).setCellRenderer(
@@ -364,24 +332,52 @@ public class DSHoaDon_gui extends JPanel {
         // Thay đổi trạng thái sẽ lọc ngay
         cboTrangThai.addActionListener(e -> locDuLieu());
 
-        // Nhấn nút Xem
-        table.addMouseListener(new MouseAdapter() {
+        // Sự kiện cụm nút thao tác
+        btnLapHoaDon.addActionListener(e -> {
+            if (hanhDongLapHoaDon != null) {
+                hanhDongLapHoaDon.run();
+            } else {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Hãy kết nối nút này với màn hình lập hóa đơn.",
+                        "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
 
+        btnXemChiTiet.addActionListener(e -> {
+            int viewRow = table.getSelectedRow();
+            if (viewRow != -1) {
+                int modelRow = table.convertRowIndexToModel(viewRow);
+                String maHD = model.getValueAt(modelRow, 0).toString();
+                hienThiChiTiet(maHD);
+            }
+        });
+
+        btnXoa.addActionListener(e -> xoaHoaDon());
+        btnXuat.addActionListener(e -> xuatCSV());
+
+        // Lắng nghe chọn dòng: chỉ bật Xem chi tiết / Xóa khi có dòng được chọn
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean coChon = table.getSelectedRow() != -1;
+                btnXemChiTiet.setEnabled(coChon);
+                btnXoa.setEnabled(coChon);
+            }
+        });
+
+        // Click đúp vào dòng để xem chi tiết
+        table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
-                int viewRow = table.rowAtPoint(e.getPoint());
-                int viewCol = table.columnAtPoint(e.getPoint());
-
-                if (viewRow < 0 || viewCol != 8) {
-                    return;
+                if (e.getClickCount() == 2) {
+                    int viewRow = table.getSelectedRow();
+                    if (viewRow != -1) {
+                        int modelRow = table.convertRowIndexToModel(viewRow);
+                        String maHD = model.getValueAt(modelRow, 0).toString();
+                        hienThiChiTiet(maHD);
+                    }
                 }
-
-                int modelRow = table.convertRowIndexToModel(viewRow);
-
-                String maHD = model.getValueAt(modelRow, 0).toString();
-
-                hienThiChiTiet(maHD);
             }
         });
     }
@@ -447,9 +443,7 @@ public class DSHoaDon_gui extends JPanel {
                     layMa(hd.getMaNhanVien()),
                     layMa(hd.getMaKM()),
                     layMa(hd.getMaThue()),
-                    layMa(hd.getMaThanhToan()),
-
-                    "Xem"
+                    layMa(hd.getMaThanhToan())
             });
         }
     }

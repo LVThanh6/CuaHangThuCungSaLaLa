@@ -31,7 +31,14 @@ public class DanhSachKhachHangGUI extends JPanel {
     private JLabel lblDuongDan;
     private JLabel lblTieuDe;
     private JLabel lblMoTa;
+
+    // Cụm nút thao tác độc lập trên toolbar
+    private JPanel panelThaoTac;
     private JButton btnThemKhachHang;
+    private JButton btnXemChiTiet;
+    private JButton btnChinhSua;
+    private JButton btnXoa;
+    private JButton btnXuatExcel;
 
     // Các thẻ thống kê số liệu
     private JPanel panelThongKe;
@@ -73,13 +80,18 @@ public class DanhSachKhachHangGUI extends JPanel {
         setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         setBorder(new EmptyBorder(16, 24, 16, 24));
 
-        // Khởi tạo khối phía trên (Breadcrumb + Tiêu đề + Nút thêm + 4 thẻ thống kê)
+        // Khởi tạo khối phía trên (Breadcrumb + Tiêu đề + 4 thẻ thống kê)
         khoiTaoPhanTren();
         add(panelPhanTren, BorderLayout.NORTH);
 
-        // Khởi tạo khối bảng dữ liệu bên dưới
+        // Khởi tạo khối bảng dữ liệu cùng thanh công cụ thao tác độc lập bên dưới
         khoiTaoBangDuLieu();
-        add(panelQuanLyTable, BorderLayout.CENTER);
+
+        JPanel panelKhungBang = new JPanel(new BorderLayout(0, 10));
+        panelKhungBang.setOpaque(false);
+        panelKhungBang.add(panelThaoTac, BorderLayout.NORTH);
+        panelKhungBang.add(panelQuanLyTable, BorderLayout.CENTER);
+        add(panelKhungBang, BorderLayout.CENTER);
     }
 
     private void khoiTaoPhanTren() {
@@ -87,7 +99,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelPhanTren.setLayout(new BoxLayout(panelPhanTren, BoxLayout.Y_AXIS));
         panelPhanTren.setOpaque(false);
 
-        // --- Hàng 1: Breadcrumb đường dẫn & Tiêu đề + Nút thêm ---
+        // --- Hàng 1: Breadcrumb đường dẫn & Tiêu đề ---
         panelTieuDe = new JPanel(new BorderLayout());
         panelTieuDe.setOpaque(false);
 
@@ -113,20 +125,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelTrai.add(lblTieuDe);
         panelTrai.add(Box.createRigidArea(new Dimension(0, 4)));
         panelTrai.add(lblMoTa);
-        panelTieuDe.add(panelTrai, BorderLayout.WEST);
-
-        // Nút "Thêm khách hàng"
-        btnThemKhachHang = new JButton("Thêm khách hàng");
-        btnThemKhachHang.setFont(RangBuocGiaoDien.fontDam(13));
-        btnThemKhachHang.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
-        btnThemKhachHang.setFocusPainted(false);
-        btnThemKhachHang.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        btnThemKhachHang.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        panelPhai.setOpaque(false);
-        panelPhai.add(btnThemKhachHang);
-        panelTieuDe.add(panelPhai, BorderLayout.EAST);
+        panelTieuDe.add(panelTrai, BorderLayout.CENTER);
 
         panelPhanTren.add(panelTieuDe);
         panelPhanTren.add(Box.createRigidArea(new Dimension(0, 16)));
@@ -192,9 +191,40 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     private void khoiTaoBangDuLieu() {
+        // Cụm nút thao tác độc lập phía trên bảng
+        panelThaoTac = new JPanel(new BorderLayout());
+        panelThaoTac.setOpaque(false);
+
+        JLabel lblSec = new JLabel("DANH SÁCH KHÁCH HÀNG");
+        lblSec.setFont(RangBuocGiaoDien.fontDam(14));
+        lblSec.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        panelThaoTac.add(lblSec, BorderLayout.WEST);
+
+        JPanel pButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        pButtons.setOpaque(false);
+
+        btnThemKhachHang = taoNutChinh("+ Thêm mới");
+        btnXemChiTiet = taoNutPhu("Xem chi tiết");
+        btnChinhSua = taoNutPhu("Chỉnh sửa");
+        btnXoa = taoNutNguyHiem("Xóa");
+        btnXuatExcel = taoNutPhu("Xuất Excel");
+
+        // Logic thao tác: Các nút Xem/Sửa/Xóa mặc định bị disable
+        btnXemChiTiet.setEnabled(false);
+        btnChinhSua.setEnabled(false);
+        btnXoa.setEnabled(false);
+
+        pButtons.add(btnThemKhachHang);
+        pButtons.add(btnXemChiTiet);
+        pButtons.add(btnChinhSua);
+        pButtons.add(btnXoa);
+        pButtons.add(btnXuatExcel);
+        panelThaoTac.add(pButtons, BorderLayout.EAST);
+
+        // 8 Cột hiển thị (đã loại bỏ hoàn toàn cột Thao tác)
         danhSachCot = new String[] {
                 "Mã khách hàng", "Họ tên", "Số điện thoại", "Email",
-                "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu", "Thao tác"
+                "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu"
         };
 
         duLieuKhachHang = new Object[][] {};
@@ -213,10 +243,55 @@ public class DanhSachKhachHangGUI extends JPanel {
     // 4. CÀI ĐẶT CÁC SỰ KIỆN & CHỨC NĂNG NGHIỆP VỤ
     // =========================================================================
     private void caiDatCacChucNang() {
-        // 1. Sự kiện nút "+ Thêm khách hàng"
+        JTable table = panelQuanLyTable.getBangDuLieu();
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // 1. Sự kiện cụm nút thao tác độc lập
         btnThemKhachHang.addActionListener(e -> hienThiDialogThemKhachHang());
 
-        // 2. Cài đặt Bộ lọc theo Hạng thành viên
+        btnXemChiTiet.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int modelRow = table.convertRowIndexToModel(row);
+                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
+                hienThiDialogXemChiTiet(maKH);
+            }
+        });
+
+        btnChinhSua.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int modelRow = table.convertRowIndexToModel(row);
+                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
+                hienThiDialogSuaKhachHang(maKH);
+            }
+        });
+
+        btnXoa.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int modelRow = table.convertRowIndexToModel(row);
+                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
+                String hoTen = table.getModel().getValueAt(modelRow, 1).toString();
+                xuLyXoaKhachHang(maKH, hoTen);
+            }
+        });
+
+        btnXuatExcel.addActionListener(e -> {
+            panelQuanLyTable.xuatFileCSV(this);
+        });
+
+        // 2. Logic bật/tắt nút: Lắng nghe ListSelectionListener trên bảng
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean coChon = table.getSelectedRow() != -1;
+                btnXemChiTiet.setEnabled(coChon);
+                btnChinhSua.setEnabled(coChon);
+                btnXoa.setEnabled(coChon);
+            }
+        });
+
+        // 3. Cài đặt Bộ lọc theo Hạng thành viên
         panelQuanLyTable.caiDatBoLoc(0,
                 new String[] { "Hạng thành viên: Tất cả", "Đồng", "Bạc", "Vàng", "Kim cương" },
                 luaChon -> {
@@ -227,101 +302,23 @@ public class DanhSachKhachHangGUI extends JPanel {
                     }
                 });
 
-        // 3. Sự kiện Click trên bảng dữ liệu (Double click xem chi tiết, Click cột Thao
-        // tác, Right-click popup)
-        JTable table = panelQuanLyTable.getBangDuLieu();
-
-        // Menu chuột phải
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem itemXem = new JMenuItem("Xem chi tiết khách hàng");
-        JMenuItem itemSua = new JMenuItem("Chỉnh sửa thông tin");
-        JMenuItem itemXoa = new JMenuItem("Xóa khách hàng");
-
-        itemXem.setFont(RangBuocGiaoDien.fontThuong(13));
-        itemSua.setFont(RangBuocGiaoDien.fontThuong(13));
-        itemXoa.setFont(RangBuocGiaoDien.fontThuong(13));
-        itemXoa.setForeground(new Color(220, 38, 38));
-
-        itemXem.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-                hienThiDialogXemChiTiet(maKH);
-            }
-        });
-
-        itemSua.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-                hienThiDialogSuaKhachHang(maKH);
-            }
-        });
-
-        itemXoa.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-                String hoTen = table.getModel().getValueAt(modelRow, 1).toString();
-                xuLyXoaKhachHang(maKH, hoTen);
-            }
-        });
-
-        popupMenu.add(itemXem);
-        popupMenu.add(itemSua);
-        popupMenu.addSeparator();
-        popupMenu.add(itemXoa);
-
-        table.setComponentPopupMenu(popupMenu);
-
-        // Click & Right-click trên bảng
+        // Click đúp vào dòng -> Xem chi tiết
         table.addMouseListener(new MouseAdapter() {
-            private void chonDong(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
-                if (row >= 0) {
-                    table.setRowSelectionInterval(row, row);
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
-                    chonDong(e);
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
-                    chonDong(e);
-                }
-            }
-
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
                 if (row >= 0) {
                     table.setRowSelectionInterval(row, row);
-                    int modelRow = table.convertRowIndexToModel(row);
-                    String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-
-                    // Click đúp vào dòng -> Xem chi tiết
                     if (e.getClickCount() == 2) {
+                        int modelRow = table.convertRowIndexToModel(row);
+                        String maKH = table.getModel().getValueAt(modelRow, 0).toString();
                         hienThiDialogXemChiTiet(maKH);
-                    }
-                    // Click chuột vào cột số 8 (Cột Thao tác) -> Hiện menu lựa chọn
-                    else if (col == 8) {
-                        popupMenu.show(table, e.getX(), e.getY());
                     }
                 }
             }
         });
 
-        // Thiết lập Renderer cho cột Hạng thành viên (6), Chi tiêu (7), Thao tác (8)
+        // Thiết lập Renderer cho cột Hạng thành viên (6) và Chi tiêu (7)
         try {
             table.getColumnModel().getColumn(6).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
                 @Override
@@ -362,22 +359,6 @@ public class DanhSachKhachHangGUI extends JPanel {
                     return lbl;
                 }
             });
-
-            table.getColumnModel().getColumn(8).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
-                        int r, int c) {
-                    JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
-                    lbl.setFont(RangBuocGiaoDien.fontVua(12));
-                    lbl.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
-                    lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                    lbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    if (!isSel) {
-                        lbl.setBackground(r % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
-                    }
-                    return lbl;
-                }
-            });
         } catch (Exception ignored) {
         }
     }
@@ -389,7 +370,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         try {
             ArrayList<KhachHang> ds = khachHangDAO.getAllKhachHangDayDu();
             if (ds != null && !ds.isEmpty()) {
-                duLieuKhachHang = new Object[ds.size()][9];
+                duLieuKhachHang = new Object[ds.size()][8];
                 for (int i = 0; i < ds.size(); i++) {
                     KhachHang kh = ds.get(i);
                     duLieuKhachHang[i][0] = kh.getMaKH();
@@ -400,8 +381,17 @@ public class DanhSachKhachHangGUI extends JPanel {
                     duLieuKhachHang[i][5] = String.valueOf(kh.getSoThuCung());
                     duLieuKhachHang[i][6] = (kh.getHangThanhVien() != null ? kh.getHangThanhVien() : "Đồng");
                     duLieuKhachHang[i][7] = String.format("%,.0f ₫", kh.getTongChiTieu()).replace(',', '.');
-                    duLieuKhachHang[i][8] = "Xem | Sửa | Xóa";
                 }
+                if (panelQuanLyTable != null) {
+                    panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
+                }
+            } else {
+                duLieuKhachHang = new Object[][] {
+                    { "KH001", "Nguyễn Thị Hoa", "0904000001", "hoa.nguyen@gmail.com", "12 Lê Lợi, Q.1", "2", "Vàng", "15.500.000 ₫" },
+                    { "KH002", "Trần Văn Hùng", "0904000002", "hung.tran@gmail.com", "45 Nguyễn Huệ, Q.1", "1", "Bạc", "6.200.000 ₫" },
+                    { "KH003", "Lê Thị Kim", "0904000003", "kim.le@gmail.com", "78 Hai Bà Trưng, Q.3", "3", "Kim cương", "32.000.000 ₫" },
+                    { "KH004", "Phạm Văn Lâm", "0904000004", "lam.pham@gmail.com", "101 Cách Mạng Tháng 8, Q.10", "1", "Đồng", "1.800.000 ₫" }
+                };
                 if (panelQuanLyTable != null) {
                     panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
                 }
@@ -816,6 +806,87 @@ public class DanhSachKhachHangGUI extends JPanel {
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10)));
         return txt;
+    }
+
+    private JButton taoNutChinh(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(RangBuocGiaoDien.fontDam(12));
+        btn.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_CHU_DAO, 1, true),
+                BorderFactory.createEmptyBorder(6, 14, 6, 14)));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(btn.getPreferredSize().width + 12, 36));
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (btn.isEnabled())
+                    btn.setBackground(RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (btn.isEnabled())
+                    btn.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+            }
+        });
+        return btn;
+    }
+
+    private JButton taoNutPhu(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(RangBuocGiaoDien.fontThuong(12));
+        btn.setBackground(Color.WHITE);
+        btn.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(btn.getPreferredSize().width + 12, 36));
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (btn.isEnabled())
+                    btn.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (btn.isEnabled())
+                    btn.setBackground(Color.WHITE);
+            }
+        });
+        return btn;
+    }
+
+    private JButton taoNutNguyHiem(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(RangBuocGiaoDien.fontThuong(12));
+        btn.setBackground(Color.WHITE);
+        btn.setForeground(RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(254, 202, 202), 1, true),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(btn.getPreferredSize().width + 12, 36));
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (btn.isEnabled())
+                    btn.setBackground(RangBuocGiaoDien.MAU_NGUY_HIEM_NEN);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (btn.isEnabled())
+                    btn.setBackground(Color.WHITE);
+            }
+        });
+        return btn;
     }
 
     public KhachHang_DAO getKhachHangDAO() {
