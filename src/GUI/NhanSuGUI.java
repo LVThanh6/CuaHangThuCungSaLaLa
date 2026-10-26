@@ -110,10 +110,6 @@ public class NhanSuGUI extends JPanel {
     private final List<NhanVien_entity> danhSachNV = new ArrayList<>();
     private final List<BacSi_entity> danhSachBS = new ArrayList<>();
 
-    // Tiêu đề & mô tả động
-    private JLabel lblBreadcrumb;
-    private JLabel lblTitle;
-    private JLabel lblDesc;
 
     // 4 Thẻ thống kê KPI
     private JLabel lblKpi1TieuDe, lblKpi1Val, lblKpi1Sub;
@@ -186,8 +182,7 @@ public class NhanSuGUI extends JPanel {
         topPanel.setOpaque(false);
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
 
-        topPanel.add(taoPhanDieuHuongVaTieuDe());
-        topPanel.add(Box.createVerticalStrut(12));
+
         topPanel.add(taoHangTheThongKe());
         add(topPanel, BorderLayout.NORTH);
 
@@ -206,47 +201,8 @@ public class NhanSuGUI extends JPanel {
     }
 
     // =========================================================================
-    // REGION 4: SUB-NAV, TIÊU ĐỀ & 4 THẺ THỐNG KÊ KPI
+    // REGION 4: 4 THẺ THỐNG KÊ KPI
     // =========================================================================
-    private JPanel taoPhanDieuHuongVaTieuDe() {
-        JPanel wrap = new JPanel();
-        wrap.setOpaque(false);
-        wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
-
-        // Hàng 1: Breadcrumb
-        lblBreadcrumb = new JLabel("Nhân sự / Danh sách nhân viên");
-        lblBreadcrumb.setFont(RangBuocGiaoDien.fontThuong(12));
-        lblBreadcrumb.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
-        lblBreadcrumb.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // Hàng 2: Tiêu đề trang và mô tả
-        JPanel pTieuDe = new JPanel(new BorderLayout());
-        pTieuDe.setOpaque(false);
-        pTieuDe.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JPanel pChu = new JPanel();
-        pChu.setOpaque(false);
-        pChu.setLayout(new BoxLayout(pChu, BoxLayout.Y_AXIS));
-
-        lblTitle = new JLabel("Quản lý danh sách nhân viên");
-        lblTitle.setFont(RangBuocGiaoDien.fontDam(22));
-        lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
-
-        lblDesc = new JLabel("Quản lý hồ sơ, chức vụ, thông tin liên hệ và lương cơ bản của nhân viên.");
-        lblDesc.setFont(RangBuocGiaoDien.fontThuong(13));
-        lblDesc.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        pChu.add(lblTitle);
-        pChu.add(Box.createVerticalStrut(3));
-        pChu.add(lblDesc);
-        pTieuDe.add(pChu, BorderLayout.WEST);
-
-        wrap.add(lblBreadcrumb);
-        wrap.add(Box.createVerticalStrut(6));
-        wrap.add(pTieuDe);
-
-        return wrap;
-    }
 
     private JPanel taoHangTheThongKe() {
         JPanel row = new JPanel(new GridLayout(1, 4, 16, 0));
@@ -724,15 +680,11 @@ public class NhanSuGUI extends JPanel {
         boolean laNhanVien = (cheDoMoi == CHE_DO_NHAN_VIEN);
 
         if (laNhanVien) {
-            lblBreadcrumb.setText("Nhân sự / Danh sách nhân viên");
-            lblTitle.setText("Quản lý danh sách nhân viên");
-            lblDesc.setText("Quản lý hồ sơ, chức vụ, thông tin liên hệ và lương cơ bản của nhân sự.");
+
             cardLayout.show(panelNoiDungChinh, "VIEW_NHAN_VIEN");
             capNhatThongKeNhanVien();
         } else {
-            lblBreadcrumb.setText("Nhân sự / Danh sách bác sĩ");
-            lblTitle.setText("Quản lý danh sách bác sĩ thú y");
-            lblDesc.setText("Quản lý hồ sơ bác sĩ thú y, chuyên ngành điều trị, số ca khám và trạng thái.");
+
             cardLayout.show(panelNoiDungChinh, "VIEW_BAC_SI");
             capNhatThongKeBacSi();
         }
