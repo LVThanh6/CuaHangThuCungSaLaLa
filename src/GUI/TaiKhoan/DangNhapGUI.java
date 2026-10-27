@@ -341,7 +341,7 @@ public class DangNhapGUI extends JFrame {
                     String vaiTro = tk.getVaiTro();
 
                     // ⭐ LƯU THÔNG TIN PHIÊN LÀM VIỆC VÀO SESSION
-                   DangNhap_DAO.dangNhap(tk, tenHienThi, kq.getMaDoiTuong());
+                    DangNhap_DAO.dangNhap(tk, tenHienThi, kq.getMaDoiTuong());
 
                     // Mở giao diện chính với thông tin tài khoản đã đăng nhập
                     JFrame frameMain = new JFrame("Hệ thống Quản lý SALALA Pet Shop");

@@ -12,9 +12,6 @@ public class NhanVien_entity {
 	private LocalDate ngaySinh;
 	private String gioiTinh;
 	private double luongCoBan;
-	private String loaiLuong;
-	private double luongTheoGio;
-	private double luongThang;
 	private Boolean trangThaiTK; // Bổ sung thuộc tính trạng thái tài khoản
 
 	public NhanVien_entity() {
@@ -34,12 +31,10 @@ public class NhanVien_entity {
 		this.ngaySinh = ngaySinh;
 		this.gioiTinh = gioiTinh;
 		this.luongCoBan = luongCoBan;
-		this.loaiLuong = "THEO_GIO";
-		this.luongTheoGio = luongCoBan;
-		this.luongThang = 0;
 	}
 
 	// Constructor 10 tham số (dùng trong DAO để lấy trọn vẹn dữ liệu từ CSDL)
+	// Lương cơ bản do chức vụ quyết định (bảng LuongChucVu), Quản lý = 0 (chưa tính lương)
 	public NhanVien_entity(String maNhanVien, String maTK, String hoTen, String chucVu, String sdt, String diaChi,
 			LocalDate ngaySinh, String gioiTinh, double luongCoBan, Boolean trangThaiTK) {
 		super();
@@ -52,28 +47,6 @@ public class NhanVien_entity {
 		this.ngaySinh = ngaySinh;
 		this.gioiTinh = gioiTinh;
 		this.luongCoBan = luongCoBan;
-		this.loaiLuong = "THEO_GIO";
-		this.luongTheoGio = luongCoBan;
-		this.luongThang = 0;
-		this.trangThaiTK = trangThaiTK;
-	}
-
-	public NhanVien_entity(String maNhanVien, String maTK, String hoTen, String chucVu, String sdt, String diaChi,
-			LocalDate ngaySinh, String gioiTinh, double luongCoBan, String loaiLuong, double luongTheoGio,
-			double luongThang, Boolean trangThaiTK) {
-		super();
-		this.maNhanVien = maNhanVien;
-		this.maTK = maTK;
-		this.hoTen = hoTen;
-		this.chucVu = chucVu;
-		this.sdt = sdt;
-		this.diaChi = diaChi;
-		this.ngaySinh = ngaySinh;
-		this.gioiTinh = gioiTinh;
-		this.luongCoBan = luongCoBan;
-		this.loaiLuong = loaiLuong;
-		this.luongTheoGio = luongTheoGio;
-		this.luongThang = luongThang;
 		this.trangThaiTK = trangThaiTK;
 	}
 
@@ -128,24 +101,6 @@ public class NhanVien_entity {
 	}
 	public void setLuongCoBan(double luongCoBan) {
 		this.luongCoBan = luongCoBan;
-	}
-	public String getLoaiLuong() {
-		return loaiLuong == null ? "THEO_GIO" : loaiLuong;
-	}
-	public void setLoaiLuong(String loaiLuong) {
-		this.loaiLuong = loaiLuong;
-	}
-	public double getLuongTheoGio() {
-		return luongTheoGio;
-	}
-	public void setLuongTheoGio(double luongTheoGio) {
-		this.luongTheoGio = luongTheoGio;
-	}
-	public double getLuongThang() {
-		return luongThang;
-	}
-	public void setLuongThang(double luongThang) {
-		this.luongThang = luongThang;
 	}
 	public Boolean getTrangThaiTK() {
 		return trangThaiTK;

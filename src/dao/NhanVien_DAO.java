@@ -34,7 +34,7 @@ public class NhanVien_DAO {
         // Sử dụng LEFT JOIN để lấy trạng thái từ bảng TaiKhoan
         String sql = "SELECT nv.maNhanVien, nv.maTK, nv.hoTen, nv.chucVu, "
                    + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
-                   + "nv.loaiLuong, nv.luongTheoGio, nv.luongThang, tk.trangThai "
+                   + "tk.trangThai "
                    + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK";
 
         Connection con = ConnectDB.getCon();
@@ -57,9 +57,6 @@ public class NhanVien_DAO {
 
                 String gioiTinh = rs.getString("gioiTinh");
                 double luongCoBan = rs.getDouble("luongCoBan");
-                String loaiLuong = rs.getString("loaiLuong");
-                double luongTheoGio = rs.getDouble("luongTheoGio");
-                double luongThang = rs.getDouble("luongThang");
 
                 Boolean trangThaiTK = null;
                 if (maTK != null) {
@@ -71,7 +68,7 @@ public class NhanVien_DAO {
 
                 NhanVien_entity nv = new NhanVien_entity(
                         maNhanVien, maTK, hoTen, chucVu,
-                        sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, loaiLuong, luongTheoGio, luongThang, trangThaiTK
+                        sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, trangThaiTK
                 );
 
                 dsNV.add(nv);
@@ -83,8 +80,8 @@ public class NhanVien_DAO {
     public boolean them(NhanVien_entity nv) throws SQLException {
         String sql = "INSERT INTO NhanVien "
                    + "(maNhanVien, maTK, hoTen, chucVu, sdt, "
-                   + "diaChi, ngaySinh, gioiTinh, luongCoBan, loaiLuong, luongTheoGio, luongThang) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + "diaChi, ngaySinh, gioiTinh, luongCoBan) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
@@ -105,9 +102,6 @@ public class NhanVien_DAO {
 
             ps.setString(8, nv.getGioiTinh());
             ps.setDouble(9, nv.getLuongCoBan());
-            ps.setString(10, nv.getLoaiLuong());
-            ps.setDouble(11, nv.getLuongTheoGio());
-            ps.setDouble(12, nv.getLuongThang());
 
             return ps.executeUpdate() > 0;
         }
@@ -128,7 +122,7 @@ public class NhanVien_DAO {
         String sql = "UPDATE NhanVien SET "
                    + "maTK = ?, hoTen = ?, chucVu = ?, sdt = ?, "
                    + "diaChi = ?, ngaySinh = ?, gioiTinh = ?, "
-                   + "luongCoBan = ?, loaiLuong = ?, luongTheoGio = ?, luongThang = ? "
+                   + "luongCoBan = ? "
                    + "WHERE maNhanVien = ?";
 
         Connection con = ConnectDB.getCon();
@@ -149,10 +143,7 @@ public class NhanVien_DAO {
 
             ps.setString(7, nv.getGioiTinh());
             ps.setDouble(8, nv.getLuongCoBan());
-            ps.setString(9, nv.getLoaiLuong());
-            ps.setDouble(10, nv.getLuongTheoGio());
-            ps.setDouble(11, nv.getLuongThang());
-            ps.setString(12, nv.getMaNhanVien());
+            ps.setString(9, nv.getMaNhanVien());
 
             return ps.executeUpdate() > 0;
         }
@@ -173,7 +164,7 @@ public class NhanVien_DAO {
     public NhanVien_entity getNhanVienTheoMa(String maNhanVien) throws SQLException {
         String sql = "SELECT nv.maNhanVien, nv.maTK, nv.hoTen, nv.chucVu, "
                    + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
-                   + "nv.loaiLuong, nv.luongTheoGio, nv.luongThang, tk.trangThai "
+                   + "tk.trangThai "
                    + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK "
                    + "WHERE nv.maNhanVien = ?";
 
@@ -207,15 +198,27 @@ public class NhanVien_DAO {
                             ngaySinh,
                             rs.getString("gioiTinh"),
                             rs.getDouble("luongCoBan"),
-                            rs.getString("loaiLuong"),
-                            rs.getDouble("luongTheoGio"),
-                            rs.getDouble("luongThang"),
                             trangThaiTK
                     );
                 }
             }
         }
         return null;
+    }
+
+    /** Lương cơ bản theo chức vụ (bảng LuongChucVu). Chức vụ không có trong bảng (vd: Quản lý) -> 0. */
+    public double getLuongTheoChucVu(String chucVu) throws SQLException {
+        String sql = "SELECT luongCoBan FROM LuongChucVu WHERE chucVu = ?";
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, chucVu);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+        }
+        return 0;
     }
 
     public ArrayList<NhanVien_entity> getAllNhanVien() {
