@@ -1,6 +1,8 @@
 package GUI;
 
 import java.awt.*;
+import java.sql.SQLException;
+
 import javax.swing.*;
 
 import GUI.BacSi.BacSiGUI;
@@ -75,7 +77,12 @@ public class GiaoDienChinhGUI extends JPanel {
         // 3. LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ HEADER
         headerGUI.setTabSelectionListener((tenTab, menuCon) -> {
             if (menuCon != null && !menuCon.isEmpty()) {
-                xuLyChonMenuCon(tenTab, menuCon);
+                try {
+					xuLyChonMenuCon(tenTab, menuCon);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
             } else {
                 xuLyChonTab(tenTab);
             }
@@ -189,7 +196,7 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    private void xuLyChonMenuCon(String tenTab, String tenMenuCon) {
+    private void xuLyChonMenuCon(String tenTab, String tenMenuCon) throws SQLException {
         this.tabHienTai = tenTab;
         hienThiNoiDungMacDinh("Đang xem: " + tenTab + " ➔ " + tenMenuCon);
 
@@ -291,7 +298,7 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    public void hienThiTaoHoaDonMoi() { setNoiDung(new LapHoaDon_gui()); }
+    public void hienThiTaoHoaDonMoi() throws SQLException { setNoiDung(new LapHoaDon_gui()); }
     public void hienThiDanhSachHoaDon() { setNoiDung(new DSHoaDon_gui()); }
     public void hienThiXemLich() { setNoiDung(new XemLichGUI()); }
     public void hienThiDatLichMoi() { setNoiDung(new DatLichMoiGUI()); }
