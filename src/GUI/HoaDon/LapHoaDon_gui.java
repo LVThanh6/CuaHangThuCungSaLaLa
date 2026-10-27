@@ -8,6 +8,8 @@ import dao.HoaDon_Dao;
 import dao.ChiTietHoaDon_DAO;
 import dao.KhuyenMai_DAO;
 import dao.Thue_DAO;
+import dao.BacSi_DAO;
+import dao.NhanVien_DAO;
 
 import entity.KhachHang;
 import entity.ThuCung_entity;
@@ -15,6 +17,7 @@ import entity.DichVu_entity;
 import entity.VatTu_entity;
 import entity.HoaDon_entity;
 import entity.NhanVien_entity;
+import entity.BacSi_entity;
 import entity.ChiTietHoaDon_entity;
 import entity.KhuyenMai_Entity;
 import entity.Thue_entity;
@@ -27,6 +30,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class LapHoaDon_gui extends JPanel {
 
@@ -40,6 +46,8 @@ public class LapHoaDon_gui extends JPanel {
     private final ChiTietHoaDon_DAO ctDAO = new ChiTietHoaDon_DAO();
     private final KhuyenMai_DAO kmDAO = new KhuyenMai_DAO();
     private final Thue_DAO thueDAO = new Thue_DAO();
+    private final NhanVien_DAO nvDAO = new NhanVien_DAO();
+    private final BacSi_DAO bacSiDAO = new BacSi_DAO();
 
     // Nhân viên đang đăng nhập
     private final NhanVien_entity nhanVienDangNhap;
@@ -50,6 +58,7 @@ public class LapHoaDon_gui extends JPanel {
     private JComboBox<ThuCung_entity> cboThuCung;
     private JComboBox<String> cboLoai;
     private JComboBox<Object> cboMatHang;
+    private JComboBox<Object> cboNguoiThucHien;
 
     private JComboBox<KhuyenMai_Entity> cboKhuyenMai;
     private JComboBox<Thue_entity> cboThue;
@@ -60,6 +69,7 @@ public class LapHoaDon_gui extends JPanel {
 
     private JTable tblChiTiet;
     private DefaultTableModel model;
+    private final Map<Integer, Object> nguoiThucHienTheoDong = new HashMap<>();
 
     private JLabel lblTamTinh;
     private JLabel lblTienGiam;
@@ -328,6 +338,7 @@ public class LapHoaDon_gui extends JPanel {
         );
 
         cboMatHang = new JComboBox<>();
+        cboNguoiThucHien = new JComboBox<>();
         txtSoLuong = new JTextField("1", 5);
 
         JButton btnThem = new JButton("Thêm vào hóa đơn");
@@ -366,6 +377,9 @@ public class LapHoaDon_gui extends JPanel {
         pnlThem.add(new JLabel("Dịch vụ / vật tư"), gbc);
 
         gbc.gridx = 2;
+        pnlThem.add(new JLabel("Người thực hiện"), gbc);
+
+        gbc.gridx = 3;
         pnlThem.add(new JLabel("Số lượng"), gbc);
 
         gbc.gridx = 0;
@@ -376,9 +390,12 @@ public class LapHoaDon_gui extends JPanel {
         pnlThem.add(cboMatHang, gbc);
 
         gbc.gridx = 2;
-        pnlThem.add(txtSoLuong, gbc);
+        pnlThem.add(cboNguoiThucHien, gbc);
 
         gbc.gridx = 3;
+        pnlThem.add(txtSoLuong, gbc);
+
+        gbc.gridx = 4;
         gbc.weightx = 0;
         pnlThem.add(btnThem, gbc);
 
@@ -423,7 +440,14 @@ public class LapHoaDon_gui extends JPanel {
         pnl.add(pnlNut, BorderLayout.SOUTH);
 
         cboLoai.addActionListener(
-                e -> taiDanhSachMatHang()
+                e -> {
+                    taiDanhSachMatHang();
+                    taiDanhSachNguoiThucHien();
+                }
+        );
+
+        cboMatHang.addActionListener(
+                e -> taiDanhSachNguoiThucHien()
         );
 
         btnThem.addActionListener(
@@ -585,6 +609,56 @@ public class LapHoaDon_gui extends JPanel {
     }
 
     // ==================== TẢI DỊCH VỤ / VẬT TƯ ====================
+
+    private void taiDanhSachNguoiThucHien() {
+        if (cboNguoiThucHien == null) {
+            return;
+        }
+
+        cboNguoiThucHien.removeAllItems();
+        cboNguoiThucHien.addItem(null);
+
+        try {
+            String loai = (String) cboLoai.getSelectedItem();
+            if ("Dịch vụ".equals(loai)) {
+                for (NhanVien_entity nv : nvDAO.getAll()) {
+                    if ("Nhân viên dịch vụ".equals(nv.getChucVu())) {
+                        cboNguoiThucHien.addItem(nv);
+                    }
+                }
+                for (BacSi_entity bs : bacSiDAO.getAll()) {
+                    cboNguoiThucHien.addItem(bs);
+                }
+            } else {
+                cboNguoiThucHien.addItem("Không có người thực hiện");
+            }
+        } catch (java.sql.SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Không thể tải danh sách người thực hiện: " + ex.getMessage(),
+                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+        }
+
+        cboNguoiThucHien.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list,
+                    Object value,
+                    int index,
+                    boolean isSelected,
+                    boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof NhanVien_entity nv) {
+                    setText(nv.getMaNhanVien() + " - " + nv.getHoTen() + " (NV)");
+                } else if (value instanceof BacSi_entity bs) {
+                    setText(bs.getMaBacSi() + " - " + bs.getHoTen() + " (BS)");
+                } else if (value == null) {
+                    setText("-- Chọn người thực hiện --");
+                } else {
+                    setText("Không có người thực hiện");
+                }
+                return this;
+            }
+        });
+    }
 
     private void taiDanhSachMatHang() {
 
@@ -761,11 +835,20 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
+        Object nguoiThucHien = cboNguoiThucHien.getSelectedItem();
+        if ("Dịch vụ".equals(loai)
+                && !(nguoiThucHien instanceof NhanVien_entity)
+                && !(nguoiThucHien instanceof BacSi_entity)) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn người thực hiện dịch vụ.");
+            return;
+        }
+
         // Kiểm tra mặt hàng đã có trong bảng chưa
         for (int i = 0; i < model.getRowCount(); i++) {
 
             if (ma.equals(model.getValueAt(i, 0))
-                    && loai.equals(model.getValueAt(i, 2))) {
+                    && loai.equals(model.getValueAt(i, 2))
+                    && Objects.equals(nguoiThucHienTheoDong.get(i), nguoiThucHien)) {
 
                 int slCu = Integer.parseInt(
                         model.getValueAt(i, 4).toString()
@@ -790,6 +873,7 @@ public class LapHoaDon_gui extends JPanel {
                         dinhDangTien(donGia * slMoi),
                         i, 5
                 );
+                nguoiThucHienTheoDong.put(i, nguoiThucHien);
 
                 capNhatTongTien();
                 return;
@@ -804,6 +888,7 @@ public class LapHoaDon_gui extends JPanel {
                 soLuong,
                 dinhDangTien(donGia * soLuong)
         });
+        nguoiThucHienTheoDong.put(model.getRowCount() - 1, nguoiThucHien);
 
         capNhatTongTien();
     }
@@ -825,6 +910,16 @@ public class LapHoaDon_gui extends JPanel {
         int modelRow = tblChiTiet.convertRowIndexToModel(row);
 
         model.removeRow(modelRow);
+        Map<Integer, Object> daCapNhat = new HashMap<>();
+        for (Map.Entry<Integer, Object> entry : nguoiThucHienTheoDong.entrySet()) {
+            if (entry.getKey() < modelRow) {
+                daCapNhat.put(entry.getKey(), entry.getValue());
+            } else if (entry.getKey() > modelRow) {
+                daCapNhat.put(entry.getKey() - 1, entry.getValue());
+            }
+        }
+        nguoiThucHienTheoDong.clear();
+        nguoiThucHienTheoDong.putAll(daCapNhat);
 
         capNhatTongTien();
     }
@@ -1045,6 +1140,14 @@ public class LapHoaDon_gui extends JPanel {
 
             DichVu_entity dv = null;
             VatTu_entity vt = null;
+            NhanVien_entity nvThucHien = null;
+            BacSi_entity bsThucHien = null;
+            Object nguoiThucHien = nguoiThucHienTheoDong.get(i);
+            if (nguoiThucHien instanceof NhanVien_entity) {
+                nvThucHien = (NhanVien_entity) nguoiThucHien;
+            } else if (nguoiThucHien instanceof BacSi_entity) {
+                bsThucHien = (BacSi_entity) nguoiThucHien;
+            }
 
             if ("Dịch vụ".equals(loai)) {
 
@@ -1075,6 +1178,8 @@ public class LapHoaDon_gui extends JPanel {
                             hd,
                             dv,
                             vt,
+                            nvThucHien,
+                            bsThucHien,
                             soLuong,
                             donGia
                     );

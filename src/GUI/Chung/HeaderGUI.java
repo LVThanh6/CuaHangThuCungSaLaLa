@@ -67,7 +67,8 @@ public class HeaderGUI extends JPanel {
     // ==========================================
     private void khoiTaoMenuConMacDinh() {
         menuConMap = new HashMap<>();
-        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Danh sách bác sĩ", "Thống kê" });
+        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Thống kê" });
+        menuConMap.put("Bác sĩ", new String[] { "Danh sách bác sĩ" });
         menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
         menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
         menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
@@ -95,8 +96,8 @@ public class HeaderGUI extends JPanel {
             this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Hóa đơn", "Lịch hẹn", "Dịch vụ" };
         } else {
             // Mặc định là Quản lý / Toàn quyền
-            this.danhSachTabs = new String[] { "Nhân viên", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch hẹn",
-                    "Dịch vụ" };
+            this.danhSachTabs = new String[] { "Nhân viên", "Bác sĩ", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư",
+                    "Lịch hẹn", "Dịch vụ" };
         }
 
         if (danhSachTabs.length > 0) {

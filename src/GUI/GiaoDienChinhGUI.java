@@ -13,7 +13,6 @@ import GUI.KhachHang.DanhSachKhachHangGUI;
 import GUI.KhachHang.QuanLyHangThanhVienGUI;
 import GUI.LichHen.DatLichMoiGUI;
 import GUI.LichHen.XemLichGUI;
-import GUI.NhanVien.NhanSuGUI;
 import GUI.NhanVien.NhanVienGUI;
 import GUI.ThongKe.ThongKeGUI;
 import GUI.ThuCung.DonThuocGUI;
@@ -172,6 +171,9 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Nhân viên":
                 hienThiTabNhanVien();
                 break;
+            case "Bác sĩ":
+                hienThiTabBacSi();
+                break;
             case "Thú cưng":
                 hienThiTabThuCung();
                 break;
@@ -277,7 +279,12 @@ public class GiaoDienChinhGUI extends JPanel {
         hienThiDanhSachNhanVien();
     }
 
-    /** Tab 2: Thú cưng → Hồ sơ thú cưng */
+    /** Tab bác sĩ → Danh sách bác sĩ */
+    public void hienThiTabBacSi() {
+        hienThiDanhSachBacSi();
+    }
+
+    /** Tab: Thú cưng → Hồ sơ thú cưng */
     public void hienThiTabThuCung() {
         hienThiHoSoThuCung();
     }
@@ -313,11 +320,11 @@ public class GiaoDienChinhGUI extends JPanel {
 
     // --- Tab Nhân viên ---
     public void hienThiDanhSachNhanVien() {
-        setNoiDung(new NhanSuGUI(NhanSuGUI.CHE_DO_NHAN_VIEN));
+        setNoiDung(new NhanVienGUI());
     }
 
     public void hienThiDanhSachBacSi() {
-        setNoiDung(new NhanSuGUI(NhanSuGUI.CHE_DO_BAC_SI));
+        setNoiDung(new BacSiGUI());
     }
 
     public void hienThiThongKe() {

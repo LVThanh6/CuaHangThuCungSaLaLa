@@ -672,6 +672,7 @@ public class BacSiGUI extends JPanel {
         JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null
                 ? ""
                 : DINH_DANG_NGAY.format(goc.getNgaySinh()));
+        JTextField txtLuongThang = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongThang()));
         JTextField txtSoCa = new JTextField(String.valueOf(goc == null ? 0 : goc.getSoCaKham()));
         txtSoCa.setEditable(false);
 
@@ -694,6 +695,7 @@ public class BacSiGUI extends JPanel {
             txtSdt.setEditable(false);
             txtEmail.setEditable(false);
             txtNgay.setEditable(false);
+            txtLuongThang.setEditable(false);
             cbGT.setEnabled(false);
             cbCN.setEnabled(false);
         }
@@ -708,8 +710,8 @@ public class BacSiGUI extends JPanel {
         gc.insets = new Insets(0, 0, 4, 0);
 
         String[] nhan = { "Mã bác sĩ", "Họ và tên", "Giới tính", "Số điện thoại", "Chuyên ngành",
-                "Email", "Ngày sinh (dd/MM/yyyy)", "Số ca khám tháng này", "Trạng thái tài khoản" };
-        JComponent[] truong = { txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtSoCa, cbTT };
+                "Email", "Ngày sinh (dd/MM/yyyy)", "Lương tháng (₫)", "Số ca khám tháng này", "Trạng thái tài khoản" };
+        JComponent[] truong = { txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT };
         for (int i = 0; i < nhan.length; i++) {
             JLabel l = new JLabel(nhan[i]);
             l.setFont(RangBuocGiaoDien.fontThuong(12));
@@ -743,6 +745,7 @@ public class BacSiGUI extends JPanel {
             String ngayStr = txtNgay.getText().trim();
             String loi = null;
             LocalDate ngay = null;
+            double luongThang = 0;
 
             if (ten.isEmpty()) {
                 loi = "Vui lòng nhập họ và tên.";
@@ -759,6 +762,15 @@ public class BacSiGUI extends JPanel {
                     loi = "Ngày sinh không hợp lệ (định dạng dd/MM/yyyy).";
                 }
             }
+            if (loi == null) {
+                try {
+                    luongThang = Double.parseDouble(txtLuongThang.getText().replaceAll("[.,\\s]", ""));
+                    if (luongThang < 0)
+                        loi = "Lương tháng không được âm.";
+                } catch (NumberFormatException ex) {
+                    loi = "Lương tháng không hợp lệ (nhập số, ví dụ 25000000).";
+                }
+            }
             if (loi != null) {
                 lblLoi.setText(loi);
                 return;
@@ -768,9 +780,9 @@ public class BacSiGUI extends JPanel {
             String cn = (String) cbCN.getSelectedItem();
             try {
                 if (goc == null) {
-                    dao.them(new BacSi_entity(txtMa.getText(), null, ten, gt, sdt, cn, email, ngay));
+                    dao.them(new BacSi_entity(txtMa.getText(), null, ten, gt, sdt, cn, email, ngay, luongThang, 0, null));
                 } else {
-                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten, gt, sdt, cn, email, ngay));
+                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten, gt, sdt, cn, email, ngay, luongThang, goc.getSoCaKham(), goc.getTrangThaiTK()));
                     if (coTK) {
                         boolean hoatDong = cbTT.getSelectedIndex() == 0;
                         if (hoatDong != Boolean.TRUE.equals(goc.getTrangThaiTK())) {

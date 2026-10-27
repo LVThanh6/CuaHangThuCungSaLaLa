@@ -75,10 +75,14 @@ CREATE TABLE NhanVien
     ngaySinh    DATE,
     gioiTinh    NVARCHAR(20),
     luongCoBan  DECIMAL(18,2) NOT NULL,
+    loaiLuong   NVARCHAR(20) NOT NULL CONSTRAINT DF_NhanVien_LoaiLuong DEFAULT N'THEO_GIO',
+    luongTheoGio DECIMAL(18,2) NOT NULL CONSTRAINT DF_NhanVien_LuongTheoGio DEFAULT 0,
+    luongThang  DECIMAL(18,2) NOT NULL CONSTRAINT DF_NhanVien_LuongThang DEFAULT 0,
 
     CONSTRAINT PK_NhanVien PRIMARY KEY (maNhanVien),
     CONSTRAINT FK_NhanVien_TaiKhoan FOREIGN KEY (maTK) REFERENCES TaiKhoan(maTK),
-    CONSTRAINT CK_NhanVien_Luong CHECK (luongCoBan >= 0)
+    CONSTRAINT CK_NhanVien_Luong CHECK (luongCoBan >= 0 AND luongTheoGio >= 0 AND luongThang >= 0),
+    CONSTRAINT CK_NhanVien_LoaiLuong CHECK (loaiLuong IN (N'THEO_GIO', N'THEO_THANG'))
 );
 GO
 CREATE UNIQUE INDEX UQ_NhanVien_TaiKhoan ON NhanVien(maTK) WHERE maTK IS NOT NULL;
@@ -95,9 +99,11 @@ CREATE TABLE BacSyThuY
     sdt              VARCHAR(20)   NOT NULL,
     email            VARCHAR(100)  NOT NULL,
     ngaySinh         DATE,
+    luongThang       DECIMAL(18,2) NOT NULL CONSTRAINT DF_BacSyThuY_LuongThang DEFAULT 0,
 
     CONSTRAINT PK_BacSyThuY PRIMARY KEY (maBacSi),
-    CONSTRAINT FK_BacSyThuY_TaiKhoan FOREIGN KEY (maTK) REFERENCES TaiKhoan(maTK)
+    CONSTRAINT FK_BacSyThuY_TaiKhoan FOREIGN KEY (maTK) REFERENCES TaiKhoan(maTK),
+    CONSTRAINT CK_BacSyThuY_Luong CHECK (luongThang >= 0)
 );
 GO
 CREATE UNIQUE INDEX UQ_BacSyThuY_TaiKhoan ON BacSyThuY(maTK) WHERE maTK IS NOT NULL;
@@ -353,6 +359,8 @@ CREATE TABLE ChiTietHoaDon
     maHD      VARCHAR(20)   NOT NULL,
     maDV      VARCHAR(20)   NULL,
     maVT      VARCHAR(20)   NULL,
+    maNhanVien VARCHAR(20)  NULL,
+    maBacSi   VARCHAR(20)   NULL,
     soLuong   DECIMAL(18,2) NOT NULL,
     donGia    DECIMAL(18,2) NOT NULL,
 
@@ -360,6 +368,8 @@ CREATE TABLE ChiTietHoaDon
     CONSTRAINT FK_ChiTietHoaDon_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
     CONSTRAINT FK_ChiTietHoaDon_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
     CONSTRAINT FK_ChiTietHoaDon_VatTu FOREIGN KEY (maVT) REFERENCES VatTu(maVT),
+    CONSTRAINT FK_ChiTietHoaDon_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
+    CONSTRAINT FK_ChiTietHoaDon_BacSy FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi),
     CONSTRAINT CK_ChiTietHoaDon_SoLuong CHECK (soLuong > 0),
     CONSTRAINT CK_ChiTietHoaDon_DonGia CHECK (donGia >= 0),
     CONSTRAINT CK_ChiTietHoaDon_DV_hoac_VT
