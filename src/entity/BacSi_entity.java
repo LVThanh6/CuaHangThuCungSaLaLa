@@ -11,6 +11,7 @@ public class BacSi_entity {
     private String chuyenNganh;
     private String email;
     private LocalDate ngaySinh;
+    private double luongThang;
     private int soCaKham;
     private Boolean trangThaiTK; // true: Đang làm việc, false: Tạm nghỉ, null: Chưa có tài khoản
 
@@ -20,11 +21,17 @@ public class BacSi_entity {
 
     public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
                         String chuyenNganh, String email, LocalDate ngaySinh) {
-        this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, null);
+        this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
     }
 
     public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
                         String chuyenNganh, String email, LocalDate ngaySinh, int soCaKham, Boolean trangThaiTK) {
+        this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, soCaKham, trangThaiTK);
+    }
+
+    public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
+                        String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
+                        int soCaKham, Boolean trangThaiTK) {
         super();
         this.maBacSi = maBacSi;
         this.maTK = maTK;
@@ -34,6 +41,7 @@ public class BacSi_entity {
         this.chuyenNganh = chuyenNganh;
         this.email = email;
         this.ngaySinh = ngaySinh;
+        this.luongThang = luongThang;
         this.soCaKham = soCaKham;
         this.trangThaiTK = trangThaiTK;
     }
@@ -61,6 +69,9 @@ public class BacSi_entity {
 
     public LocalDate getNgaySinh() { return ngaySinh; }
     public void setNgaySinh(LocalDate ngaySinh) { this.ngaySinh = ngaySinh; }
+
+    public double getLuongThang() { return luongThang; }
+    public void setLuongThang(double luongThang) { this.luongThang = luongThang; }
 
     public int getSoCaKham() { return soCaKham; }
     public void setSoCaKham(int soCaKham) { this.soCaKham = soCaKham; }

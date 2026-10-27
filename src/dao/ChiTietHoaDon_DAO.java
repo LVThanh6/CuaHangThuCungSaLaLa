@@ -8,9 +8,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import connectDB.ConnectDB;
+import entity.BacSi_entity;
 import entity.ChiTietHoaDon_entity;
 import entity.HoaDon_entity;
 import entity.DichVu_entity;
+import entity.NhanVien_entity;
 import entity.VatTu_entity;
 
 public class ChiTietHoaDon_DAO {
@@ -24,7 +26,7 @@ public class ChiTietHoaDon_DAO {
         ArrayList<ChiTietHoaDon_entity> dsCTHD = new ArrayList<>();
 
         String sql = """
-            SELECT maCTHD, maHD, maDV, maVT, soLuong, donGia
+            SELECT maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia
             FROM ChiTietHoaDon
             """;
 
@@ -42,6 +44,8 @@ public class ChiTietHoaDon_DAO {
                     String maHD = rs.getString("maHD");
                     String maDV = rs.getString("maDV");
                     String maVT = rs.getString("maVT");
+                    String maNhanVien = rs.getString("maNhanVien");
+                    String maBacSi = rs.getString("maBacSi");
 
                     HoaDon_entity hd =
                         hdDAO.getHDTheoMa(maHD);
@@ -54,12 +58,17 @@ public class ChiTietHoaDon_DAO {
                         ? vtDAO.getVatTuTheoMa(maVT)
                         : null;
 
+                    NhanVien_entity nv = maNhanVien != null ? new NhanVien_DAO().getNhanVienTheoMa(maNhanVien) : null;
+                    BacSi_entity bs = maBacSi != null ? new BacSi_DAO().getAll().stream().filter(x -> x.getMaBacSi().equals(maBacSi)).findFirst().orElse(null) : null;
+
                     ChiTietHoaDon_entity cthd =
                         new ChiTietHoaDon_entity(
                             rs.getString("maCTHD"),
                             hd,
                             dv,
                             vt,
+                            nv,
+                            bs,
                             rs.getInt("soLuong"),
                             rs.getDouble("donGia")
                         );
@@ -85,8 +94,8 @@ public class ChiTietHoaDon_DAO {
 
         String sql = """
             INSERT INTO ChiTietHoaDon
-                (maCTHD, maHD, maDV, maVT, soLuong, donGia)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try {
@@ -109,8 +118,18 @@ public class ChiTietHoaDon_DAO {
                     ps.setString(4, ct.getMaVT().getMaVT());
                 }
 
-                ps.setInt(5, ct.getSoLuong());
-                ps.setDouble(6, ct.getDonGia());
+                if (ct.getNhanVienThucHien() != null) {
+                    ps.setString(5, ct.getNhanVienThucHien().getMaNhanVien());
+                    ps.setNull(6, java.sql.Types.VARCHAR);
+                } else if (ct.getBacSiThucHien() != null) {
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                    ps.setString(6, ct.getBacSiThucHien().getMaBacSi());
+                } else {
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                    ps.setNull(6, java.sql.Types.VARCHAR);
+                }
+                ps.setInt(7, ct.getSoLuong());
+                ps.setDouble(8, ct.getDonGia());
 
                 return ps.executeUpdate() > 0;
             }
@@ -158,7 +177,7 @@ public class ChiTietHoaDon_DAO {
 
         String sql = """
             UPDATE ChiTietHoaDon
-            SET maHD = ?, maDV = ?, maVT = ?,
+            SET maHD = ?, maDV = ?, maVT = ?, maNhanVien = ?, maBacSi = ?,
                 soLuong = ?, donGia = ?
             WHERE maCTHD = ?
             """;
@@ -181,9 +200,19 @@ public class ChiTietHoaDon_DAO {
                     ps.setString(3, ct.getMaVT().getMaVT());
                 }
 
-                ps.setInt(4, ct.getSoLuong());
-                ps.setDouble(5, ct.getDonGia());
-                ps.setString(6, ct.getMaCTHD());
+                if (ct.getNhanVienThucHien() != null) {
+                    ps.setString(4, ct.getNhanVienThucHien().getMaNhanVien());
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                } else if (ct.getBacSiThucHien() != null) {
+                    ps.setNull(4, java.sql.Types.VARCHAR);
+                    ps.setString(5, ct.getBacSiThucHien().getMaBacSi());
+                } else {
+                    ps.setNull(4, java.sql.Types.VARCHAR);
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                }
+                ps.setInt(6, ct.getSoLuong());
+                ps.setDouble(7, ct.getDonGia());
+                ps.setString(8, ct.getMaCTHD());
 
                 return ps.executeUpdate() > 0;
             }
@@ -200,7 +229,7 @@ public class ChiTietHoaDon_DAO {
             String maCTHD) {
 
         String sql = """
-            SELECT maCTHD, maHD, maDV, maVT, soLuong, donGia
+            SELECT maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia
             FROM ChiTietHoaDon
             WHERE maCTHD = ?
             """;
@@ -236,7 +265,7 @@ public class ChiTietHoaDon_DAO {
         ArrayList<ChiTietHoaDon_entity> dsCTHD = new ArrayList<>();
 
         String sql = """
-            SELECT maCTHD, maHD, maDV, maVT, soLuong, donGia
+            SELECT maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia
             FROM ChiTietHoaDon
             WHERE maHD = ?
             """;
@@ -272,6 +301,8 @@ public class ChiTietHoaDon_DAO {
         String maHD = rs.getString("maHD");
         String maDV = rs.getString("maDV");
         String maVT = rs.getString("maVT");
+        String maNhanVien = rs.getString("maNhanVien");
+        String maBacSi = rs.getString("maBacSi");
 
         HoaDon_entity hd = hdDAO.getHDTheoMa(maHD);
 
@@ -283,11 +314,16 @@ public class ChiTietHoaDon_DAO {
             ? vtDAO.getVatTuTheoMa(maVT)
             : null;
 
+        NhanVien_entity nv = maNhanVien != null ? new NhanVien_DAO().getNhanVienTheoMa(maNhanVien) : null;
+        BacSi_entity bs = maBacSi != null ? new BacSi_DAO().getAll().stream().filter(x -> x.getMaBacSi().equals(maBacSi)).findFirst().orElse(null) : null;
+
         return new ChiTietHoaDon_entity(
             rs.getString("maCTHD"),
             hd,
             dv,
             vt,
+            nv,
+            bs,
             rs.getInt("soLuong"),
             rs.getDouble("donGia")
         );

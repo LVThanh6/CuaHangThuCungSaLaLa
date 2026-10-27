@@ -24,7 +24,7 @@ public class BacSi_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return ds;
 
-        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, bs.tenChuyenNganh, bs.email, bs.ngaySinh, " +
+        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, bs.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, " +
                      "tk.trangThai AS trangThaiTK, " +
                      "(SELECT COUNT(*) FROM HoSoSucKhoe h WHERE h.maBacSi = bs.maBacSi " +
                      " AND MONTH(h.ngayKham) = MONTH(GETDATE()) AND YEAR(h.ngayKham) = YEAR(GETDATE())) AS soCaKham " +
@@ -52,6 +52,7 @@ public class BacSi_DAO {
                     rs.getString("tenChuyenNganh"),
                     rs.getString("email"),
                     ngaySinh,
+                    rs.getDouble("luongThang"),
                     rs.getInt("soCaKham"),
                     trangThaiTK
                 );
@@ -103,8 +104,8 @@ public class BacSi_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
-        String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, tenChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, tenChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, bs.getMaBacSi());
             if (bs.getMaTK() != null && !bs.getMaTK().isBlank()) {
@@ -122,6 +123,7 @@ public class BacSi_DAO {
             } else {
                 ps.setNull(8, Types.DATE);
             }
+            ps.setDouble(9, bs.getLuongThang());
 
             return ps.executeUpdate() > 0;
         }
@@ -135,7 +137,7 @@ public class BacSi_DAO {
         if (con == null) return false;
 
         String sql = "UPDATE BacSyThuY SET tenChuyenNganh = ?, hoTen = ?, gioiTinh = ?, " +
-                     "sdt = ?, email = ?, ngaySinh = ? WHERE maBacSi = ?";
+                     "sdt = ?, email = ?, ngaySinh = ?, luongThang = ? WHERE maBacSi = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, bs.getChuyenNganh());
             ps.setString(2, bs.getHoTen());
@@ -147,7 +149,8 @@ public class BacSi_DAO {
             } else {
                 ps.setNull(6, Types.DATE);
             }
-            ps.setString(7, bs.getMaBacSi());
+            ps.setDouble(7, bs.getLuongThang());
+            ps.setString(8, bs.getMaBacSi());
 
             return ps.executeUpdate() > 0;
         }

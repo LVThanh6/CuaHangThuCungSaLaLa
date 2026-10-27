@@ -34,6 +34,7 @@ public class NhanVien_entity {
 	}
 
 	// Constructor 10 tham số (dùng trong DAO để lấy trọn vẹn dữ liệu từ CSDL)
+	// Lương cơ bản do chức vụ quyết định (bảng LuongChucVu), Quản lý = 0 (chưa tính lương)
 	public NhanVien_entity(String maNhanVien, String maTK, String hoTen, String chucVu, String sdt, String diaChi,
 			LocalDate ngaySinh, String gioiTinh, double luongCoBan, Boolean trangThaiTK) {
 		super();
