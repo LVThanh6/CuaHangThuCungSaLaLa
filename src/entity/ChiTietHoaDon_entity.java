@@ -5,6 +5,8 @@ public class ChiTietHoaDon_entity {
 	private HoaDon_entity maHD;
 	private DichVu_entity maDV;
 	private VatTu_entity maVT;
+	private String maDVCode;
+	private String maVTCode;
 	private NhanVien_entity nhanVienThucHien;
 	private BacSi_entity bacSiThucHien;
 	private int soLuong;
@@ -40,11 +42,54 @@ public class ChiTietHoaDon_entity {
 	public HoaDon_entity getMaHD() {
 		return maHD;
 	}
+	public void setMaHD(HoaDon_entity maHD) {
+		this.maHD = maHD;
+	}
 	public DichVu_entity getMaDV() {
 		return maDV;
 	}
+	public void setMaDV(DichVu_entity maDV) {
+		this.maDV = maDV;
+		this.maDVCode = maDV == null ? null : maDV.getMaDV();
+		if (maDV != null) {
+			this.maVT = null;
+			this.maVTCode = null;
+		}
+	}
+	public String getMaDVString() {
+		if (maDV != null) {
+			return maDV.getMaDV();
+		}
+		return maDVCode;
+	}
+	public void setMaDVCode(String maDVCode) {
+		this.maDVCode = maDVCode;
+		if (maDVCode != null && !maDVCode.isBlank()) {
+			this.maDV = null;
+		}
+	}
 	public VatTu_entity getMaVT() {
 		return maVT;
+	}
+	public void setMaVT(VatTu_entity maVT) {
+		this.maVT = maVT;
+		this.maVTCode = maVT == null ? null : maVT.getMaVT();
+		if (maVT != null) {
+			this.maDV = null;
+			this.maDVCode = null;
+		}
+	}
+	public String getMaVTString() {
+		if (maVT != null) {
+			return maVT.getMaVT();
+		}
+		return maVTCode;
+	}
+	public void setMaVTCode(String maVTCode) {
+		this.maVTCode = maVTCode;
+		if (maVTCode != null && !maVTCode.isBlank()) {
+			this.maVT = null;
+		}
 	}
 	public NhanVien_entity getNhanVienThucHien() {
 		return nhanVienThucHien;

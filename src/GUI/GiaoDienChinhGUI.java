@@ -23,6 +23,7 @@ import GUI.ThuCung.LichSuKhamGUI;
 import GUI.VatTu.VatTu;
 import GUI.TaiKhoan.DangNhapGUI;
 import dao.DangNhap_DAO;
+import entity.NhanVien_entity;
 
 /**
  * Class GiaoDienChinhGUI: Khung giao diện chính của hệ thống SALALA Pet Shop.
@@ -298,8 +299,25 @@ public class GiaoDienChinhGUI extends JPanel {
         }
     }
 
-    public void hienThiTaoHoaDonMoi() throws SQLException { setNoiDung(new LapHoaDon_gui()); }
-    public void hienThiDanhSachHoaDon() { setNoiDung(new DSHoaDon_gui()); }
+    public void hienThiTaoHoaDonMoi() throws SQLException {
+        NhanVien_entity nvDangNhap = dao.DangNhap_DAO.getNhanVienHienTai();
+        if (nvDangNhap == null) {
+            JOptionPane.showMessageDialog(this, "Chưa có thông tin nhân viên đăng nhập. Vui lòng đăng nhập lại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        setNoiDung(new LapHoaDon_gui(nvDangNhap));
+    }
+
+    public void hienThiDanhSachHoaDon() {
+        setNoiDung(new DSHoaDon_gui(() -> {
+            try {
+                hienThiTaoHoaDonMoi();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Không thể mở màn hình lập hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }));
+    }
     public void hienThiXemLich() { setNoiDung(new XemLichGUI()); }
     public void hienThiDatLichMoi() { setNoiDung(new DatLichMoiGUI()); }
     public void hienThiBangGiaDichVu() { setNoiDung(new DichVu()); }

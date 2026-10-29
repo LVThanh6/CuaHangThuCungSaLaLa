@@ -1,9 +1,11 @@
 package GUI.HoaDon;
 
 import dao.ChiTietHoaDon_DAO;
+import dao.DichVu_DAO;
 import dao.HoaDon_Dao;
 import dao.KhachHang_DAO;
 import dao.ThuCung_DAO;
+import dao.VatTu_DAO;
 
 import entity.ChiTietHoaDon_entity;
 import entity.HoaDon_entity;
@@ -61,6 +63,8 @@ public class ChiTietHoaDon_gui extends JPanel {
     private final ArrayList<ChiTietHoaDon_entity> dong;
     private final ArrayList<ThuCung_entity> thuCung;
     private final String hangThanhVien;
+    private final DichVu_DAO dichVuDAO = new DichVu_DAO();
+    private final VatTu_DAO vatTuDAO = new VatTu_DAO();
 
     private final JPanel noiDung = new TrangCuon();
     private final JButton btnIn = new JButton("In/xuất hóa đơn");
@@ -398,22 +402,43 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         for (ChiTietHoaDon_entity c : dong) {
 
-            String ma;
-            String ten;
-            String loai;
+            String ma = null;
+            String ten = null;
+            String loai = "—";
 
             if (c.getMaDV() != null) {
-                ma = c.getMaDV().getMaDV();
+                ma = c.getMaDVString();
                 ten = c.getMaDV().getTenDV();
                 loai = "Dịch vụ";
             } else if (c.getMaVT() != null) {
-                ma = c.getMaVT().getMaVT();
+                ma = c.getMaVTString();
                 ten = c.getMaVT().getTenVT();
                 loai = "Vật tư";
             } else {
-                ma = null;
-                ten = null;
-                loai = "—";
+                String maDV = c.getMaDVString();
+                String maVT = c.getMaVTString();
+
+                if (maDV != null && !maDV.isBlank()) {
+                    var dv = dichVuDAO.getDichVuTheoMa(maDV);
+                    if (dv != null) {
+                        ma = dv.getMaDV();
+                        ten = dv.getTenDV();
+                        loai = "Dịch vụ";
+                    } else {
+                        ma = maDV;
+                        ten = "(Không tìm thấy dịch vụ)";
+                    }
+                } else if (maVT != null && !maVT.isBlank()) {
+                    var vt = vatTuDAO.getVatTuTheoMa(maVT);
+                    if (vt != null) {
+                        ma = vt.getMaVT();
+                        ten = vt.getTenVT();
+                        loai = "Vật tư";
+                    } else {
+                        ma = maVT;
+                        ten = "(Không tìm thấy vật tư)";
+                    }
+                }
             }
 
             double goc = c.getSoLuong() * c.getDonGia();

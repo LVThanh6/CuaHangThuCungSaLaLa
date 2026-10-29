@@ -1,5 +1,6 @@
 package GUI.HoaDon;
 
+import connectDB.ConnectDB;
 import dao.KhachHang_DAO;
 import dao.ThuCung_DAO;
 import dao.DichVu_DAO;
@@ -26,6 +27,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1169,8 +1174,7 @@ public class LapHoaDon_gui extends JPanel {
                 break;
             }
 
-            String maCTHD =
-                    "CT" + maHD + String.format("%02d", i + 1);
+            String maCTHD = phatSinhMaCTHD(maHD, i + 1);
 
             ChiTietHoaDon_entity ct =
                     new ChiTietHoaDon_entity(
@@ -1183,6 +1187,24 @@ public class LapHoaDon_gui extends JPanel {
                             soLuong,
                             donGia
                     );
+            ct.setMaHD(hd);
+            if (dv != null) {
+                ct.setMaDV(dv);
+                ct.setMaDVCode(dv.getMaDV());
+                ct.setMaVT(null);
+                ct.setMaVTCode(null);
+            } else if (vt != null) {
+                ct.setMaVT(vt);
+                ct.setMaVTCode(vt.getMaVT());
+                ct.setMaDV(null);
+                ct.setMaDVCode(null);
+            }
+
+            System.out.println("[LapHoaDon_gui] prep insert: maCTHD=" + ct.getMaCTHD()
+                    + ", maHD=" + hd.getMaHD()
+                    + ", maDV=" + ct.getMaDVString()
+                    + ", maVT=" + ct.getMaVTString()
+                    + ", soLuong=" + ct.getSoLuong());
 
             if (!ctDAO.createChiTietHoaDon(ct)) {
                 thanhCong = false;
@@ -1250,10 +1272,43 @@ public class LapHoaDon_gui extends JPanel {
     // ==================== MÃ HÓA ĐƠN ====================
 
     private String phatSinhMaHD() {
+        try {
+            Connection con = ConnectDB.getCon();
+            if (con == null) {
+                return "HD001";
+            }
 
-        return "HD" + LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern("yyMMddHHmmssSSS")
-        );
+            String sql = "SELECT ISNULL(MAX(CAST(SUBSTRING(maHD, 3, LEN(maHD)) AS INT)), 0) " +
+                         "FROM HoaDon WHERE maHD LIKE 'HD%'";
+
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int max = rs.getInt(1);
+                    return String.format("HD%03d", max + 1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return "HD001";
+    }
+
+    private String phatSinhMaCTHD(String maHD, int soThuTu) {
+        String so = (maHD == null || maHD.isBlank())
+                ? ""
+                : maHD.replaceAll("\\D+", "");
+
+        if (so.length() > 8) {
+            so = so.substring(so.length() - 8);
+        }
+
+        if (so.length() < 8) {
+            so = String.format("%08d", 0).substring(0, 8 - so.length()) + so;
+        }
+
+        return "CT" + so + String.format("%02d", soThuTu);
     }
 
     // ==================== ĐỊNH DẠNG TIỀN ====================

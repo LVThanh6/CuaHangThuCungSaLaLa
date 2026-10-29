@@ -1,6 +1,7 @@
 package dao;
 
 
+import entity.NhanVien_entity;
 import model.TaiKhoan;
 
 /**
@@ -62,5 +63,23 @@ public class DangNhap_DAO {
 
     public static String getVaiTro() {
         return vaiTro != null ? vaiTro : "";
+    }
+
+    /**
+     * Lấy đối tượng nhân viên đang đăng nhập hiện tại từ session.
+     * Dùng cho các màn hình như lập hóa đơn, phiếu khám, ... cần lưu mã NV người thao tác.
+     */
+    public static NhanVien_entity getNhanVienHienTai() {
+        if (!isDaDangNhap()) return null;
+
+        String maDoiTuong = getMaDoiTuong();
+        if (maDoiTuong == null || maDoiTuong.isBlank()) return null;
+
+        try {
+            return new NhanVien_DAO().getNhanVienTheoMa(maDoiTuong);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

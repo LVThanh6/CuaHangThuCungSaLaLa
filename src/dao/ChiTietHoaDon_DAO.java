@@ -84,11 +84,59 @@ public class ChiTietHoaDon_DAO {
         return dsCTHD;
     }
 
+    private void resolveReferences(ChiTietHoaDon_entity ct) {
+        if (ct == null) {
+            return;
+        }
+
+        if (ct.getMaHD() == null && ct.getMaDVString() == null && ct.getMaVTString() == null) {
+            return;
+        }
+
+        String maDVCode = ct.getMaDVString();
+        String maVTCode = ct.getMaVTString();
+
+        if (ct.getMaDV() == null && maDVCode != null && !maDVCode.isBlank()) {
+            ct.setMaDV(dvDAO.getDichVuTheoMa(maDVCode));
+        }
+
+        if (ct.getMaVT() == null && maVTCode != null && !maVTCode.isBlank()) {
+            ct.setMaVT(vtDAO.getVatTuTheoMa(maVTCode));
+        }
+
+        if (ct.getMaDV() != null) {
+            ct.setMaDVCode(ct.getMaDV().getMaDV());
+            ct.setMaVT(null);
+            ct.setMaVTCode(null);
+        }
+
+        if (ct.getMaVT() != null) {
+            ct.setMaVTCode(ct.getMaVT().getMaVT());
+            ct.setMaDV(null);
+            ct.setMaDVCode(null);
+        }
+    }
+
     // 2. Thêm chi tiết hóa đơn
     public boolean createChiTietHoaDon(
             ChiTietHoaDon_entity ct) {
 
+        if (ct == null) {
+            System.err.println("[ChiTietHoaDon_DAO] createChiTietHoaDon: ct == null");
+            return false;
+        }
+
+        resolveReferences(ct);
+
+        if (ct.getMaHD() == null) {
+            System.err.println("[ChiTietHoaDon_DAO] createChiTietHoaDon: maHD null");
+            return false;
+        }
+
         if (!duLieuHopLe(ct)) {
+            System.err.println("[ChiTietHoaDon_DAO] Dữ liệu chi tiết hóa đơn không hợp lệ: maCTHD=" + ct.getMaCTHD()
+                    + ", maHD=" + (ct.getMaHD() == null ? "null" : ct.getMaHD().getMaHD())
+                    + ", maDV=" + ct.getMaDVString() + ", maVT=" + ct.getMaVTString() + ", soLuong=" + ct.getSoLuong());
             return false;
         }
 
@@ -105,17 +153,24 @@ public class ChiTietHoaDon_DAO {
                 return false;
             }
 
+            if (ct.getMaCTHD() != null && ct.getMaCTHD().length() > 20) {
+                System.err.println("[ChiTietHoaDon_DAO] maCTHD vượt quá 20 ký tự: " + ct.getMaCTHD());
+                return false;
+            }
+
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, ct.getMaCTHD());
                 ps.setString(2, ct.getMaHD().getMaHD());
 
-                // Mỗi dòng chỉ có dịch vụ hoặc vật tư
-                if (ct.getMaDV() != null) {
-                    ps.setString(3, ct.getMaDV().getMaDV());
+                String maDV = ct.getMaDV() != null ? ct.getMaDV().getMaDV() : ct.getMaDVString();
+                String maVT = ct.getMaVT() != null ? ct.getMaVT().getMaVT() : ct.getMaVTString();
+
+                if (maDV != null && !maDV.isBlank()) {
+                    ps.setString(3, maDV);
                     ps.setNull(4, java.sql.Types.VARCHAR);
                 } else {
                     ps.setNull(3, java.sql.Types.VARCHAR);
-                    ps.setString(4, ct.getMaVT().getMaVT());
+                    ps.setString(4, maVT);
                 }
 
                 if (ct.getNhanVienThucHien() != null) {
@@ -131,10 +186,17 @@ public class ChiTietHoaDon_DAO {
                 ps.setInt(7, ct.getSoLuong());
                 ps.setDouble(8, ct.getDonGia());
 
-                return ps.executeUpdate() > 0;
+                int rows = ps.executeUpdate();
+                if (rows <= 0) {
+                    System.err.println("[ChiTietHoaDon_DAO] INSERT chi tiết trả về 0 dòng: " + ct.getMaCTHD());
+                    return false;
+                }
+                System.out.println("[ChiTietHoaDon_DAO] INSERT OK: maCTHD=" + ct.getMaCTHD() + ", maHD=" + ct.getMaHD().getMaHD() + ", maDV=" + maDV + ", maVT=" + maVT);
+                return true;
             }
 
         } catch (SQLException e) {
+            System.err.println("[ChiTietHoaDon_DAO] Lỗi khi insert chi tiết hóa đơn: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -306,18 +368,30 @@ public class ChiTietHoaDon_DAO {
 
         HoaDon_entity hd = hdDAO.getHDTheoMa(maHD);
 
-        DichVu_entity dv = maDV != null
-            ? dvDAO.getDichVuTheoMa(maDV)
-            : null;
+        DichVu_entity dv = maDV != null ? dvDAO.getDichVuTheoMa(maDV) : null;
+        if (dv == null && maDV != null && !maDV.isBlank()) {
+            for (DichVu_entity item : dvDAO.getAllDichVu()) {
+                if (maDV.equals(item.getMaDV())) {
+                    dv = item;
+                    break;
+                }
+            }
+        }
 
-        VatTu_entity vt = maVT != null
-            ? vtDAO.getVatTuTheoMa(maVT)
-            : null;
+        VatTu_entity vt = maVT != null ? vtDAO.getVatTuTheoMa(maVT) : null;
+        if (vt == null && maVT != null && !maVT.isBlank()) {
+            for (VatTu_entity item : vtDAO.getAllVatTu()) {
+                if (maVT.equals(item.getMaVT())) {
+                    vt = item;
+                    break;
+                }
+            }
+        }
 
         NhanVien_entity nv = maNhanVien != null ? new NhanVien_DAO().getNhanVienTheoMa(maNhanVien) : null;
         BacSi_entity bs = maBacSi != null ? new BacSi_DAO().getAll().stream().filter(x -> x.getMaBacSi().equals(maBacSi)).findFirst().orElse(null) : null;
 
-        return new ChiTietHoaDon_entity(
+        ChiTietHoaDon_entity entity = new ChiTietHoaDon_entity(
             rs.getString("maCTHD"),
             hd,
             dv,
@@ -327,6 +401,17 @@ public class ChiTietHoaDon_DAO {
             rs.getInt("soLuong"),
             rs.getDouble("donGia")
         );
+        if (dv != null) {
+            entity.setMaDV(dv);
+        } else if (maDV != null && !maDV.isBlank()) {
+            entity.setMaDVCode(maDV);
+        }
+        if (vt != null) {
+            entity.setMaVT(vt);
+        } else if (maVT != null && !maVT.isBlank()) {
+            entity.setMaVTCode(maVT);
+        }
+        return entity;
     }
 
     // 8. Kiểm tra dữ liệu trước khi thêm hoặc cập nhật
@@ -340,10 +425,20 @@ public class ChiTietHoaDon_DAO {
             return false;
         }
 
-        // Phải có đúng một trong hai: dịch vụ hoặc vật tư
-        boolean coDichVu = ct.getMaDV() != null;
-        boolean coVatTu = ct.getMaVT() != null;
+        resolveReferences(ct);
 
-        return coDichVu ^ coVatTu;
+        String maDV = ct.getMaDVString();
+        String maVT = ct.getMaVTString();
+        boolean coDichVu = maDV != null && !maDV.isBlank();
+        boolean coVatTu = maVT != null && !maVT.isBlank();
+
+        if (coDichVu && ct.getMaDV() == null) {
+            ct.setMaDV(dvDAO.getDichVuTheoMa(maDV));
+        }
+        if (coVatTu && ct.getMaVT() == null) {
+            ct.setMaVT(vtDAO.getVatTuTheoMa(maVT));
+        }
+
+        return (coDichVu ^ coVatTu) && (ct.getMaDV() != null || ct.getMaVT() != null);
     }
 }
