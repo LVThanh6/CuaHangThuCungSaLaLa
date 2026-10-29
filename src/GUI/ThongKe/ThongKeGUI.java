@@ -381,7 +381,7 @@ public class ThongKeGUI extends JPanel {
                     { "Bác sĩ", "bac-si", "người" },
                     { "Doanh số nhân viên", "doanh-so-nhan-vien", "đ" },
                     { "Doanh thu dịch vụ theo người làm", "doanh-thu-dich-vu-nguoi-thuc-hien", "đ" },
-                    { "Giờ ca dự kiến", "so-gio-ca-du-kien", "giờ" },
+                    { "Giờ làm việc", "so-gio-lam-viec", "giờ" },
                     { "Hồ sơ khám", "ho-so-suc-khoe", "hồ sơ" }
             };
         } else {
@@ -391,7 +391,7 @@ public class ThongKeGUI extends JPanel {
                     { "Hoa hồng", "hoa-hong-du-tinh", "đ" },
                     { "Nhân viên", "nhan-vien", "người" },
                     { "Bác sĩ", "bac-si", "người" },
-                    { "Giờ ca dự kiến", "so-gio-ca-du-kien", "giờ" }
+                    { "Giờ làm việc", "so-gio-lam-viec", "giờ" }
             };
         }
 
@@ -434,7 +434,7 @@ public class ThongKeGUI extends JPanel {
             case "lich-hen-trang-thai":
             case "doanh-so-nhan-vien":
             case "doanh-thu-dich-vu-nguoi-thuc-hien":
-            case "so-gio-ca-du-kien":
+            case "so-gio-lam-viec":
             case "ho-so-kham-theo-bac-si":
                 return NHOM_CHI_SO[2];
             case "tong-luong-du-tinh":
@@ -500,7 +500,7 @@ public class ThongKeGUI extends JPanel {
         if (NHOM_CHI_SO[2].equals(nhom)) {
             return "Doanh số bán gắn theo nhân viên lập hóa đơn; doanh thu dịch vụ được phân theo người thực hiện đã lưu trên từng dòng.";
         }
-        return "Lương là ước tính theo ca dự kiến và lương cấu hình; cần cập nhật đủ mức lương trước khi dùng cho quyết toán.";
+        return "Giờ làm việc lấy từ lịch có trạng thái Đang làm hoặc Hoàn thành, làm tròn theo giờ; lương nhân viên tính theo giờ thực tế và 208 giờ chuẩn mỗi tháng.";
     }
 
     private void moDialogTaoBieuDo() {
@@ -577,6 +577,10 @@ public class ThongKeGUI extends JPanel {
                 for (int j = 0; j < giaTri[i].length; j++) {
                     giaTri[i][j] = duLieu.giaTri.get(i).get(j);
                 }
+            }
+            if (chuoi.length != giaTri.length) {
+                throw new IllegalArgumentException("Chỉ số '" + ten
+                        + "' có số chuỗi và số dòng giá trị không khớp.");
             }
         }
 
@@ -668,9 +672,14 @@ public class ThongKeGUI extends JPanel {
                 lblTrangThai.setText("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.");
                 return;
             }
+            ChiSo chiSoChon = (ChiSo) cboChiSo.getSelectedItem();
+            if (chiSoChon == null) {
+                lblTrangThai.setText("Chưa có chỉ số để tạo biểu đồ.");
+                return;
+            }
             btnTao.setEnabled(false);
             lblTrangThai.setText("Đang nạp dữ liệu cho khoảng thời gian đã chọn...");
-            String maChiSo = ((ChiSo) cboChiSo.getSelectedItem()).ma;
+            String maChiSo = chiSoChon.ma;
             int loai = loaiBieuDo(cboLoai.getSelectedIndex());
             new SwingWorker<ThongKe_DAO.DuLieuThongKe, Void>() {
                 @Override
@@ -698,11 +707,13 @@ public class ThongKeGUI extends JPanel {
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                         hienLoi("Đã gián đoạn khi nạp dữ liệu biểu đồ.");
-                    } catch (ExecutionException | IllegalStateException ex) {
+                    } catch (ExecutionException ex) {
                         Throwable nguyenNhan = ex instanceof ExecutionException && ex.getCause() != null
                                 ? ex.getCause()
                                 : ex;
                         hienLoi("Không thể tạo biểu đồ: " + nguyenNhan.getMessage());
+                    } catch (RuntimeException ex) {
+                        hienLoi("Không thể tạo biểu đồ: " + ex.getMessage());
                     }
                 }
             }.execute();
