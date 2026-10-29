@@ -325,7 +325,8 @@ public class QuanLyNhanVienGUI extends JPanel {
         JComboBox<String> cbGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
         JTextField txtNgaySinh = new JTextField("1995-01-01");
         JTextField txtDiaChi = new JTextField("TP.HCM");
-        JTextField txtLuong = new JTextField("8000000");
+        JTextField txtLuong = new JTextField("Tự động theo chức vụ");
+        txtLuong.setEditable(false);
 
         JPanel form = taoFormDialog(txtMa, txtHoTen, cbChucVu, txtSdt, cbGioiTinh, txtNgaySinh, txtDiaChi, txtLuong);
 
@@ -344,9 +345,10 @@ public class QuanLyNhanVienGUI extends JPanel {
 
             double luong;
             try {
-                luong = Double.parseDouble(txtLuong.getText().replaceAll("[^0-9]", ""));
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lương cơ bản không hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                luong = nhanVienDAO.getLuongTheoChucVu((String) cbChucVu.getSelectedItem());
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Không thể lấy lương theo chức vụ: " + ex.getMessage(),
+                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -408,7 +410,8 @@ public class QuanLyNhanVienGUI extends JPanel {
         cbGioiTinh.setSelectedItem(nv.getGioiTinh());
         JTextField txtNgaySinh = new JTextField(nv.getNgaySinh() != null ? nv.getNgaySinh().toString() : "1995-01-01");
         JTextField txtDiaChi = new JTextField(nv.getDiaChi());
-        JTextField txtLuong = new JTextField(String.format("%.0f", nv.getLuongCoBan()));
+        JTextField txtLuong = new JTextField("Tự động theo chức vụ");
+        txtLuong.setEditable(false);
 
         JPanel form = taoFormDialog(txtMa, txtHoTen, cbChucVu, txtSdt, cbGioiTinh, txtNgaySinh, txtDiaChi, txtLuong);
 
@@ -423,9 +426,10 @@ public class QuanLyNhanVienGUI extends JPanel {
 
             double luong;
             try {
-                luong = Double.parseDouble(txtLuong.getText().replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Lương cơ bản không hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                luong = nhanVienDAO.getLuongTheoChucVu((String) cbChucVu.getSelectedItem());
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Không thể lấy lương theo chức vụ: " + ex.getMessage(),
+                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 

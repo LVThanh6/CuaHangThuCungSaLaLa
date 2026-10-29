@@ -75,17 +75,24 @@ CREATE TABLE NhanVien
     ngaySinh    DATE,
     gioiTinh    NVARCHAR(20),
     luongCoBan  DECIMAL(18,2) NOT NULL,
-    loaiLuong   NVARCHAR(20) NOT NULL CONSTRAINT DF_NhanVien_LoaiLuong DEFAULT N'THEO_GIO',
-    luongTheoGio DECIMAL(18,2) NOT NULL CONSTRAINT DF_NhanVien_LuongTheoGio DEFAULT 0,
-    luongThang  DECIMAL(18,2) NOT NULL CONSTRAINT DF_NhanVien_LuongThang DEFAULT 0,
 
     CONSTRAINT PK_NhanVien PRIMARY KEY (maNhanVien),
     CONSTRAINT FK_NhanVien_TaiKhoan FOREIGN KEY (maTK) REFERENCES TaiKhoan(maTK),
-    CONSTRAINT CK_NhanVien_Luong CHECK (luongCoBan >= 0 AND luongTheoGio >= 0 AND luongThang >= 0),
-    CONSTRAINT CK_NhanVien_LoaiLuong CHECK (loaiLuong IN (N'THEO_GIO', N'THEO_THANG'))
+    CONSTRAINT CK_NhanVien_Luong CHECK (luongCoBan >= 0)
 );
 GO
 CREATE UNIQUE INDEX UQ_NhanVien_TaiKhoan ON NhanVien(maTK) WHERE maTK IS NOT NULL;
+GO
+
+-- MỨC LƯƠNG THEO CHỨC VỤ
+CREATE TABLE LuongChucVu
+(
+    chucVu      NVARCHAR(50) NOT NULL,
+    luongCoBan  DECIMAL(18,2) NOT NULL,
+
+    CONSTRAINT PK_LuongChucVu PRIMARY KEY (chucVu),
+    CONSTRAINT CK_LuongChucVu_Luong CHECK (luongCoBan >= 0)
+);
 GO
 
 -- 4. BÁC SĨ THÚ Y
@@ -522,8 +529,25 @@ SELECT 'NV' + dbo.fn_C3(n), 'TK' + dbo.fn_C3(n + 15),
        CHOOSE(n % 5 + 1, N'Củ Chi', N'Quận 1', N'Quận 3', N'Thủ Đức', N'Bình Thạnh') + N', TP.HCM',
        DATEADD(DAY, n * 263, '19880115'),
        CASE WHEN n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
-       7000000 + n * 500000
+       CASE WHEN n <= 5 THEN 8500000
+            WHEN n <= 10 THEN 11000000
+            ELSE 13500000 END
 FROM #N WHERE n <= 15;
+GO
+
+-- Mức lương nhân viên dùng chung theo chức vụ; Quản lý chưa tính lương.
+INSERT INTO LuongChucVu (chucVu, luongCoBan)
+VALUES
+    (N'Nhân viên bán hàng', 8500000),
+    (N'Nhân viên dịch vụ', 11000000),
+    (N'Nhân viên quản lý kho', 13500000),
+    (N'Quản lý', 0);
+GO
+
+UPDATE nv
+SET luongCoBan = lc.luongCoBan
+FROM NhanVien nv
+JOIN LuongChucVu lc ON lc.chucVu = nv.chucVu;
 GO
 
 -- 4. BacSyThuY: 15 dòng

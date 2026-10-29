@@ -179,11 +179,6 @@ public class ThongKe_DAO {
                 "h.ngayLap", "ISNULL(SUM(c.soLuong), 0)",
                 "v.tenVT", "đơn vị", "",
                 "Xếp hạng số lượng bán theo vật tư trong khoảng thời gian đã chọn."));
-        ds.add(nhom("so-gio-ca-du-kien", "Số giờ ca dự kiến theo nhân viên",
-                "LichLamViec l JOIN NhanVien nv ON nv.maNhanVien = l.maNhanVien",
-                "l.ngay", "ISNULL(SUM(DATEDIFF(MINUTE, l.gioBatDau, l.gioKetThuc) / 60.0), 0)",
-                "nv.hoTen", "giờ", "",
-                "Tổng số giờ theo ca dự kiến đã phân trong khoảng ngày đã chọn."));
         ds.add(nhom("hoa-don-trang-thai", "Hóa đơn theo trạng thái",
                 "HoaDon", "ngayLap", "COUNT(*)", "trangThai", "hóa đơn", "",
                 "Phân loại hóa đơn theo trạng thái trong khoảng ngày đã chọn."));
@@ -258,6 +253,7 @@ public class ThongKe_DAO {
         ChiSoThongKe chiSo = new ChiSoThongKe("hang-ton-khong-ban-trong-ky",
                 "Tồn kho không bán trong kỳ", "đơn vị", "",
                 "Số lượng tồn hiện tại của vật tư không có giao dịch bán trong kỳ; đây chỉ là chỉ báo, không phải tuổi tồn kho.");
+        chiSo.chuoi.add("Số lượng tồn");
         chiSo.giaTri.add(new ArrayList<>());
         String sql = "SELECT v.tenVT, v.soLuongTon FROM VatTu v "
                 + "WHERE v.soLuongTon > 0 AND NOT EXISTS ("
@@ -271,7 +267,6 @@ public class ThongKe_DAO {
                 while (rs.next()) {
                     double ton = rs.getDouble("soLuongTon");
                     chiSo.nhan.add(rs.getString("tenVT"));
-                    chiSo.chuoi.add(rs.getString("tenVT"));
                     chiSo.giaTri.get(0).add(ton);
                     chiSo.tong += ton;
                 }
@@ -279,7 +274,6 @@ public class ThongKe_DAO {
         }
         if (chiSo.nhan.isEmpty()) {
             chiSo.nhan.add("Không có vật tư tồn không bán");
-            chiSo.chuoi.add("Không có vật tư tồn không bán");
             chiSo.giaTri.get(0).add(0.0);
         }
         return chiSo;
@@ -289,18 +283,21 @@ public class ThongKe_DAO {
             throws SQLException {
         Map<String, Double> luongCoBan = new LinkedHashMap<>();
         Map<String, Double> hoaHong = new LinkedHashMap<>();
-        String sqlNhanVien = "SELECT maNhanVien, hoTen, chucVu, loaiLuong, luongTheoGio, luongThang "
-                + "FROM NhanVien ORDER BY hoTen";
+        Map<String, Double> gioLamViec = new LinkedHashMap<>();
+        String sqlNhanVien = "SELECT nv.maNhanVien, nv.hoTen, nv.chucVu, "
+                + "COALESCE(lc.luongCoBan, nv.luongCoBan, 0) AS luongCoBan "
+                + "FROM NhanVien nv LEFT JOIN LuongChucVu lc ON lc.chucVu = nv.chucVu "
+                + "ORDER BY nv.hoTen";
         try (PreparedStatement ps = con.prepareStatement(sqlNhanVien);
                 ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 String ma = rs.getString("maNhanVien");
                 String ten = rs.getString("hoTen") + " (NV)";
                 String chucVu = rs.getString("chucVu");
-                boolean theoGio = laNhanVienTheoGio(chucVu, rs.getString("loaiLuong"));
-                double tienCoBan = theoGio
-                        ? laySoGioCa(con, ma, tu, den) * rs.getDouble("luongTheoGio")
-                        : tinhLuongThangTrongKy(rs.getDouble("luongThang"), tu, den);
+                if ("Quản lý".equals(chucVu)) continue;
+                double soGio = laySoGioLamViec(con, ma, tu, den);
+                double tienCoBan = soGio * rs.getDouble("luongCoBan") / GIO_CHUAN_THANG;
+                gioLamViec.put(ten, soGio);
                 double tyLe = "Nhân viên dịch vụ".equals(chucVu) ? 0.05 : 0;
                 double tienHoaHong = tyLe == 0 ? 0 : layDoanhThuDichVuNhanVien(con, ma, tu, den) * tyLe;
                 luongCoBan.put(ten, tienCoBan);
@@ -322,44 +319,56 @@ public class ThongKe_DAO {
         }
 
         ChiSoThongKe tongLuong = new ChiSoThongKe("tong-luong-du-tinh", "Tổng lương dự tính theo nhân sự",
-                "VNĐ", "đ", "Lương giờ hoặc lương tháng phân bổ theo ngày trong kỳ, cộng hoa hồng 5% dịch vụ / 10% bác sĩ.");
+                "VNĐ", "đ", "Lương theo giờ làm việc thực tế, quy đổi từ mức lương chức vụ 208 giờ/tháng, cộng hoa hồng.");
         ChiSoThongKe luongCoBanChiSo = new ChiSoThongKe("luong-co-ban-du-tinh", "Lương cơ bản dự tính",
-                "VNĐ", "đ", "Lương theo giờ nhân số giờ ca dự kiến; lương tháng phân bổ theo số ngày lịch trong kỳ.");
+                "VNĐ", "đ", "Số giờ làm việc thực tế nhân mức lương chức vụ chia 208 giờ chuẩn/tháng.");
         ChiSoThongKe hoaHongChiSo = new ChiSoThongKe("hoa-hong-du-tinh", "Hoa hồng dịch vụ dự tính",
                 "VNĐ", "đ", "Hoa hồng tính trên doanh thu dịch vụ trước khuyến mãi và thuế: nhân viên dịch vụ 5%, bác sĩ 10%. Do bảng dịch vụ chưa phân loại khám bệnh, bác sĩ hiện tính trên mọi dòng dịch vụ được gán.");
+        ChiSoThongKe gioLamViecChiSo = new ChiSoThongKe("so-gio-lam-viec", "Số giờ làm việc",
+                "giờ", "giờ", "Tổng giờ từ các ca Đang làm hoặc Hoàn thành, làm tròn đến giờ.");
+        tongLuong.chuoi.add("Tổng lương");
+        luongCoBanChiSo.chuoi.add("Lương cơ bản");
+        hoaHongChiSo.chuoi.add("Hoa hồng");
+        gioLamViecChiSo.chuoi.add("Số giờ");
         tongLuong.giaTri.add(new ArrayList<>());
         luongCoBanChiSo.giaTri.add(new ArrayList<>());
         hoaHongChiSo.giaTri.add(new ArrayList<>());
+        gioLamViecChiSo.giaTri.add(new ArrayList<>());
         for (Map.Entry<String, Double> entry : luongCoBan.entrySet()) {
             double coBan = entry.getValue();
             double commission = hoaHong.getOrDefault(entry.getKey(), 0.0);
             tongLuong.nhan.add(entry.getKey());
-            tongLuong.chuoi.add(entry.getKey());
             tongLuong.giaTri.get(0).add(coBan + commission);
             luongCoBanChiSo.nhan.add(entry.getKey());
-            luongCoBanChiSo.chuoi.add(entry.getKey());
             luongCoBanChiSo.giaTri.get(0).add(coBan);
             hoaHongChiSo.nhan.add(entry.getKey());
-            hoaHongChiSo.chuoi.add(entry.getKey());
             hoaHongChiSo.giaTri.get(0).add(commission);
             tongLuong.tong += coBan + commission;
             luongCoBanChiSo.tong += coBan;
             hoaHongChiSo.tong += commission;
         }
+        for (Map.Entry<String, Double> entry : gioLamViec.entrySet()) {
+            gioLamViecChiSo.nhan.add(entry.getKey());
+            gioLamViecChiSo.giaTri.get(0).add(entry.getValue());
+            gioLamViecChiSo.tong += entry.getValue();
+        }
         if (tongLuong.nhan.isEmpty()) {
-            for (ChiSoThongKe chiSo : List.of(tongLuong, luongCoBanChiSo, hoaHongChiSo)) {
+            for (ChiSoThongKe chiSo : List.of(tongLuong, luongCoBanChiSo, hoaHongChiSo, gioLamViecChiSo)) {
                 chiSo.nhan.add("Không có dữ liệu");
-                chiSo.chuoi.add("Không có dữ liệu");
                 chiSo.giaTri.get(0).add(0.0);
             }
         }
-        return List.of(tongLuong, luongCoBanChiSo, hoaHongChiSo);
+        return List.of(tongLuong, luongCoBanChiSo, hoaHongChiSo, gioLamViecChiSo);
     }
 
-    private double laySoGioCa(Connection con, String maNhanVien, LocalDate tu, LocalDate den)
+    private static final double GIO_CHUAN_THANG = 26 * 8;
+
+    private double laySoGioLamViec(Connection con, String maNhanVien, LocalDate tu, LocalDate den)
             throws SQLException {
-        String sql = "SELECT ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0) "
-                + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ?";
+        String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
+                + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
+                + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
+                + "AND trangThai IN (N'Đang làm', N'Hoàn thành')";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maNhanVien);
             ps.setDate(2, Date.valueOf(tu));
@@ -394,16 +403,6 @@ public class ThongKe_DAO {
                 return rs.next() ? rs.getDouble(1) : 0;
             }
         }
-    }
-
-    private static boolean laNhanVienTheoGio(String chucVu, String loaiLuong) {
-        if ("Nhân viên bán hàng".equals(chucVu) || "Nhân viên dịch vụ".equals(chucVu)) {
-            return true;
-        }
-        if ("Nhân viên quản lý kho".equals(chucVu)) {
-            return false;
-        }
-        return "THEO_GIO".equalsIgnoreCase(loaiLuong);
     }
 
     private static double tinhLuongThangTrongKy(double luongThang, LocalDate tu, LocalDate den) {

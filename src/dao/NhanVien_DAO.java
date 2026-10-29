@@ -206,19 +206,22 @@ public class NhanVien_DAO {
         return null;
     }
 
-    /** Lương cơ bản theo chức vụ (bảng LuongChucVu). Chức vụ không có trong bảng (vd: Quản lý) -> 0. */
+    /**
+     * Lấy mức lương cơ bản theo chức vụ.
+     */
     public double getLuongTheoChucVu(String chucVu) throws SQLException {
-        String sql = "SELECT luongCoBan FROM LuongChucVu WHERE chucVu = ?";
+        if ("Quản lý".equals(chucVu)) return 0;
+
+        String sql = "SELECT ISNULL(luongCoBan, 0) FROM LuongChucVu WHERE chucVu = ?";
         Connection con = ConnectDB.getCon();
         if (con == null) return 0;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, chucVu);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getDouble(1);
+                return rs.next() ? rs.getDouble(1) : 0;
             }
         }
-        return 0;
     }
 
     public ArrayList<NhanVien_entity> getAllNhanVien() {

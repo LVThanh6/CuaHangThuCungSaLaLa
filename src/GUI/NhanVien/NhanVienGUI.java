@@ -59,7 +59,7 @@ public class NhanVienGUI extends JPanel {
     }
 
     private static final String[] CHUC_VU = {
-            "Nhân viên bán hàng", "Nhân viên dịch vụ", "Nhân viên kho", "Quản lý"
+            "Nhân viên bán hàng", "Nhân viên dịch vụ", "Nhân viên quản lý kho", "Quản lý"
     };
     private static final String[] GIOI_TINH = { "Nam", "Nữ" };
 
@@ -736,7 +736,8 @@ public class NhanVienGUI extends JPanel {
         gc.insets = new Insets(0, 0, 4, 0);
 
         String[] nhan = { "Mã nhân viên", "Họ và tên", "Chức vụ", "Số điện thoại", "Địa chỉ",
-                "Ngày sinh (dd/MM/yyyy, có thể để trống)", "Giới tính", "Lương cơ bản (theo chức vụ)", "Trạng thái tài khoản" };
+                "Ngày sinh (dd/MM/yyyy, có thể để trống)", "Giới tính", "Lương cơ bản (theo chức vụ)",
+                "Trạng thái tài khoản" };
         JComponent[] truong = { txtMa, txtTen, cbChucVu, txtSdt, txtDiaChi, txtNgay, cbGT, txtLuong, cbTT };
         for (int i = 0; i < nhan.length; i++) {
             JLabel l = new JLabel(nhan[i]);
