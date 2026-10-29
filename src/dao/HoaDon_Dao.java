@@ -1,4 +1,3 @@
-
 package dao;
 
 import java.sql.Connection;
@@ -7,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import connectDB.ConnectDB;
 import entity.HoaDon_entity;
@@ -24,7 +25,7 @@ public class HoaDon_Dao {
     private final Thue_DAO thueDAO = new Thue_DAO();
     private final ThanhToan_DAO ttDAO = new ThanhToan_DAO();
 
-    // 1. Lấy danh sách hóa đơn và các đối tượng khóa ngoại
+    // 1. Lấy danh sách hóa đơn và các đối tượng khóa ngoại (Đã tối ưu tốc độ bằng Caching)
     public ArrayList<HoaDon_entity> getDSHD() {
         ArrayList<HoaDon_entity> dsHD = new ArrayList<>();
 
@@ -37,10 +38,16 @@ public class HoaDon_Dao {
 
         try {
             Connection con = ConnectDB.getCon();
-
             if (con == null) {
                 return dsHD;
             }
+
+            // TỐI ƯU HÓA: Sử dụng Map để cache dữ liệu, tránh lỗi N+1 Query gây lag
+            Map<String, KhachHang> cacheKH = new HashMap<>();
+            Map<String, NhanVien_entity> cacheNV = new HashMap<>();
+            Map<String, KhuyenMai_Entity> cacheKM = new HashMap<>();
+            Map<String, Thue_entity> cacheThue = new HashMap<>();
+            Map<String, ThanhToan_entity> cacheTT = new HashMap<>();
 
             try (PreparedStatement ps = con.prepareStatement(sql);
                  ResultSet rs = ps.executeQuery()) {
@@ -56,26 +63,48 @@ public class HoaDon_Dao {
 
                     String trangThai = rs.getString("trangThai");
 
-                    // Lấy đối tượng khách hàng theo mã
-                    KhachHang kh =
-                        khDAO.getKhachHangTheoMa(rs.getString("maKH"));
+                    // Lấy Khách Hàng (có dùng cache)
+                    String maKH = rs.getString("maKH");
+                    KhachHang kh = null;
+                    if (maKH != null) {
+                        kh = cacheKH.computeIfAbsent(maKH, k -> khDAO.getKhachHangTheoMa(k));
+                    }
 
-                    // Lấy đối tượng nhân viên theo mã
-                    NhanVien_entity nv =
-                        nvDAO.getNhanVienTheoMa(rs.getString("maNhanVien"));
+                    // Lấy Nhân Viên (có dùng cache)
+                 // Lấy Nhân Viên (có dùng cache)
+                    String maNV = rs.getString("maNhanVien");
+                    NhanVien_entity nv = null;
+                    if (maNV != null) {
+                        nv = cacheNV.computeIfAbsent(maNV, k -> {
+                            try {
+                                return nvDAO.getNhanVienTheoMa(k);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                return null; // Sửa 'return nv;' thành 'return null;' ở đây
+                            }
+                        });
+                    }
 
-                    // Các khóa ngoại có thể NULL
+                    // Lấy Khuyến Mãi (có dùng cache)
                     String maKM = rs.getString("maKM");
-                    KhuyenMai_Entity km = maKM != null
-                        ? kmDAO.getKhuyenMaiTheoMa(maKM) : null;
+                    KhuyenMai_Entity km = null;
+                    if (maKM != null) {
+                        km = cacheKM.computeIfAbsent(maKM, k -> kmDAO.getKhuyenMaiTheoMa(k));
+                    }
 
+                    // Lấy Thuế (có dùng cache)
                     String maThue = rs.getString("maThue");
-                    Thue_entity thue = maThue != null
-                        ? thueDAO.getThueTheoMa(maThue) : null;
+                    Thue_entity thue = null;
+                    if (maThue != null) {
+                        thue = cacheThue.computeIfAbsent(maThue, k -> thueDAO.getThueTheoMa(k));
+                    }
 
+                    // Lấy Thanh Toán (có dùng cache)
                     String maThanhToan = rs.getString("maThanhToan");
-                    ThanhToan_entity tt = maThanhToan != null
-                        ? ttDAO.getThanhToanTheoMa(maThanhToan) : null;
+                    ThanhToan_entity tt = null;
+                    if (maThanhToan != null) {
+                        tt = cacheTT.computeIfAbsent(maThanhToan, k -> ttDAO.getThanhToanTheoMa(k));
+                    }
 
                     HoaDon_entity hd = new HoaDon_entity(
                         maHD, ngayLap, trangThai,
@@ -85,11 +114,9 @@ public class HoaDon_Dao {
                     dsHD.add(hd);
                 }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return dsHD;
     }
 

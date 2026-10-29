@@ -13,10 +13,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
+import dao.DangNhap_DAO;
+import GUI.GiaoDienChinhGUI;
+
 /**
  * Class HeaderGUI: Thanh tiêu đề và điều hướng của SALALA Pet Shop.
- * Đọc thông tin người dùng và hiển thị thanh header, phân quyền danh sách tab
- * theo vai trò.
+ * Đọc thông tin người dùng từ Session, hiển thị thanh header, phân quyền danh sách tab
+ * theo vai trò và tích hợp tính năng Đăng xuất.
  */
 public class HeaderGUI extends JPanel {
 
@@ -44,7 +47,9 @@ public class HeaderGUI extends JPanel {
     // CONSTRUCTORS
     // ==========================================
     public HeaderGUI() {
-        this("Lê Văn Thành", "Quản lý");
+        // Tự động đồng bộ với phiên đăng nhập hiện tại
+        this(DangNhap_DAO.isDaDangNhap() ? DangNhap_DAO.getTenNguoiDung() : "Người dùng",
+             DangNhap_DAO.isDaDangNhap() ? DangNhap_DAO.getVaiTro() : "Quản lý");
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu) {
@@ -67,7 +72,8 @@ public class HeaderGUI extends JPanel {
     // ==========================================
     private void khoiTaoMenuConMacDinh() {
         menuConMap = new HashMap<>();
-        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Danh sách bác sĩ", "Thống kê" });
+        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Thống kê" });
+        menuConMap.put("Bác sĩ", new String[] { "Danh sách bác sĩ" });
         menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
         menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
         menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
@@ -77,26 +83,21 @@ public class HeaderGUI extends JPanel {
     }
 
     /**
-     * Tự động điều chỉnh danh sách Tabs hiển thị dựa theo vai trò (chức vụ) người
-     * dùng.
-     * 
-     * @param vaiTro Vai trò người dùng (ví dụ: "Quản lý", "Nhân viên", "Bác sĩ")
+     * Tự động điều chỉnh danh sách Tabs hiển thị dựa theo vai trò người dùng.
      */
     public void thietLapTheoVaiTro(String vaiTro) {
         this.chucVu = vaiTro;
-
-        // Cắt chữ cái viết tắt đại diện cho Avatar
         capNhatChuCaiAvatar();
 
         // Phân quyền Tab hiển thị theo vai trò
-        if ("Bác sĩ".equalsIgnoreCase(vaiTro) || "Bác sĩ thú y".equalsIgnoreCase(vaiTro)) {
+        if ("Bác sĩ".equalsIgnoreCase(vaiTro) || "Bác sĩ thú y".equalsIgnoreCase(vaiTro) || vaiTro.toLowerCase().contains("bác sĩ")) {
             this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Vật tư", "Lịch hẹn", "Dịch vụ" };
-        } else if ("Nhân viên".equalsIgnoreCase(vaiTro) || "Thu ngân".equalsIgnoreCase(vaiTro)) {
+        } else if ("Nhân viên".equalsIgnoreCase(vaiTro) || "Thu ngân".equalsIgnoreCase(vaiTro) || vaiTro.toLowerCase().contains("nhân viên")) {
             this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Hóa đơn", "Lịch hẹn", "Dịch vụ" };
         } else {
             // Mặc định là Quản lý / Toàn quyền
-            this.danhSachTabs = new String[] { "Nhân viên", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch hẹn",
-                    "Dịch vụ" };
+            this.danhSachTabs = new String[] { "Nhân viên", "Bác sĩ", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư",
+                    "Lịch hẹn", "Dịch vụ" };
         }
 
         if (danhSachTabs.length > 0) {
@@ -216,6 +217,51 @@ public class HeaderGUI extends JPanel {
         khoiNguoiDung.add(thongTin);
         panelPhai.add(khoiNguoiDung);
 
+        // --- Tạo Popup Menu cho chức năng Đăng xuất ---
+        JPopupMenu userMenu = new JPopupMenu();
+        userMenu.setBackground(Color.WHITE);
+        userMenu.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
+
+        JMenuItem itemThongTin = new JMenuItem("Thông tin tài khoản");
+        itemThongTin.setFont(RangBuocGiaoDien.fontThuong(13));
+        itemThongTin.setBackground(Color.WHITE);
+        itemThongTin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
+        JMenuItem itemDangXuat = new JMenuItem("Đăng xuất");
+        itemDangXuat.setFont(RangBuocGiaoDien.fontDam(13));
+        itemDangXuat.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
+        itemDangXuat.setBackground(Color.WHITE);
+        itemDangXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Sự kiện click Đăng xuất
+        itemDangXuat.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                this, 
+                "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?", 
+                "Xác nhận đăng xuất", 
+                JOptionPane.YES_NO_OPTION, 
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Lấy Frame chính đang chứa Header này để tắt và quay về trang đăng nhập
+                JFrame frameChinh = (JFrame) SwingUtilities.getWindowAncestor(this);
+                GiaoDienChinhGUI.xuLyDangXuat(frameChinh);
+            }
+        });
+
+        userMenu.add(itemThongTin);
+        userMenu.addSeparator();
+        userMenu.add(itemDangXuat);
+
+        // Hiển thị menu khi nhấn vào khối người dùng
+        khoiNguoiDung.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                userMenu.show(khoiNguoiDung, khoiNguoiDung.getWidth() - userMenu.getPreferredSize().width, khoiNguoiDung.getHeight());
+            }
+        });
+
         hangTren.add(panelPhai, BorderLayout.EAST);
         return hangTren;
     }
@@ -258,8 +304,7 @@ public class HeaderGUI extends JPanel {
             };
 
             nut.setFont(RangBuocGiaoDien.fontVua(13));
-            nut.setForeground(
-                    tenTab.equals(tabHienTai) ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_CHINH);
+            nut.setForeground(tenTab.equals(tabHienTai) ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_CHINH);
             nut.setFocusPainted(false);
             nut.setBorderPainted(false);
             nut.setContentAreaFilled(false);
@@ -350,10 +395,6 @@ public class HeaderGUI extends JPanel {
     // ==========================================
     // CẬP NHẬT THÔNG TIN NGƯỜI DÙNG & VAI TRÒ
     // ==========================================
-    /**
-     * Cập nhật thông tin người dùng và tự động làm mới giao diện Header theo vai
-     * trò mới
-     */
     public void setThongTinNguoiDung(String ten, String chucVu) {
         this.tenNguoiDung = ten;
         thietLapTheoVaiTro(chucVu);

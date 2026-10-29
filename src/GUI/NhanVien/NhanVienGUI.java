@@ -59,7 +59,7 @@ public class NhanVienGUI extends JPanel {
     }
 
     private static final String[] CHUC_VU = {
-            "Nhân viên bán hàng", "Nhân viên dịch vụ", "Nhân viên quản lý kho"
+            "Nhân viên bán hàng", "Nhân viên dịch vụ", "Nhân viên kho", "Quản lý"
     };
     private static final String[] GIOI_TINH = { "Nam", "Nữ" };
 
@@ -686,7 +686,8 @@ public class NhanVienGUI extends JPanel {
                 ? ""
                 : DINH_DANG_NGAY.format(goc.getNgaySinh()));
         JComboBox<String> cbGT = new JComboBox<>(GIOI_TINH);
-        JTextField txtLuong = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongCoBan()));
+        JTextField txtLuong = new JTextField();
+        txtLuong.setEditable(false);
         JComboBox<String> cbTT = coTK
                 ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.NGUNG.nhan })
                 : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
@@ -699,6 +700,21 @@ public class NhanVienGUI extends JPanel {
             if (coTK)
                 cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
+        // Lương do chức vụ quyết định: tự điền theo bảng LuongChucVu, không cho sửa tay
+        Runnable apDungLuong = () -> {
+            String chucVu = (String) cbChucVu.getSelectedItem();
+            if ("Quản lý".equals(chucVu)) {
+                txtLuong.setText("Chưa áp dụng");
+                return;
+            }
+            try {
+                txtLuong.setText(dinhDangTien(dao.getLuongTheoChucVu(chucVu)));
+            } catch (SQLException ex) {
+                txtLuong.setText("Không đọc được lương");
+            }
+        };
+        cbChucVu.addActionListener(e -> apDungLuong.run());
+        apDungLuong.run();
         cbTT.setEnabled(coTK && !chiXem);
 
         if (chiXem) {
@@ -706,7 +722,6 @@ public class NhanVienGUI extends JPanel {
             txtSdt.setEditable(false);
             txtDiaChi.setEditable(false);
             txtNgay.setEditable(false);
-            txtLuong.setEditable(false);
             cbChucVu.setEnabled(false);
             cbGT.setEnabled(false);
         }
@@ -721,7 +736,7 @@ public class NhanVienGUI extends JPanel {
         gc.insets = new Insets(0, 0, 4, 0);
 
         String[] nhan = { "Mã nhân viên", "Họ và tên", "Chức vụ", "Số điện thoại", "Địa chỉ",
-                "Ngày sinh (dd/MM/yyyy, có thể để trống)", "Giới tính", "Lương cơ bản (₫)", "Trạng thái tài khoản" };
+                "Ngày sinh (dd/MM/yyyy, có thể để trống)", "Giới tính", "Lương cơ bản (theo chức vụ)", "Trạng thái tài khoản" };
         JComponent[] truong = { txtMa, txtTen, cbChucVu, txtSdt, txtDiaChi, txtNgay, cbGT, txtLuong, cbTT };
         for (int i = 0; i < nhan.length; i++) {
             JLabel l = new JLabel(nhan[i]);
@@ -772,15 +787,6 @@ public class NhanVienGUI extends JPanel {
                         loi = "Ngày sinh không hợp lệ (định dạng dd/MM/yyyy).";
                     }
                 }
-                if (loi == null) {
-                    try {
-                        luong = Double.parseDouble(txtLuong.getText().replaceAll("[.,\\s]", ""));
-                        if (luong < 0)
-                            loi = "Lương cơ bản không được âm.";
-                    } catch (NumberFormatException ex) {
-                        loi = "Lương cơ bản không hợp lệ (nhập số, ví dụ 7500000).";
-                    }
-                }
             }
             if (loi != null) {
                 lblLoi.setText(loi);
@@ -788,14 +794,20 @@ public class NhanVienGUI extends JPanel {
             }
 
             String chucVu = (String) cbChucVu.getSelectedItem();
+            try {
+                luong = "Quản lý".equals(chucVu) ? 0 : dao.getLuongTheoChucVu(chucVu);
+            } catch (SQLException ex) {
+                lblLoi.setText("Lỗi CSDL: " + ex.getMessage());
+                return;
+            }
             String gt = (String) cbGT.getSelectedItem();
             String dc = diaChi.isEmpty() ? null : diaChi;
             try {
                 if (goc == null) {
-                    dao.them(new NhanVien_entity(txtMa.getText(), null, ten, chucVu, sdt, dc, ngay, gt, luong));
+                    dao.them(new NhanVien_entity(txtMa.getText(), null, ten, chucVu, sdt, dc, ngay, gt, luong, null));
                 } else {
                     dao.capNhat(new NhanVien_entity(goc.getMaNhanVien(), goc.getMaTK(), ten, chucVu, sdt, dc, ngay, gt,
-                            luong));
+                            luong, goc.getTrangThaiTK()));
                     if (coTK) {
                         boolean hoatDong = cbTT.getSelectedIndex() == 0;
                         if (hoatDong != Boolean.TRUE.equals(goc.getTrangThaiTK())) {

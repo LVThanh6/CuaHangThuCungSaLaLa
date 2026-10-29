@@ -5,6 +5,8 @@ public class ChiTietHoaDon_entity {
 	private HoaDon_entity maHD;
 	private DichVu_entity maDV;
 	private VatTu_entity maVT;
+	private NhanVien_entity nhanVienThucHien;
+	private BacSi_entity bacSiThucHien;
 	private int soLuong;
 	private double donGia;
 	public ChiTietHoaDon_entity() {
@@ -20,6 +22,18 @@ public class ChiTietHoaDon_entity {
 		this.soLuong = soLuong;
 		this.donGia = donGia;
 	}
+	public ChiTietHoaDon_entity(String maCTHD, HoaDon_entity maHD, DichVu_entity maDV, VatTu_entity maVT,
+			NhanVien_entity nhanVienThucHien, BacSi_entity bacSiThucHien, int soLuong, double donGia) {
+		super();
+		this.maCTHD = maCTHD;
+		this.maHD = maHD;
+		this.maDV = maDV;
+		this.maVT = maVT;
+		this.nhanVienThucHien = nhanVienThucHien;
+		this.bacSiThucHien = bacSiThucHien;
+		this.soLuong = soLuong;
+		this.donGia = donGia;
+	}
 	public String getMaCTHD() {
 		return maCTHD;
 	}
@@ -31,6 +45,24 @@ public class ChiTietHoaDon_entity {
 	}
 	public VatTu_entity getMaVT() {
 		return maVT;
+	}
+	public NhanVien_entity getNhanVienThucHien() {
+		return nhanVienThucHien;
+	}
+	public void setNhanVienThucHien(NhanVien_entity nhanVienThucHien) {
+		this.nhanVienThucHien = nhanVienThucHien;
+	}
+	public BacSi_entity getBacSiThucHien() {
+		return bacSiThucHien;
+	}
+	public void setBacSiThucHien(BacSi_entity bacSiThucHien) {
+		this.bacSiThucHien = bacSiThucHien;
+	}
+	public String getMaNhanVienThucHien() {
+		return nhanVienThucHien == null ? null : nhanVienThucHien.getMaNhanVien();
+	}
+	public String getMaBacSiThucHien() {
+		return bacSiThucHien == null ? null : bacSiThucHien.getMaBacSi();
 	}
 	public int getSoLuong() {
 		return soLuong;

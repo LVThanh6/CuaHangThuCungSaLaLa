@@ -1,7 +1,9 @@
 package GUI.TaiKhoan;
 
+import dao.DangNhap_DAO;
 import dao.TaiKhoan_DAO;
 import model.TaiKhoan;
+
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.GiaoDienChinhGUI;
 
@@ -15,7 +17,7 @@ import java.awt.event.KeyEvent;
 
 /**
  * Giao diện Đăng nhập hệ thống SALALA Pet Shop.
- * Tích hợp xác thực bảo mật chuẩn SHA-256 khớp với CSDL SALALA.
+ * Tích hợp xác thực bảo mật chuẩn SHA-256 khớp với CSDL SALALA và lưu Session.
  */
 public class DangNhapGUI extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -308,7 +310,7 @@ public class DangNhapGUI extends JFrame {
     }
 
     // ==========================================
-    // XỬ LÝ ĐĂNG NHẬP
+    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
     // ==========================================
     private void xuLyDangNhap() {
         String username = txtTenDangNhap.getText().trim();
@@ -334,11 +336,14 @@ public class DangNhapGUI extends JFrame {
 
                 if (kq.isThanhCong()) {
                     lblThongBaoLoi.setText(" ");
-                    // Mở giao diện chính với thông tin tài khoản đã đăng nhập
                     TaiKhoan tk = kq.getTaiKhoan();
                     String tenHienThi = kq.getTenNguoiDung();
                     String vaiTro = tk.getVaiTro();
 
+                    // ⭐ LƯU THÔNG TIN PHIÊN LÀM VIỆC VÀO SESSION
+                    DangNhap_DAO.dangNhap(tk, tenHienThi, kq.getMaDoiTuong());
+
+                    // Mở giao diện chính với thông tin tài khoản đã đăng nhập
                     JFrame frameMain = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
                     frameMain.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

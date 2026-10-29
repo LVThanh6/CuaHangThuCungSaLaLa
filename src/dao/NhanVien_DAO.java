@@ -33,7 +33,8 @@ public class NhanVien_DAO {
 
         // Sử dụng LEFT JOIN để lấy trạng thái từ bảng TaiKhoan
         String sql = "SELECT nv.maNhanVien, nv.maTK, nv.hoTen, nv.chucVu, "
-                   + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, tk.trangThai "
+                   + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
+                   + "tk.trangThai "
                    + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK";
 
         Connection con = ConnectDB.getCon();
@@ -162,7 +163,8 @@ public class NhanVien_DAO {
 
     public NhanVien_entity getNhanVienTheoMa(String maNhanVien) throws SQLException {
         String sql = "SELECT nv.maNhanVien, nv.maTK, nv.hoTen, nv.chucVu, "
-                   + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, tk.trangThai "
+                   + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
+                   + "tk.trangThai "
                    + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK "
                    + "WHERE nv.maNhanVien = ?";
 
@@ -202,6 +204,21 @@ public class NhanVien_DAO {
             }
         }
         return null;
+    }
+
+    /** Lương cơ bản theo chức vụ (bảng LuongChucVu). Chức vụ không có trong bảng (vd: Quản lý) -> 0. */
+    public double getLuongTheoChucVu(String chucVu) throws SQLException {
+        String sql = "SELECT luongCoBan FROM LuongChucVu WHERE chucVu = ?";
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, chucVu);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+        }
+        return 0;
     }
 
     public ArrayList<NhanVien_entity> getAllNhanVien() {
