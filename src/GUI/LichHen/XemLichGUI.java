@@ -34,6 +34,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
@@ -43,6 +44,7 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
 /**
@@ -67,23 +69,22 @@ public class XemLichGUI extends JPanel {
 
     private static final int COT_THOI_GIAN = 0;
     private static final int COT_TRANG_THAI = 5;
-    private static final int COT_THAO_TAC = 6;
 
     private static final String[] TIEU_DE_BANG = {
-            "Thời gian", "Tên thú cưng", "Chủ nuôi", "Bác sĩ", "Nội dung khám", "Trạng thái", "Thao tác"
+            "Thời gian", "Tên thú cưng", "Chủ nuôi", "Bác sĩ", "Nội dung khám", "Trạng thái"
     };
-    private static final int[] DO_RONG_COT = { 170, 150, 215, 190, 300, 165, 150 };
+    private static final int[] DO_RONG_COT = { 170, 150, 215, 190, 300, 165 };
 
     // Dữ liệu mẫu minh họa (sau này thay bằng dữ liệu từ lịch hẹn trong CSDL)
     private static final Object[][] DU_LIEU_MAU = {
-            { "05/10/2026 · 09:00", "Bánh Bao", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tái khám viêm da dị ứng", "Chờ khám", "Xem chi tiết" },
-            { "05/10/2026 · 09:30", "Milu", "Nguyễn Văn A", "BS. Bùi Anh Tuấn", "Khám tổng quát", "Đang khám", "Xem chi tiết" },
-            { "05/10/2026 · 08:00", "Miu Miu", "Lê Văn D", "BS. Nguyễn Thảo Vy", "Kiểm tra da và lông", "Đã khám", "Xem chi tiết" },
-            { "05/10/2026 · 11:00", "Cục Bông", "Trần Thị Mai", "BS. Lê Minh", "Khám định kỳ", "Đã hủy", "Xem chi tiết" },
-            { "06/10/2026 · 09:00", "Khoai Lang", "Phạm Quốc Hưng", "BS. Bùi Anh Tuấn", "Tiêm phòng nhắc lại", "Chờ khám", "Xem chi tiết" },
-            { "07/10/2026 · 10:00", "Bơ", "Hoàng Văn Tú", "BS. Nguyễn Thảo Vy", "Khám tổng quát", "Chờ khám", "Xem chi tiết" },
-            { "08/10/2026 · 14:00", "Đậu Đậu", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tư vấn dinh dưỡng", "Chờ khám", "Xem chi tiết" },
-            { "09/10/2026 · 15:00", "Bông Tuyết", "Trần Thị Mai", "BS. Bùi Anh Tuấn", "Kiểm tra răng miệng", "Chờ khám", "Xem chi tiết" }
+            { "05/10/2026 · 09:00", "Bánh Bao", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tái khám viêm da dị ứng", "Chờ khám" },
+            { "05/10/2026 · 09:30", "Milu", "Nguyễn Văn A", "BS. Bùi Anh Tuấn", "Khám tổng quát", "Đang khám" },
+            { "05/10/2026 · 08:00", "Miu Miu", "Lê Văn D", "BS. Nguyễn Thảo Vy", "Kiểm tra da và lông", "Đã khám" },
+            { "05/10/2026 · 11:00", "Cục Bông", "Trần Thị Mai", "BS. Lê Minh", "Khám định kỳ", "Đã hủy" },
+            { "06/10/2026 · 09:00", "Khoai Lang", "Phạm Quốc Hưng", "BS. Bùi Anh Tuấn", "Tiêm phòng nhắc lại", "Chờ khám" },
+            { "07/10/2026 · 10:00", "Bơ", "Hoàng Văn Tú", "BS. Nguyễn Thảo Vy", "Khám tổng quát", "Chờ khám" },
+            { "08/10/2026 · 14:00", "Đậu Đậu", "Nguyễn Hoàng Nam", "BS. Lê Minh", "Tư vấn dinh dưỡng", "Chờ khám" },
+            { "09/10/2026 · 15:00", "Bông Tuyết", "Trần Thị Mai", "BS. Bùi Anh Tuấn", "Kiểm tra răng miệng", "Chờ khám" }
     };
 
     private static final String[] DANH_SACH_BAC_SI = {
@@ -125,6 +126,9 @@ public class XemLichGUI extends JPanel {
     private NutBo nutThang;
     private NutBo nutTuan;
     private NutBo nutDanhSach;
+    private NutBo nutXemChiTiet;
+    private NutBo nutSuaLich;
+    private NutBo nutHuyLich;
 
     // Bảng lịch khám
     private TableMau bangLichKham;
@@ -294,8 +298,28 @@ public class XemLichGUI extends JPanel {
         panelCheDoXem.add(nutTuan);
         panelCheDoXem.add(nutDanhSach);
 
-        JPanel khoiPhai = new JPanel(new GridBagLayout());
+        nutXemChiTiet = new NutBo("Xem chi tiết", NutBo.KIEU_VIEN);
+        nutSuaLich = new NutBo("Sửa lịch", NutBo.KIEU_VIEN);
+        nutHuyLich = new NutBo("Hủy lịch", NutBo.KIEU_VIEN);
+        nutXemChiTiet.setPreferredSize(new Dimension(112, 34));
+        nutSuaLich.setPreferredSize(new Dimension(92, 34));
+        nutHuyLich.setPreferredSize(new Dimension(92, 34));
+        nutXemChiTiet.setEnabled(false);
+        nutSuaLich.setEnabled(false);
+        nutHuyLich.setEnabled(false);
+        nutXemChiTiet.addActionListener(e -> xemChiTietLich());
+        nutSuaLich.addActionListener(e -> suaLich());
+        nutHuyLich.addActionListener(e -> huyLich());
+
+        JPanel nhomThaoTac = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        nhomThaoTac.setOpaque(false);
+        nhomThaoTac.add(nutXemChiTiet);
+        nhomThaoTac.add(nutSuaLich);
+        nhomThaoTac.add(nutHuyLich);
+
+        JPanel khoiPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         khoiPhai.setOpaque(false);
+        khoiPhai.add(nhomThaoTac);
         khoiPhai.add(panelCheDoXem);
 
         panelThanhCongCu.add(nhomBoLoc, BorderLayout.WEST);
@@ -316,8 +340,13 @@ public class XemLichGUI extends JPanel {
                 .setCellRenderer(new RendererVanBanMau(RangBuocGiaoDien.MAU_LIEN_KET));
         bangLichKham.getColumnModel().getColumn(COT_TRANG_THAI)
                 .setCellRenderer(new RendererTrangThai());
-        bangLichKham.getColumnModel().getColumn(COT_THAO_TAC)
-                .setCellRenderer(new RendererVanBanMau(RangBuocGiaoDien.MAU_LIEN_KET));
+        bangLichKham.setRowSelectionAllowed(true);
+        bangLichKham.setColumnSelectionAllowed(false);
+        bangLichKham.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                capNhatNutThaoTac();
+            }
+        });
 
         khungCuonBang = new JScrollPane(bangLichKham);
         khungCuonBang.setBorder(null);
@@ -387,6 +416,97 @@ public class XemLichGUI extends JPanel {
         panelChanBang.add(khoiTrai, BorderLayout.WEST);
         panelChanBang.add(khoiPhai, BorderLayout.EAST);
         return panelChanBang;
+    }
+
+    private void capNhatNutThaoTac() {
+        boolean chonMot = bangLichKham != null && bangLichKham.getSelectedRowCount() == 1;
+        if (nutXemChiTiet != null) {
+            nutXemChiTiet.setEnabled(chonMot);
+        }
+        if (nutSuaLich != null) {
+            nutSuaLich.setEnabled(chonMot);
+        }
+        if (nutHuyLich != null) {
+            nutHuyLich.setEnabled(chonMot);
+        }
+    }
+
+    private int layDongDaChon() {
+        if (bangLichKham == null || bangLichKham.getSelectedRowCount() != 1) {
+            return -1;
+        }
+        int dongHienThi = bangLichKham.getSelectedRow();
+        return dongHienThi < 0 ? -1 : bangLichKham.convertRowIndexToModel(dongHienThi);
+    }
+
+    private void xemChiTietLich() {
+        int dong = layDongDaChon();
+        if (dong < 0) {
+            return;
+        }
+
+        String chiTiet = "Thời gian: " + bangLichKham.getModel().getValueAt(dong, COT_THOI_GIAN)
+                + "\nThú cưng: " + bangLichKham.getModel().getValueAt(dong, 1)
+                + "\nChủ nuôi: " + bangLichKham.getModel().getValueAt(dong, 2)
+                + "\nBác sĩ: " + bangLichKham.getModel().getValueAt(dong, 3)
+                + "\nNội dung khám: " + bangLichKham.getModel().getValueAt(dong, 4)
+                + "\nTrạng thái: " + bangLichKham.getModel().getValueAt(dong, COT_TRANG_THAI);
+        JOptionPane.showMessageDialog(this, chiTiet, "Chi tiết lịch khám", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void suaLich() {
+        int dong = layDongDaChon();
+        if (dong < 0) {
+            return;
+        }
+
+        Object noiDungHienTai = bangLichKham.getModel().getValueAt(dong, 4);
+        Object giaTriMoi = JOptionPane.showInputDialog(this,
+                "Nội dung khám mới:", "Sửa lịch khám", JOptionPane.PLAIN_MESSAGE, null, null,
+                noiDungHienTai);
+        if (giaTriMoi == null) {
+            return;
+        }
+        String noiDungMoi = giaTriMoi.toString().trim();
+        if (noiDungMoi.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nội dung khám không được để trống.", "Dữ liệu không hợp lệ",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        bangLichKham.getModel().setValueAt(noiDungMoi, dong, 4);
+        JOptionPane.showMessageDialog(this, "Đã cập nhật lịch khám mẫu.", "Sửa lịch khám",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void huyLich() {
+        int dong = layDongDaChon();
+        if (dong < 0) {
+            return;
+        }
+
+        Object tenThuCung = bangLichKham.getModel().getValueAt(dong, 1);
+        Object thoiGian = bangLichKham.getModel().getValueAt(dong, COT_THOI_GIAN);
+        int luaChon = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc muốn hủy lịch của " + tenThuCung + " (" + thoiGian + ")?",
+                "Xác nhận hủy lịch", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (luaChon != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) bangLichKham.getModel();
+        model.removeRow(dong);
+        bangLichKham.clearSelection();
+        capNhatNutThaoTac();
+        capNhatThongTinHienThi();
+        JOptionPane.showMessageDialog(this, "Đã hủy lịch khám mẫu.", "Hủy lịch khám",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void capNhatThongTinHienThi() {
+        int soDong = bangLichKham.getRowCount();
+        nhanThongTinHienThi.setText(soDong == 0 ? "Không có lịch khám"
+                : "Hiển thị 1–" + soDong + " trong " + soDong + " lịch khám");
     }
 
     private NutBo taoNutTrang(String chu) {
@@ -756,7 +876,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    /** Ô văn bản có màu chữ riêng (cột Thời gian, cột Thao tác dạng liên kết). */
+    /** Ô văn bản có màu chữ riêng cho cột Thời gian. */
     private static class RendererVanBanMau extends DefaultTableCellRenderer {
         private Color mauChu;
 

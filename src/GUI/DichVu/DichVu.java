@@ -54,6 +54,7 @@ public class DichVu extends JPanel {
     private JComboBox<String> cboNhom, cboTrangThai;
     private JTable table;
     private DefaultTableModel model;
+    private JButton btnChinhSua, btnThietLapGia, btnXoa;
     private final JLabel[] giaTri = new JLabel[4], phu = new JLabel[4];
     private JLabel lblThongTin;
     private JPanel panelTrang;
@@ -189,6 +190,34 @@ public class DichVu extends JPanel {
         btnXuat.setPreferredSize(new Dimension(150, 38));
         btnXuat.addActionListener(e -> xuatCSV());
 
+        btnChinhSua = nut("Chỉnh sửa", false);
+        btnChinhSua.setPreferredSize(new Dimension(110, 38));
+        btnChinhSua.setEnabled(false);
+        btnChinhSua.addActionListener(e -> {
+            DV d = dichVuDaChon();
+            if (d != null && hopThoai(d, "Sửa dịch vụ")) {
+                napNhom();
+                napLai(true);
+            }
+        });
+
+        btnThietLapGia = nut("Thiết lập giá", false);
+        btnThietLapGia.setPreferredSize(new Dimension(130, 38));
+        btnThietLapGia.setEnabled(false);
+        btnThietLapGia.addActionListener(e -> {
+            DV d = dichVuDaChon();
+            if (d != null) datGia(d);
+        });
+
+        btnXoa = nut("Xóa", false);
+        btnXoa.setPreferredSize(new Dimension(80, 38));
+        btnXoa.setForeground(DO);
+        btnXoa.setEnabled(false);
+        btnXoa.addActionListener(e -> {
+            DV d = dichVuDaChon();
+            if (d != null) xoa(d);
+        });
+
         JPanel trai = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         trai.setOpaque(false);
         trai.add(txtTim);
@@ -200,10 +229,16 @@ public class DichVu extends JPanel {
         toolbar.setOpaque(false);
         toolbar.setBorder(new EmptyBorder(16, 20, 16, 20));
         toolbar.add(trai, BorderLayout.WEST);
-        toolbar.add(btnXuat, BorderLayout.EAST);
+        JPanel phaiToolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        phaiToolbar.setOpaque(false);
+        phaiToolbar.add(btnChinhSua);
+        phaiToolbar.add(btnThietLapGia);
+        phaiToolbar.add(btnXoa);
+        phaiToolbar.add(btnXuat);
+        toolbar.add(phaiToolbar, BorderLayout.EAST);
 
         // --- Bảng ---
-        String[] cot = { "Mã dịch vụ", "Tên dịch vụ", "Mô tả", "Thời gian thực hiện", "Giá", "Trạng thái", "Bật / tắt", "Thao tác" };
+        String[] cot = { "Mã dịch vụ", "Tên dịch vụ", "Mô tả", "Thời gian thực hiện", "Giá", "Trạng thái", "Bật / tắt" };
         model = new DefaultTableModel(cot, 0) {
             @Override
             public boolean isCellEditable(int r, int c) { return false; }
@@ -212,11 +247,13 @@ public class DichVu extends JPanel {
         table.setRowHeight(48);
         table.setShowVerticalLines(false);
         table.setGridColor(new Color(0xF0F1F3));
-        table.setRowSelectionAllowed(false);
+        table.setRowSelectionAllowed(true);
+        table.setColumnSelectionAllowed(false);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFocusable(false);
         table.setFillsViewportHeight(true);
         table.setDefaultRenderer(Object.class, new OBangRenderer());
-        int[] rong = { 90, 200, 330, 130, 110, 140, 110, 250 };
+        int[] rong = { 90, 200, 330, 130, 110, 140, 110 };
         for (int i = 0; i < rong.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
 
@@ -232,7 +269,11 @@ public class DichVu extends JPanel {
             return l;
         });
 
-        // Click vào cột "Bật / tắt" hoặc "Thao tác"
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) capNhatNutThaoTac();
+        });
+
+        // Click vào cột "Bật / tắt"
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -242,11 +283,6 @@ public class DichVu extends JPanel {
                 if (c == 6) {
                     d.bat = !d.bat;
                     napLai(true);
-                } else if (c == 7) {
-                    int x = e.getX() - table.getCellRect(r, c, false).x; // vị trí trong ô
-                    if (x < 55) { if (hopThoai(d, "Sửa dịch vụ")) { napNhom(); napLai(true); } }
-                    else if (x < 150) datGia(d);
-                    else xoa(d);
                 }
             }
         });
@@ -306,14 +342,29 @@ public class DichVu extends JPanel {
         int tuDong = (trang - 1) * soDong, denDong = Math.min(tuDong + soDong, loc.size());
         hienTai = loc.subList(tuDong, denDong);
 
+        table.clearSelection();
         model.setRowCount(0);
         for (DV d : hienTai)
-            model.addRow(new Object[] { d.ma, d, d.moTa, d.phut + " phút", dinhDangGia(d.gia), d, d, d });
+            model.addRow(new Object[] { d.ma, d, d.moTa, d.phut + " phút", dinhDangGia(d.gia), d, d });
 
         lblThongTin.setText(loc.isEmpty() ? "Không có dịch vụ phù hợp"
                 : "Hiển thị " + (tuDong + 1) + "–" + denDong + " trong " + loc.size() + " dịch vụ");
         vePhanTrang(tongTrang);
         capNhatThongKe();
+        capNhatNutThaoTac();
+    }
+
+    private DV dichVuDaChon() {
+        if (table == null || table.getSelectedRowCount() != 1) return null;
+        int r = table.getSelectedRow();
+        return r >= 0 && r < hienTai.size() ? hienTai.get(r) : null;
+    }
+
+    private void capNhatNutThaoTac() {
+        boolean chonMot = table != null && table.getSelectedRowCount() == 1;
+        if (btnChinhSua != null) btnChinhSua.setEnabled(chonMot);
+        if (btnThietLapGia != null) btnThietLapGia.setEnabled(chonMot);
+        if (btnXoa != null) btnXoa.setEnabled(chonMot);
     }
 
     private void vePhanTrang(int tongTrang) {
@@ -415,17 +466,18 @@ public class DichVu extends JPanel {
     private static class OBangRenderer implements TableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
-            if (c == 0) return o(nhan(String.valueOf(v), 13, false, XANH));
-            if (c == 2 || c == 3) return o(nhan(String.valueOf(v), 13, false, CHU));
+            Color nen = s ? new Color(0xF0FAF6) : Color.WHITE;
+            if (c == 0) return o(nhan(String.valueOf(v), 13, false, XANH), nen);
+            if (c == 2 || c == 3) return o(nhan(String.valueOf(v), 13, false, CHU), nen);
             if (c == 4) {
                 JLabel l = nhan(String.valueOf(v), 13, true, CHU);
                 l.setHorizontalAlignment(SwingConstants.RIGHT);
                 l.setBorder(new EmptyBorder(0, 10, 0, 14));
-                return o(l);
+                return o(l, nen);
             }
             DV d = (DV) v;
             JPanel p = new JPanel(new GridBagLayout());
-            p.setBackground(Color.WHITE);
+            p.setBackground(nen);
             GridBagConstraints g = new GridBagConstraints();
             g.anchor = GridBagConstraints.WEST;
             g.weightx = 1;
@@ -454,26 +506,14 @@ public class DichVu extends JPanel {
                     g.weightx = 1;
                     p.add(nhan(d.bat ? "Bật" : "Tắt", 12, false, XAM), g);
                     break;
-                default: // thao tác: độ rộng cố định để bắt click (55 | 95 | còn lại)
-                    p.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 15));
-                    p.add(link("Sửa", 55, XANH, 10));
-                    p.add(link("Thiết lập giá", 95, XANH, 0));
-                    p.add(link("Xóa", 40, DO, 0));
             }
             return p;
         }
 
-        private static JLabel o(JLabel l) { // ô nền trắng
+        private static JLabel o(JLabel l, Color nen) { // ô nền trắng
             l.setOpaque(true);
-            l.setBackground(Color.WHITE);
+            l.setBackground(nen);
             if (l.getBorder() == null) l.setBorder(new EmptyBorder(0, 10, 0, 10));
-            return l;
-        }
-
-        private static JLabel link(String text, int rong, Color mau, int trai) {
-            JLabel l = nhan(text, 12, false, mau);
-            l.setPreferredSize(new Dimension(rong, 18));
-            l.setBorder(new EmptyBorder(0, trai, 0, 0));
             return l;
         }
     }

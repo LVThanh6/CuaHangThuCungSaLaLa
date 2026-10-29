@@ -331,11 +331,12 @@ public class GiaoDienChinhGUI extends JPanel {
     // ==========================================
     public static void caiDatKichThuocCuaSo(JFrame frame, boolean moFullManHinh) {
         frame.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TOI_THIEU);
-        frame.setPreferredSize(RangBuocGiaoDien.KICH_THUOC_MAC_DINH);
-        frame.setSize(RangBuocGiaoDien.KICH_THUOC_MAC_DINH);
-        frame.setLocationRelativeTo(null);
         if (moFullManHinh) {
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        } else {
+            frame.setPreferredSize(RangBuocGiaoDien.KICH_THUOC_MAC_DINH);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
         }
     }
 

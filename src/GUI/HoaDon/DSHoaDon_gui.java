@@ -11,8 +11,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -42,6 +40,9 @@ public class DSHoaDon_gui extends JPanel {
     private final JLabel lblDaThanhToan = new JLabel("...");
     private final JLabel lblChuaThanhToan = new JLabel("...");
 
+    private JButton btnXem;
+    private JButton btnXoa;
+
     private final DefaultTableModel model = new DefaultTableModel(
             new String[] {
                     "Mã Hóa Đơn",
@@ -51,8 +52,7 @@ public class DSHoaDon_gui extends JPanel {
                     "Mã Nhân Viên",
                     "Mã Khuyến Mãi",
                     "Mã Thuế",
-                    "Mã Thanh Toán",
-                    "Thao tác"
+                    "Mã Thanh Toán"
             }, 0) {
 
         @Override
@@ -209,7 +209,20 @@ public class DSHoaDon_gui extends JPanel {
         JPanel benPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         benPhai.setOpaque(false);
 
-        JButton btnXoa = new JButton("Xóa");
+        btnXem = new JButton("Xem chi tiết");
+        btnXem.setFont(new Font("Arial", Font.BOLD, 12));
+        btnXem.setForeground(Color.WHITE);
+        btnXem.setBackground(XANH);
+        btnXem.setOpaque(true);
+        btnXem.setContentAreaFilled(true);
+        btnXem.setBorderPainted(false);
+        btnXem.setFocusPainted(false);
+        btnXem.setBorder(new EmptyBorder(9, 12, 9, 12));
+        btnXem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnXem.setEnabled(false);
+        btnXem.addActionListener(e -> xemHoaDon());
+
+        btnXoa = new JButton("Xóa");
         btnXoa.setFont(new Font("Arial", Font.BOLD, 12));
         btnXoa.setForeground(Color.WHITE);
         btnXoa.setBackground(new Color(220, 38, 38));
@@ -219,6 +232,7 @@ public class DSHoaDon_gui extends JPanel {
         btnXoa.setFocusPainted(false);
         btnXoa.setBorder(new EmptyBorder(9, 16, 9, 16));
         btnXoa.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnXoa.setEnabled(false);
         btnXoa.addActionListener(e -> xoaHoaDon());
 
         JButton btnXuat = new JButton("Xuất Danh Sách");
@@ -230,6 +244,7 @@ public class DSHoaDon_gui extends JPanel {
         btnXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnXuat.addActionListener(e -> xuatCSV());
 
+        benPhai.add(btnXem);
         benPhai.add(btnXoa);
         benPhai.add(btnXuat);
 
@@ -248,6 +263,9 @@ public class DSHoaDon_gui extends JPanel {
         table.setGridColor(new Color(241, 245, 249));
         table.setFillsViewportHeight(true);
         table.setAutoCreateRowSorter(true);
+        table.setRowSelectionAllowed(true);
+        table.setColumnSelectionAllowed(false);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JTableHeader header = table.getTableHeader();
         header.setPreferredSize(new Dimension(0, 36));
@@ -255,19 +273,6 @@ public class DSHoaDon_gui extends JPanel {
         header.setBackground(new Color(241, 245, 249));
         header.setForeground(new Color(71, 85, 105));
         header.setReorderingAllowed(false);
-
-        table.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object value, boolean selected, boolean focus, int row, int column) {
-                JButton btnXem = new JButton("Xem");
-                btnXem.setFont(new Font("Arial", Font.PLAIN, 11));
-                btnXem.setForeground(XANH);
-                btnXem.setBackground(new Color(240, 253, 250));
-                btnXem.setBorder(new LineBorder(new Color(204, 251, 241), 1, true));
-                btnXem.setFocusPainted(false);
-                return btnXem;
-            }
-        });
 
         table.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
@@ -293,18 +298,10 @@ public class DSHoaDon_gui extends JPanel {
     private void caiDatSuKien() {
         txtTimKiem.addActionListener(e -> locDuLieu());
         cboTrangThai.addActionListener(e -> locDuLieu());
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int viewRow = table.rowAtPoint(e.getPoint());
-                int viewCol = table.columnAtPoint(e.getPoint());
-                if (viewRow < 0 || viewCol != 8) return;
-
-                int modelRow = table.convertRowIndexToModel(viewRow);
-                String maHD = model.getValueAt(modelRow, 0).toString();
-                hienThiChiTiet(maHD);
-            }
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) capNhatNutThaoTac();
         });
+        capNhatNutThaoTac();
     }
 
     // TỐI ƯU HÓA: Chạy load dữ liệu ngầm để không bị đơ giật UI
@@ -349,6 +346,7 @@ public class DSHoaDon_gui extends JPanel {
     }
 
     private void hienThiBang(ArrayList<HoaDon_entity> ds) {
+        table.clearSelection();
         model.setRowCount(0);
         for (HoaDon_entity hd : ds) {
             model.addRow(new Object[] {
@@ -359,10 +357,16 @@ public class DSHoaDon_gui extends JPanel {
                     layMa(hd.getMaNhanVien()),
                     layMa(hd.getMaKM()),
                     layMa(hd.getMaThue()),
-                    layMa(hd.getMaThanhToan()),
-                    "Xem"
+                    layMa(hd.getMaThanhToan())
             });
         }
+        capNhatNutThaoTac();
+    }
+
+    private void capNhatNutThaoTac() {
+        boolean chonMot = table != null && table.getSelectedRowCount() == 1;
+        if (btnXem != null) btnXem.setEnabled(chonMot);
+        if (btnXoa != null) btnXoa.setEnabled(chonMot);
     }
 
     private String layMa(Object doiTuong) {
@@ -396,13 +400,21 @@ public class DSHoaDon_gui extends JPanel {
         hienThiBang(ketQua);
     }
 
-    private void hienThiChiTiet(String maHD) {
+    private void xemHoaDon() {
+        int viewRow = table.getSelectedRow();
+        if (viewRow < 0 || table.getSelectedRowCount() != 1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một hóa đơn cần xem chi tiết.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int modelRow = table.convertRowIndexToModel(viewRow);
+        String maHD = model.getValueAt(modelRow, 0).toString();
         ChiTietHoaDon_gui.hienThi(this, maHD);
     }
 
     private void xoaHoaDon() {
         int viewRow = table.getSelectedRow();
-        if (viewRow < 0) {
+        if (viewRow < 0 || table.getSelectedRowCount() != 1) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một hóa đơn cần xóa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }

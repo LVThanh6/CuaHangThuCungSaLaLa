@@ -7,10 +7,9 @@ import GUI.Chung.QuanLyTable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +31,9 @@ public class DanhSachKhachHangGUI extends JPanel {
     private JLabel lblTieuDe;
     private JLabel lblMoTa;
     private JButton btnThemKhachHang;
+    private JButton btnXemKhachHang;
+    private JButton btnSuaKhachHang;
+    private JButton btnXoaKhachHang;
 
     // Các thẻ thống kê số liệu
     private JPanel panelThongKe;
@@ -115,7 +117,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelTrai.add(lblMoTa);
         panelTieuDe.add(panelTrai, BorderLayout.WEST);
 
-        // Nút "Thêm khách hàng"
+        // Các nút thao tác dòng được chọn
         btnThemKhachHang = new JButton("Thêm khách hàng");
         btnThemKhachHang.setFont(RangBuocGiaoDien.fontDam(13));
         btnThemKhachHang.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
@@ -123,8 +125,16 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnThemKhachHang.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btnThemKhachHang.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        btnXemKhachHang = taoNutThaoTac("Xem chi tiết", false);
+        btnSuaKhachHang = taoNutThaoTac("Chỉnh sửa", false);
+        btnXoaKhachHang = taoNutThaoTac("Xóa", false);
+        btnXoaKhachHang.setForeground(new Color(220, 38, 38));
+
+        JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         panelPhai.setOpaque(false);
+        panelPhai.add(btnXemKhachHang);
+        panelPhai.add(btnSuaKhachHang);
+        panelPhai.add(btnXoaKhachHang);
         panelPhai.add(btnThemKhachHang);
         panelTieuDe.add(panelPhai, BorderLayout.EAST);
 
@@ -152,6 +162,18 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelThongKe.add(theThanhVienVang);
 
         panelPhanTren.add(panelThongKe);
+    }
+
+    private JButton taoNutThaoTac(String text, boolean noiBat) {
+        JButton button = new JButton(text);
+        button.setFont(RangBuocGiaoDien.fontThuong(12));
+        button.setForeground(noiBat ? Color.WHITE : RangBuocGiaoDien.MAU_CHU_DAO);
+        button.setBackground(noiBat ? RangBuocGiaoDien.MAU_CHU_DAO : Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+        return button;
     }
 
     private JPanel taoTheThongKe(String tieuDe, JLabel lblSoChinh, JLabel lblGhiChu) {
@@ -194,7 +216,7 @@ public class DanhSachKhachHangGUI extends JPanel {
     private void khoiTaoBangDuLieu() {
         danhSachCot = new String[] {
                 "Mã khách hàng", "Họ tên", "Số điện thoại", "Email",
-                "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu", "Thao tác"
+                "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu"
         };
 
         duLieuKhachHang = new Object[][] {};
@@ -227,101 +249,16 @@ public class DanhSachKhachHangGUI extends JPanel {
                     }
                 });
 
-        // 3. Sự kiện Click trên bảng dữ liệu (Double click xem chi tiết, Click cột Thao
-        // tác, Right-click popup)
+        // 3. Các nút thao tác luôn dùng dòng đang được chọn
         JTable table = panelQuanLyTable.getBangDuLieu();
+        ListSelectionListener capNhatNut = e -> capNhatTrangThaiNut(table);
+        table.getSelectionModel().addListSelectionListener(capNhatNut);
+        btnXemKhachHang.addActionListener(e -> thucHienTrenKhachHang(table, 0));
+        btnSuaKhachHang.addActionListener(e -> thucHienTrenKhachHang(table, 1));
+        btnXoaKhachHang.addActionListener(e -> thucHienTrenKhachHang(table, 2));
+        capNhatTrangThaiNut(table);
 
-        // Menu chuột phải
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem itemXem = new JMenuItem("Xem chi tiết khách hàng");
-        JMenuItem itemSua = new JMenuItem("Chỉnh sửa thông tin");
-        JMenuItem itemXoa = new JMenuItem("Xóa khách hàng");
-
-        itemXem.setFont(RangBuocGiaoDien.fontThuong(13));
-        itemSua.setFont(RangBuocGiaoDien.fontThuong(13));
-        itemXoa.setFont(RangBuocGiaoDien.fontThuong(13));
-        itemXoa.setForeground(new Color(220, 38, 38));
-
-        itemXem.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-                hienThiDialogXemChiTiet(maKH);
-            }
-        });
-
-        itemSua.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-                hienThiDialogSuaKhachHang(maKH);
-            }
-        });
-
-        itemXoa.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-                String hoTen = table.getModel().getValueAt(modelRow, 1).toString();
-                xuLyXoaKhachHang(maKH, hoTen);
-            }
-        });
-
-        popupMenu.add(itemXem);
-        popupMenu.add(itemSua);
-        popupMenu.addSeparator();
-        popupMenu.add(itemXoa);
-
-        table.setComponentPopupMenu(popupMenu);
-
-        // Click & Right-click trên bảng
-        table.addMouseListener(new MouseAdapter() {
-            private void chonDong(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
-                if (row >= 0) {
-                    table.setRowSelectionInterval(row, row);
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
-                    chonDong(e);
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
-                    chonDong(e);
-                }
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
-                if (row >= 0) {
-                    table.setRowSelectionInterval(row, row);
-                    int modelRow = table.convertRowIndexToModel(row);
-                    String maKH = table.getModel().getValueAt(modelRow, 0).toString();
-
-                    // Click đúp vào dòng -> Xem chi tiết
-                    if (e.getClickCount() == 2) {
-                        hienThiDialogXemChiTiet(maKH);
-                    }
-                    // Click chuột vào cột số 8 (Cột Thao tác) -> Hiện menu lựa chọn
-                    else if (col == 8) {
-                        popupMenu.show(table, e.getX(), e.getY());
-                    }
-                }
-            }
-        });
-
-        // Thiết lập Renderer cho cột Hạng thành viên (6), Chi tiêu (7), Thao tác (8)
+        // Thiết lập renderer cho cột Hạng thành viên và Tổng chi tiêu
         try {
             table.getColumnModel().getColumn(6).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
                 @Override
@@ -363,22 +300,30 @@ public class DanhSachKhachHangGUI extends JPanel {
                 }
             });
 
-            table.getColumnModel().getColumn(8).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
-                        int r, int c) {
-                    JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
-                    lbl.setFont(RangBuocGiaoDien.fontVua(12));
-                    lbl.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
-                    lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                    lbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    if (!isSel) {
-                        lbl.setBackground(r % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
-                    }
-                    return lbl;
-                }
-            });
         } catch (Exception ignored) {
+        }
+    }
+
+    private void capNhatTrangThaiNut(JTable table) {
+        boolean coDong = table.getSelectedRowCount() == 1;
+        btnXemKhachHang.setEnabled(coDong);
+        btnSuaKhachHang.setEnabled(coDong);
+        btnXoaKhachHang.setEnabled(coDong);
+    }
+
+    private void thucHienTrenKhachHang(JTable table, int thaoTac) {
+        int row = table.getSelectedRow();
+        if (row < 0 || table.getSelectedRowCount() != 1) {
+            return;
+        }
+        int modelRow = table.convertRowIndexToModel(row);
+        String maKH = String.valueOf(table.getModel().getValueAt(modelRow, 0));
+        if (thaoTac == 0) {
+            hienThiDialogXemChiTiet(maKH);
+        } else if (thaoTac == 1) {
+            hienThiDialogSuaKhachHang(maKH);
+        } else {
+            xuLyXoaKhachHang(maKH, String.valueOf(table.getModel().getValueAt(modelRow, 1)));
         }
     }
 
@@ -389,7 +334,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         try {
             ArrayList<KhachHang> ds = khachHangDAO.getAllKhachHangDayDu();
             if (ds != null && !ds.isEmpty()) {
-                duLieuKhachHang = new Object[ds.size()][9];
+                duLieuKhachHang = new Object[ds.size()][8];
                 for (int i = 0; i < ds.size(); i++) {
                     KhachHang kh = ds.get(i);
                     duLieuKhachHang[i][0] = kh.getMaKH();
@@ -400,7 +345,6 @@ public class DanhSachKhachHangGUI extends JPanel {
                     duLieuKhachHang[i][5] = String.valueOf(kh.getSoThuCung());
                     duLieuKhachHang[i][6] = (kh.getHangThanhVien() != null ? kh.getHangThanhVien() : "Đồng");
                     duLieuKhachHang[i][7] = String.format("%,.0f ₫", kh.getTongChiTieu()).replace(',', '.');
-                    duLieuKhachHang[i][8] = "Xem | Sửa | Xóa";
                 }
                 if (panelQuanLyTable != null) {
                     panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
