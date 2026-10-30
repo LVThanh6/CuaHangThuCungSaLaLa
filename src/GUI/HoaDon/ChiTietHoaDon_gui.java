@@ -64,6 +64,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     private final JPanel noiDung = new TrangCuon();
     private final JButton btnIn = new JButton("In/xuất hóa đơn");
+    private final JButton btnXacNhanThanhToan = new JButton("Xác nhận đã thanh toán");
+    private JPanel pnlHangThanhToan;
 
     // Các số liệu tổng hợp
     private double mucKM;
@@ -264,6 +266,8 @@ public class ChiTietHoaDon_gui extends JPanel {
         trai.add(Box.createVerticalStrut(4));
         trai.add(lblMoTa);
 
+        boolean daTT = isHoaDonDaThanhToan();
+
         btnIn.setFont(new Font("Arial", Font.BOLD, 12));
         btnIn.setForeground(Color.WHITE);
         btnIn.setBackground(XANH);
@@ -272,12 +276,27 @@ public class ChiTietHoaDon_gui extends JPanel {
         btnIn.setBorderPainted(false);
         btnIn.setFocusPainted(false);
         btnIn.setBorder(new EmptyBorder(10, 18, 10, 18));
-        btnIn.setCursor(Cursor.getPredefinedCursor(
-                Cursor.HAND_CURSOR));
+        btnIn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnIn.setEnabled(daTT);
+        btnIn.setToolTipText(daTT ? "In hóa đơn (có thể in lại bất kỳ lúc nào)" : "Cần xác nhận thanh toán trước khi in");
         btnIn.addActionListener(e -> inHoaDon());
 
-        JPanel phai = new JPanel(new GridBagLayout());
+        btnXacNhanThanhToan.setFont(new Font("Arial", Font.BOLD, 12));
+        btnXacNhanThanhToan.setForeground(Color.WHITE);
+        btnXacNhanThanhToan.setBackground(daTT ? new Color(100, 116, 139) : new Color(16, 185, 129));
+        btnXacNhanThanhToan.setOpaque(true);
+        btnXacNhanThanhToan.setContentAreaFilled(true);
+        btnXacNhanThanhToan.setBorderPainted(false);
+        btnXacNhanThanhToan.setFocusPainted(false);
+        btnXacNhanThanhToan.setBorder(new EmptyBorder(10, 18, 10, 18));
+        btnXacNhanThanhToan.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnXacNhanThanhToan.setEnabled(!daTT);
+        btnXacNhanThanhToan.setText(daTT ? "✓ Đã thanh toán" : "Xác nhận đã thanh toán");
+        btnXacNhanThanhToan.addActionListener(e -> xuLyXacNhanThanhToan());
+
+        JPanel phai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         phai.setOpaque(false);
+        phai.add(btnXacNhanThanhToan);
         phai.add(btnIn);
 
         tieuDe.add(trai, BorderLayout.CENTER);
@@ -492,9 +511,15 @@ public class ChiTietHoaDon_gui extends JPanel {
     // ==================== THANH TOÁN + TỔNG TIỀN ====================
 
     private JPanel taoHangThanhToan() {
+        pnlHangThanhToan = new JPanel(new GridBagLayout());
+        pnlHangThanhToan.setOpaque(false);
+        napTheThanhToanVaTongTien();
+        return pnlHangThanhToan;
+    }
 
-        JPanel hang = new JPanel(new GridBagLayout());
-        hang.setOpaque(false);
+    private void napTheThanhToanVaTongTien() {
+        if (pnlHangThanhToan == null) return;
+        pnlHangThanhToan.removeAll();
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
@@ -502,14 +527,16 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         gbc.gridx = 0;
         gbc.weightx = 0.6;
-        hang.add(taoTheThanhToan(), gbc);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        pnlHangThanhToan.add(taoTheThanhToan(), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.4;
         gbc.insets = new Insets(0, 12, 0, 0);
-        hang.add(taoTheTongTien(), gbc);
+        pnlHangThanhToan.add(taoTheTongTien(), gbc);
 
-        return hang;
+        pnlHangThanhToan.revalidate();
+        pnlHangThanhToan.repaint();
     }
 
     private JPanel taoTheThanhToan() {
@@ -709,7 +736,23 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== IN / XUẤT HÓA ĐƠN ====================
 
+    private boolean isHoaDonDaThanhToan() {
+        if (hd == null) return false;
+        if (laDaThanhToan(hd.getTrangThai())) return true;
+        ThanhToan_entity tt = hd.getMaThanhToan();
+        return tt != null && laDaThanhToan(tt.getTrangThai());
+    }
+
     private void inHoaDon() {
+        if (!isHoaDonDaThanhToan()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Hóa đơn chưa được xác nhận thanh toán nên không được phép in!\nVui lòng nhấn \"Xác nhận đã thanh toán\" trước khi in.",
+                    "Chưa thanh toán",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
 
         PrinterJob job = PrinterJob.getPrinterJob();
         job.setJobName("Hoa don " + hd.getMaHD());
@@ -740,8 +783,9 @@ public class ChiTietHoaDon_gui extends JPanel {
             return;
         }
 
-        // Ẩn nút khi in cho gọn
+        // Ẩn các nút khi in cho gọn
         btnIn.setVisible(false);
+        btnXacNhanThanhToan.setVisible(false);
 
         try {
             job.print();
@@ -754,6 +798,69 @@ public class ChiTietHoaDon_gui extends JPanel {
             );
         } finally {
             btnIn.setVisible(true);
+            btnXacNhanThanhToan.setVisible(true);
+        }
+    }
+
+    private boolean xuLyXacNhanThanhToan() {
+        String[] ptOptions = { "Tiền mặt", "Chuyển khoản", "Thẻ tín dụng" };
+        JComboBox<String> cboPT = new JComboBox<>(ptOptions);
+        Object[] thongBao = {
+            "Mã hóa đơn: " + hd.getMaHD(),
+            "Tổng số tiền thanh toán: " + tien(thanhTien),
+            "Chọn phương thức thanh toán:", cboPT
+        };
+        int opt = JOptionPane.showConfirmDialog(
+            this,
+            thongBao,
+            "Xác nhận đã thanh toán",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+        if (opt != JOptionPane.OK_OPTION) {
+            return false;
+        }
+
+        String pt = (String) cboPT.getSelectedItem();
+        boolean ok = new HoaDon_Dao().xacNhanThanhToan(hd.getMaHD(), pt, thanhTien);
+        if (ok) {
+            hd.setTrangThai("Đã thanh toán");
+            ThanhToan_entity tt = hd.getMaThanhToan();
+            if (tt == null) {
+                tt = new ThanhToan_entity("TT" + System.currentTimeMillis(), thanhTien, java.time.LocalDate.now(), pt, "Đã thanh toán");
+                hd.setMaThanhToan(tt);
+            } else {
+                tt.setTrangThai("Đã thanh toán");
+                tt.setSoTien(thanhTien);
+                tt.setPhuongThuc(pt);
+                tt.setThoiGian(java.time.LocalDate.now());
+            }
+            daThanhToan = thanhTien;
+            conPhaiThu = 0;
+
+            btnIn.setEnabled(true);
+            btnIn.setToolTipText("In hóa đơn (có thể in lại bất kỳ lúc nào)");
+            btnXacNhanThanhToan.setEnabled(false);
+            btnXacNhanThanhToan.setText("✓ Đã thanh toán");
+            btnXacNhanThanhToan.setBackground(new Color(100, 116, 139));
+
+            napTheThanhToanVaTongTien();
+
+            JOptionPane.showMessageDialog(
+                this,
+                "Đã xác nhận thanh toán thành công!\nBây giờ bạn có thể in hóa đơn.",
+                "Thành công",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            return true;
+        } else {
+            JOptionPane.showMessageDialog(
+                this,
+                "Không thể lưu trạng thái thanh toán vào CSDL!",
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE
+            );
+            return false;
         }
     }
 

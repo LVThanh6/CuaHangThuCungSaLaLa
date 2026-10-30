@@ -10,6 +10,8 @@ import dao.KhuyenMai_DAO;
 import dao.Thue_DAO;
 import dao.BacSi_DAO;
 import dao.NhanVien_DAO;
+import dao.DangNhap_DAO;
+import model.TaiKhoan;
 
 import entity.KhachHang;
 import entity.ThuCung_entity;
@@ -50,7 +52,7 @@ public class LapHoaDon_gui extends JPanel {
     private final BacSi_DAO bacSiDAO = new BacSi_DAO();
 
     // Nhân viên đang đăng nhập
-    private final NhanVien_entity nhanVienDangNhap;
+    private NhanVien_entity nhanVienDangNhap;
 
     // ==================== COMPONENT ====================
 
@@ -65,6 +67,8 @@ public class LapHoaDon_gui extends JPanel {
 
     private JTextField txtMaHD;
     private JTextField txtNgayLap;
+    private JTextField txtNhanVien;
+    private JTextField txtTrangThai;
     private JTextField txtSoLuong;
 
     private JTable tblChiTiet;
@@ -94,7 +98,11 @@ public class LapHoaDon_gui extends JPanel {
     }
 
     public LapHoaDon_gui(NhanVien_entity nhanVienDangNhap) {
-        this.nhanVienDangNhap = nhanVienDangNhap;
+        if (nhanVienDangNhap != null) {
+            this.nhanVienDangNhap = nhanVienDangNhap;
+        } else {
+            this.nhanVienDangNhap = layNhanVienDangNhapHienTai();
+        }
 
         setLayout(new BorderLayout(0, 12));
         setBackground(MAU_NEN);
@@ -108,6 +116,39 @@ public class LapHoaDon_gui extends JPanel {
         taiDanhSachThue();
 
         capNhatTongTien();
+    }
+
+    /**
+     * Tự động lấy thông tin nhân viên đang đăng nhập từ Session (DangNhap_DAO).
+     */
+    public static NhanVien_entity layNhanVienDangNhapHienTai() {
+        try {
+            NhanVien_DAO nvDAO = new NhanVien_DAO();
+            String maDT = DangNhap_DAO.getMaDoiTuong();
+            if (maDT != null && !maDT.isBlank()) {
+                NhanVien_entity nv = nvDAO.getNhanVienTheoMa(maDT);
+                if (nv != null) {
+                    return nv;
+                }
+            }
+            TaiKhoan tk = DangNhap_DAO.getTaiKhoanHienTai();
+            if (tk != null && tk.getMaTK() != null) {
+                ArrayList<NhanVien_entity> ds = nvDAO.getAll();
+                for (NhanVien_entity nv : ds) {
+                    if (tk.getMaTK().equals(nv.getMaTK())) {
+                        return nv;
+                    }
+                }
+            }
+            // Fallback khi đăng nhập bằng tài khoản quản lý hoặc tài khoản chưa liên kết trực tiếp
+            ArrayList<NhanVien_entity> dsAll = nvDAO.getAll();
+            if (!dsAll.isEmpty()) {
+                return dsAll.get(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // ==================== KHỞI TẠO GIAO DIỆN ====================
@@ -278,6 +319,13 @@ public class LapHoaDon_gui extends JPanel {
             }
         });
 
+        txtNhanVien = new JTextField();
+        txtNhanVien.setEditable(false);
+        capNhatHienThiNhanVien();
+
+        txtTrangThai = new JTextField("Chờ thanh toán");
+        txtTrangThai.setEditable(false);
+
         themTruong(
                 pnl, gbc, 0, 0,
                 "Mã hóa đơn", txtMaHD
@@ -306,6 +354,16 @@ public class LapHoaDon_gui extends JPanel {
         themTruong(
                 pnl, gbc, 1, 2,
                 "Thuế", cboThue
+        );
+
+        themTruong(
+                pnl, gbc, 0, 3,
+                "Nhân viên lập", txtNhanVien
+        );
+
+        themTruong(
+                pnl, gbc, 1, 3,
+                "Trạng thái", txtTrangThai
         );
 
         cboKhachHang.addActionListener(
@@ -1044,13 +1102,17 @@ public class LapHoaDon_gui extends JPanel {
                 (ThuCung_entity) cboThuCung.getSelectedItem();
 
         if (nhanVienDangNhap == null) {
+            nhanVienDangNhap = layNhanVienDangNhapHienTai();
+            capNhatHienThiNhanVien();
+        }
 
+        if (nhanVienDangNhap == null) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Chưa có thông tin nhân viên đăng nhập.\n"
-                    + "Hãy truyền NhanVien_entity vào LapHoaDon_gui."
+                    "Chưa có thông tin nhân viên đăng nhập để lập hóa đơn.\nVui lòng kiểm tra lại tài khoản hoặc CSDL.",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
             );
-
             return;
         }
 
@@ -1198,19 +1260,24 @@ public class LapHoaDon_gui extends JPanel {
             double tienThue = tinhTienThue(tienSauGiam);
             double tongThanhToan = tienSauGiam + tienThue;
 
-            JOptionPane.showMessageDialog(
+            int luaChon = JOptionPane.showConfirmDialog(
                     this,
-                    "Đã lưu hóa đơn " + maHD
+                    "Đã lưu hóa đơn " + maHD + " thành công!"
                     + "\nTạm tính: " + dinhDangTien(tienHang)
                     + "\nTiền giảm: " + dinhDangTien(tienGiam)
                     + "\nTiền thuế: " + dinhDangTien(tienThue)
-                    + "\nTổng thanh toán: "
-                    + dinhDangTien(tongThanhToan)
-                    + "\n\nLưu ý: mã thú cưng hiện chưa được lưu "
-                    + "vào bảng HoaDon theo Entity/DAO hiện tại."
+                    + "\nTổng thanh toán: " + dinhDangTien(tongThanhToan)
+                    + "\n\nBạn có muốn mở xem và xác nhận thanh toán / in hóa đơn ngay không?",
+                    "Lập hóa đơn thành công",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE
             );
 
             lamMoi();
+
+            if (luaChon == JOptionPane.YES_OPTION) {
+                ChiTietHoaDon_gui.hienThi(this, maHD);
+            }
 
         } else {
 
@@ -1228,6 +1295,7 @@ public class LapHoaDon_gui extends JPanel {
     private void lamMoi() {
 
         model.setRowCount(0);
+        nguoiThucHienTheoDong.clear();
 
         txtMaHD.setText(phatSinhMaHD());
 
@@ -1239,12 +1307,27 @@ public class LapHoaDon_gui extends JPanel {
 
         txtSoLuong.setText("1");
 
+        if (nhanVienDangNhap == null) {
+            nhanVienDangNhap = layNhanVienDangNhapHienTai();
+        }
+        capNhatHienThiNhanVien();
+
         taiDanhSachKhachHang();
         taiDanhSachMatHang();
         taiDanhSachKhuyenMai();
         taiDanhSachThue();
 
         capNhatTongTien();
+    }
+
+    private void capNhatHienThiNhanVien() {
+        if (txtNhanVien != null) {
+            if (nhanVienDangNhap != null) {
+                txtNhanVien.setText(nhanVienDangNhap.getMaNhanVien() + " - " + nhanVienDangNhap.getHoTen());
+            } else {
+                txtNhanVien.setText("Chưa xác định");
+            }
+        }
     }
 
     // ==================== MÃ HÓA ĐƠN ====================

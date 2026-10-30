@@ -299,7 +299,15 @@ public class GiaoDienChinhGUI extends JPanel {
     }
 
     public void hienThiTaoHoaDonMoi() throws SQLException { setNoiDung(new LapHoaDon_gui()); }
-    public void hienThiDanhSachHoaDon() { setNoiDung(new DSHoaDon_gui()); }
+    public void hienThiDanhSachHoaDon() {
+        setNoiDung(new DSHoaDon_gui(() -> {
+            try {
+                hienThiTaoHoaDonMoi();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }));
+    }
     public void hienThiXemLich() { setNoiDung(new XemLichGUI()); }
     public void hienThiDatLichMoi() { setNoiDung(new DatLichMoiGUI()); }
     public void hienThiBangGiaDichVu() { setNoiDung(new DichVu()); }

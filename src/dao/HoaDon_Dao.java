@@ -301,4 +301,88 @@ public class HoaDon_Dao {
 
         return null;
     }
+
+    // 5. Xác nhận đã thanh toán hóa đơn
+    public boolean xacNhanThanhToan(String maHD, String phuongThuc, double soTien) {
+        if (maHD == null || maHD.isBlank()) {
+            return false;
+        }
+
+        Connection con = null;
+        try {
+            con = ConnectDB.getCon();
+            if (con == null) {
+                return false;
+            }
+
+            boolean autoCommitCu = con.getAutoCommit();
+            try {
+                con.setAutoCommit(false);
+
+                // Kiểm tra maThanhToan hiện tại của hóa đơn
+                String sqlCheck = "SELECT maThanhToan FROM HoaDon WHERE maHD = ?";
+                String maTT = null;
+                try (PreparedStatement ps = con.prepareStatement(sqlCheck)) {
+                    ps.setString(1, maHD);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            maTT = rs.getString("maThanhToan");
+                        }
+                    }
+                }
+
+                if (maTT == null || maTT.isBlank()) {
+                    // Tạo mã thanh toán mới (tối đa 20 ký tự)
+                    maTT = "TT" + System.currentTimeMillis();
+                    if (maTT.length() > 20) {
+                        maTT = maTT.substring(0, 20);
+                    }
+
+                    String sqlInsertTT = "INSERT INTO ThanhToan (maThanhToan, soTien, thoiGian, phuongThuc, trangThai) "
+                            + "VALUES (?, ?, CURRENT_TIMESTAMP, ?, N'Đã thanh toán')";
+                    try (PreparedStatement ps = con.prepareStatement(sqlInsertTT)) {
+                        ps.setString(1, maTT);
+                        ps.setDouble(2, Math.max(0, soTien));
+                        ps.setString(3, phuongThuc != null ? phuongThuc : "Tiền mặt");
+                        ps.executeUpdate();
+                    }
+
+                    String sqlUpdateHD = "UPDATE HoaDon SET trangThai = N'Đã thanh toán', maThanhToan = ? WHERE maHD = ?";
+                    try (PreparedStatement ps = con.prepareStatement(sqlUpdateHD)) {
+                        ps.setString(1, maTT);
+                        ps.setString(2, maHD);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    String sqlUpdateTT = "UPDATE ThanhToan SET trangThai = N'Đã thanh toán', soTien = ?, "
+                            + "phuongThuc = ?, thoiGian = CURRENT_TIMESTAMP WHERE maThanhToan = ?";
+                    try (PreparedStatement ps = con.prepareStatement(sqlUpdateTT)) {
+                        ps.setDouble(1, Math.max(0, soTien));
+                        ps.setString(2, phuongThuc != null ? phuongThuc : "Tiền mặt");
+                        ps.setString(3, maTT);
+                        ps.executeUpdate();
+                    }
+
+                    String sqlUpdateHD = "UPDATE HoaDon SET trangThai = N'Đã thanh toán' WHERE maHD = ?";
+                    try (PreparedStatement ps = con.prepareStatement(sqlUpdateHD)) {
+                        ps.setString(1, maHD);
+                        ps.executeUpdate();
+                    }
+                }
+
+                con.commit();
+                return true;
+
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            } finally {
+                con.setAutoCommit(autoCommitCu);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
