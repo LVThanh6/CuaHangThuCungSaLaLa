@@ -6,7 +6,30 @@ import GUI.GiaoDienChinhGUI;
 import GUI.ThuCung.HoSoThuCungGUI.NutBoTron;
 import GUI.ThuCung.HoSoThuCungGUI.OTimKiemGoiY;
 import GUI.ThuCung.HoSoThuCungGUI.PanelBoTron;
+import dao.BacSi_DAO;
+import dao.ChiTietDonThuoc_DAO;
+import dao.DonThuoc_DAO;
+import dao.HoSoSucKhoe_DAO;
+import dao.ThuCung_DAO;
+import entity.BacSi_entity;
+import entity.ChiTietDonThuoc_entity;
+import entity.DonThuoc_entity;
+import entity.HoSoSucKhoe_entity;
+import entity.ThuCung_entity;
+import entity.Thuoc_entity;
 import java.awt.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -14,7 +37,7 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  * Class DonThuocGUI: Giao diện "Đơn thuốc" (thay thế giao diện Loại thú cưng).
- * Chỉ dựng giao diện, chưa xử lý nghiệp vụ.
+ * Quản lý đơn thuốc và các chi tiết thuốc thông qua DAO.
  * Các trường hiển thị dựa theo bảng DonThuoc (kết hợp ThuCung, BacSyThuY, ChiTietDonThuoc).
  * Dùng lại các thành phần PanelBoTron, NutBoTron, OTimKiemGoiY của HoSoThuCungGUI.
  */
@@ -31,23 +54,22 @@ public class DonThuocGUI extends JPanel {
     private static final int CHIEU_CAO_THE_THONG_KE = 80;
     private static final int CHIEU_CAO_O_NHAP = 38;
     private static final int CHIEU_CAO_THANH_PHAN_TRANG = 56;
+    private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
+    private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
 
-    // --- Dữ liệu hiển thị mẫu (chỉ để dựng giao diện) ---
     private final String[] tieuDeCot = { "Mã đơn thuốc", "Thú cưng", "Mã hồ sơ", "Bác sĩ kê đơn", "Ngày kê đơn",
             "Số loại thuốc", "Ghi chú", "Trạng thái" };
-    private final Object[][] duLieuMau = {
-            { "DT001", "Mimi (TC001)", "HS001", "Nguyễn Hữu Tài", "06/06/2025 09:00", "2", "Theo dõi ăn uống", "Chờ lấy thuốc" },
-            { "DT002", "Lucky (TC002)", "HS002", "Trần Thị Uyên", "11/06/2025 10:00", "1", "Cho uống đủ liều", "Hoàn thành" },
-            { "DT003", "Bông (TC003)", "HS003", "Lê Minh Vinh", "16/06/2025 11:00", "3", "Tái khám sau 7 ngày", "Đã cấp thuốc" },
-            { "DT004", "Milo (TC004)", "HS004", "Phạm Thị Xuân", "21/06/2025 12:00", "2", "Theo dõi ăn uống", "Chờ lấy thuốc" },
-            { "DT005", "Kitty (TC005)", "HS005", "Võ Thanh Tùng", "26/06/2025 13:00", "1", "Cho uống đủ liều", "Hoàn thành" },
-            { "DT006", "Boss (TC006)", "HS006", "Đặng Thị Yến", "01/07/2025 14:00", "2", "Tái khám sau 7 ngày", "Đã cấp thuốc" },
-            { "DT007", "Susu (TC007)", "HS007", "Bùi Văn Khánh", "06/07/2025 15:00", "1", "Theo dõi ăn uống", "Chờ lấy thuốc" },
-            { "DT008", "Nâu (TC008)", "HS008", "Hồ Thị Diệp", "11/07/2025 16:00", "4", "Cho uống đủ liều", "Hoàn thành" }
-    };
-    private final String[] dsTrangThaiLoc = { "Trạng thái: Tất cả", "Đã cấp thuốc", "Chờ lấy thuốc", "Hoàn thành" };
+    private final String[] dsTrangThaiLoc = { "Trạng thái: Tất cả", "Chờ lấy thuốc", "Đã cấp thuốc" };
     private final String[] dsThoiGianLoc = { "Thời gian: Tất cả", "Hôm nay", "7 ngày qua", "Tháng này" };
     private final String[] dsSoDongTrang = { "8", "16", "32" };
+    private final DonThuoc_DAO donThuocDAO = new DonThuoc_DAO();
+    private final ChiTietDonThuoc_DAO chiTietDAO = new ChiTietDonThuoc_DAO();
+    private final HoSoSucKhoe_DAO hoSoSucKhoeDAO = new HoSoSucKhoe_DAO();
+    private final ThuCung_DAO thuCungDAO = new ThuCung_DAO();
+    private final BacSi_DAO bacSiDAO = new BacSi_DAO();
+    private List<DonThuoc_entity> danhSachDonThuoc = new ArrayList<>();
+    private LocalDate tuNgay;
+    private LocalDate denNgay;
 
     // --- Phần tiêu đề trang ---
     private JPanel panelTieuDe;
@@ -61,7 +83,7 @@ public class DonThuocGUI extends JPanel {
     private JLabel nhanSoTongDon;
     private JLabel nhanSoDaCapThuoc;
     private JLabel nhanSoChoLayThuoc;
-    private JLabel nhanSoHoanThanh;
+    private JLabel nhanTongSoThuoc;
 
     // --- Phần thẻ chứa bảng ---
     private PanelBoTron panelTheBang;
@@ -69,6 +91,7 @@ public class DonThuocGUI extends JPanel {
     private OTimKiemGoiY txtTimKiem;
     private JComboBox<String> cboTrangThai;
     private JComboBox<String> cboThoiGian;
+    private JButton nutChonKhoangNgay;
     private JButton nutXemChiTiet;
     private JButton nutChinhSua;
     private JButton nutXoa;
@@ -94,6 +117,7 @@ public class DonThuocGUI extends JPanel {
     public DonThuocGUI() {
         khoiTaoGiaoDien();
         caiDatSuKien();
+        loadDataToTable();
     }
 
     // =========================================================================
@@ -167,15 +191,15 @@ public class DonThuocGUI extends JPanel {
         panelThongKe.setOpaque(false);
         panelThongKe.setPreferredSize(new Dimension(0, CHIEU_CAO_THE_THONG_KE));
 
-        nhanSoTongDon = new JLabel("15");
-        nhanSoDaCapThuoc = new JLabel("5");
-        nhanSoChoLayThuoc = new JLabel("5");
-        nhanSoHoanThanh = new JLabel("5");
+        nhanSoTongDon = new JLabel("0");
+        nhanSoDaCapThuoc = new JLabel("0");
+        nhanSoChoLayThuoc = new JLabel("0");
+        nhanTongSoThuoc = new JLabel("0");
 
         panelThongKe.add(taoTheThongKe("ĐT", "Tổng đơn thuốc", nhanSoTongDon, "Đơn đã kê"));
         panelThongKe.add(taoTheThongKe("CT", "Đã cấp thuốc", nhanSoDaCapThuoc, "Đã giao thuốc"));
         panelThongKe.add(taoTheThongKe("CL", "Chờ lấy thuốc", nhanSoChoLayThuoc, "Cần xử lý"));
-        panelThongKe.add(taoTheThongKe("HT", "Hoàn thành", nhanSoHoanThanh, "Đã kết thúc"));
+        panelThongKe.add(taoTheThongKe("TH", "Tổng loại thuốc", nhanTongSoThuoc, "Trong các đơn thuốc"));
     }
 
     private PanelBoTron taoTheThongKe(String bieuTuong, String tieuDe, JLabel nhanSo, String moTa) {
@@ -255,6 +279,7 @@ public class DonThuocGUI extends JPanel {
 
         cboTrangThai = taoOChon(dsTrangThaiLoc, 180);
         cboThoiGian = taoOChon(dsThoiGianLoc, 180);
+        nutChonKhoangNgay = taoNutLienKet("Khoảng ngày", RangBuocGiaoDien.MAU_CHU_DAO);
 
          nutXemChiTiet = taoNutLienKet("Xem chi tiết", RangBuocGiaoDien.MAU_CHU_DAO);
          nutChinhSua = taoNutLienKet("Chỉnh sửa", RangBuocGiaoDien.MAU_CHU_DAO);
@@ -275,6 +300,8 @@ public class DonThuocGUI extends JPanel {
         panelCongCu.add(cboTrangThai);
         panelCongCu.add(Box.createHorizontalStrut(12));
         panelCongCu.add(cboThoiGian);
+        panelCongCu.add(Box.createHorizontalStrut(8));
+        panelCongCu.add(nutChonKhoangNgay);
         panelCongCu.add(Box.createHorizontalGlue());
         panelCongCu.add(nutXemChiTiet);
         panelCongCu.add(Box.createHorizontalStrut(14));
@@ -286,7 +313,7 @@ public class DonThuocGUI extends JPanel {
     }
 
     private void khoiTaoBang() {
-         bangDonThuoc = new TableMau(tieuDeCot, duLieuMau);
+         bangDonThuoc = new TableMau(tieuDeCot, new Object[0][tieuDeCot.length]);
          bangDonThuoc.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
          int cotTrangThai = tieuDeCot.length - 1;
@@ -353,10 +380,307 @@ public class DonThuocGUI extends JPanel {
     // CÀI ĐẶT SỰ KIỆN CHO CỤM NÚT THAO TÁC
     // =========================================================================
     private void caiDatSuKien() {
+        nutKeDonThuoc.addActionListener(e -> moFormDonThuoc(null));
         nutXemChiTiet.addActionListener(e -> xemDongDaChon());
         nutChinhSua.addActionListener(e -> chinhSuaDongDaChon());
         nutXoa.addActionListener(e -> xoaDongDaChon());
+        nutXuatDanhSach.addActionListener(e -> xuatDanhSach());
+        nutChonKhoangNgay.addActionListener(e -> chonKhoangNgay());
+        cboTrangThai.addActionListener(e -> locDuLieu());
+        cboThoiGian.addActionListener(e -> locDuLieu());
+        txtTimKiem.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
+        });
+        bangDonThuoc.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && bangDonThuoc.getSelectedRowCount() == 1) {
+                    xemDongDaChon();
+                }
+            }
+        });
         capNhatTrangThaiNutHanhDong();
+    }
+
+    public void loadDataToTable() {
+        try {
+            List<DonThuoc_entity> ketQua = donThuocDAO.getAllDonThuoc();
+            danhSachDonThuoc = new ArrayList<>();
+            for (DonThuoc_entity don : ketQua) {
+                if ("Chờ lấy thuốc".equals(don.getTrangThai()) || "Đã cấp thuốc".equals(don.getTrangThai())) {
+                    danhSachDonThuoc.add(don);
+                }
+            }
+            locDuLieu();
+            capNhatThongKe();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Không thể tải danh sách đơn thuốc: " + e.getMessage(),
+                    "Lỗi tải dữ liệu", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void locDuLieu() {
+        String keyword = txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
+        String status = String.valueOf(cboTrangThai.getSelectedItem());
+        String time = String.valueOf(cboThoiGian.getSelectedItem());
+        LocalDate tu = tuNgay;
+        LocalDate den = denNgay;
+        LocalDate homNay = LocalDate.now();
+        if ("Hôm nay".equals(time)) {
+            tu = homNay;
+            den = homNay;
+        } else if ("7 ngày qua".equals(time)) {
+            tu = homNay.minusDays(6);
+            den = homNay;
+        } else if ("Tháng này".equals(time)) {
+            tu = homNay.withDayOfMonth(1);
+            den = homNay;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) bangDonThuoc.getModel();
+        model.setRowCount(0);
+        for (DonThuoc_entity don : danhSachDonThuoc) {
+            LocalDate ngay = don.getNgayKeDon() == null ? null : don.getNgayKeDon().toLocalDate();
+            boolean matchedKeyword = keyword.isEmpty()
+                    || value(don.getMaDonThuoc()).toLowerCase(Locale.ROOT).contains(keyword)
+                    || value(don.getMaHSSK()).toLowerCase(Locale.ROOT).contains(keyword)
+                    || value(don.getTenThuCung()).toLowerCase(Locale.ROOT).contains(keyword)
+                    || value(don.getTenBacSi()).toLowerCase(Locale.ROOT).contains(keyword);
+            boolean matchedStatus = status == null || status.startsWith("Trạng thái:")
+                    || status.equals(don.getTrangThai());
+            boolean matchedDate = (tu == null || (ngay != null && !ngay.isBefore(tu)))
+                    && (den == null || (ngay != null && !ngay.isAfter(den)));
+            if (matchedKeyword && matchedStatus && matchedDate) {
+                model.addRow(new Object[] { don.getMaDonThuoc(),
+                        value(don.getTenThuCung()) + " (" + don.getMaTC() + ")", don.getMaHSSK(),
+                        don.getTenBacSi(), don.getNgayKeDon() == null ? "" : DINH_DANG_NGAY_GIO.format(don.getNgayKeDon()),
+                        don.getSoLoaiThuoc(), value(don.getGhiChu()), don.getTrangThai() });
+            }
+        }
+        bangDonThuoc.clearSelection();
+        capNhatTrangThaiNutHanhDong();
+        nhanThongTinTrang.setText("Hiển thị " + model.getRowCount() + " trong " + model.getRowCount() + " đơn thuốc");
+    }
+
+    private void capNhatThongKe() {
+        int daCap = 0;
+        int choLay = 0;
+        int loaiThuoc = 0;
+        for (DonThuoc_entity don : danhSachDonThuoc) {
+            if ("Đã cấp thuốc".equals(don.getTrangThai())) {
+                daCap++;
+            } else if ("Chờ lấy thuốc".equals(don.getTrangThai())) {
+                choLay++;
+            }
+            loaiThuoc += don.getSoLoaiThuoc();
+        }
+        nhanSoTongDon.setText(String.valueOf(danhSachDonThuoc.size()));
+        nhanSoDaCapThuoc.setText(String.valueOf(daCap));
+        nhanSoChoLayThuoc.setText(String.valueOf(choLay));
+        nhanTongSoThuoc.setText(String.valueOf(loaiThuoc));
+    }
+
+    private String value(String text) {
+        return text == null ? "" : text;
+    }
+
+    private void chonKhoangNgay() {
+        JTextField tu = new JTextField(tuNgay == null ? "" : DINH_DANG_NGAY.format(tuNgay));
+        JTextField den = new JTextField(denNgay == null ? "" : DINH_DANG_NGAY.format(denNgay));
+        JPanel form = new JPanel(new GridLayout(2, 2, 8, 8));
+        form.add(new JLabel("Từ ngày (dd/MM/yyyy):"));
+        form.add(tu);
+        form.add(new JLabel("Đến ngày (dd/MM/yyyy):"));
+        form.add(den);
+        if (JOptionPane.showConfirmDialog(this, form, "Lọc theo khoảng ngày",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
+            return;
+        }
+        try {
+            tuNgay = tu.getText().trim().isEmpty() ? null : LocalDate.parse(tu.getText().trim(), DINH_DANG_NGAY);
+            denNgay = den.getText().trim().isEmpty() ? null : LocalDate.parse(den.getText().trim(), DINH_DANG_NGAY);
+            if (tuNgay != null && denNgay != null && tuNgay.isAfter(denNgay)) {
+                throw new IllegalArgumentException("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.");
+            }
+            cboThoiGian.setSelectedIndex(0);
+            locDuLieu();
+        } catch (DateTimeParseException | IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, "Khoảng ngày không hợp lệ: " + e.getMessage(),
+                    "Sai định dạng ngày", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private String layMaDonDaChon() {
+        int row = layDongDaChon();
+        return row < 0 ? null : String.valueOf(bangDonThuoc.getModel().getValueAt(row, 0));
+    }
+
+    private void moFormDonThuoc(DonThuoc_entity donHienTai) {
+        try {
+            List<HoSoSucKhoe_entity> hoSoList = hoSoSucKhoeDAO.getAllHoSoSucKhoe();
+            List<ThuCung_entity> thuCungList = thuCungDAO.getAllThuCung();
+            List<BacSi_entity> bacSiList = bacSiDAO.getAll();
+            List<Thuoc_entity> thuocList = chiTietDAO.getAllThuoc();
+            if (hoSoList.isEmpty() || thuCungList.isEmpty() || bacSiList.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Cần có hồ sơ khám, thú cưng và bác sĩ trước khi kê đơn.",
+                        "Thiếu dữ liệu liên quan", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            JTextField txtMa = new JTextField(donHienTai == null
+                    ? donThuocDAO.getMaTiepTheo() : donHienTai.getMaDonThuoc());
+            txtMa.setEditable(false);
+            JComboBox<HoSoSucKhoe_entity> cboHoSo = new JComboBox<>(hoSoList.toArray(new HoSoSucKhoe_entity[0]));
+            cboHoSo.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object item, int index,
+                        boolean selected, boolean focus) {
+                    super.getListCellRendererComponent(list, item, index, selected, focus);
+                    if (item instanceof HoSoSucKhoe_entity) {
+                        HoSoSucKhoe_entity hs = (HoSoSucKhoe_entity) item;
+                        setText(hs.getMaHSSK() + " - " + value(hs.getTenThuCung()) + " - " + value(hs.getTenBacSi()));
+                    }
+                    return this;
+                }
+            });
+            if (donHienTai != null) {
+                for (int i = 0; i < cboHoSo.getItemCount(); i++) {
+                    if (donHienTai.getMaHSSK().equals(cboHoSo.getItemAt(i).getMaHSSK())) {
+                        cboHoSo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+            JTextField txtNgay = new JTextField(donHienTai == null
+                    ? DINH_DANG_NGAY_GIO.format(LocalDateTime.now().withSecond(0).withNano(0))
+                    : DINH_DANG_NGAY_GIO.format(donHienTai.getNgayKeDon()));
+            JTextField txtGhiChu = new JTextField(donHienTai == null ? "" : value(donHienTai.getGhiChu()));
+            JComboBox<String> cboTrangThaiForm = new JComboBox<>(new String[] { "Chờ lấy thuốc", "Đã cấp thuốc" });
+            if (donHienTai != null) {
+                cboTrangThaiForm.setSelectedItem(donHienTai.getTrangThai());
+            }
+
+            DefaultTableModel chiTietModel = new DefaultTableModel(
+                    new String[] { "Mã thuốc", "Tên thuốc", "Đơn vị", "Số lượng", "Liều lượng" }, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) { return false; }
+            };
+            if (donHienTai != null) {
+                for (ChiTietDonThuoc_entity item : chiTietDAO.getChiTietTheoMaDon(donHienTai.getMaDonThuoc())) {
+                    chiTietModel.addRow(new Object[] { item.getMaThuoc(), item.getTenThuoc(),
+                            item.getDonViTinh(), item.getSoLuong(), item.getLieuLuong() });
+                }
+            }
+            JTable bangChiTiet = new JTable(chiTietModel);
+            bangChiTiet.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            JButton nutThemThuoc = new JButton("Thêm thuốc");
+            JButton nutXoaThuoc = new JButton("Xóa thuốc");
+            nutThemThuoc.addActionListener(e -> themChiTietThuoc(chiTietModel, thuocList));
+            nutXoaThuoc.addActionListener(e -> {
+                int row = bangChiTiet.getSelectedRow();
+                if (row >= 0) {
+                    chiTietModel.removeRow(row);
+                }
+            });
+            JPanel panelThuocNut = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            panelThuocNut.add(nutThemThuoc);
+            panelThuocNut.add(nutXoaThuoc);
+            JPanel panelThuoc = new JPanel(new BorderLayout(0, 6));
+            panelThuoc.add(new JScrollPane(bangChiTiet), BorderLayout.CENTER);
+            panelThuoc.add(panelThuocNut, BorderLayout.SOUTH);
+            panelThuoc.setPreferredSize(new Dimension(560, 190));
+
+            JPanel header = new JPanel(new GridLayout(0, 2, 8, 8));
+            header.add(new JLabel("Mã đơn thuốc:")); header.add(txtMa);
+            header.add(new JLabel("Hồ sơ khám:")); header.add(cboHoSo);
+            header.add(new JLabel("Ngày kê đơn (dd/MM/yyyy HH:mm):")); header.add(txtNgay);
+            header.add(new JLabel("Ghi chú:")); header.add(txtGhiChu);
+            header.add(new JLabel("Trạng thái:")); header.add(cboTrangThaiForm);
+            JPanel form = new JPanel(new BorderLayout(0, 8));
+            form.add(header, BorderLayout.NORTH);
+            form.add(panelThuoc, BorderLayout.CENTER);
+            String title = donHienTai == null ? "Kê đơn thuốc" : "Cập nhật đơn thuốc";
+            if (JOptionPane.showConfirmDialog(this, form, title, JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
+                return;
+            }
+            LocalDateTime ngay = LocalDateTime.parse(txtNgay.getText().trim(), DINH_DANG_NGAY_GIO);
+            HoSoSucKhoe_entity hs = (HoSoSucKhoe_entity) cboHoSo.getSelectedItem();
+            if (hs == null || txtGhiChu.getText().trim().length() > 500) {
+                throw new IllegalArgumentException("Chọn hồ sơ khám và giới hạn ghi chú không quá 500 ký tự.");
+            }
+            List<ChiTietDonThuoc_entity> chiTiet = new ArrayList<>();
+            for (int i = 0; i < chiTietModel.getRowCount(); i++) {
+                chiTiet.add(new ChiTietDonThuoc_entity(null, txtMa.getText(),
+                        String.valueOf(chiTietModel.getValueAt(i, 0)),
+                        new BigDecimal(String.valueOf(chiTietModel.getValueAt(i, 3))),
+                        new BigDecimal(String.valueOf(chiTietModel.getValueAt(i, 4)))));
+            }
+            if (chiTiet.isEmpty()) {
+                throw new IllegalArgumentException("Đơn thuốc phải có ít nhất một loại thuốc.");
+            }
+            DonThuoc_entity don = new DonThuoc_entity(txtMa.getText(), hs.getMaTC(), hs.getMaBacSi(),
+                    hs.getMaHSSK(), ngay, txtGhiChu.getText().trim(),
+                    String.valueOf(cboTrangThaiForm.getSelectedItem()));
+            boolean saved = donHienTai == null
+                    ? donThuocDAO.createDonThuoc(don, chiTiet)
+                    : donThuocDAO.updateDonThuoc(don, chiTiet);
+            if (saved) {
+                JOptionPane.showMessageDialog(this, "Đã lưu đơn thuốc và chi tiết thuốc.",
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadDataToTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thể lưu đơn thuốc.",
+                        "Thao tác thất bại", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (DateTimeParseException e) {
+            JOptionPane.showMessageDialog(this, "Ngày kê đơn không hợp lệ, hãy nhập dd/MM/yyyy HH:mm.",
+                    "Sai định dạng ngày", JOptionPane.WARNING_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi xử lý đơn thuốc: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void themChiTietThuoc(DefaultTableModel model, List<Thuoc_entity> danhSachThuoc) {
+        if (danhSachThuoc.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Chưa có danh mục thuốc trong hệ thống.",
+                    "Thiếu dữ liệu", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JComboBox<Thuoc_entity> cboThuoc = new JComboBox<>(danhSachThuoc.toArray(new Thuoc_entity[0]));
+        JTextField txtSoLuong = new JTextField("1");
+        JTextField txtLieuLuong = new JTextField("1");
+        JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+        form.add(new JLabel("Thuốc:")); form.add(cboThuoc);
+        form.add(new JLabel("Số lượng:")); form.add(txtSoLuong);
+        form.add(new JLabel("Liều lượng:")); form.add(txtLieuLuong);
+        if (JOptionPane.showConfirmDialog(this, form, "Thêm thuốc vào đơn",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
+            return;
+        }
+        try {
+            Thuoc_entity thuoc = (Thuoc_entity) cboThuoc.getSelectedItem();
+            BigDecimal soLuong = new BigDecimal(txtSoLuong.getText().trim());
+            BigDecimal lieuLuong = new BigDecimal(txtLieuLuong.getText().trim());
+            if (thuoc == null || soLuong.signum() <= 0 || lieuLuong.signum() <= 0) {
+                throw new NumberFormatException("Số lượng và liều lượng phải lớn hơn 0.");
+            }
+            for (int i = 0; i < model.getRowCount(); i++) {
+                if (thuoc.getMaThuoc().equals(model.getValueAt(i, 0))) {
+                    throw new IllegalArgumentException("Thuốc này đã có trong đơn.");
+                }
+            }
+            model.addRow(new Object[] { thuoc.getMaThuoc(), thuoc.getTenThuoc(),
+                    thuoc.getDonViTinh(), soLuong, lieuLuong });
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, "Thông tin thuốc không hợp lệ: " + e.getMessage(),
+                    "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     private void capNhatTrangThaiNutHanhDong() {
@@ -375,46 +699,110 @@ public class DonThuocGUI extends JPanel {
     }
 
     private void xemDongDaChon() {
-        int dong = layDongDaChon();
-        if (dong < 0) {
+        String maDon = layMaDonDaChon();
+        if (maDon == null) {
             return;
         }
-
-        StringBuilder chiTiet = new StringBuilder();
-        for (int cot = 0; cot < bangDonThuoc.getColumnCount(); cot++) {
-            if (cot > 0) {
-                chiTiet.append('\n');
+        try {
+            DonThuoc_entity don = donThuocDAO.getDonThuocTheoMa(maDon);
+            if (don == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy đơn thuốc " + maDon + ".",
+                        "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-            chiTiet.append(bangDonThuoc.getColumnName(cot)).append(": ")
-                    .append(String.valueOf(bangDonThuoc.getModel().getValueAt(dong, cot)));
+            List<ChiTietDonThuoc_entity> items = donThuocDAO.getChiTietDonThuoc(maDon);
+            DefaultTableModel model = new DefaultTableModel(
+                    new String[] { "Mã thuốc", "Tên thuốc", "Đơn vị", "Số lượng", "Liều lượng" }, 0);
+            for (ChiTietDonThuoc_entity item : items) {
+                model.addRow(new Object[] { item.getMaThuoc(), item.getTenThuoc(),
+                        item.getDonViTinh(), item.getSoLuong(), item.getLieuLuong() });
+            }
+            JTable bangChiTiet = new JTable(model);
+            JPanel panel = new JPanel(new BorderLayout(0, 8));
+            panel.add(new JLabel("Đơn " + don.getMaDonThuoc() + " | " + value(don.getTenThuCung())
+                    + " | " + value(don.getTenBacSi()) + " | "
+                    + (don.getNgayKeDon() == null ? "" : DINH_DANG_NGAY_GIO.format(don.getNgayKeDon()))
+                    + " | " + don.getTrangThai()), BorderLayout.NORTH);
+            panel.add(new JScrollPane(bangChiTiet), BorderLayout.CENTER);
+            panel.setPreferredSize(new Dimension(620, 280));
+            JOptionPane.showMessageDialog(this, panel, "Chi tiết đơn thuốc",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Không thể tải chi tiết đơn thuốc: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-        JOptionPane.showMessageDialog(this, chiTiet.toString(), "Chi tiết đơn thuốc",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void chinhSuaDongDaChon() {
-        int dong = layDongDaChon();
-        if (dong < 0) {
+        String maDon = layMaDonDaChon();
+        if (maDon == null) {
             return;
         }
-        String maDon = String.valueOf(bangDonThuoc.getModel().getValueAt(dong, 0));
-        JOptionPane.showMessageDialog(this, "Mở form chỉnh sửa đơn thuốc: " + maDon,
-                "Chỉnh sửa", JOptionPane.INFORMATION_MESSAGE);
+        try {
+            DonThuoc_entity don = donThuocDAO.getDonThuocTheoMa(maDon);
+            if (don == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy đơn thuốc " + maDon + ".",
+                        "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            moFormDonThuoc(don);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Không thể tải đơn thuốc để sửa: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void xoaDongDaChon() {
-        int dong = layDongDaChon();
-        if (dong < 0) {
+        String maDon = layMaDonDaChon();
+        if (maDon == null) {
             return;
         }
-        String maDon = String.valueOf(bangDonThuoc.getModel().getValueAt(dong, 0));
         int luaChon = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn xóa đơn thuốc \"" + maDon + "\" không?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (luaChon == JOptionPane.YES_OPTION) {
-            ((DefaultTableModel) bangDonThuoc.getModel()).removeRow(dong);
-            bangDonThuoc.clearSelection();
-            capNhatTrangThaiNutHanhDong();
+            try {
+                if (donThuocDAO.deleteDonThuoc(maDon)) {
+                    JOptionPane.showMessageDialog(this, "Đã xóa đơn thuốc.",
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    loadDataToTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy đơn thuốc để xóa.",
+                            "Xóa thất bại", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Không thể xóa đơn thuốc: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void xuatDanhSach() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setSelectedFile(new java.io.File("danh-sach-don-thuoc.csv"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        java.io.File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase(Locale.ROOT).endsWith(".csv")) {
+            file = new java.io.File(file.getParentFile(), file.getName() + ".csv");
+        }
+        if (file.exists() && JOptionPane.showConfirmDialog(this, "Tệp đã tồn tại, ghi đè?",
+                "Xác nhận", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+            writer.write('\ufeff');
+            DefaultTableModel model = (DefaultTableModel) bangDonThuoc.getModel();
+            for (int r = -1; r < model.getRowCount(); r++) {
+                for (int c = 0; c < model.getColumnCount(); c++) {
+                    if (c > 0) writer.write(',');
+                    String text = r < 0 ? bangDonThuoc.getColumnName(c) : String.valueOf(model.getValueAt(r, c));
+                    writer.write("\"" + text.replace("\"", "\"\"") + "\"");
+                }
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this, "Đã xuất tệp: " + file.getAbsolutePath(),
+                    "Xuất thành công", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Không thể xuất danh sách: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -498,10 +886,6 @@ public class DonThuocGUI extends JPanel {
                 boolean hasFocus, int row, int column) {
             chu = value == null ? "" : value.toString();
             switch (chu) {
-                case "Hoàn thành":
-                    mauNen = RangBuocGiaoDien.MAU_THANH_CONG_NEN;
-                    mauChu = RangBuocGiaoDien.MAU_THANH_CONG_CHU;
-                    break;
                 case "Chờ lấy thuốc":
                     mauNen = RangBuocGiaoDien.MAU_CANH_BAO_NEN;
                     mauChu = RangBuocGiaoDien.MAU_CANH_BAO_CHU;
