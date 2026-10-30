@@ -727,9 +727,14 @@ public class ChiTietHoaDon_gui extends JPanel {
     }
 
     private void inHoaDon() {
-        // Hóa đơn chưa thanh toán: chỉ hiện 1 hộp thoại duy nhất để xác nhận
-        // thanh toán; đồng ý thì lưu thanh toán rồi tiếp tục in.
-        if (!isHoaDonDaThanhToan() && !xuLyXacNhanThanhToan()) {
+        // Hóa đơn chưa thanh toán: chỉ hiện một thông báo duy nhất và không cho in.
+        if (!isHoaDonDaThanhToan()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Hóa đơn " + hd.getMaHD() + " chưa được thanh toán nên không thể in.",
+                    "Chưa thanh toán",
+                    JOptionPane.WARNING_MESSAGE
+            );
             return;
         }
 
@@ -776,57 +781,6 @@ public class ChiTietHoaDon_gui extends JPanel {
             );
         } finally {
             btnIn.setVisible(true);
-        }
-    }
-
-    private boolean xuLyXacNhanThanhToan() {
-        String[] ptOptions = { "Tiền mặt", "Chuyển khoản", "Thẻ tín dụng" };
-        JComboBox<String> cboPT = new JComboBox<>(ptOptions);
-        Object[] thongBao = {
-            "Hóa đơn " + hd.getMaHD() + " chưa thanh toán.",
-            "Tổng số tiền cần thu: " + tien(thanhTien),
-            "Xác nhận khách đã thanh toán và in hóa đơn?",
-            "Phương thức thanh toán:", cboPT
-        };
-        int opt = JOptionPane.showConfirmDialog(
-            this,
-            thongBao,
-            "Hóa đơn chưa thanh toán",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.QUESTION_MESSAGE
-        );
-        if (opt != JOptionPane.OK_OPTION) {
-            return false;
-        }
-
-        String pt = (String) cboPT.getSelectedItem();
-        boolean ok = new HoaDon_Dao().xacNhanThanhToan(hd.getMaHD(), pt, thanhTien);
-        if (ok) {
-            hd.setTrangThai("Đã thanh toán");
-            ThanhToan_entity tt = hd.getMaThanhToan();
-            if (tt == null) {
-                tt = new ThanhToan_entity("TT" + System.currentTimeMillis(), thanhTien, java.time.LocalDate.now(), pt, "Đã thanh toán");
-                hd.setMaThanhToan(tt);
-            } else {
-                tt.setTrangThai("Đã thanh toán");
-                tt.setSoTien(thanhTien);
-                tt.setPhuongThuc(pt);
-                tt.setThoiGian(java.time.LocalDate.now());
-            }
-            daThanhToan = thanhTien;
-            conPhaiThu = 0;
-
-            napTheThanhToanVaTongTien();
-            noiDung.validate();
-            return true;
-        } else {
-            JOptionPane.showMessageDialog(
-                this,
-                "Không thể lưu trạng thái thanh toán vào CSDL!",
-                "Lỗi",
-                JOptionPane.ERROR_MESSAGE
-            );
-            return false;
         }
     }
 
