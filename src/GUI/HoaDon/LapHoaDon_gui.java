@@ -1329,18 +1329,13 @@ public class LapHoaDon_gui extends JPanel {
             }
         }
     }
-
     // ==================== MÃ HÓA ĐƠN ====================
-
     private String phatSinhMaHD() {
         int soThuTu = hdDAO.laySoHoaDonLonNhat() + 1;
         return String.format("HD%03d", soThuTu);
     }
-
     // ==================== ĐỊNH DẠNG TIỀN ====================
-
     private String dinhDangTien(double tien) {
-
         return String.format("%,.0f đ", tien);
     }
 }
