@@ -447,6 +447,34 @@ CREATE TABLE ChiTietPhieuNhapKho
 GO
 
 
+-- 25. QUẢN LÝ HẠNG THÀNH VIÊN (chỉ liên kết với KhachHang)
+CREATE TABLE QuanLyHangThanhVien
+(
+    maHang            VARCHAR(20)   NOT NULL,
+    maKH              VARCHAR(20)   NOT NULL,
+    tenHang           NVARCHAR(50)  NOT NULL,
+    chiTieuToiThieu   DECIMAL(18,2) NOT NULL,
+    chiTieuToiDa      DECIMAL(18,2) NULL,
+    mucGiamGia        DECIMAL(5,2)  NOT NULL,
+    diemTichLuy1Van   DECIMAL(4,1)  NOT NULL,
+    quyenLoi          NVARCHAR(500) NOT NULL,
+    tongChiTieu       DECIMAL(18,2) NOT NULL DEFAULT 0,
+    diemTichLuy       INT           NOT NULL DEFAULT 0,
+    ngayCapNhatHang   DATETIME2     NOT NULL DEFAULT SYSDATETIME(),
+    trangThai         NVARCHAR(50)  NOT NULL DEFAULT N'Đang áp dụng',
+
+    CONSTRAINT PK_QuanLyHangThanhVien PRIMARY KEY (maHang),
+    CONSTRAINT UQ_QuanLyHangThanhVien_KhachHang UNIQUE (maKH),
+    CONSTRAINT FK_QuanLyHangThanhVien_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
+    CONSTRAINT CK_QuanLyHangThanhVien_TenHang CHECK (tenHang IN (N'Đồng', N'Bạc', N'Vàng', N'Kim cương')),
+    CONSTRAINT CK_QuanLyHangThanhVien_ChiTieu CHECK (chiTieuToiThieu >= 0 AND (chiTieuToiDa IS NULL OR chiTieuToiDa > chiTieuToiThieu)),
+    CONSTRAINT CK_QuanLyHangThanhVien_GiamGia CHECK (mucGiamGia BETWEEN 0 AND 100),
+    CONSTRAINT CK_QuanLyHangThanhVien_Diem CHECK (diemTichLuy1Van >= 0 AND diemTichLuy >= 0),
+    CONSTRAINT CK_QuanLyHangThanhVien_TongChiTieu CHECK (tongChiTieu >= 0)
+);
+GO
+
+
 /* =========================================================
    PHẦN 2: VIEW TỔNG TIỀN HÓA ĐƠN
    ========================================================= */
@@ -818,6 +846,43 @@ SELECT 'CTPNK' + dbo.fn_C3(n),
 FROM #N
 JOIN VatTu v ON v.maVT = 'VT' + dbo.fn_C3(((n - 1) % 15) + 1)
 WHERE n <= 20;
+GO
+
+-- 25. QUẢN LÝ HẠNG THÀNH VIÊN: 15 dòng (mỗi khách hàng 1 hạng, tính từ chi tiêu thực tế trong HoaDon)
+-- Đồng < 5tr | Bạc 5tr - <15tr | Vàng 15tr - <30tr | Kim cương >= 30tr
+INSERT INTO QuanLyHangThanhVien
+       (maHang, maKH, tenHang, chiTieuToiThieu, chiTieuToiDa, mucGiamGia, diemTichLuy1Van,
+        quyenLoi, tongChiTieu, diemTichLuy, ngayCapNhatHang, trangThai)
+SELECT 'HTV' + dbo.fn_C3(n),
+       k.maKH,
+       t.tenHang, t.chiTieuToiThieu, t.chiTieuToiDa, t.mucGiamGia, t.diemTichLuy1Van,
+       t.quyenLoi,
+       c.tongChiTieu,
+       CAST(FLOOR(c.tongChiTieu / 10000.0 * t.diemTichLuy1Van) AS INT),
+       ISNULL(c.ngayGanNhat, CAST('20250901' AS DATETIME2)),
+       N'Đang áp dụng'
+FROM #N
+JOIN KhachHang k ON k.maKH = 'KH' + dbo.fn_C3(n)
+OUTER APPLY (
+    SELECT ISNULL(SUM(v.tongThanhToan), 0) AS tongChiTieu,
+           MAX(h.ngayLap)                  AS ngayGanNhat
+    FROM HoaDon h
+    JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD
+    WHERE h.maKH = k.maKH
+) c
+JOIN (VALUES
+    (N'Đồng',      CAST(0        AS DECIMAL(18,2)), CAST(5000000  AS DECIMAL(18,2)),  2.00, 1.0,
+        N'Giảm 2% hóa đơn dịch vụ' + CHAR(10) + N'Tích 1 điểm / 10.000 ₫' + CHAR(10) + N'Nhắc lịch tiêm và tái khám' + CHAR(10) + N'Ưu đãi sinh nhật thú cưng'),
+    (N'Bạc',       CAST(5000000  AS DECIMAL(18,2)), CAST(15000000 AS DECIMAL(18,2)),  5.00, 1.2,
+        N'Giảm 5% hóa đơn dịch vụ' + CHAR(10) + N'Tích 1,2 điểm / 10.000 ₫' + CHAR(10) + N'01 lần vệ sinh tai miễn phí / quý' + CHAR(10) + N'Ưu tiên khung giờ khám'),
+    (N'Vàng',      CAST(15000000 AS DECIMAL(18,2)), CAST(30000000 AS DECIMAL(18,2)), 10.00, 1.5,
+        N'Giảm 10% hóa đơn dịch vụ' + CHAR(10) + N'Tích 1,5 điểm / 10.000 ₫' + CHAR(10) + N'01 lần khám tổng quát / năm' + CHAR(10) + N'Miễn phí giao hàng nội thành'),
+    (N'Kim cương', CAST(30000000 AS DECIMAL(18,2)), CAST(NULL     AS DECIMAL(18,2)), 15.00, 2.0,
+        N'Giảm 15% hóa đơn dịch vụ' + CHAR(10) + N'Tích 2 điểm / 10.000 ₫' + CHAR(10) + N'02 lần khám tổng quát / năm' + CHAR(10) + N'Hotline bác sĩ ưu tiên 24/7')
+) t(tenHang, chiTieuToiThieu, chiTieuToiDa, mucGiamGia, diemTichLuy1Van, quyenLoi)
+  ON c.tongChiTieu >= t.chiTieuToiThieu
+ AND (t.chiTieuToiDa IS NULL OR c.tongChiTieu < t.chiTieuToiDa)
+WHERE n <= 15;
 GO
 
 DROP TABLE #N;
