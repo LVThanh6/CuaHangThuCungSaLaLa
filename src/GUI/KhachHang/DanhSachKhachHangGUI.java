@@ -400,6 +400,8 @@ public class DanhSachKhachHangGUI extends JPanel {
         String maGoiY = khachHangDAO.phatSinhMaKHMoi();
 
         JTextField txtMaKH = taoTextField(maGoiY);
+        txtMaKH.setEditable(false);
+        txtMaKH.setBackground(new Color(241, 245, 249));
         JTextField txtHoTen = taoTextField("");
         JTextField txtSDT = taoTextField("");
         JTextField txtEmail = taoTextField("");
