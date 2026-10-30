@@ -64,7 +64,6 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     private final JPanel noiDung = new TrangCuon();
     private final JButton btnIn = new JButton("In/xuất hóa đơn");
-    private final JButton btnXacNhanThanhToan = new JButton("Xác nhận đã thanh toán");
     private JPanel pnlHangThanhToan;
 
     // Các số liệu tổng hợp
@@ -266,8 +265,6 @@ public class ChiTietHoaDon_gui extends JPanel {
         trai.add(Box.createVerticalStrut(4));
         trai.add(lblMoTa);
 
-        boolean daTT = isHoaDonDaThanhToan();
-
         btnIn.setFont(new Font("Arial", Font.BOLD, 12));
         btnIn.setForeground(Color.WHITE);
         btnIn.setBackground(XANH);
@@ -277,26 +274,12 @@ public class ChiTietHoaDon_gui extends JPanel {
         btnIn.setFocusPainted(false);
         btnIn.setBorder(new EmptyBorder(10, 18, 10, 18));
         btnIn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnIn.setEnabled(daTT);
-        btnIn.setToolTipText(daTT ? "In hóa đơn (có thể in lại bất kỳ lúc nào)" : "Cần xác nhận thanh toán trước khi in");
+        btnIn.setEnabled(true);
+        btnIn.setToolTipText("In hóa đơn (có thể in lại bất kỳ lúc nào)");
         btnIn.addActionListener(e -> inHoaDon());
-
-        btnXacNhanThanhToan.setFont(new Font("Arial", Font.BOLD, 12));
-        btnXacNhanThanhToan.setForeground(Color.WHITE);
-        btnXacNhanThanhToan.setBackground(daTT ? new Color(100, 116, 139) : new Color(16, 185, 129));
-        btnXacNhanThanhToan.setOpaque(true);
-        btnXacNhanThanhToan.setContentAreaFilled(true);
-        btnXacNhanThanhToan.setBorderPainted(false);
-        btnXacNhanThanhToan.setFocusPainted(false);
-        btnXacNhanThanhToan.setBorder(new EmptyBorder(10, 18, 10, 18));
-        btnXacNhanThanhToan.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnXacNhanThanhToan.setEnabled(!daTT);
-        btnXacNhanThanhToan.setText(daTT ? "✓ Đã thanh toán" : "Xác nhận đã thanh toán");
-        btnXacNhanThanhToan.addActionListener(e -> xuLyXacNhanThanhToan());
 
         JPanel phai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         phai.setOpaque(false);
-        phai.add(btnXacNhanThanhToan);
         phai.add(btnIn);
 
         tieuDe.add(trai, BorderLayout.CENTER);
@@ -744,13 +727,9 @@ public class ChiTietHoaDon_gui extends JPanel {
     }
 
     private void inHoaDon() {
-        if (!isHoaDonDaThanhToan()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Hóa đơn chưa được xác nhận thanh toán nên không được phép in!\nVui lòng nhấn \"Xác nhận đã thanh toán\" trước khi in.",
-                    "Chưa thanh toán",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        // Hóa đơn chưa thanh toán: chỉ hiện 1 hộp thoại duy nhất để xác nhận
+        // thanh toán; đồng ý thì lưu thanh toán rồi tiếp tục in.
+        if (!isHoaDonDaThanhToan() && !xuLyXacNhanThanhToan()) {
             return;
         }
 
@@ -785,7 +764,6 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         // Ẩn các nút khi in cho gọn
         btnIn.setVisible(false);
-        btnXacNhanThanhToan.setVisible(false);
 
         try {
             job.print();
@@ -798,7 +776,6 @@ public class ChiTietHoaDon_gui extends JPanel {
             );
         } finally {
             btnIn.setVisible(true);
-            btnXacNhanThanhToan.setVisible(true);
         }
     }
 
@@ -806,14 +783,15 @@ public class ChiTietHoaDon_gui extends JPanel {
         String[] ptOptions = { "Tiền mặt", "Chuyển khoản", "Thẻ tín dụng" };
         JComboBox<String> cboPT = new JComboBox<>(ptOptions);
         Object[] thongBao = {
-            "Mã hóa đơn: " + hd.getMaHD(),
-            "Tổng số tiền thanh toán: " + tien(thanhTien),
-            "Chọn phương thức thanh toán:", cboPT
+            "Hóa đơn " + hd.getMaHD() + " chưa thanh toán.",
+            "Tổng số tiền cần thu: " + tien(thanhTien),
+            "Xác nhận khách đã thanh toán và in hóa đơn?",
+            "Phương thức thanh toán:", cboPT
         };
         int opt = JOptionPane.showConfirmDialog(
             this,
             thongBao,
-            "Xác nhận đã thanh toán",
+            "Hóa đơn chưa thanh toán",
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.QUESTION_MESSAGE
         );
@@ -838,20 +816,8 @@ public class ChiTietHoaDon_gui extends JPanel {
             daThanhToan = thanhTien;
             conPhaiThu = 0;
 
-            btnIn.setEnabled(true);
-            btnIn.setToolTipText("In hóa đơn (có thể in lại bất kỳ lúc nào)");
-            btnXacNhanThanhToan.setEnabled(false);
-            btnXacNhanThanhToan.setText("✓ Đã thanh toán");
-            btnXacNhanThanhToan.setBackground(new Color(100, 116, 139));
-
             napTheThanhToanVaTongTien();
-
-            JOptionPane.showMessageDialog(
-                this,
-                "Đã xác nhận thanh toán thành công!\nBây giờ bạn có thể in hóa đơn.",
-                "Thành công",
-                JOptionPane.INFORMATION_MESSAGE
-            );
+            noiDung.validate();
             return true;
         } else {
             JOptionPane.showMessageDialog(

@@ -1267,7 +1267,7 @@ public class LapHoaDon_gui extends JPanel {
                     + "\nTiền giảm: " + dinhDangTien(tienGiam)
                     + "\nTiền thuế: " + dinhDangTien(tienThue)
                     + "\nTổng thanh toán: " + dinhDangTien(tongThanhToan)
-                    + "\n\nBạn có muốn mở xem và xác nhận thanh toán / in hóa đơn ngay không?",
+                    + "\n\nBạn có muốn mở xem / in hóa đơn ngay không?",
                     "Lập hóa đơn thành công",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.INFORMATION_MESSAGE
