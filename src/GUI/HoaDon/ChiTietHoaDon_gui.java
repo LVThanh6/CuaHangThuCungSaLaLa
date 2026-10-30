@@ -1109,11 +1109,22 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     private void inHoaDon() {
 
+
         // Hóa đơn chưa thanh toán: chỉ hiện 1 hộp thoại duy nhất để xác nhận
 
         // thanh toán; đồng ý thì lưu thanh toán rồi tiếp tục in.
 
         if (!isHoaDonDaThanhToan() && !xuLyXacNhanThanhToan()) {
+
+
+        // Hóa đơn chưa thanh toán: chỉ hiện một thông báo duy nhất và không cho in.
+        if (!isHoaDonDaThanhToan()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Hóa đơn " + hd.getMaHD() + " chưa được thanh toán nên không thể in.",
+                    "Chưa thanh toán",
+                    JOptionPane.WARNING_MESSAGE
+            );
 
             return;
 
@@ -1188,6 +1199,7 @@ public class ChiTietHoaDon_gui extends JPanel {
         }
 
     }
+
 
     private boolean xuLyXacNhanThanhToan() {
 
@@ -1289,6 +1301,7 @@ public class ChiTietHoaDon_gui extends JPanel {
         }
 
     }
+
 
     // ==================== HÀM TIỆN ÍCH ====================
 
