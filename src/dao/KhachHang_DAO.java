@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import connectDB.ConnectDB;
+import entity.HangThanhVien;
 import entity.KhachHang;
 
 public class KhachHang_DAO {
@@ -62,12 +63,14 @@ public class KhachHang_DAO {
             }
             String sql = "SELECT k.maKH, k.hoTen, k.sdt, k.email, k.diaChi, " +
                     "COUNT(DISTINCT tc.maTC) AS soThuCung, " +
-                    "ISNULL(SUM(tt.soTien), 0) AS tongChiTieu " +
+                    "ISNULL(SUM(tt.soTien), 0) AS tongChiTieu, " +
+                    "ISNULL(q.tenHang, N'Đồng') AS hangThanhVien " +
                     "FROM KhachHang k " +
+                    "LEFT JOIN QuanLyHangThanhVien q ON q.maKH = k.maKH " +
                     "LEFT JOIN ThuCung tc ON tc.maKH = k.maKH " +
                     "LEFT JOIN HoaDon h ON h.maKH = k.maKH " +
                     "LEFT JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
-                    "GROUP BY k.maKH, k.hoTen, k.sdt, k.email, k.diaChi " +
+                    "GROUP BY k.maKH, k.hoTen, k.sdt, k.email, k.diaChi, q.tenHang " +
                     "ORDER BY k.maKH";
 
             Statement statement = con.createStatement();
@@ -81,7 +84,10 @@ public class KhachHang_DAO {
                 String diaChi = rs.getString("diaChi");
                 int soThuCung = rs.getInt("soThuCung");
                 double tongChiTieu = rs.getDouble("tongChiTieu");
-                String hang = tinhHangThanhVien(tongChiTieu);
+                String hang = rs.getString("hangThanhVien");
+                if (hang == null || hang.trim().isEmpty()) {
+                    hang = tinhHangThanhVien(tongChiTieu);
+                }
 
                 KhachHang k = new KhachHang(maKH, hoTen, sdt, email, diaChi, soThuCung, hang, tongChiTieu);
                 dsDayDu.add(k);
@@ -93,7 +99,7 @@ public class KhachHang_DAO {
     }
 
     /**
-     * Thêm mới một khách hàng
+     * Thêm mới một khách hàng và tự động gán hạng Đồng trong QuanLyHangThanhVien
      */
     public boolean createKhachHang(KhachHang kh) {
         Connection con = ConnectDB.getCon();
@@ -110,6 +116,22 @@ public class KhachHang_DAO {
             stmt.setString(4, kh.getEmail());
             stmt.setString(5, kh.getDiaChi());
             n = stmt.executeUpdate();
+
+            if (n > 0) {
+                // Tự động gán hạng mặc định (Đồng) trong bảng QuanLyHangThanhVien
+                try {
+                    HangThanhVien_DAO htvDAO = new HangThanhVien_DAO();
+                    String maHang = htvDAO.phatSinhMaHangMoi();
+                    String qlDong = "Giảm 2% hóa đơn dịch vụ\nTích 1 điểm / 10.000 ₫\nNhắc lịch tiêm và tái khám\nƯu đãi sinh nhật thú cưng";
+                    HangThanhVien htv = new HangThanhVien(
+                            maHang, kh.getMaKH(), "Đồng", 0.0, 5000000.0, 2.0, 1.0,
+                            qlDong, 0.0, 0, new java.sql.Timestamp(System.currentTimeMillis()), "Đang áp dụng"
+                    );
+                    htvDAO.themHangThanhVien(htv);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -142,7 +164,7 @@ public class KhachHang_DAO {
     }
 
     /**
-     * Xóa một khách hàng theo mã
+     * Xóa một khách hàng theo mã kèm xóa trong bảng QuanLyHangThanhVien
      */
     public boolean deleteKhachHang(String maKH) {
         Connection con = ConnectDB.getCon();
@@ -152,6 +174,14 @@ public class KhachHang_DAO {
         PreparedStatement stmt = null;
         int n = 0;
         try {
+            // Xóa bản ghi trong QuanLyHangThanhVien trước để tránh vi phạm khóa ngoại
+            try {
+                PreparedStatement psHtv = con.prepareStatement("DELETE FROM QuanLyHangThanhVien WHERE maKH = ?");
+                psHtv.setString(1, maKH);
+                psHtv.executeUpdate();
+            } catch (Exception ignored) {
+            }
+
             stmt = con.prepareStatement("DELETE FROM KhachHang WHERE maKH = ?");
             stmt.setString(1, maKH);
             n = stmt.executeUpdate();
