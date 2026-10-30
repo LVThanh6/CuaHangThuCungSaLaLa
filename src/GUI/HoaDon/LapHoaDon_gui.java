@@ -1276,7 +1276,7 @@ public class LapHoaDon_gui extends JPanel {
             lamMoi();
 
             if (luaChon == JOptionPane.YES_OPTION) {
-                ChiTietHoaDon_gui.hienThi(this, maHD);
+                ChiTietHoaDon_gui.hienThi(this, maHD,null);
             }
 
         } else {
@@ -1333,10 +1333,8 @@ public class LapHoaDon_gui extends JPanel {
     // ==================== MÃ HÓA ĐƠN ====================
 
     private String phatSinhMaHD() {
-
-        return "HD" + LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern("yyMMddHHmmssSSS")
-        );
+        int soThuTu = hdDAO.laySoHoaDonLonNhat() + 1;
+        return String.format("HD%03d", soThuTu);
     }
 
     // ==================== ĐỊNH DẠNG TIỀN ====================

@@ -305,7 +305,7 @@ public class DSHoaDon_gui extends JPanel {
     }
 
     // TỐI ƯU HÓA: Chạy load dữ liệu ngầm để không bị đơ giật UI
-    private void taiDuLieu() {
+    public void taiDuLieu() {
         SwingWorker<ArrayList<HoaDon_entity>, Void> worker = new SwingWorker<>() {
             @Override
             protected ArrayList<HoaDon_entity> doInBackground() {
@@ -409,7 +409,7 @@ public class DSHoaDon_gui extends JPanel {
 
         int modelRow = table.convertRowIndexToModel(viewRow);
         String maHD = model.getValueAt(modelRow, 0).toString();
-        ChiTietHoaDon_gui.hienThi(this, maHD);
+        ChiTietHoaDon_gui.hienThi(this, maHD,this);
     }
 
     private void xoaHoaDon() {
