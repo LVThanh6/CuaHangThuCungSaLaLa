@@ -3,9 +3,24 @@ package GUI.ThuCung;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 import GUI.GiaoDienChinhGUI;
+import dao.KhachHang_DAO;
+import dao.ThuCung_DAO;
+import entity.KhachHang;
+import entity.ThuCung_entity;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -13,10 +28,11 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * Class HoSoThuCungGUI: Giao diện "Danh sách thú cưng" (Tab Thú cưng ➔ Hồ sơ thú cưng).
- * Chỉ dựng giao diện, chưa xử lý nghiệp vụ.
- * Các trường hiển thị dựa theo bảng ThuCung (kết hợp KhachHang để lấy SĐT chủ nuôi).
+ * Quản lý hồ sơ thú cưng, sử dụng DAO để đọc và ghi dữ liệu.
  */
 public class HoSoThuCungGUI extends JPanel {
+
+    private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
 
     // =========================================================================
     // KHAI BÁO TOÀN BỘ BIẾN
@@ -30,21 +46,13 @@ public class HoSoThuCungGUI extends JPanel {
     private static final int CHIEU_CAO_O_NHAP = 38;
     private static final int CHIEU_CAO_THANH_PHAN_TRANG = 56;
 
-    // --- Dữ liệu hiển thị mẫu (chỉ để dựng giao diện) ---
     private final String[] tieuDeCot = { "Mã thú cưng", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh",
             "Chủ nuôi", "SĐT chủ", "Đặc điểm nhận diện" };
-    private final Object[][] duLieuMau = {
-            { "TC001", "Mimi", "Mèo", "Đực", "12/05/2022", "Nguyễn Thị Hoa", "0904000001", "Lông trắng, mắt xanh" },
-            { "TC002", "Lucky", "Chó", "Cái", "20/08/2023", "Trần Văn Hùng", "0904000002", "Lông vàng, đuôi ngắn" },
-            { "TC003", "Bông", "Mèo", "Đực", "03/02/2023", "Lê Thị Kim", "0904000003", "Đốm đen ở tai trái" },
-            { "TC004", "Milo", "Thỏ", "Cái", "15/11/2023", "Phạm Văn Lâm", "0904000004", "Lông xám, khoang trắng ở ngực" },
-            { "TC005", "Kitty", "Hamster", "Đực", "22/06/2022", "Võ Thị My", "0904000005", "Lông trắng, mắt xanh" },
-            { "TC006", "Boss", "Chó", "Cái", "08/09/2023", "Đặng Văn Nghĩa", "0904000006", "Lông vàng, đuôi ngắn" },
-            { "TC007", "Susu", "Mèo", "Đực", "14/03/2024", "Bùi Thị Oanh", "0904000007", "Đốm đen ở tai trái" },
-            { "TC008", "Nâu", "Chó", "Cái", "10/01/2023", "Hồ Văn Phong", "0904000008", "Lông xám, khoang trắng ở ngực" }
-    };
     private final String[] dsLoaiLoc = { "Loài: Tất cả", "Chó", "Mèo", "Thỏ", "Hamster" };
     private final String[] dsSoDongTrang = { "8", "16", "32" };
+    private final ThuCung_DAO thuCungDAO = new ThuCung_DAO();
+    private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private ArrayList<ThuCung_entity> danhSachThuCung = new ArrayList<>();
 
     // --- Phần tiêu đề trang ---
     private JPanel panelTieuDe;
@@ -91,6 +99,7 @@ public class HoSoThuCungGUI extends JPanel {
     public HoSoThuCungGUI() {
         khoiTaoGiaoDien();
         caiDatSuKien();
+        loadDataToTable();
     }
 
     // =========================================================================
@@ -285,7 +294,7 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     private void khoiTaoBang() {
-        bangThuCung = new TableMau(tieuDeCot, duLieuMau);
+        bangThuCung = new TableMau(tieuDeCot, new Object[0][tieuDeCot.length]);
         bangThuCung.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         int[] doRongCot = { 100, 130, 90, 90, 110, 170, 120, 250 };
@@ -354,10 +363,111 @@ public class HoSoThuCungGUI extends JPanel {
     // CÀI ĐẶT SỰ KIỆN CHO CỤM NÚT THAO TÁC
     // =========================================================================
     private void caiDatSuKien() {
+        nutThemThuCung.addActionListener(e -> moFormThemThuCung());
         nutXemHoSo.addActionListener(e -> xemDongDaChon());
         nutChinhSua.addActionListener(e -> chinhSuaDongDaChon());
         nutXoa.addActionListener(e -> xoaDongDaChon());
+        nutXuatDanhSach.addActionListener(e -> xuatDanhSach());
+        txtTimKiem.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                locDuLieu();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                locDuLieu();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                locDuLieu();
+            }
+        });
+        cboLoai.addActionListener(e -> locDuLieu());
+        bangThuCung.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && bangThuCung.getSelectedRowCount() == 1) {
+                    xemDongDaChon();
+                }
+            }
+        });
         capNhatTrangThaiNutHanhDong();
+    }
+
+    /**
+     * Nạp danh sách thú cưng từ DAO và áp dụng bộ lọc đang chọn.
+     */
+    public void loadDataToTable() {
+        try {
+            ArrayList<ThuCung_entity> ketQua = thuCungDAO.getAllThuCung();
+            danhSachThuCung = ketQua != null ? ketQua : new ArrayList<>();
+            locDuLieu();
+            capNhatThongKe();
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, "Không thể tải danh sách thú cưng: " + e.getMessage(),
+                    "Lỗi tải dữ liệu", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void locDuLieu() {
+        if (bangThuCung == null) {
+            return;
+        }
+        String tuKhoa = txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
+        String loaiChon = String.valueOf(cboLoai.getSelectedItem());
+        DefaultTableModel model = (DefaultTableModel) bangThuCung.getModel();
+        model.setRowCount(0);
+
+        for (ThuCung_entity tc : danhSachThuCung) {
+            if (tc == null) {
+                continue;
+            }
+            String ma = giaTri(tc.getMaTC());
+            String ten = giaTri(tc.getTenTC());
+            String loai = giaTri(tc.getLoai());
+            String chuHo = giaTri(tc.getChuHo());
+            String sdt = tc.getMaKH() == null ? "" : giaTri(tc.getMaKH().getSdt());
+            String ngaySinh = tc.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(tc.getNgaySinh());
+
+            boolean khopTuKhoa = tuKhoa.isEmpty()
+                    || ma.toLowerCase(Locale.ROOT).contains(tuKhoa)
+                    || loai.toLowerCase(Locale.ROOT).contains(tuKhoa)
+                    || ten.toLowerCase(Locale.ROOT).contains(tuKhoa)
+                    || chuHo.toLowerCase(Locale.ROOT).contains(tuKhoa)
+                    || sdt.toLowerCase(Locale.ROOT).contains(tuKhoa);
+            boolean khopLoai = loaiChon == null || loaiChon.startsWith("Loài:")
+                    || loai.equalsIgnoreCase(loaiChon);
+            if (khopTuKhoa && khopLoai) {
+                model.addRow(new Object[] { ma, ten, loai, giaTri(tc.getGioiTinh()), ngaySinh,
+                        chuHo, sdt, giaTri(tc.getDacDiemNhanDien()) });
+            }
+        }
+        bangThuCung.clearSelection();
+        capNhatTrangThaiNutHanhDong();
+        int soDong = model.getRowCount();
+        nhanThongTinTrang.setText("Hiển thị " + soDong + " trong " + soDong + " thú cưng");
+    }
+
+    private void capNhatThongKe() {
+        int cho = 0;
+        int meo = 0;
+        for (ThuCung_entity tc : danhSachThuCung) {
+            if (tc != null && "Chó".equalsIgnoreCase(tc.getLoai())) {
+                cho++;
+            } else if (tc != null && "Mèo".equalsIgnoreCase(tc.getLoai())) {
+                meo++;
+            }
+        }
+        nhanSoTongThuCung.setText(String.valueOf(danhSachThuCung.size()));
+        nhanSoCho.setText(String.valueOf(cho));
+        nhanSoMeo.setText(String.valueOf(meo));
+        nhanSoLoaiKhac.setText(String.valueOf(danhSachThuCung.size() - cho - meo));
+    }
+
+    private String giaTri(String value) {
+        return value == null ? "" : value;
     }
 
     private void capNhatTrangThaiNutHanhDong() {
@@ -376,47 +486,266 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     private void xemDongDaChon() {
-        int dong = layDongDaChon();
-        if (dong < 0) {
+        String maThuCung = layMaThuCungDaChon();
+        if (maThuCung == null) {
             return;
         }
-
-        StringBuilder chiTiet = new StringBuilder();
-        for (int cot = 0; cot < bangThuCung.getColumnCount(); cot++) {
-            if (cot > 0) {
-                chiTiet.append('\n');
+        try {
+            ThuCung_entity tc = thuCungDAO.getThuCungTheoMa(maThuCung);
+            if (tc == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy thú cưng " + maThuCung + ".",
+                        "Không tìm thấy dữ liệu", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-            chiTiet.append(bangThuCung.getColumnName(cot)).append(": ")
-                    .append(String.valueOf(bangThuCung.getModel().getValueAt(dong, cot)));
+            hienThiFormThuCung(tc, true, false);
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, "Không thể tải chi tiết thú cưng: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-        JOptionPane.showMessageDialog(this, chiTiet.toString(), "Hồ sơ chi tiết thú cưng",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void chinhSuaDongDaChon() {
-        int dong = layDongDaChon();
-        if (dong < 0) {
+        String maThuCung = layMaThuCungDaChon();
+        if (maThuCung == null) {
             return;
         }
-        String maThuCung = String.valueOf(bangThuCung.getModel().getValueAt(dong, 0));
-        JOptionPane.showMessageDialog(this, "Mở form chỉnh sửa thông tin cho thú cưng: " + maThuCung,
-                "Chỉnh sửa", JOptionPane.INFORMATION_MESSAGE);
+        try {
+            ThuCung_entity tc = thuCungDAO.getThuCungTheoMa(maThuCung);
+            if (tc == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy thú cưng " + maThuCung + ".",
+                        "Không tìm thấy dữ liệu", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            hienThiFormThuCung(tc, false, true);
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, "Không thể tải thông tin thú cưng: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void xoaDongDaChon() {
-        int dong = layDongDaChon();
-        if (dong < 0) {
+        String maThuCung = layMaThuCungDaChon();
+        if (maThuCung == null) {
             return;
         }
+        int dong = layDongDaChon();
         String tenThuCung = String.valueOf(bangThuCung.getModel().getValueAt(dong, 1));
         int luaChon = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc chắn muốn xóa hồ sơ thú cưng \"" + tenThuCung + "\" không?",
+                "Bạn có chắc chắn muốn xóa hồ sơ thú cưng \"" + tenThuCung + "\" (" + maThuCung + ") không?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (luaChon == JOptionPane.YES_OPTION) {
-            ((DefaultTableModel) bangThuCung.getModel()).removeRow(dong);
-            bangThuCung.clearSelection();
-            capNhatTrangThaiNutHanhDong();
+            try {
+                if (thuCungDAO.deleteThuCung(maThuCung)) {
+                    JOptionPane.showMessageDialog(this, "Đã xóa thú cưng thành công.",
+                            "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    loadDataToTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không xóa được thú cưng. Vui lòng kiểm tra dữ liệu liên quan.",
+                            "Xóa thất bại", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (RuntimeException e) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi xóa thú cưng: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
+    }
+
+    private String layMaThuCungDaChon() {
+        int dong = layDongDaChon();
+        return dong < 0 ? null : String.valueOf(bangThuCung.getModel().getValueAt(dong, 0));
+    }
+
+    private void moFormThemThuCung() {
+        hienThiFormThuCung(null, false, true);
+    }
+
+    private void hienThiFormThuCung(ThuCung_entity thuCung, boolean chiDoc, boolean luuDuoc) {
+        try {
+            ArrayList<KhachHang> danhSachKhachHang = khachHangDAO.getAlltbKhachHang();
+            if (danhSachKhachHang == null || danhSachKhachHang.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Cần có khách hàng trước khi tạo hồ sơ thú cưng.",
+                        "Chưa có khách hàng", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            JTextField txtMa = new JTextField(thuCung == null ? phatSinhMaThuCung() : giaTri(thuCung.getMaTC()));
+            txtMa.setEditable(false);
+            JTextField txtTen = new JTextField(thuCung == null ? "" : giaTri(thuCung.getTenTC()));
+            JComboBox<String> cboLoaiNhap = new JComboBox<>(new String[] { "Chó", "Mèo", "Thỏ", "Hamster", "Khác" });
+            cboLoaiNhap.setEditable(true);
+            if (thuCung != null) {
+                cboLoaiNhap.setSelectedItem(giaTri(thuCung.getLoai()));
+            }
+            JComboBox<String> cboGioiTinh = new JComboBox<>(new String[] { "", "Đực", "Cái" });
+            if (thuCung != null) {
+                cboGioiTinh.setSelectedItem(giaTri(thuCung.getGioiTinh()));
+            }
+            JTextField txtNgaySinh = new JTextField(thuCung == null || thuCung.getNgaySinh() == null
+                    ? "" : DINH_DANG_NGAY.format(thuCung.getNgaySinh()));
+            JComboBox<KhachHang> cboKhachHang = new JComboBox<>(danhSachKhachHang.toArray(new KhachHang[0]));
+            cboKhachHang.setRenderer(new DefaultListCellRenderer() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                        boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (value instanceof KhachHang) {
+                        KhachHang kh = (KhachHang) value;
+                        setText(giaTri(kh.getHoTen()) + " (" + giaTri(kh.getMaKH()) + ")");
+                    }
+                    return this;
+                }
+            });
+            if (thuCung != null && thuCung.getMaKH() != null) {
+                for (int i = 0; i < cboKhachHang.getItemCount(); i++) {
+                    if (thuCung.getMaKH().getMaKH().equals(cboKhachHang.getItemAt(i).getMaKH())) {
+                        cboKhachHang.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+            JTextField txtChuHo = new JTextField(thuCung == null ? "" : giaTri(thuCung.getChuHo()));
+            JTextField txtDacDiem = new JTextField(thuCung == null ? "" : giaTri(thuCung.getDacDiemNhanDien()));
+
+            cboKhachHang.addActionListener(e -> {
+                KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
+                if (kh != null && (thuCung == null || txtChuHo.getText().trim().isEmpty())) {
+                    txtChuHo.setText(giaTri(kh.getHoTen()));
+                }
+            });
+            if (thuCung == null) {
+                KhachHang khMacDinh = (KhachHang) cboKhachHang.getSelectedItem();
+                if (khMacDinh != null) {
+                    txtChuHo.setText(giaTri(khMacDinh.getHoTen()));
+                }
+            }
+
+            JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+            form.add(new JLabel("Mã thú cưng:")); form.add(txtMa);
+            form.add(new JLabel("Tên thú cưng:")); form.add(txtTen);
+            form.add(new JLabel("Loài:")); form.add(cboLoaiNhap);
+            form.add(new JLabel("Giới tính:")); form.add(cboGioiTinh);
+            form.add(new JLabel("Ngày sinh (dd/MM/yyyy):")); form.add(txtNgaySinh);
+            form.add(new JLabel("Khách hàng:")); form.add(cboKhachHang);
+            form.add(new JLabel("Chủ nuôi:")); form.add(txtChuHo);
+            form.add(new JLabel("Đặc điểm nhận diện:")); form.add(txtDacDiem);
+
+            for (Component component : new Component[] { txtTen, cboLoaiNhap, cboGioiTinh,
+                    txtNgaySinh, cboKhachHang, txtChuHo, txtDacDiem }) {
+                component.setEnabled(!chiDoc);
+            }
+            String tieuDe = chiDoc ? "Chi tiết hồ sơ thú cưng"
+                    : thuCung == null ? "Thêm thú cưng" : "Cập nhật thú cưng";
+            int luaChon = JOptionPane.showConfirmDialog(this, form, tieuDe,
+                    luuDuoc ? JOptionPane.OK_CANCEL_OPTION : JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
+            if (chiDoc || luaChon != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            String ten = txtTen.getText().trim();
+            String loai = String.valueOf(cboLoaiNhap.getSelectedItem()).trim();
+            String chuHo = txtChuHo.getText().trim();
+            KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
+            if (ten.isEmpty() || loai.isEmpty() || chuHo.isEmpty() || kh == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên, loài, chủ nuôi và chọn khách hàng.",
+                        "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            LocalDate ngaySinh = null;
+            if (!txtNgaySinh.getText().trim().isEmpty()) {
+                try {
+                    ngaySinh = LocalDate.parse(txtNgaySinh.getText().trim(), DINH_DANG_NGAY);
+                } catch (DateTimeParseException e) {
+                    JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ. Hãy nhập theo dd/MM/yyyy.",
+                            "Sai định dạng ngày", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+
+            ThuCung_entity duLieu = new ThuCung_entity(txtMa.getText(), kh, ten, loai,
+                    String.valueOf(cboGioiTinh.getSelectedItem()), ngaySinh, chuHo, txtDacDiem.getText().trim());
+            boolean thanhCong = thuCung == null
+                    ? thuCungDAO.createThuCung(duLieu)
+                    : thuCungDAO.updateThuCung(duLieu);
+            if (thanhCong) {
+                JOptionPane.showMessageDialog(this,
+                        thuCung == null ? "Đã thêm thú cưng thành công." : "Đã cập nhật thú cưng thành công.",
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                loadDataToTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thể lưu thông tin thú cưng.",
+                        "Thao tác thất bại", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, "Lỗi xử lý hồ sơ thú cưng: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String phatSinhMaThuCung() {
+        int maLonNhat = 0;
+        Pattern pattern = Pattern.compile("^TC(\\d+)$", Pattern.CASE_INSENSITIVE);
+        for (ThuCung_entity tc : danhSachThuCung) {
+            Matcher matcher = pattern.matcher(giaTri(tc.getMaTC()));
+            if (matcher.matches()) {
+                try {
+                    maLonNhat = Math.max(maLonNhat, Integer.parseInt(matcher.group(1)));
+                } catch (NumberFormatException e) {
+                    throw new IllegalStateException("Mã thú cưng không hợp lệ: " + tc.getMaTC(), e);
+                }
+            }
+        }
+        return String.format(Locale.ROOT, "TC%03d", maLonNhat + 1);
+    }
+
+    private void xuatDanhSach() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Xuất danh sách thú cưng");
+        chooser.setSelectedFile(new java.io.File("danh-sach-thu-cung.csv"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        java.io.File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase(Locale.ROOT).endsWith(".csv")) {
+            file = new java.io.File(file.getParentFile(), file.getName() + ".csv");
+        }
+        if (file.exists() && JOptionPane.showConfirmDialog(this,
+                "Tệp đã tồn tại. Bạn có muốn ghi đè không?", "Xác nhận ghi đè",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+            writer.write('\ufeff');
+            for (int cot = 0; cot < bangThuCung.getColumnCount(); cot++) {
+                if (cot > 0) {
+                    writer.write(',');
+                }
+                writer.write(baoVeCsv(bangThuCung.getColumnName(cot)));
+            }
+            writer.newLine();
+            DefaultTableModel model = (DefaultTableModel) bangThuCung.getModel();
+            for (int dong = 0; dong < model.getRowCount(); dong++) {
+                for (int cot = 0; cot < model.getColumnCount(); cot++) {
+                    if (cot > 0) {
+                        writer.write(',');
+                    }
+                    writer.write(baoVeCsv(String.valueOf(model.getValueAt(dong, cot))));
+                }
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this, "Đã xuất danh sách ra:\n" + file.getAbsolutePath(),
+                    "Xuất thành công", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Không thể xuất danh sách: " + e.getMessage(),
+                    "Lỗi xuất tệp", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String baoVeCsv(String value) {
+        return "\"" + (value == null ? "" : value.replace("\"", "\"\"")) + "\"";
     }
 
     // =========================================================================
