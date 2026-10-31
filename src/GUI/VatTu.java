@@ -50,6 +50,7 @@ public class VatTu extends JPanel {
     private final JPanel cardPanel = new JPanel(cards);
     private final java.util.List<JButton> navButtons = new java.util.ArrayList<>();
     private int tong, tonDu, sapHet, hetTon;
+    private static final String CARD_PHIEU_XUAT = "PHIEU_XUAT";
 
     private static final DecimalFormat MONEY;
     static {
@@ -97,6 +98,13 @@ public class VatTu extends JPanel {
         loadSampleData();
         setThongKe(142, 118, 19, 5);
         showCard(CARD_TON_KHO, 0);
+        
+     // màn hình 3: Phiếu xuất kho
+        PhieuXuatKho phieuXuat = new PhieuXuatKho(
+                this::getDanhSachVatTu,
+                this::tangTon,      // phiếu xuất gọi tangTon(ma, -soLuong) để trừ tồn
+                this::getTonKho);
+        cardPanel.add(phieuXuat, CARD_PHIEU_XUAT);
     }
     // =====================================================================
     // Thanh điều hướng con: Vật tư | Nhà cung cấp | Phiếu nhập kho | Phiếu xuất kho
@@ -118,6 +126,7 @@ public class VatTu extends JPanel {
                 switch (idx) {
                     case 0: showCard(CARD_TON_KHO, 0); break;
                     case 2: showCard(CARD_PHIEU_NHAP, 2); break;
+                    case 3: showCard(CARD_PHIEU_XUAT, 3); break;
                     default: System.out.println("TODO: chuyển tới " + name);
                 }
             });
@@ -128,7 +137,13 @@ public class VatTu extends JPanel {
         return p;
     }
 
-    private void showCard(String card, int activeIdx) {
+    public int getTonKho(String ma) {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (ma.equals(model.getValueAt(i, 0))) return ((Number) model.getValueAt(i, 3)).intValue();
+        }
+        return 0;
+    }
+	private void showCard(String card, int activeIdx) {
         cards.show(cardPanel, card);
         for (int i = 0; i < navButtons.size(); i++) {
             JButton b = navButtons.get(i);
