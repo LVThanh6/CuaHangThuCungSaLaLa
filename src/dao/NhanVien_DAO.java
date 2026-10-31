@@ -207,17 +207,45 @@ public class NhanVien_DAO {
     }
 
     /**
-     * Lấy mức lương cơ bản theo chức vụ.
+     * Tổng số giờ làm việc của nhân viên trong khoảng ngày.
      */
-    public double getLuongTheoChucVu(String chucVu) throws SQLException {
-        if ("Quản lý".equals(chucVu)) return 0;
-
-        String sql = "SELECT ISNULL(luongCoBan, 0) FROM LuongChucVu WHERE chucVu = ?";
+    public double getSoGioLamViecCuaNhanVien(String maNhanVien, java.time.LocalDate tu, java.time.LocalDate den)
+            throws SQLException {
+        if (maNhanVien == null || tu == null || den == null) return 0;
+        String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
+                + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
+                + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
+                + "AND (trangThai = N'Hoàn thành' OR trangThai = N'Đã làm')";
         Connection con = ConnectDB.getCon();
         if (con == null) return 0;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, chucVu);
+            ps.setString(1, maNhanVien);
+            ps.setDate(2, Date.valueOf(tu));
+            ps.setDate(3, Date.valueOf(den.plusDays(1)));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        }
+    }
+
+    /**
+     * Doanh thu dịch vụ do một nhân viên thực hiện trong khoảng ngày (dùng để tính hoa hồng).
+     */
+    public double getDoanhThuDichVuCuaNhanVien(String maNhanVien, java.time.LocalDate tu, java.time.LocalDate den)
+            throws SQLException {
+        if (maNhanVien == null || tu == null || den == null) return 0;
+        String sql = "SELECT ISNULL(SUM(c.soLuong * c.donGia), 0) "
+                + "FROM ChiTietHoaDon c JOIN HoaDon h ON h.maHD = c.maHD "
+                + "WHERE c.maDV IS NOT NULL AND c.maNhanVien = ? "
+                + "AND h.ngayLap >= ? AND h.ngayLap < ?";
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maNhanVien);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(tu.atStartOfDay()));
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(den.plusDays(1).atStartOfDay()));
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getDouble(1) : 0;
             }

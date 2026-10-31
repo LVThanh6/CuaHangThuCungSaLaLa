@@ -121,6 +121,9 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnThemKhachHang = new JButton("Thêm khách hàng");
         btnThemKhachHang.setFont(RangBuocGiaoDien.fontDam(13));
         btnThemKhachHang.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnThemKhachHang.setForeground(Color.WHITE);
+        btnThemKhachHang.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        btnThemKhachHang.setRolloverEnabled(false);
         btnThemKhachHang.setFocusPainted(false);
         btnThemKhachHang.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btnThemKhachHang.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -216,7 +219,7 @@ public class DanhSachKhachHangGUI extends JPanel {
     private void khoiTaoBangDuLieu() {
         danhSachCot = new String[] {
                 "Mã khách hàng", "Họ tên", "Số điện thoại", "Email",
-                "Địa chỉ", "Số thú cưng", "Hạng thành viên", "Tổng chi tiêu"
+                "Địa chỉ", "Hạng thành viên"
         };
 
         duLieuKhachHang = new Object[][] {};
@@ -228,6 +231,7 @@ public class DanhSachKhachHangGUI extends JPanel {
                 "Tìm theo tên, mã khách hàng, số điện thoại...",
                 danhSachBoLoc);
 
+        panelQuanLyTable.anPhanTrang();
         panelQuanLyTable.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     }
 
@@ -245,7 +249,7 @@ public class DanhSachKhachHangGUI extends JPanel {
                     if (luaChon == null || luaChon.equals("Hạng thành viên: Tất cả")) {
                         panelQuanLyTable.getRowSorter().setRowFilter(null);
                     } else {
-                        panelQuanLyTable.getRowSorter().setRowFilter(RowFilter.regexFilter(luaChon, 6));
+                        panelQuanLyTable.getRowSorter().setRowFilter(RowFilter.regexFilter(luaChon, 5));
                     }
                 });
 
@@ -258,9 +262,9 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnXoaKhachHang.addActionListener(e -> thucHienTrenKhachHang(table, 2));
         capNhatTrangThaiNut(table);
 
-        // Thiết lập renderer cho cột Hạng thành viên và Tổng chi tiêu
+        // Thiết lập renderer cho cột Hạng thành viên
         try {
-            table.getColumnModel().getColumn(6).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            table.getColumnModel().getColumn(5).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
                 @Override
                 public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
                         int r, int c) {
@@ -277,22 +281,6 @@ public class DanhSachKhachHangGUI extends JPanel {
                         lbl.setForeground(new Color(180, 83, 9));
                     }
                     lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
-                    if (!isSel) {
-                        lbl.setBackground(r % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
-                    }
-                    return lbl;
-                }
-            });
-
-            table.getColumnModel().getColumn(7).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
-                        int r, int c) {
-                    JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
-                    lbl.setFont(RangBuocGiaoDien.fontDam(13));
-                    lbl.setForeground(new Color(14, 116, 101));
-                    lbl.setHorizontalAlignment(SwingConstants.RIGHT);
-                    lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 16));
                     if (!isSel) {
                         lbl.setBackground(r % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
                     }
@@ -334,7 +322,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         try {
             ArrayList<KhachHang> ds = khachHangDAO.getAllKhachHangDayDu();
             if (ds != null && !ds.isEmpty()) {
-                duLieuKhachHang = new Object[ds.size()][8];
+                duLieuKhachHang = new Object[ds.size()][6];
                 for (int i = 0; i < ds.size(); i++) {
                     KhachHang kh = ds.get(i);
                     duLieuKhachHang[i][0] = kh.getMaKH();
@@ -342,9 +330,7 @@ public class DanhSachKhachHangGUI extends JPanel {
                     duLieuKhachHang[i][2] = kh.getSdt();
                     duLieuKhachHang[i][3] = kh.getEmail();
                     duLieuKhachHang[i][4] = kh.getDiaChi() != null ? kh.getDiaChi() : "";
-                    duLieuKhachHang[i][5] = String.valueOf(kh.getSoThuCung());
-                    duLieuKhachHang[i][6] = (kh.getHangThanhVien() != null ? kh.getHangThanhVien() : "Đồng");
-                    duLieuKhachHang[i][7] = String.format("%,.0f ₫", kh.getTongChiTieu()).replace(',', '.');
+                    duLieuKhachHang[i][5] = (kh.getHangThanhVien() != null ? kh.getHangThanhVien() : "Đồng");
                 }
                 if (panelQuanLyTable != null) {
                     panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
@@ -414,6 +400,8 @@ public class DanhSachKhachHangGUI extends JPanel {
         String maGoiY = khachHangDAO.phatSinhMaKHMoi();
 
         JTextField txtMaKH = taoTextField(maGoiY);
+        txtMaKH.setEditable(false);
+        txtMaKH.setBackground(new Color(241, 245, 249));
         JTextField txtHoTen = taoTextField("");
         JTextField txtSDT = taoTextField("");
         JTextField txtEmail = taoTextField("");
@@ -440,6 +428,8 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnHuy.setFont(RangBuocGiaoDien.fontVua(13));
         btnHuy.setBackground(Color.WHITE);
         btnHuy.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        btnHuy.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        btnHuy.setRolloverEnabled(false);
         btnHuy.setBorder(BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
         btnHuy.setPreferredSize(new Dimension(100, 38));
         btnHuy.addActionListener(e -> dialog.dispose());
@@ -447,6 +437,9 @@ public class DanhSachKhachHangGUI extends JPanel {
         JButton btnLuu = new JButton("Lưu khách hàng");
         btnLuu.setFont(RangBuocGiaoDien.fontDam(13));
         btnLuu.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnLuu.setForeground(Color.WHITE);
+        btnLuu.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        btnLuu.setRolloverEnabled(false);
         btnLuu.setFocusPainted(false);
         btnLuu.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 16));
         btnLuu.setPreferredSize(new Dimension(140, 38));

@@ -385,4 +385,29 @@ public class HoaDon_Dao {
             return false;
         }
     }
+    //Lấy số hóa đơn lớn nhất
+    public int laySoHoaDonLonNhat() {
+        String sql = """
+            SELECT ISNULL(
+                MAX(TRY_CAST(SUBSTRING(maHD, 3, LEN(maHD)) AS INT)),
+                0
+            )
+            FROM HoaDon
+            WHERE maHD LIKE 'HD%'
+        """;
+
+        try (Connection con = ConnectDB.getCon();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
 }

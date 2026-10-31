@@ -85,10 +85,10 @@ public class ChiTietHoaDon_DAO {
     }
 
     // 2. Thêm chi tiết hóa đơn
-    public boolean createChiTietHoaDon(
-            ChiTietHoaDon_entity ct) {
+    public boolean createChiTietHoaDon(ChiTietHoaDon_entity ct) {
 
         if (!duLieuHopLe(ct)) {
+            System.out.println("Lỗi: Dữ liệu chi tiết hóa đơn không hợp lệ!");
             return false;
         }
 
@@ -106,10 +106,11 @@ public class ChiTietHoaDon_DAO {
             }
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
+
                 ps.setString(1, ct.getMaCTHD());
                 ps.setString(2, ct.getMaHD().getMaHD());
 
-                // Mỗi dòng chỉ có dịch vụ hoặc vật tư
+                // Dịch vụ hoặc vật tư
                 if (ct.getMaDV() != null) {
                     ps.setString(3, ct.getMaDV().getMaDV());
                     ps.setNull(4, java.sql.Types.VARCHAR);
@@ -118,20 +119,28 @@ public class ChiTietHoaDon_DAO {
                     ps.setString(4, ct.getMaVT().getMaVT());
                 }
 
+                // Nhân viên hoặc bác sĩ thực hiện
                 if (ct.getNhanVienThucHien() != null) {
-                    ps.setString(5, ct.getNhanVienThucHien().getMaNhanVien());
-                    ps.setNull(6, java.sql.Types.VARCHAR);
-                } else if (ct.getBacSiThucHien() != null) {
-                    ps.setNull(5, java.sql.Types.VARCHAR);
-                    ps.setString(6, ct.getBacSiThucHien().getMaBacSi());
+                    ps.setString(5,
+                        ct.getNhanVienThucHien().getMaNhanVien());
                 } else {
                     ps.setNull(5, java.sql.Types.VARCHAR);
+                }
+
+                if (ct.getBacSiThucHien() != null) {
+                    ps.setString(6,
+                        ct.getBacSiThucHien().getMaBacSi());
+                } else {
                     ps.setNull(6, java.sql.Types.VARCHAR);
                 }
+
                 ps.setInt(7, ct.getSoLuong());
                 ps.setDouble(8, ct.getDonGia());
 
-                return ps.executeUpdate() > 0;
+                int ketQua = ps.executeUpdate();
+
+
+                return ketQua > 0;
             }
 
         } catch (SQLException e) {

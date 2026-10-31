@@ -20,6 +20,7 @@ public class QuanLyTable extends JPanel {
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel lblThongTinTrang;
+    private JPanel panelPhanTrang;
     private java.util.List<JComboBox<String>> listComboBoxBoLoc = new java.util.ArrayList<>();
 
     public QuanLyTable(String[] tenCot, Object[][] duLieu, String placeholderTimKiem, String[] danhSachBoLoc) {
@@ -124,7 +125,7 @@ public class QuanLyTable extends JPanel {
         panelCardBang.add(scrollPane, BorderLayout.CENTER);
 
         // 3. THANH PHÂN TRANG PHÍA DƯỚI
-        JPanel panelPhanTrang = new JPanel(new BorderLayout());
+        panelPhanTrang = new JPanel(new BorderLayout());
         panelPhanTrang.setOpaque(false);
         panelPhanTrang.setBorder(new EmptyBorder(12, 16, 12, 16));
 
@@ -259,6 +260,28 @@ public class QuanLyTable extends JPanel {
                 lblThongTinTrang.setText("Hiển thị 1–" + total + " trong " + total + " bản ghi");
             }
         }
+    }
+
+    public void setHienThiPhanTrang(boolean hienThi) {
+        if (panelPhanTrang != null) {
+            panelPhanTrang.setVisible(hienThi);
+        }
+    }
+
+    public void anPhanTrang() {
+        if (panelPhanTrang != null) {
+            panelPhanTrang.setVisible(false);
+            Container parent = panelPhanTrang.getParent();
+            if (parent != null) {
+                parent.remove(panelPhanTrang);
+                parent.revalidate();
+                parent.repaint();
+            }
+        }
+    }
+
+    public JPanel getPanelPhanTrang() {
+        return panelPhanTrang;
     }
 
     // --- TÍCH HỢP CLASS TableMau ---

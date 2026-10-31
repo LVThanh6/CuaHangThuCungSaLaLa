@@ -8,7 +8,9 @@ import javax.swing.*;
 import GUI.BacSi.BacSiGUI;
 import GUI.Chung.HeaderGUI;
 import GUI.Chung.RangBuocGiaoDien;
-import GUI.DichVu.DichVu;
+import GUI.DichVu.DichVuGUI;
+import GUI.DichVu.KhuyenMaiGUI;
+import GUI.DichVu.ThueGUI;
 import GUI.HoaDon.DSHoaDon_gui;
 import GUI.HoaDon.LapHoaDon_gui;
 import GUI.KhachHang.DanhSachKhachHangGUI;
@@ -252,8 +254,11 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Bảng giá dịch vụ":
                 hienThiBangGiaDichVu();
                 break;
-            case "Gói chăm sóc":
-                hienThiGoiChamSoc();
+            case "Khuyến mãi":
+                hienThiKhuyenMai();
+                break;
+            case "Thuế":
+                hienThiThue();
                 break;
         }
     }
@@ -310,8 +315,9 @@ public class GiaoDienChinhGUI extends JPanel {
     }
     public void hienThiXemLich() { setNoiDung(new XemLichGUI()); }
     public void hienThiDatLichMoi() { setNoiDung(new DatLichMoiGUI()); }
-    public void hienThiBangGiaDichVu() { setNoiDung(new DichVu()); }
-    public void hienThiGoiChamSoc() { /* Bổ sung sau */ }
+    public void hienThiBangGiaDichVu() { setNoiDung(new DichVuGUI()); }
+    public void hienThiKhuyenMai() { setNoiDung(new KhuyenMaiGUI()); }
+    public void hienThiThue() { setNoiDung(new ThueGUI()); }
 
 
     // ==========================================
