@@ -215,7 +215,7 @@ public class NhanVien_DAO {
         String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
                 + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
                 + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
-                + "AND trangThai IN (N'Đang làm', N'Hoàn thành')";
+                + "AND (trangThai = N'Hoàn thành' OR trangThai = N'Đã làm')";
         Connection con = ConnectDB.getCon();
         if (con == null) return 0;
 

@@ -289,7 +289,7 @@ public class ThongKe_DAO {
      */
     private ChiSoThongKe tongLuongNhanSu(Connection con, LocalDate tu, LocalDate den) throws SQLException {
         ChiSoThongKe chiSo = new ChiSoThongKe(MA_TONG_LUONG, "Tiền lương nhân sự dự tính",
-                "VNĐ", "đ", "Lương theo chức vụ và lương bác sĩ trong kỳ, cộng hoa hồng 5% dịch vụ cho nhân viên dịch vụ và 10% cho bác sĩ.");
+                "VNĐ", "đ", "Tổng lương toàn kỳ = (Số giờ làm việc × Lương giờ cho NV bán hàng & dịch vụ) + (Lương tháng cố định phân bổ theo ngày cho NV quản lý kho & quản lý) + (Lương tháng phân bổ cho bác sĩ) + 5% hoa hồng dịch vụ nhân viên + 10% hoa hồng bác sĩ.");
         chiSo.chuoi.add("Tiền lương");
 
         double tong = 0;
@@ -301,12 +301,13 @@ public class ThongKe_DAO {
     }
 
     private ChiSoThongKe luongTheoNhanVien(Connection con, LocalDate tu, LocalDate den) throws SQLException {
-        ChiSoThongKe chiSo = new ChiSoThongKe(MA_LUONG_NHAN_VIEN, "Lương từng nhân viên trong kỳ",
-                "VNĐ", "đ", "Lương cơ bản của nhân viên theo chức vụ, cộng hoa hồng dịch vụ và lương bác sĩ tương ứng.");
+        ChiSoThongKe chiSo = new ChiSoThongKe(MA_LUONG_NHAN_VIEN, "Chi tiết lương từng nhân sự",
+                "VNĐ", "đ", "Bảng kê lương cơ bản (lương giờ theo ca hoàn thành / lương tháng phân bổ) và hoa hồng dịch vụ (5% NV dịch vụ, 10% bác sĩ) của từng nhân sự. Các ca làm việc không hoàn thành bị loại bỏ và không tính lương.");
         chiSo.chuoi.add("Tiền lương");
 
         for (NguoiLaoDong nld : layDanhSachNguoiLaoDong(con, tu, den)) {
-            chiSo.them(nld.ten + " (" + nld.chucVu + ")", nld.tongLuong());
+            String nhan = nld.ten + " (" + nld.chucVu + ") · " + nld.moTaChiTiet;
+            chiSo.them(nhan, nld.tongLuong());
         }
         chuaCoDuLieu(chiSo, "Chưa có nhân sự để tính lương");
         return chiSo;
@@ -317,6 +318,7 @@ public class ThongKe_DAO {
         private String chucVu;
         private double luongCoBan;
         private double hoaHong;
+        private String moTaChiTiet;
 
         private double tongLuong() {
             return luongCoBan + hoaHong;
@@ -346,8 +348,11 @@ public class ThongKe_DAO {
                     if ("Nhân viên dịch vụ".equals(chucVu)) {
                         nld.hoaHong = doanhThuDichVuNhanVien(con, ma, tu, den) * 0.05;
                     }
+                    String phanHoaHong = nld.hoaHong > 0 ? " + HH " + dinhDangTien(nld.hoaHong) : "";
+                    nld.moTaChiTiet = soGio + "h làm (lương " + dinhDangTien(nld.luongCoBan) + phanHoaHong + ", trừ ca không hoàn thành)";
                 } else {
                     nld.luongCoBan = phanBoTheoKy(luongCoBanGoc, tu, den);
+                    nld.moTaChiTiet = "Lương tháng phân bổ (" + dinhDangTien(nld.luongCoBan) + ")";
                 }
                 ds.add(nld);
             }
@@ -362,10 +367,18 @@ public class ThongKe_DAO {
                 nld.chucVu = "Bác sĩ";
                 nld.luongCoBan = phanBoTheoKy(rs.getDouble("luongThang"), tu, den);
                 nld.hoaHong = doanhThuDichVuBacSi(con, rs.getString("maBacSi"), tu, den) * 0.10;
+                String phanHoaHong = nld.hoaHong > 0 ? " + HH 10% " + dinhDangTien(nld.hoaHong) : "";
+                nld.moTaChiTiet = "Lương tháng " + dinhDangTien(nld.luongCoBan) + phanHoaHong;
                 ds.add(nld);
             }
         }
         return ds;
+    }
+
+    private static String dinhDangTien(double so) {
+        java.text.NumberFormat nf = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        nf.setMaximumFractionDigits(0);
+        return nf.format(so) + "đ";
     }
 
     private double laySoGioLamViec(Connection con, String maNhanVien, LocalDate tu, LocalDate den)
@@ -373,7 +386,7 @@ public class ThongKe_DAO {
         String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
                 + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
                 + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
-                + "AND trangThai IN (N'Đang làm', N'Hoàn thành')";
+                + "AND (trangThai = N'Hoàn thành' OR trangThai = N'Đã làm')";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maNhanVien);
             ps.setDate(2, java.sql.Date.valueOf(tu));

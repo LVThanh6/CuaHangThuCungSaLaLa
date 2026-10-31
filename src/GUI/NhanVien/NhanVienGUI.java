@@ -777,7 +777,7 @@ public class NhanVienGUI extends JPanel {
             gc.gridy = i * 2;
             noiDung.add(l, gc);
             truong[i].setFont(RangBuocGiaoDien.fontThuong(13));
-            truong[i].setPreferredSize(new Dimension(340, 34));
+            truong[i].setPreferredSize(new Dimension(440, 34));
             gc.gridy = i * 2 + 1;
             gc.insets = new Insets(0, 0, 10, 0);
             noiDung.add(truong[i], gc);
@@ -890,7 +890,6 @@ public class NhanVienGUI extends JPanel {
         String chucVu = nz(nv.getChucVu());
         double luongCoBanGoc = nv.getLuongCoBan();
         double luongCoBan = 0;
-        String moTaThem = "";
 
         if ("Nhân viên bán hàng".equals(chucVu) || "Nhân viên dịch vụ".equals(chucVu)) {
             double soGio = 0;
@@ -900,10 +899,8 @@ public class NhanVienGUI extends JPanel {
                 soGio = 0;
             }
             luongCoBan = soGio * luongCoBanGoc;
-            moTaThem = " · " + soGio + " giờ làm (" + dinhDangTien(luongCoBanGoc) + "/giờ)";
         } else {
             luongCoBan = luongCoBanGoc * homNay.getDayOfMonth() / homNay.lengthOfMonth();
-            moTaThem = " · " + homNay.getDayOfMonth() + "/" + homNay.lengthOfMonth() + " ngày (" + dinhDangTien(luongCoBanGoc) + "/tháng)";
         }
 
         double hoaHong = 0;
@@ -914,10 +911,7 @@ public class NhanVienGUI extends JPanel {
                 hoaHong = 0;
             }
         }
-        return dinhDangTien(luongCoBan + hoaHong)
-                + "  (lương " + dinhDangTien(luongCoBan)
-                + (hoaHong > 0 ? " + hoa hồng " + dinhDangTien(hoaHong) : "")
-                + moTaThem + ")";
+        return dinhDangTien(luongCoBan + hoaHong);
     }
 
     private void xuatCsv() {
