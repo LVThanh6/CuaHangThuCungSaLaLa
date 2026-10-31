@@ -344,14 +344,11 @@ public class QuanLyNhanVienGUI extends JPanel {
                 return;
             }
 
-            double luong;
-            try {
-                luong = nhanVienDAO.getLuongTheoChucVu((String) cbChucVu.getSelectedItem());
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Không thể lấy lương theo chức vụ: " + ex.getMessage(),
-                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            double luong = 45000;
+            String cv = (String) cbChucVu.getSelectedItem();
+            if ("Nhân viên dịch vụ".equals(cv)) luong = 60000;
+            else if ("Nhân viên quản lý kho".equals(cv)) luong = 13500000;
+            else if ("Quản lý".equals(cv)) luong = 15000000;
 
             Date ngaySinh;
             try {
@@ -425,14 +422,11 @@ public class QuanLyNhanVienGUI extends JPanel {
                 return;
             }
 
-            double luong;
-            try {
-                luong = nhanVienDAO.getLuongTheoChucVu((String) cbChucVu.getSelectedItem());
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Không thể lấy lương theo chức vụ: " + ex.getMessage(),
-                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            double luong = 45000;
+            String cv = (String) cbChucVu.getSelectedItem();
+            if ("Nhân viên dịch vụ".equals(cv)) luong = 60000;
+            else if ("Nhân viên quản lý kho".equals(cv)) luong = 13500000;
+            else if ("Quản lý".equals(cv)) luong = 15000000;
 
             nv.setHoTen(hoTen);
             nv.setChucVu((String) cbChucVu.getSelectedItem());
