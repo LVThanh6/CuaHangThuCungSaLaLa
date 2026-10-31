@@ -355,7 +355,7 @@ public class NhanVienGUI extends JPanel {
         bang.setFillsViewportHeight(true);
         bang.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        int[] rong = { 44, 90, 190, 170, 250, 110, 130, 150 };
+        int[] rong = { 44, 90, 200, 180, 260, 120, 160 };
         for (int i = 0; i < rong.length; i++) {
             bang.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
         }
@@ -366,8 +366,7 @@ public class NhanVienGUI extends JPanel {
         bang.getColumnModel().getColumn(3).setCellRenderer(new ChuRenderer(3));
         bang.getColumnModel().getColumn(4).setCellRenderer(new LienHeRenderer());
         bang.getColumnModel().getColumn(5).setCellRenderer(new ChuRenderer(5));
-        bang.getColumnModel().getColumn(6).setCellRenderer(new ChuRenderer(6));
-        bang.getColumnModel().getColumn(7).setCellRenderer(new TrangThaiRenderer());
+        bang.getColumnModel().getColumn(6).setCellRenderer(new TrangThaiRenderer());
 
         JTableHeader header = bang.getTableHeader();
         header.setReorderingAllowed(false);
@@ -720,6 +719,8 @@ public class NhanVienGUI extends JPanel {
         JComboBox<String> cbGT = new JComboBox<>(GIOI_TINH);
         JTextField txtLuong = new JTextField();
         txtLuong.setEditable(false);
+        JTextField txtTongLuong = new JTextField();
+        txtTongLuong.setEditable(false);
         JComboBox<String> cbTT = coTK
                 ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.NGUNG.nhan })
                 : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
@@ -747,6 +748,7 @@ public class NhanVienGUI extends JPanel {
         };
         cbChucVu.addActionListener(e -> apDungLuong.run());
         apDungLuong.run();
+        txtTongLuong.setText(tinhTongLuongThang(goc));
         cbTT.setEnabled(coTK && !chiXem);
 
         if (chiXem) {
@@ -769,8 +771,8 @@ public class NhanVienGUI extends JPanel {
 
         String[] nhan = { "Mã nhân viên", "Họ và tên", "Chức vụ", "Số điện thoại", "Địa chỉ",
                 "Ngày sinh (dd/MM/yyyy, có thể để trống)", "Giới tính", "Lương cơ bản (theo chức vụ)",
-                "Trạng thái tài khoản" };
-        JComponent[] truong = { txtMa, txtTen, cbChucVu, txtSdt, txtDiaChi, txtNgay, cbGT, txtLuong, cbTT };
+                "Tổng lương tháng này (đến hôm nay)", "Trạng thái tài khoản" };
+        JComponent[] truong = { txtMa, txtTen, cbChucVu, txtSdt, txtDiaChi, txtNgay, cbGT, txtLuong, txtTongLuong, cbTT };
         for (int i = 0; i < nhan.length; i++) {
             JLabel l = new JLabel(nhan[i]);
             l.setFont(RangBuocGiaoDien.fontThuong(12));
@@ -873,6 +875,41 @@ public class NhanVienGUI extends JPanel {
         dlg.setVisible(true);
     }
 
+    /**
+     * Tổng lương nhận trong tháng hiện tại tính đến hôm nay:
+     * lương chức vụ phân bổ theo số ngày đã qua trong tháng + hoa hồng 5% dịch vụ
+     * (nhân viên dịch vụ). Quản lý chưa tính lương.
+     */
+    private String tinhTongLuongThang(NhanVien_entity nv) {
+        if (nv == null || "Quản lý".equals(nv.getChucVu())) {
+            return "Chưa áp dụng";
+        }
+        LocalDate homNay = LocalDate.now();
+        LocalDate dauThang = homNay.withDayOfMonth(1);
+        double luongThang;
+        try {
+            luongThang = dao.getLuongTheoChucVu(nv.getChucVu());
+        } catch (SQLException ex) {
+            return "Không đọc được lương";
+        }
+        if (luongThang <= 0) {
+            return "Chưa áp dụng";
+        }
+        double luongCoBan = luongThang * homNay.getDayOfMonth() / homNay.lengthOfMonth();
+        double hoaHong = 0;
+        if ("Nhân viên dịch vụ".equals(nv.getChucVu())) {
+            try {
+                hoaHong = dao.getDoanhThuDichVuCuaNhanVien(nv.getMaNhanVien(), dauThang, homNay) * 0.05;
+            } catch (SQLException ex) {
+                hoaHong = 0;
+            }
+        }
+        return dinhDangTien(luongCoBan + hoaHong)
+                + "  (lương " + dinhDangTien(luongCoBan)
+                + " + hoa hồng " + dinhDangTien(hoaHong)
+                + " · " + homNay.getDayOfMonth() + "/" + homNay.lengthOfMonth() + " ngày)";
+    }
+
     private void xuatCsv() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new File("danh_sach_nhan_vien.csv"));
@@ -881,7 +918,7 @@ public class NhanVienGUI extends JPanel {
 
         StringBuilder sb = new StringBuilder("\uFEFF");
         sb.append(
-                "Mã nhân viên,Họ và tên,Chức vụ,Số điện thoại,Địa chỉ,Ngày sinh,Giới tính,Lương cơ bản,Trạng thái tài khoản\n");
+                "Mã nhân viên,Họ và tên,Chức vụ,Số điện thoại,Địa chỉ,Ngày sinh,Giới tính,Trạng thái tài khoản\n");
         for (NhanVien_entity nv : daLoc) {
             sb.append(csv(nv.getMaNhanVien())).append(',')
                     .append(csv(nz(nv.getHoTen()))).append(',')
@@ -890,7 +927,6 @@ public class NhanVienGUI extends JPanel {
                     .append(csv(nz(nv.getDiaChi()))).append(',')
                     .append(csv(nv.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(nv.getNgaySinh()))).append(',')
                     .append(csv(nz(nv.getGioiTinh()))).append(',')
-                    .append(csv(String.format("%.0f", nv.getLuongCoBan()))).append(',')
                     .append(csv(TrangThai.tuEntity(nv).nhan)).append('\n');
         }
         try {
@@ -932,7 +968,7 @@ public class NhanVienGUI extends JPanel {
 
     private class BangModel extends AbstractTableModel {
         private final String[] cot = { "", "Mã nhân viên", "Họ và tên", "Chức vụ", "Liên hệ", "Ngày sinh",
-                "Lương cơ bản", "Trạng thái" };
+                "Trạng thái" };
         private List<NhanVien_entity> hang = new ArrayList<>();
 
         void datHang(List<NhanVien_entity> h) {
@@ -1007,8 +1043,6 @@ public class NhanVienGUI extends JPanel {
                 return nz(nv.getChucVu());
             case 5:
                 return nv.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(nv.getNgaySinh());
-            case 6:
-                return dinhDangTien(nv.getLuongCoBan());
             default:
                 return "";
         }

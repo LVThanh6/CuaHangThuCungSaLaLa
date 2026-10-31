@@ -224,6 +224,29 @@ public class NhanVien_DAO {
         }
     }
 
+    /**
+     * Doanh thu dịch vụ do một nhân viên thực hiện trong khoảng ngày (dùng để tính hoa hồng).
+     */
+    public double getDoanhThuDichVuCuaNhanVien(String maNhanVien, java.time.LocalDate tu, java.time.LocalDate den)
+            throws SQLException {
+        if (maNhanVien == null || tu == null || den == null) return 0;
+        String sql = "SELECT ISNULL(SUM(c.soLuong * c.donGia), 0) "
+                + "FROM ChiTietHoaDon c JOIN HoaDon h ON h.maHD = c.maHD "
+                + "WHERE c.maDV IS NOT NULL AND c.maNhanVien = ? "
+                + "AND h.ngayLap >= ? AND h.ngayLap < ?";
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maNhanVien);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(tu.atStartOfDay()));
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(den.plusDays(1).atStartOfDay()));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        }
+    }
+
     public ArrayList<NhanVien_entity> getAllNhanVien() {
         try {
             return getAll();
