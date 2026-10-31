@@ -51,9 +51,9 @@ public class ThongKeGUI extends JPanel {
 
     private final JLabel lblMoTa = new JLabel(" ");
     private final JLabel lblTrangThai = new JLabel(" ");
-    private final JLabel[] lblTieuDeKpi = new JLabel[5];
-    private final JLabel[] lblGiaTriKpi = new JLabel[5];
-    private final JLabel[] lblGhiChuKpi = new JLabel[5];
+    private final JLabel[] lblTieuDeKpi = new JLabel[6];
+    private final JLabel[] lblGiaTriKpi = new JLabel[6];
+    private final JLabel[] lblGhiChuKpi = new JLabel[6];
     private final JSpinner ngayBatDau = taoBoChonNgay(LocalDate.now().withDayOfMonth(1));
     private final JSpinner ngayKetThuc = taoBoChonNgay(LocalDate.now());
     private final JComboBox<String> cboKhoangNhanh = new JComboBox<>(
@@ -62,7 +62,8 @@ public class ThongKeGUI extends JPanel {
             "Doanh thu",
             "Hàng hóa",
             "Dịch vụ",
-            "Tồn kho"
+            "Tồn kho",
+            "Tiền lương"
     };
     private final JComboBox<String> cboNhomChiSo = new JComboBox<>(NHOM_CHI_SO);
     private final JComboBox<ChiSo> cboChiSo = new JComboBox<>();
@@ -160,7 +161,8 @@ public class ThongKeGUI extends JPanel {
                 { "Hóa đơn", "—", "Số hóa đơn trong kỳ" },
                 { "Số lượng bán", "—", "Sản phẩm đã bán" },
                 { "Doanh thu hàng hóa", "—", "Vật tư bán ra" },
-                { "Doanh thu dịch vụ", "—", "Dịch vụ đã thực hiện" }
+                { "Doanh thu dịch vụ", "—", "Dịch vụ đã thực hiện" },
+                { "Tiền lương", "—", "Nhân viên + bác sĩ" }
         };
 
         JPanel hang = new JPanel(new GridLayout(1, thongTin.length, 12, 0));
@@ -363,9 +365,10 @@ public class ThongKeGUI extends JPanel {
                 duLieuThongKe.soHoaDon,
                 duLieuThongKe.soLuongBan,
                 duLieuThongKe.doanhThuHangHoa,
-                duLieuThongKe.doanhThuDichVu
+                duLieuThongKe.doanhThuDichVu,
+                duLieuThongKe.tongLuong
         };
-        String[] hauTo = { "đ", "", "", "đ", "đ" };
+        String[] hauTo = { "đ", "", "", "đ", "đ", "đ" };
         for (int i = 0; i < giaTri.length; i++) {
             lblGiaTriKpi[i].setText(dinhDang.format(giaTri[i]) + " " + hauTo[i]);
             lblGhiChuKpi[i].setText("Trong khoảng thời gian đã chọn");
@@ -384,6 +387,9 @@ public class ThongKeGUI extends JPanel {
                 return NHOM_CHI_SO[2];
             case ThongKe_DAO.MA_TON_KHO:
                 return NHOM_CHI_SO[3];
+            case ThongKe_DAO.MA_TONG_LUONG:
+            case ThongKe_DAO.MA_LUONG_NHAN_VIEN:
+                return NHOM_CHI_SO[4];
             default:
                 return NHOM_CHI_SO[0];
         }
@@ -397,7 +403,7 @@ public class ThongKeGUI extends JPanel {
             return;
         }
         lblGhiChuChiSo.setText(chiSo.ghiChu);
-        boolean theoThoiGian = chiSo.ma.equals(ThongKe_DAO.MA_DOANH_THU_TONG)
+        boolean theoThoiGian = chiSo.ma.equals(ThongKe_DAO.MA_TONG_LUONG)
                 || chiSo.ma.equals(ThongKe_DAO.MA_SO_HOA_DON)
                 || chiSo.ma.equals(ThongKe_DAO.MA_SO_LUONG_BAN);
         modelBang.setColumnIdentifiers(new Object[] {

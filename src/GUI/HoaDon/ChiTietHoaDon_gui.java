@@ -1193,9 +1193,8 @@ public class ChiTietHoaDon_gui extends JPanel {
             );
 
         } finally {
-
             btnIn.setVisible(true);
-
+        	}
         }
 
     }
