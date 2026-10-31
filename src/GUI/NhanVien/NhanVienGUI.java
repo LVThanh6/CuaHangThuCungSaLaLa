@@ -717,8 +717,8 @@ public class NhanVienGUI extends JPanel {
                 ? ""
                 : DINH_DANG_NGAY.format(goc.getNgaySinh()));
         JComboBox<String> cbGT = new JComboBox<>(GIOI_TINH);
-        JTextField txtLuong = new JTextField();
-        txtLuong.setEditable(false);
+        JTextField txtLuong = new JTextField(goc == null ? "45000" : String.format("%.0f", goc.getLuongCoBan()));
+        txtLuong.setEditable(!chiXem);
         JTextField txtTongLuong = new JTextField();
         txtTongLuong.setEditable(false);
         JComboBox<String> cbTT = coTK
@@ -733,17 +733,13 @@ public class NhanVienGUI extends JPanel {
             if (coTK)
                 cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
-        // Lương do chức vụ quyết định: tự điền theo bảng LuongChucVu, không cho sửa tay
         Runnable apDungLuong = () -> {
             String chucVu = (String) cbChucVu.getSelectedItem();
-            if ("Quản lý".equals(chucVu)) {
-                txtLuong.setText("Chưa áp dụng");
-                return;
-            }
-            try {
-                txtLuong.setText(dinhDangTien(dao.getLuongTheoChucVu(chucVu)));
-            } catch (SQLException ex) {
-                txtLuong.setText("Không đọc được lương");
+            if (goc == null) {
+                if ("Nhân viên bán hàng".equals(chucVu)) txtLuong.setText("45000");
+                else if ("Nhân viên dịch vụ".equals(chucVu)) txtLuong.setText("60000");
+                else if ("Nhân viên quản lý kho".equals(chucVu)) txtLuong.setText("13500000");
+                else if ("Quản lý".equals(chucVu)) txtLuong.setText("15000000");
             }
         };
         cbChucVu.addActionListener(e -> apDungLuong.run());
@@ -756,6 +752,7 @@ public class NhanVienGUI extends JPanel {
             txtSdt.setEditable(false);
             txtDiaChi.setEditable(false);
             txtNgay.setEditable(false);
+            txtLuong.setEditable(false);
             cbChucVu.setEnabled(false);
             cbGT.setEnabled(false);
         }
@@ -806,7 +803,6 @@ public class NhanVienGUI extends JPanel {
             String ngayStr = txtNgay.getText().trim();
             String loi = null;
             LocalDate ngay = null;
-            double luong = 0;
 
             if (ten.isEmpty()) {
                 loi = "Vui lòng nhập họ và tên.";
@@ -828,14 +824,19 @@ public class NhanVienGUI extends JPanel {
                 return;
             }
 
-            String chucVu = (String) cbChucVu.getSelectedItem();
+            double luong = 0;
             try {
-                luong = "Quản lý".equals(chucVu) ? 0 : dao.getLuongTheoChucVu(chucVu);
-            } catch (SQLException ex) {
-                lblLoi.setText("Lỗi CSDL: " + ex.getMessage());
+                luong = Double.parseDouble(txtLuong.getText().replaceAll("[.,\\s]", ""));
+                if (luong < 0) {
+                    lblLoi.setText("Lương cơ bản không được âm.");
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                lblLoi.setText("Lương cơ bản không hợp lệ (nhập số).");
                 return;
             }
             String gt = (String) cbGT.getSelectedItem();
+            String chucVu = (String) cbChucVu.getSelectedItem();
             String dc = diaChi.isEmpty() ? null : diaChi;
             try {
                 if (goc == null) {
@@ -881,23 +882,32 @@ public class NhanVienGUI extends JPanel {
      * (nhân viên dịch vụ). Quản lý chưa tính lương.
      */
     private String tinhTongLuongThang(NhanVien_entity nv) {
-        if (nv == null || "Quản lý".equals(nv.getChucVu())) {
+        if (nv == null) {
             return "Chưa áp dụng";
         }
         LocalDate homNay = LocalDate.now();
         LocalDate dauThang = homNay.withDayOfMonth(1);
-        double luongThang;
-        try {
-            luongThang = dao.getLuongTheoChucVu(nv.getChucVu());
-        } catch (SQLException ex) {
-            return "Không đọc được lương";
+        String chucVu = nz(nv.getChucVu());
+        double luongCoBanGoc = nv.getLuongCoBan();
+        double luongCoBan = 0;
+        String moTaThem = "";
+
+        if ("Nhân viên bán hàng".equals(chucVu) || "Nhân viên dịch vụ".equals(chucVu)) {
+            double soGio = 0;
+            try {
+                soGio = dao.getSoGioLamViecCuaNhanVien(nv.getMaNhanVien(), dauThang, homNay);
+            } catch (SQLException ex) {
+                soGio = 0;
+            }
+            luongCoBan = soGio * luongCoBanGoc;
+            moTaThem = " · " + soGio + " giờ làm (" + dinhDangTien(luongCoBanGoc) + "/giờ)";
+        } else {
+            luongCoBan = luongCoBanGoc * homNay.getDayOfMonth() / homNay.lengthOfMonth();
+            moTaThem = " · " + homNay.getDayOfMonth() + "/" + homNay.lengthOfMonth() + " ngày (" + dinhDangTien(luongCoBanGoc) + "/tháng)";
         }
-        if (luongThang <= 0) {
-            return "Chưa áp dụng";
-        }
-        double luongCoBan = luongThang * homNay.getDayOfMonth() / homNay.lengthOfMonth();
+
         double hoaHong = 0;
-        if ("Nhân viên dịch vụ".equals(nv.getChucVu())) {
+        if ("Nhân viên dịch vụ".equals(chucVu)) {
             try {
                 hoaHong = dao.getDoanhThuDichVuCuaNhanVien(nv.getMaNhanVien(), dauThang, homNay) * 0.05;
             } catch (SQLException ex) {
@@ -906,8 +916,8 @@ public class NhanVienGUI extends JPanel {
         }
         return dinhDangTien(luongCoBan + hoaHong)
                 + "  (lương " + dinhDangTien(luongCoBan)
-                + " + hoa hồng " + dinhDangTien(hoaHong)
-                + " · " + homNay.getDayOfMonth() + "/" + homNay.lengthOfMonth() + " ngày)";
+                + (hoaHong > 0 ? " + hoa hồng " + dinhDangTien(hoaHong) : "")
+                + moTaThem + ")";
     }
 
     private void xuatCsv() {

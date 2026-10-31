@@ -3,6 +3,7 @@ package dao;
 import connectDB.ConnectDB;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -326,24 +327,27 @@ public class ThongKe_DAO {
             throws SQLException {
         List<NguoiLaoDong> ds = new ArrayList<>();
 
-        String sqlNhanVien = "SELECT nv.maNhanVien, nv.hoTen, nv.chucVu, "
-                + "COALESCE(lc.luongCoBan, nv.luongCoBan, 0) AS luongCoBan "
-                + "FROM NhanVien nv LEFT JOIN LuongChucVu lc ON lc.chucVu = nv.chucVu "
-                + "ORDER BY nv.hoTen";
-        // Lương nhân viên được hiểu là mức lương tháng theo chức vụ, phân bổ theo số ngày của kỳ.
+        String sqlNhanVien = "SELECT maNhanVien, hoTen, chucVu, luongCoBan FROM NhanVien ORDER BY hoTen";
         try (PreparedStatement ps = con.prepareStatement(sqlNhanVien);
                 ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
+                String ma = rs.getString("maNhanVien");
+                String ten = rs.getString("hoTen");
                 String chucVu = rs.getString("chucVu");
-                if ("Quản lý".equals(chucVu)) {
-                    continue;
-                }
+                double luongCoBanGoc = rs.getDouble("luongCoBan");
+
                 NguoiLaoDong nld = new NguoiLaoDong();
-                nld.ten = rs.getString("hoTen");
+                nld.ten = ten;
                 nld.chucVu = chucVu;
-                nld.luongCoBan = phanBoTheoKy(rs.getDouble("luongCoBan"), tu, den);
-                if ("Nhân viên dịch vụ".equals(chucVu)) {
-                    nld.hoaHong = doanhThuDichVuNhanVien(con, rs.getString("maNhanVien"), tu, den) * 0.05;
+
+                if ("Nhân viên bán hàng".equals(chucVu) || "Nhân viên dịch vụ".equals(chucVu)) {
+                    double soGio = laySoGioLamViec(con, ma, tu, den);
+                    nld.luongCoBan = soGio * luongCoBanGoc;
+                    if ("Nhân viên dịch vụ".equals(chucVu)) {
+                        nld.hoaHong = doanhThuDichVuNhanVien(con, ma, tu, den) * 0.05;
+                    }
+                } else {
+                    nld.luongCoBan = phanBoTheoKy(luongCoBanGoc, tu, den);
                 }
                 ds.add(nld);
             }
@@ -362,6 +366,22 @@ public class ThongKe_DAO {
             }
         }
         return ds;
+    }
+
+    private double laySoGioLamViec(Connection con, String maNhanVien, LocalDate tu, LocalDate den)
+            throws SQLException {
+        String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
+                + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
+                + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
+                + "AND trangThai IN (N'Đang làm', N'Hoàn thành')";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maNhanVien);
+            ps.setDate(2, java.sql.Date.valueOf(tu));
+            ps.setDate(3, java.sql.Date.valueOf(den.plusDays(1)));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        }
     }
 
     /** Phân bổ lương tháng theo số ngày của kỳ thống kê. */

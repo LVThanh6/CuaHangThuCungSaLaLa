@@ -207,17 +207,22 @@ public class NhanVien_DAO {
     }
 
     /**
-     * Lấy mức lương cơ bản theo chức vụ.
+     * Tổng số giờ làm việc của nhân viên trong khoảng ngày.
      */
-    public double getLuongTheoChucVu(String chucVu) throws SQLException {
-        if ("Quản lý".equals(chucVu)) return 0;
-
-        String sql = "SELECT ISNULL(luongCoBan, 0) FROM LuongChucVu WHERE chucVu = ?";
+    public double getSoGioLamViecCuaNhanVien(String maNhanVien, java.time.LocalDate tu, java.time.LocalDate den)
+            throws SQLException {
+        if (maNhanVien == null || tu == null || den == null) return 0;
+        String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
+                + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
+                + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
+                + "AND trangThai IN (N'Đang làm', N'Hoàn thành')";
         Connection con = ConnectDB.getCon();
         if (con == null) return 0;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, chucVu);
+            ps.setString(1, maNhanVien);
+            ps.setDate(2, Date.valueOf(tu));
+            ps.setDate(3, Date.valueOf(den.plusDays(1)));
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getDouble(1) : 0;
             }
