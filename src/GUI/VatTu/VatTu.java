@@ -44,6 +44,13 @@ public class VatTu extends JPanel {
     private JTable table;
     private DefaultTableModel model;
     private TableRowSorter<TableModel> sorter;
+    private static final String CARD_TON_KHO = "TON_KHO";
+    private static final String CARD_PHIEU_NHAP = "PHIEU_NHAP";
+    private final CardLayout cards = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cards);
+    private final java.util.List<JButton> navButtons = new java.util.ArrayList<>();
+    private int tong, tonDu, sapHet, hetTon;
+    private static final String CARD_PHIEU_XUAT = "PHIEU_XUAT";
 
     private static final DecimalFormat MONEY;
     static {
@@ -57,23 +64,48 @@ public class VatTu extends JPanel {
         setBackground(BG);
         setBorder(new EmptyBorder(16, 24, 24, 24));
 
+        // thanh tab con luôn hiển thị
+        JPanel navWrap = new JPanel(new BorderLayout());
+        navWrap.setOpaque(false);
+        navWrap.setBorder(new EmptyBorder(0, 0, 16, 0));
+        navWrap.add(createSubNav(), BorderLayout.WEST);
+        add(navWrap, BorderLayout.NORTH);
+
+        // màn hình 1: Tồn kho vật tư
+        JPanel tonKho = new JPanel(new BorderLayout());
+        tonKho.setOpaque(false);
         JPanel top = new JPanel();
         top.setOpaque(false);
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-        top.add(createSubNav());
-        top.add(Box.createVerticalStrut(16));
         top.add(createTitle());
         top.add(Box.createVerticalStrut(14));
         top.add(createStatCards());
         top.add(Box.createVerticalStrut(16));
+        tonKho.add(top, BorderLayout.NORTH);
+        tonKho.add(createTablePanel(), BorderLayout.CENTER);
 
-        add(top, BorderLayout.NORTH);
-        add(createTablePanel(), BorderLayout.CENTER);
+        // màn hình 2: Phiếu nhập kho
+        PhieuNhapKho phieuNhap = new PhieuNhapKho(
+                this::getDanhSachVatTu,
+                this::tangTon,
+                () -> System.out.println("TODO: chuyển sang Phiếu xuất kho"));
+
+        cardPanel.setOpaque(false);
+        cardPanel.add(tonKho, CARD_TON_KHO);
+        cardPanel.add(phieuNhap, CARD_PHIEU_NHAP);
+        add(cardPanel, BorderLayout.CENTER);
 
         loadSampleData();
-        setThongKe(142, 118, 19, 5); // số liệu mẫu giống thiết kế; có thể thay bằng dữ liệu từ DB
+        setThongKe(142, 118, 19, 5);
+        showCard(CARD_TON_KHO, 0);
+        
+     // màn hình 3: Phiếu xuất kho
+        PhieuXuatKho phieuXuat = new PhieuXuatKho(
+                this::getDanhSachVatTu,
+                this::tangTon,      // phiếu xuất gọi tangTon(ma, -soLuong) để trừ tồn
+                this::getTonKho);
+        cardPanel.add(phieuXuat, CARD_PHIEU_XUAT);
     }
-
     // =====================================================================
     // Thanh điều hướng con: Vật tư | Nhà cung cấp | Phiếu nhập kho | Phiếu xuất kho
     // =====================================================================
@@ -83,23 +115,43 @@ public class VatTu extends JPanel {
         String[] items = {"Vật tư", "Nhà cung cấp", "Phiếu nhập kho ▾", "Phiếu xuất kho ▾"};
         for (int i = 0; i < items.length; i++) {
             JButton b = new JButton(items[i]);
-            b.setFont(new Font(FONT, i == 0 ? Font.BOLD : Font.PLAIN, 13));
             b.setFocusPainted(false);
             b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             b.setBorder(new EmptyBorder(7, 14, 7, 14));
             b.setContentAreaFilled(false);
             b.setOpaque(true);
-            b.setBackground(i == 0 ? PRIMARY_BG : BG);
-            b.setForeground(i == 0 ? PRIMARY : TEXT_DARK);
+            final int idx = i;
             final String name = items[i];
             b.addActionListener((ActionEvent e) -> {
-                // TODO: chuyển sang màn hình tương ứng (NhaCungCap, PhieuNhapKho, PhieuXuatKho)
-                System.out.println("Chuyển tới: " + name);
+                switch (idx) {
+                    case 0: showCard(CARD_TON_KHO, 0); break;
+                    case 2: showCard(CARD_PHIEU_NHAP, 2); break;
+                    case 3: showCard(CARD_PHIEU_XUAT, 3); break;
+                    default: System.out.println("TODO: chuyển tới " + name);
+                }
             });
+            navButtons.add(b);
             p.add(b);
         }
         p.setAlignmentX(LEFT_ALIGNMENT);
         return p;
+    }
+
+    public int getTonKho(String ma) {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (ma.equals(model.getValueAt(i, 0))) return ((Number) model.getValueAt(i, 3)).intValue();
+        }
+        return 0;
+    }
+	private void showCard(String card, int activeIdx) {
+        cards.show(cardPanel, card);
+        for (int i = 0; i < navButtons.size(); i++) {
+            JButton b = navButtons.get(i);
+            boolean on = (i == activeIdx);
+            b.setFont(new Font(FONT, on ? Font.BOLD : Font.PLAIN, 13));
+            b.setBackground(on ? PRIMARY_BG : BG);
+            b.setForeground(on ? PRIMARY : TEXT_DARK);
+        }
     }
 
     private JComponent createTitle() {
@@ -162,10 +214,46 @@ public class VatTu extends JPanel {
 
     /** Cập nhật 4 số liệu thống kê. */
     public void setThongKe(int tong, int tonDu, int sapHet, int hetTon) {
+        this.tong = tong; this.tonDu = tonDu; this.sapHet = sapHet; this.hetTon = hetTon;
         lblTong.setText(tong + " Mặt hàng");
         lblTonDu.setText(tonDu + " Mặt hàng");
         lblSapHet.setText(sapHet + " Mặt hàng");
         lblHetTon.setText(hetTon + " Mặt hàng");
+    }
+
+    /** Danh sách vật tư cho phiếu nhập: {mã, tên, đơn vị, giá nhập}. */
+    public java.util.List<Object[]> getDanhSachVatTu() {
+        java.util.List<Object[]> ds = new java.util.ArrayList<>();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            ds.add(new Object[]{model.getValueAt(i, 0), model.getValueAt(i, 1),
+                    model.getValueAt(i, 4), ((Number) model.getValueAt(i, 5)).longValue()});
+        }
+        return ds;
+    }
+
+    /** Cộng số lượng vào tồn kho khi phiếu nhập được xác nhận. */
+    public void tangTon(String ma, int soLuong) {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (ma.equals(model.getValueAt(i, 0))) {
+                int cu = ((Number) model.getValueAt(i, 3)).intValue();
+                int moi = cu + soLuong;
+                String ttCu = tinhTrangThai(cu), ttMoi = tinhTrangThai(moi);
+                model.setValueAt(moi, i, 3);
+                model.setValueAt(ttMoi, i, 6);
+                if (!ttCu.equals(ttMoi)) {            // đổi nhóm trạng thái -> cập nhật 4 thẻ thống kê
+                    doiDem(ttCu, -1);
+                    doiDem(ttMoi, +1);
+                    setThongKe(tong, tonDu, sapHet, hetTon);
+                }
+                return;
+            }
+        }
+    }
+
+    private void doiDem(String tt, int delta) {
+        if ("Còn hàng".equals(tt)) tonDu += delta;
+        else if ("Sắp hết".equals(tt)) sapHet += delta;
+        else hetTon += delta;
     }
 
     // =====================================================================

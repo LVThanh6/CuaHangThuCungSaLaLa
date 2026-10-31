@@ -32,6 +32,8 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
 import dao.BacSi_DAO;
+import dao.ChuyenNganh_DAO;
+import entity.ChuyenNganh_entity;
 import entity.BacSi_entity;
 
 /**
@@ -266,11 +268,8 @@ public class BacSiGUI extends JPanel {
             }
         });
 
-        String[] dsCN = new String[CHUYEN_NGANH.length + 1];
-        dsCN[0] = "Chuyên ngành: Tất cả";
-        for (int i = 0; i < CHUYEN_NGANH.length; i++)
-            dsCN[i + 1] = "Chuyên ngành: " + CHUYEN_NGANH[i];
-        cbChuyenNganh = new JComboBox<>(dsCN);
+        cbChuyenNganh = new JComboBox<>();
+        taiDanhSachChuyenNganh(cbChuyenNganh, true);
 
         String[] dsTT = new String[TrangThai.values().length + 1];
         dsTT[0] = "Trạng thái: Tất cả";
@@ -521,10 +520,11 @@ public class BacSiGUI extends JPanel {
         String tuSo = tu.replace(" ", "");
         int cn = cbChuyenNganh.getSelectedIndex();
         int tt = cbTrangThai.getSelectedIndex();
+        String tenCnChon = cn > 0 ? (String) cbChuyenNganh.getSelectedItem() : null;
 
         daLoc.clear();
         for (BacSi_entity bs : tatCa) {
-            if (cn > 0 && !CHUYEN_NGANH[cn - 1].equals(bs.getChuyenNganh()))
+            if (cn > 0 && tenCnChon != null && !tenCnChon.equals(bs.getChuyenNganh()))
                 continue;
             if (tt > 0 && TrangThai.tuEntity(bs) != TrangThai.values()[tt - 1])
                 continue;
@@ -749,7 +749,26 @@ public class BacSiGUI extends JPanel {
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getHoTen()));
         JComboBox<String> cbGT = new JComboBox<>(new String[] { "Nam", "Nữ" });
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
-        JComboBox<String> cbCN = new JComboBox<>(CHUYEN_NGANH);
+        JComboBox<String> cbCN = new JComboBox<>();
+        taiDanhSachChuyenNganh(cbCN, false);
+        cbCN.addActionListener(e -> {
+            String selected = (String) cbCN.getSelectedItem();
+            if ("+ Thêm chuyên ngành mới...".equals(selected)) {
+                String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành", JOptionPane.QUESTION_MESSAGE);
+                if (tenMoi != null && !tenMoi.isBlank()) {
+                    try {
+                        new ChuyenNganh_DAO().them(tenMoi.trim());
+                        taiDanhSachChuyenNganh(cbCN, false);
+                        cbCN.setSelectedItem(tenMoi.trim());
+                    } catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(dlg, "Không thể thêm chuyên ngành: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        cbCN.setSelectedIndex(0);
+                    }
+                } else {
+                    cbCN.setSelectedIndex(0);
+                }
+            }
+        });
         JTextField txtEmail = new JTextField(goc == null ? "" : nz(goc.getEmail()));
         JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null
                 ? ""
@@ -1005,6 +1024,24 @@ public class BacSiGUI extends JPanel {
 
     private static String csv(String s) {
         return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
+
+    private void taiDanhSachChuyenNganh(JComboBox<String> cb, boolean coTatCa) {
+        cb.removeAllItems();
+        if (coTatCa) {
+            cb.addItem("Chuyên ngành: Tất cả");
+        }
+        try {
+            List<ChuyenNganh_entity> ds = new ChuyenNganh_DAO().getAll();
+            for (ChuyenNganh_entity cn : ds) {
+                cb.addItem(cn.getTenChuyenNganh());
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        if (!coTatCa) {
+            cb.addItem("+ Thêm chuyên ngành mới...");
+        }
     }
 
     private void taiLai() {

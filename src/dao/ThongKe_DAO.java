@@ -3,6 +3,7 @@ package dao;
 import connectDB.ConnectDB;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -35,6 +36,8 @@ public class ThongKe_DAO {
     public static final String MA_TOP_DICH_VU = "top-dich-vu";
     public static final String MA_TON_KHO = "ton-kho-hien-tai";
     public static final String MA_TOP_TON_KHO = "top-ton-kho";
+    public static final String MA_TONG_LUONG = "tong-luong";
+    public static final String MA_LUONG_NHAN_VIEN = "luong-theo-nhan-vien";
 
     public static class DuLieuThongKe {
         public double doanhThuTong;
@@ -42,6 +45,7 @@ public class ThongKe_DAO {
         public double doanhThuDichVu;
         public int soHoaDon;
         public int soLuongBan;
+        public double tongLuong;
         public final List<ChiSoThongKe> chiSo = new ArrayList<>();
     }
 
@@ -99,6 +103,8 @@ public class ThongKe_DAO {
         ketQua.chiSo.add(topDichVu(con, tu, den));
         ketQua.chiSo.add(tonKhoHienTai(con));
         ketQua.chiSo.add(topTonKho(con));
+        ketQua.chiSo.add(tongLuongNhanSu(con, tu, den));
+        ketQua.chiSo.add(luongTheoNhanVien(con, tu, den));
 
         for (ChiSoThongKe chiSo : ketQua.chiSo) {
             switch (chiSo.ma) {
@@ -116,6 +122,9 @@ public class ThongKe_DAO {
                     break;
                 case MA_DOANH_THU_DICH_VU:
                     ketQua.doanhThuDichVu = chiSo.tong;
+                    break;
+                case MA_TONG_LUONG:
+                    ketQua.tongLuong = chiSo.tong;
                     break;
                 default:
                     break;
@@ -270,6 +279,168 @@ public class ThongKe_DAO {
         }
         chuaCoDuLieu(chiSo, "Kho chưa có vật tư");
         return chiSo;
+    }
+
+    // ==================== TIỀN LƯƠNG ====================
+
+    /**
+     * Tổng lương nhân sự trong kỳ: lương nhân viên theo chức vụ + hoa hồng dịch vụ,
+     * cộng lương tháng bác sĩ phân bổ theo kỳ và hoa hồng 10%. Quản lý chưa tính lương.
+     */
+    private ChiSoThongKe tongLuongNhanSu(Connection con, LocalDate tu, LocalDate den) throws SQLException {
+        ChiSoThongKe chiSo = new ChiSoThongKe(MA_TONG_LUONG, "Tiền lương nhân sự dự tính",
+                "VNĐ", "đ", "Tổng lương toàn kỳ = (Số giờ làm việc × Lương giờ cho NV bán hàng & dịch vụ) + (Lương tháng cố định phân bổ theo ngày cho NV quản lý kho & quản lý) + (Lương tháng phân bổ cho bác sĩ) + 5% hoa hồng dịch vụ nhân viên + 10% hoa hồng bác sĩ.");
+        chiSo.chuoi.add("Tiền lương");
+
+        double tong = 0;
+        for (NguoiLaoDong nld : layDanhSachNguoiLaoDong(con, tu, den)) {
+            tong += nld.tongLuong();
+        }
+        chiSo.them("Toàn kỳ", tong);
+        return chiSo;
+    }
+
+    private ChiSoThongKe luongTheoNhanVien(Connection con, LocalDate tu, LocalDate den) throws SQLException {
+        ChiSoThongKe chiSo = new ChiSoThongKe(MA_LUONG_NHAN_VIEN, "Chi tiết lương từng nhân sự",
+                "VNĐ", "đ", "Bảng kê lương cơ bản (lương giờ theo ca hoàn thành / lương tháng phân bổ) và hoa hồng dịch vụ (5% NV dịch vụ, 10% bác sĩ) của từng nhân sự. Các ca làm việc không hoàn thành bị loại bỏ và không tính lương.");
+        chiSo.chuoi.add("Tiền lương");
+
+        for (NguoiLaoDong nld : layDanhSachNguoiLaoDong(con, tu, den)) {
+            String nhan = nld.ten + " (" + nld.chucVu + ") · " + nld.moTaChiTiet;
+            chiSo.them(nhan, nld.tongLuong());
+        }
+        chuaCoDuLieu(chiSo, "Chưa có nhân sự để tính lương");
+        return chiSo;
+    }
+
+    private static class NguoiLaoDong {
+        private String ten;
+        private String chucVu;
+        private double luongCoBan;
+        private double hoaHong;
+        private String moTaChiTiet;
+
+        private double tongLuong() {
+            return luongCoBan + hoaHong;
+        }
+    }
+
+    private List<NguoiLaoDong> layDanhSachNguoiLaoDong(Connection con, LocalDate tu, LocalDate den)
+            throws SQLException {
+        List<NguoiLaoDong> ds = new ArrayList<>();
+
+        String sqlNhanVien = "SELECT maNhanVien, hoTen, chucVu, luongCoBan FROM NhanVien ORDER BY hoTen";
+        try (PreparedStatement ps = con.prepareStatement(sqlNhanVien);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String ma = rs.getString("maNhanVien");
+                String ten = rs.getString("hoTen");
+                String chucVu = rs.getString("chucVu");
+                double luongCoBanGoc = rs.getDouble("luongCoBan");
+
+                NguoiLaoDong nld = new NguoiLaoDong();
+                nld.ten = ten;
+                nld.chucVu = chucVu;
+
+                if ("Nhân viên bán hàng".equals(chucVu) || "Nhân viên dịch vụ".equals(chucVu)) {
+                    double soGio = laySoGioLamViec(con, ma, tu, den);
+                    nld.luongCoBan = soGio * luongCoBanGoc;
+                    if ("Nhân viên dịch vụ".equals(chucVu)) {
+                        nld.hoaHong = doanhThuDichVuNhanVien(con, ma, tu, den) * 0.05;
+                    }
+                    String phanHoaHong = nld.hoaHong > 0 ? " + HH " + dinhDangTien(nld.hoaHong) : "";
+                    nld.moTaChiTiet = soGio + "h làm (lương " + dinhDangTien(nld.luongCoBan) + phanHoaHong + ", trừ ca không hoàn thành)";
+                } else {
+                    nld.luongCoBan = phanBoTheoKy(luongCoBanGoc, tu, den);
+                    nld.moTaChiTiet = "Lương tháng phân bổ (" + dinhDangTien(nld.luongCoBan) + ")";
+                }
+                ds.add(nld);
+            }
+        }
+
+        String sqlBacSi = "SELECT maBacSi, hoTen, luongThang FROM BacSyThuY ORDER BY hoTen";
+        try (PreparedStatement ps = con.prepareStatement(sqlBacSi);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                NguoiLaoDong nld = new NguoiLaoDong();
+                nld.ten = rs.getString("hoTen");
+                nld.chucVu = "Bác sĩ";
+                nld.luongCoBan = phanBoTheoKy(rs.getDouble("luongThang"), tu, den);
+                nld.hoaHong = doanhThuDichVuBacSi(con, rs.getString("maBacSi"), tu, den) * 0.10;
+                String phanHoaHong = nld.hoaHong > 0 ? " + HH 10% " + dinhDangTien(nld.hoaHong) : "";
+                nld.moTaChiTiet = "Lương tháng " + dinhDangTien(nld.luongCoBan) + phanHoaHong;
+                ds.add(nld);
+            }
+        }
+        return ds;
+    }
+
+    private static String dinhDangTien(double so) {
+        java.text.NumberFormat nf = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        nf.setMaximumFractionDigits(0);
+        return nf.format(so) + "đ";
+    }
+
+    private double laySoGioLamViec(Connection con, String maNhanVien, LocalDate tu, LocalDate den)
+            throws SQLException {
+        String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
+                + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
+                + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
+                + "AND (trangThai = N'Hoàn thành' OR trangThai = N'Đã làm')";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maNhanVien);
+            ps.setDate(2, java.sql.Date.valueOf(tu));
+            ps.setDate(3, java.sql.Date.valueOf(den.plusDays(1)));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        }
+    }
+
+    /** Phân bổ lương tháng theo số ngày của kỳ thống kê. */
+    private static double phanBoTheoKy(double luongThang, LocalDate tu, LocalDate den) {
+        if (luongThang <= 0) {
+            return 0;
+        }
+        double tong = 0;
+        LocalDate ngay = tu;
+        while (!ngay.isAfter(den)) {
+            tong += luongThang / ngay.lengthOfMonth();
+            ngay = ngay.plusDays(1);
+        }
+        return tong;
+    }
+
+    private double doanhThuDichVuNhanVien(Connection con, String maNhanVien, LocalDate tu, LocalDate den)
+            throws SQLException {
+        String sql = "SELECT ISNULL(SUM(c.soLuong * c.donGia), 0) "
+                + "FROM ChiTietHoaDon c JOIN HoaDon h ON h.maHD = c.maHD "
+                + "WHERE c.maDV IS NOT NULL AND c.maNhanVien = ? "
+                + "AND h.ngayLap >= ? AND h.ngayLap < ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maNhanVien);
+            ps.setTimestamp(2, Timestamp.valueOf(tu.atStartOfDay()));
+            ps.setTimestamp(3, Timestamp.valueOf(den.plusDays(1).atStartOfDay()));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        }
+    }
+
+    private double doanhThuDichVuBacSi(Connection con, String maBacSi, LocalDate tu, LocalDate den)
+            throws SQLException {
+        String sql = "SELECT ISNULL(SUM(c.soLuong * c.donGia), 0) "
+                + "FROM ChiTietHoaDon c JOIN HoaDon h ON h.maHD = c.maHD "
+                + "WHERE c.maDV IS NOT NULL AND c.maBacSi = ? "
+                + "AND h.ngayLap >= ? AND h.ngayLap < ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maBacSi);
+            ps.setTimestamp(2, Timestamp.valueOf(tu.atStartOfDay()));
+            ps.setTimestamp(3, Timestamp.valueOf(den.plusDays(1).atStartOfDay()));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        }
     }
 
     // ==================== TRUY VẤN DÙNG CHUNG ====================

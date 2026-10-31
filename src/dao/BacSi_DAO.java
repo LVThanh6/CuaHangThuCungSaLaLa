@@ -24,11 +24,12 @@ public class BacSi_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return ds;
 
-        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, bs.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, " +
+        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, cn.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, " +
                      "tk.trangThai AS trangThaiTK, " +
                      "(SELECT COUNT(*) FROM HoSoSucKhoe h WHERE h.maBacSi = bs.maBacSi " +
                      " AND MONTH(h.ngayKham) = MONTH(GETDATE()) AND YEAR(h.ngayKham) = YEAR(GETDATE())) AS soCaKham " +
                      "FROM BacSyThuY bs " +
+                     "JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
                      "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
                      "ORDER BY bs.maBacSi ASC";
 
@@ -104,7 +105,14 @@ public class BacSi_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
-        String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, tenChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang) " +
+        ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
+        String maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
+        if (maCN == null) {
+            cnDao.them(bs.getChuyenNganh());
+            maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
+        }
+
+        String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, maChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, bs.getMaBacSi());
@@ -113,7 +121,7 @@ public class BacSi_DAO {
             } else {
                 ps.setNull(2, Types.VARCHAR);
             }
-            ps.setString(3, bs.getChuyenNganh());
+            ps.setString(3, maCN);
             ps.setString(4, bs.getHoTen());
             ps.setString(5, bs.getGioiTinh());
             ps.setString(6, bs.getSdt());
@@ -136,10 +144,17 @@ public class BacSi_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
-        String sql = "UPDATE BacSyThuY SET tenChuyenNganh = ?, hoTen = ?, gioiTinh = ?, " +
+        ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
+        String maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
+        if (maCN == null) {
+            cnDao.them(bs.getChuyenNganh());
+            maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
+        }
+
+        String sql = "UPDATE BacSyThuY SET maChuyenNganh = ?, hoTen = ?, gioiTinh = ?, " +
                      "sdt = ?, email = ?, ngaySinh = ?, luongThang = ? WHERE maBacSi = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, bs.getChuyenNganh());
+            ps.setString(1, maCN);
             ps.setString(2, bs.getHoTen());
             ps.setString(3, bs.getGioiTinh());
             ps.setString(4, bs.getSdt());
