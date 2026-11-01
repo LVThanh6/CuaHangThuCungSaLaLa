@@ -1,10 +1,5 @@
 package GUI;
 
-import java.awt.*;
-import java.sql.SQLException;
-
-import javax.swing.*;
-
 import GUI.BacSi.BacSiGUI;
 import GUI.Chung.HeaderGUI;
 import GUI.Chung.RangBuocGiaoDien;
@@ -18,18 +13,18 @@ import GUI.KhachHang.QuanLyHangThanhVienGUI;
 import GUI.LichHen.DatLichMoiGUI;
 import GUI.LichHen.XemLichGUI;
 import GUI.NhanVien.NhanVienGUI;
+import GUI.TaiKhoan.DangNhapGUI;
 import GUI.ThongKe.ThongKeGUI;
 import GUI.ThuCung.DonThuocGUI;
 import GUI.ThuCung.HoSoThuCungGUI;
 import GUI.ThuCung.LichSuKhamGUI;
-import GUI.TaiKhoan.DangNhapGUI;
-import dao.DangNhap_DAO;
-
-// Các GUI thuộc tab Vật tư
-import GUI.VatTu.VatTuGUI;
 import GUI.VatTu.NhaCungCapGUI;
 import GUI.VatTu.PhieuNhapKhoGUI;
 import GUI.VatTu.PhieuXuatKhoGUI;
+import GUI.VatTu.VatTuGUI;
+import java.awt.*;
+import java.sql.SQLException;
+import javax.swing.*;
 
 /**
 - Class GiaoDienChinhGUI: 
