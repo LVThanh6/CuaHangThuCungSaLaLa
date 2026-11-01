@@ -45,12 +45,13 @@ public class VatTu extends JPanel {
     private DefaultTableModel model;
     private TableRowSorter<TableModel> sorter;
     private static final String CARD_TON_KHO = "TON_KHO";
+    private static final String CARD_NHA_CC = "NHA_CC";
     private static final String CARD_PHIEU_NHAP = "PHIEU_NHAP";
+    private static final String CARD_PHIEU_XUAT = "PHIEU_XUAT";
     private final CardLayout cards = new CardLayout();
     private final JPanel cardPanel = new JPanel(cards);
     private final java.util.List<JButton> navButtons = new java.util.ArrayList<>();
     private int tong, tonDu, sapHet, hetTon;
-    private static final String CARD_PHIEU_XUAT = "PHIEU_XUAT";
 
     private static final DecimalFormat MONEY;
     static {
@@ -84,27 +85,31 @@ public class VatTu extends JPanel {
         tonKho.add(top, BorderLayout.NORTH);
         tonKho.add(createTablePanel(), BorderLayout.CENTER);
 
-        // màn hình 2: Phiếu nhập kho
+        // màn hình 2: Nhà cung cấp
+        NhaCungCapGUI nhaCC = new NhaCungCapGUI();
+
+        // màn hình 3: Phiếu nhập kho
         PhieuNhapKho phieuNhap = new PhieuNhapKho(
                 this::getDanhSachVatTu,
                 this::tangTon,
-                () -> System.out.println("TODO: chuyển sang Phiếu xuất kho"));
+                () -> showCard(CARD_PHIEU_XUAT, 3));
+
+        // màn hình 4: Phiếu xuất kho
+        PhieuXuatKho phieuXuat = new PhieuXuatKho(
+                this::getDanhSachVatTu,
+                this::tangTon,      // phiếu xuất gọi tangTon(ma, -soLuong) để trừ tồn
+                this::getTonKho);
 
         cardPanel.setOpaque(false);
         cardPanel.add(tonKho, CARD_TON_KHO);
+        cardPanel.add(nhaCC, CARD_NHA_CC);
         cardPanel.add(phieuNhap, CARD_PHIEU_NHAP);
+        cardPanel.add(phieuXuat, CARD_PHIEU_XUAT);
         add(cardPanel, BorderLayout.CENTER);
 
         loadSampleData();
         setThongKe(142, 118, 19, 5);
         showCard(CARD_TON_KHO, 0);
-        
-     // màn hình 3: Phiếu xuất kho
-        PhieuXuatKho phieuXuat = new PhieuXuatKho(
-                this::getDanhSachVatTu,
-                this::tangTon,      // phiếu xuất gọi tangTon(ma, -soLuong) để trừ tồn
-                this::getTonKho);
-        cardPanel.add(phieuXuat, CARD_PHIEU_XUAT);
     }
     // =====================================================================
     // Thanh điều hướng con: Vật tư | Nhà cung cấp | Phiếu nhập kho | Phiếu xuất kho
@@ -125,9 +130,10 @@ public class VatTu extends JPanel {
             b.addActionListener((ActionEvent e) -> {
                 switch (idx) {
                     case 0: showCard(CARD_TON_KHO, 0); break;
+                    case 1: showCard(CARD_NHA_CC, 1); break;
                     case 2: showCard(CARD_PHIEU_NHAP, 2); break;
                     case 3: showCard(CARD_PHIEU_XUAT, 3); break;
-                    default: System.out.println("TODO: chuyển tới " + name);
+                    default: System.out.println("DTO: chuyển tới " + name);
                 }
             });
             navButtons.add(b);

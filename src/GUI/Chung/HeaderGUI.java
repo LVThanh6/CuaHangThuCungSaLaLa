@@ -77,7 +77,7 @@ public class HeaderGUI extends JPanel {
         menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
         menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
         menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
-        menuConMap.put("Vật tư", new String[] { "Kho thuốc", "Dụng cụ y tế" });
+        menuConMap.put("Vật tư", new String[] { "Vật tư", "Nhà cung cấp", "Phiếu nhập kho", "Phiếu xuất kho" });
         menuConMap.put("Lịch hẹn", new String[] { "Xem lịch", "Đặt lịch mới" });
         menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Khuyến mãi", "Thuế" });
     }

@@ -72,8 +72,8 @@ public class ChiTietPhieuNhapKho_entity {
         return new PhieuNhapKho_entity.ChiTiet(maVT, tenVT, donVi, soLuong, donGia);
     }
 
-    public static ChiTietPhieuNhap_entity fromChiTiet(String soPhieu, PhieuNhapKho_entity.ChiTiet d) {
-        ChiTietPhieuNhap_entity e = new ChiTietPhieuNhap_entity();
+    public static ChiTietPhieuNhapKho_entity fromChiTiet(String soPhieu, PhieuNhapKho_entity.ChiTiet d) {
+        ChiTietPhieuNhapKho_entity e = new ChiTietPhieuNhapKho_entity();
         e.soPhieu = soPhieu;
         e.maVT = d.getMaVT();
         e.tenVT = d.getTenVT();
@@ -86,8 +86,8 @@ public class ChiTietPhieuNhapKho_entity {
     // ===== equals / hashCode theo khóa chính (soPhieu, maVT) =====
     @Override public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ChiTietPhieuNhap_entity)) return false;
-        ChiTietPhieuNhap_entity c = (ChiTietPhieuNhap_entity) o;
+        if (!(o instanceof ChiTietPhieuNhapKho_entity)) return false;
+        ChiTietPhieuNhapKho_entity c = (ChiTietPhieuNhapKho_entity) o;
         return Objects.equals(soPhieu, c.soPhieu) && Objects.equals(maVT, c.maVT);
     }
 

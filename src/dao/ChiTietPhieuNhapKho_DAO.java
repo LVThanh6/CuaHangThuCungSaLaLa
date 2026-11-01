@@ -3,7 +3,6 @@ package dao;
 import connectDB.ConnectDB;
 import entity.ChiTietPhieuNhapKho_entity;
 import entity.PhieuNhapKho_entity.TrangThai;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -139,7 +138,7 @@ public class ChiTietPhieuNhapKho_DAO {
     }
 
     /** Thêm nhiều dòng cùng lúc trong 1 transaction (chỉ khi phiếu Chờ xác nhận). */
-    public boolean insertAll(String soPhieu, List<ChiTietPhieuNhap_entity> ds) {
+    public boolean insertAll(String soPhieu, List<ChiTietPhieuNhapKho_entity> ds) {
         if (ds == null || ds.isEmpty()) return true;
         Connection c = null;
         try {
@@ -151,7 +150,7 @@ public class ChiTietPhieuNhapKho_DAO {
             }
             String sql = "INSERT INTO ChiTietPhieuNhap(soPhieu, maVT, soLuong, donGia) VALUES (?,?,?,?)";
             try (PreparedStatement ps = c.prepareStatement(sql)) {
-                for (ChiTietPhieuNhap_entity d : ds) {
+                for (ChiTietPhieuNhapKho_entity d : ds) {
                     ps.setString(1, soPhieu);
                     ps.setString(2, d.getMaVT());
                     ps.setInt(3, d.getSoLuong());
