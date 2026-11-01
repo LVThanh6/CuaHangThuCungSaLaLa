@@ -18,108 +18,106 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class LichLamViecGUI extends JPanel {
-    private CardLayout cardLayout;
-    private JPanel mainPanel;
-    private JPanel panelThang;
-    private JPanel panelNgay;
+    // Các Panel chia màn hình
+    private JPanel panelTrai_Lich;
+    private JPanel panelPhai_Timeline;
     
-    // Components
-    private TableMau bangTimeline;
+    // UI Lịch tháng
     private JLabel lblThangNam;
-    private JLabel lblTieuDeNgay;
     private JPanel gridLich;
     
-    // State Variables
+    // UI Timeline
+    private TableMau bangTimeline;
+    private JLabel lblTieuDeNgay;
+    
+    // Biến trạng thái
     private int thangHienTai = LocalDate.now().getMonthValue();
     private int namHienTai = LocalDate.now().getYear();
-    private LocalDate ngayDangChon = LocalDate.now();
+    private LocalDate ngayDangChon = LocalDate.now(); // Mặc định là hôm nay
     
+    // Dữ liệu
     private LichLamViec_DAO dao = new LichLamViec_DAO();
     private List<LichLamViec_entity> danhSachLichNgay;
 
     public LichLamViecGUI() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
         setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        mainPanel.setOpaque(false);
+        // Khởi tạo 2 nửa màn hình
+        panelTrai_Lich = taoGiaoDienLichThang();
+        panelPhai_Timeline = taoGiaoDienTimelineNgay();
 
-        panelThang = taoGiaoDienLichThang();
-        panelNgay = taoGiaoDienTimelineNgay();
+        // Sử dụng JSplitPane để chia đôi màn hình (Trái: Lịch | Phải: Timeline)
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTrai_Lich, panelPhai_Timeline);
+        splitPane.setDividerLocation(420); // Chiều rộng cố định cho bộ Lịch
+        splitPane.setDividerSize(8);
+        splitPane.setBorder(null);
+        splitPane.setOpaque(false);
 
-        mainPanel.add(panelThang, "THANG");
-        mainPanel.add(panelNgay, "NGAY");
-
-        add(mainPanel, BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
         
+        // Render dữ liệu mặc định ban đầu (Của ngày hôm nay)
         capNhatLichThang();
-        cardLayout.show(mainPanel, "THANG");
+        loadDuLieuNgay();
     }
 
     // ==============================================================
-    // 1. GIAO DIỆN LỊCH THÁNG (VIEW DẠNG LƯỚI)
+    // 1. KHỐI GIAO DIỆN BÊN TRÁI: LỊCH THÁNG
     // ==============================================================
     private JPanel taoGiaoDienLichThang() {
-        JPanel pnl = new JPanel(new BorderLayout(0, 20));
-        pnl.setOpaque(false);
-        pnl.setBorder(new EmptyBorder(20, 24, 20, 24));
+        JPanel pnl = new JPanel(new BorderLayout(0, 15));
+        pnl.setBackground(Color.WHITE);
+        pnl.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
+            new EmptyBorder(15, 15, 15, 15)
+        ));
 
+        // Header điều hướng Tháng/Năm
         JPanel pnlTop = new JPanel(new BorderLayout());
         pnlTop.setOpaque(false);
         
-        JLabel lblTieuDe = new JLabel("Lịch Làm Việc Tổng Quan");
-        lblTieuDe.setFont(RangBuocGiaoDien.fontDam(24));
-        lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
-        
-        JPanel pnlDieuHuong = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        pnlDieuHuong.setOpaque(false);
-        
-        JButton btnPrev = taoNutTrang("<");
-        JButton btnNext = taoNutTrang(">");
-        JButton btnHomNay = new JButton("Hôm nay");
-        btnHomNay.setFont(RangBuocGiaoDien.fontDam(14));
-        btnHomNay.setBackground(Color.WHITE);
-        btnHomNay.setFocusPainted(false);
-        
         lblThangNam = new JLabel("", SwingConstants.CENTER);
         lblThangNam.setFont(RangBuocGiaoDien.fontDam(18));
-        lblThangNam.setPreferredSize(new Dimension(160, 30));
+        lblThangNam.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         
+        JButton btnHomNay = new JButton("Hôm nay");
+        btnHomNay.setFont(RangBuocGiaoDien.fontDam(12));
+        btnHomNay.setBackground(new Color(220, 244, 238));
+        btnHomNay.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnHomNay.setFocusPainted(false);
+        
+        JButton btnPrev = taoNutDieuHuong("◀");
+        JButton btnNext = taoNutDieuHuong("▶");
+        
+        // Sự kiện đổi tháng
         btnPrev.addActionListener(e -> doiThang(-1));
         btnNext.addActionListener(e -> doiThang(1));
         btnHomNay.addActionListener(e -> {
             thangHienTai = LocalDate.now().getMonthValue();
             namHienTai = LocalDate.now().getYear();
+            ngayDangChon = LocalDate.now();
             capNhatLichThang();
+            loadDuLieuNgay();
         });
 
-        pnlDieuHuong.add(btnHomNay);
+        JPanel pnlDieuHuong = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
+        pnlDieuHuong.setOpaque(false);
         pnlDieuHuong.add(btnPrev);
         pnlDieuHuong.add(lblThangNam);
         pnlDieuHuong.add(btnNext);
-        
-        pnlTop.add(lblTieuDe, BorderLayout.WEST);
-        pnlTop.add(pnlDieuHuong, BorderLayout.EAST);
 
-        gridLich = new JPanel(new GridLayout(0, 7, 10, 10));
+        pnlTop.add(btnHomNay, BorderLayout.WEST);
+        pnlTop.add(pnlDieuHuong, BorderLayout.CENTER);
+
+        // Khung Grid chứa các ngày
+        gridLich = new JPanel(new GridLayout(0, 7, 8, 8));
         gridLich.setOpaque(false);
 
         pnl.add(pnlTop, BorderLayout.NORTH);
         pnl.add(gridLich, BorderLayout.CENTER);
         
         return pnl;
-    }
-
-    private JButton taoNutTrang(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(RangBuocGiaoDien.fontDam(14));
-        btn.setBackground(Color.WHITE);
-        btn.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
-        return btn;
     }
 
     private void doiThang(int delta) {
@@ -131,14 +129,14 @@ public class LichLamViecGUI extends JPanel {
             thangHienTai = 1;
             namHienTai++;
         }
-        capNhatLichThang();
+        capNhatLichThang(); // Render lại lịch tháng mới
     }
 
     private void capNhatLichThang() {
         gridLich.removeAll();
         lblThangNam.setText("Tháng " + thangHienTai + " / " + namHienTai);
         
-        String[] thu = {"Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"};
+        String[] thu = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
         for (String t : thu) {
             JLabel lbl = new JLabel(t, SwingConstants.CENTER);
             lbl.setFont(RangBuocGiaoDien.fontDam(14));
@@ -151,78 +149,76 @@ public class LichLamViecGUI extends JPanel {
         int dayOfWeek = firstDay.getDayOfWeek().getValue(); 
         int daysInMonth = ym.lengthOfMonth();
         
-        for (int i = 1; i < dayOfWeek; i++) {
-            gridLich.add(new JLabel("")); 
-        }
+        // Ô trống đầu tháng
+        for (int i = 1; i < dayOfWeek; i++) gridLich.add(new JLabel("")); 
         
+        // Nút bấm các ngày trong tháng
         for (int i = 1; i <= daysInMonth; i++) {
-            int currentDay = i;
+            LocalDate dateOfBtn = ym.atDay(i);
             JButton btnNgay = new JButton(String.valueOf(i));
-            btnNgay.setFont(RangBuocGiaoDien.fontDam(18));
+            btnNgay.setFont(RangBuocGiaoDien.fontDam(14));
             btnNgay.setCursor(new Cursor(Cursor.HAND_CURSOR));
             btnNgay.setFocusPainted(false);
             
-            LocalDate dateOfBtn = ym.atDay(i);
-            
-            if (dateOfBtn.equals(LocalDate.now())) {
+            // XỬ LÝ MÀU SẮC ĐÁNH DẤU TRẠNG THÁI NGÀY
+            if (dateOfBtn.equals(ngayDangChon)) {
+                // Đang được chọn (Màu xanh đậm)
                 btnNgay.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
                 btnNgay.setForeground(Color.WHITE);
                 btnNgay.setBorder(new LineBorder(RangBuocGiaoDien.MAU_CHU_DAO, 2, true));
+            } else if (dateOfBtn.equals(LocalDate.now())) {
+                // Hôm nay nhưng không được chọn (Xanh nhạt)
+                btnNgay.setBackground(new Color(220, 244, 238));
+                btnNgay.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+                btnNgay.setBorder(new LineBorder(RangBuocGiaoDien.MAU_CHU_DAO, 1, true));
             } else if (dateOfBtn.isBefore(LocalDate.now())) {
-                btnNgay.setBackground(new Color(241, 245, 249)); // Quá khứ
-                btnNgay.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+                // Quá khứ (Xám)
+                btnNgay.setBackground(new Color(245, 245, 245));
+                btnNgay.setForeground(Color.GRAY);
                 btnNgay.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
             } else {
-                btnNgay.setBackground(Color.WHITE); // Tương lai
+                // Tương lai (Trắng)
+                btnNgay.setBackground(Color.WHITE);
                 btnNgay.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
                 btnNgay.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
             }
             
+            // SỰ KIỆN KHI CLICK VÀO 1 NGÀY BẤT KỲ
             btnNgay.addActionListener(e -> {
-                ngayDangChon = dateOfBtn;
-                loadDuLieuNgay();
-                lblTieuDeNgay.setText("Timeline Lịch Ngày: " + ngayDangChon.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                cardLayout.show(mainPanel, "NGAY");
+                ngayDangChon = dateOfBtn; // Cập nhật ngày
+                capNhatLichThang(); // Vẽ lại lịch để bôi đậm ô vừa chọn
+                loadDuLieuNgay();   // Tải timeline bên phải lập tức
             });
             gridLich.add(btnNgay);
         }
         
+        // Điền ô trống cuối tháng cho đủ lưới
         int remainingCells = 42 - (dayOfWeek - 1 + daysInMonth);
-        for (int i = 0; i < remainingCells; i++) {
-            gridLich.add(new JLabel(""));
-        }
+        for (int i = 0; i < remainingCells; i++) gridLich.add(new JLabel(""));
         
         gridLich.revalidate();
         gridLich.repaint();
     }
 
     // ==============================================================
-    // 2. GIAO DIỆN TIMELINE NGÀY (VIEW TABLEMAU)
+    // 2. KHỐI GIAO DIỆN BÊN PHẢI: TIMELINE LỊCH TRÌNH
     // ==============================================================
     private JPanel taoGiaoDienTimelineNgay() {
-        JPanel pnl = new JPanel(new BorderLayout(0, 16));
+        JPanel pnl = new JPanel(new BorderLayout(0, 15));
         pnl.setBackground(Color.WHITE);
-        pnl.setBorder(new EmptyBorder(20, 24, 20, 24));
+        pnl.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
+            new EmptyBorder(15, 15, 15, 15)
+        ));
 
         JPanel pnlTop = new JPanel(new BorderLayout());
         pnlTop.setOpaque(false);
         
-        JButton btnQuayLai = taoNutTrang("⬅ Quay lại Lịch Tháng");
-        btnQuayLai.addActionListener(e -> {
-            capNhatLichThang(); 
-            cardLayout.show(mainPanel, "THANG");
-        });
-        
-        lblTieuDeNgay = new JLabel("Timeline Lịch Ngày: ");
+        lblTieuDeNgay = new JLabel("Timeline Ngày: ");
         lblTieuDeNgay.setFont(RangBuocGiaoDien.fontDam(18));
-        lblTieuDeNgay.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        lblTieuDeNgay.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
         
-        JPanel pnlTrai = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-        pnlTrai.setOpaque(false);
-        pnlTrai.add(btnQuayLai);
-        pnlTrai.add(lblTieuDeNgay);
-        
-        JPanel pnlHanhDong = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        JPanel pnlHanhDong = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         pnlHanhDong.setOpaque(false);
         
         JButton btnThem = new JButton("+ Thêm Lịch");
@@ -231,12 +227,12 @@ public class LichLamViecGUI extends JPanel {
         btnThem.setFont(RangBuocGiaoDien.fontDam(13));
         btnThem.addActionListener(e -> themLichLamViec());
 
-        JButton btnSua = new JButton("Sửa / Đổi Trạng Thái");
+        JButton btnSua = new JButton("Sửa / Đổi TT");
         btnSua.setFont(RangBuocGiaoDien.fontDam(13));
         btnSua.setBackground(Color.WHITE);
         btnSua.addActionListener(e -> kiemTraTruocKhiThaoTac(false));
 
-        JButton btnXoa = new JButton("Xóa Lịch");
+        JButton btnXoa = new JButton("Xóa");
         btnXoa.setFont(RangBuocGiaoDien.fontDam(13));
         btnXoa.setBackground(Color.WHITE);
         btnXoa.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
@@ -246,9 +242,10 @@ public class LichLamViecGUI extends JPanel {
         pnlHanhDong.add(btnSua);
         pnlHanhDong.add(btnXoa);
 
-        pnlTop.add(pnlTrai, BorderLayout.WEST);
+        pnlTop.add(lblTieuDeNgay, BorderLayout.WEST);
         pnlTop.add(pnlHanhDong, BorderLayout.EAST);
 
+        // Bảng dữ liệu 
         String[] cot = {"Mã LLV", "Mã NS", "Tên Nhân Sự", "Vai trò", "Bắt đầu", "Kết thúc", "Trạng thái"};
         bangTimeline = new TableMau(cot, new Object[][]{});
         
@@ -263,8 +260,11 @@ public class LichLamViecGUI extends JPanel {
     }
 
     private void loadDuLieuNgay() {
+        // Cập nhật tiêu đề bên phải
+        lblTieuDeNgay.setText("Timeline Ngày: " + ngayDangChon.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        
         bangTimeline.xoaTatCaDuLieu(); 
-        danhSachLichNgay = dao.getLichTheoNgay(ngayDangChon); 
+        danhSachLichNgay = dao.getLichTheoNgay(ngayDangChon); // DAO tự động lọc trạng thái
         
         for (LichLamViec_entity l : danhSachLichNgay) {
             bangTimeline.themDong(new Object[]{
@@ -275,13 +275,11 @@ public class LichLamViecGUI extends JPanel {
     }
 
     // ==============================================================
-    // 3. LOGIC XỬ LÝ (KIỂM TRA THỜI GIAN KHÓA CỨNG)
+    // 3. LOGIC XỬ LÝ QUYỀN HẠN (KHÓA CỨNG, KHÓA GIỜ)
     // ==============================================================
-    
     private void themLichLamViec() {
-        // NGHIỆP VỤ: Quá khứ không được phép thêm lịch
         if (ngayDangChon.isBefore(LocalDate.now())) {
-            JOptionPane.showMessageDialog(this, "Ngày cũ đã bị khóa! Không thể thêm lịch.", "Từ chối", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể thêm lịch làm việc vào ngày cũ!", "Từ chối", JOptionPane.ERROR_MESSAGE);
             return;
         }
         hienThiFormThongTin(null);
@@ -290,62 +288,58 @@ public class LichLamViecGUI extends JPanel {
     private void kiemTraTruocKhiThaoTac(boolean isXoa) {
         int r = bangTimeline.getSelectedRow();
         if (r == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 lịch làm việc để thao tác!");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 lịch làm việc trên Timeline để thao tác!");
             return;
         }
 
-        // NGHIỆP VỤ 1: Ngày hôm qua -> Khóa cứng 100% không cho sửa/xóa
+        // 1. Quá khứ -> Khóa cứng 100%
         if (ngayDangChon.isBefore(LocalDate.now())) {
-            JOptionPane.showMessageDialog(this, "Lịch của ngày cũ đã khóa cứng. Không thể tác động!", "Khóa chỉnh sửa", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lịch của ngày cũ đã bị khóa vĩnh viễn. Không thể sửa/xóa!", "Khóa chức năng", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         LichLamViec_entity llvChon = danhSachLichNgay.get(r);
         LocalDateTime thoiDiemBatDau = LocalDateTime.of(ngayDangChon, llvChon.getGioBatDau());
 
-        // NGHIỆP VỤ 2: Hôm nay + Đã quá giờ bắt đầu
+        // 2. Hôm nay nhưng đã quá giờ bắt đầu ca
         if (ngayDangChon.isEqual(LocalDate.now()) && LocalDateTime.now().isAfter(thoiDiemBatDau)) {
             if (isXoa) {
-                JOptionPane.showMessageDialog(this, "Không thể xóa ca làm việc đã hoặc đang diễn ra!", "Từ chối", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Không thể xóa ca làm việc đã hoặc đang diễn ra!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             } else {
-                // CHỈ CHO ĐỔI TRẠNG THÁI (Khóa đổi giờ)
-                hienThiFormDoiTrangThai(llvChon);
+                hienThiFormDoiTrangThai(llvChon); // Chặn Form Full, chỉ mở Form Mini cập nhật trạng thái
             }
         } 
-        // NGHIỆP VỤ 3: Hôm nay (Chưa tới giờ) HOẶC Ngày mai trở đi -> Cho phép Full chức năng
+        // 3. Chưa tới giờ -> Cho phép Sửa Full hoặc Xóa
         else {
             if (isXoa) {
-                if (JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa lịch này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn xóa lịch này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     dao.xoaLich(llvChon.getMaLLV());
                     loadDuLieuNgay();
                 }
             } else {
-                hienThiFormThongTin(llvChon); // Mở Full Edit
+                hienThiFormThongTin(llvChon); 
             }
         }
     }
 
     // ==============================================================
-    // 4. CÁC FORM THAO TÁC JDIALOG
+    // 4. DIALOG THÊM / SỬA / CẬP NHẬT
     // ==============================================================
-    
-    // FORM ĐỔI TRẠNG THÁI NHANH (Khi đã qua giờ bắt đầu)
     private void hienThiFormDoiTrangThai(LichLamViec_entity llv) {
         String[] options = {"Đang làm", "Hoàn thành", "Vắng mặt", "Đi trễ", "Về sớm"};
         String input = (String) JOptionPane.showInputDialog(this, 
-                "Ca làm việc này ĐÃ BẮT ĐẦU.\nBạn chỉ có thể cập nhật trạng thái:", 
-                "Cập nhật trạng thái", 
+                "Ca làm việc này đã trôi qua giờ bắt đầu.\nBạn chỉ có thể cập nhật trạng thái:", 
+                "Đánh dấu trạng thái", 
                 JOptionPane.QUESTION_MESSAGE, null, options, llv.getTrangThai());
                 
         if (input != null && !input.equals(llv.getTrangThai())) {
             if(dao.capNhatTrangThaiKhoa(llv.getMaLLV(), input)) {
                 loadDuLieuNgay();
-                JOptionPane.showMessageDialog(this, "Đổi trạng thái thành công!");
+                JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thành công!");
             }
         }
     }
 
-    // FORM THÊM / SỬA FULL (Khi chưa tới giờ)
     private void hienThiFormThongTin(LichLamViec_entity llvHienTai) {
         Window ancestor = SwingUtilities.getWindowAncestor(this);
         JDialog dialog = new JDialog((Frame) ancestor, llvHienTai == null ? "Thêm Lịch Mới" : "Sửa Lịch Làm Việc", true);
@@ -363,16 +357,16 @@ public class LichLamViecGUI extends JPanel {
         JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Chưa làm", "Hoàn thành", "Vắng mặt"});
         if (llvHienTai != null) cbTrangThai.setSelectedItem(llvHienTai.getTrangThai());
 
-        pnl.add(new JLabel("Mã Nhân Sự (NV/BS):"));
+        pnl.add(new JLabel("Mã NV / BS:"));
         pnl.add(txtMaNS);
-        pnl.add(new JLabel("Giờ Bắt Đầu (HH:mm):"));
+        pnl.add(new JLabel("Bắt Đầu (HH:mm):"));
         pnl.add(txtGioBD);
-        pnl.add(new JLabel("Giờ Kết Thúc (HH:mm):"));
+        pnl.add(new JLabel("Kết Thúc (HH:mm):"));
         pnl.add(txtGioKT);
         pnl.add(new JLabel("Trạng Thái:"));
         pnl.add(cbTrangThai);
 
-        JButton btnLuu = new JButton("Lưu Thông Tin");
+        JButton btnLuu = new JButton("Lưu Dữ Liệu");
         btnLuu.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
         btnLuu.setForeground(Color.WHITE);
         btnLuu.setFont(RangBuocGiaoDien.fontDam(14));
@@ -380,7 +374,7 @@ public class LichLamViecGUI extends JPanel {
         btnLuu.addActionListener(e -> {
             try {
                 if (txtMaNS.getText().trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "Mã nhân sự không được trống!");
+                    JOptionPane.showMessageDialog(dialog, "Vui lòng điền mã nhân sự!");
                     return;
                 }
                 
@@ -404,9 +398,7 @@ public class LichLamViecGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xử lý thành công!");
                 
             } catch (DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(dialog, "Lỗi: Giờ phải theo chuẩn (HH:mm). VD: 08:30", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "Lỗi không xác định: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Giờ phải đúng định dạng 24h (VD: 08:30, 14:00)", "Sai định dạng", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -417,5 +409,16 @@ public class LichLamViecGUI extends JPanel {
         dialog.add(pnl, BorderLayout.CENTER);
         dialog.add(pnlBtn, BorderLayout.SOUTH);
         dialog.setVisible(true);
+    }
+    
+    private JButton taoNutDieuHuong(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(RangBuocGiaoDien.fontDam(14));
+        btn.setBackground(Color.WHITE);
+        btn.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
+        return btn;
     }
 }
