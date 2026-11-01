@@ -189,9 +189,9 @@ public class DonThuoc_DAO {
         if (donThuoc == null || donThuoc.getMaDonThuoc() == null
                 || donThuoc.getMaTC() == null || donThuoc.getMaBacSi() == null
                 || donThuoc.getMaHSSK() == null || donThuoc.getNgayKeDon() == null
-                || !("Chờ lấy thuốc".equals(donThuoc.getTrangThai())
-                        || "Đã cấp thuốc".equals(donThuoc.getTrangThai()))) {
-            throw new IllegalArgumentException("Đơn thuốc phải có ngày kê và trạng thái hợp lệ.");
+                || donThuoc.getTrangThai() == null || donThuoc.getTrangThai().trim().isEmpty()) {
+            // Đã fix lỗi: Gỡ bỏ ràng buộc cứng "Chờ lấy thuốc" và "Đã cấp thuốc", cho phép các trạng thái khác (như "Hoàn thành") được thêm/sửa/load bình thường.
+            throw new IllegalArgumentException("Đơn thuốc phải có ngày kê và trạng thái không được để trống.");
         }
         if (chiTiet == null || chiTiet.isEmpty()) {
             throw new IllegalArgumentException("Đơn thuốc phải có ít nhất một loại thuốc.");
