@@ -2,7 +2,6 @@ package GUI;
 
 import java.awt.*;
 import java.sql.SQLException;
-
 import javax.swing.*;
 
 import GUI.BacSi.BacSiGUI;
@@ -15,8 +14,12 @@ import GUI.HoaDon.DSHoaDon_gui;
 import GUI.HoaDon.LapHoaDon_gui;
 import GUI.KhachHang.DanhSachKhachHangGUI;
 import GUI.KhachHang.QuanLyHangThanhVienGUI;
+
+// IMPORT GUI LỊCH & LỊCH HẸN
 import GUI.LichHen.DatLichMoiGUI;
 import GUI.LichHen.XemLichGUI;
+import GUI.LichHen.LichLamViecGUI; 
+
 import GUI.NhanVien.NhanVienGUI;
 import GUI.ThongKe.ThongKeGUI;
 import GUI.ThuCung.DonThuocGUI;
@@ -31,25 +34,11 @@ import GUI.VatTu.NhaCungCapGUI;
 import GUI.VatTu.PhieuNhapKhoGUI;
 import GUI.VatTu.PhieuXuatKhoGUI;
 
-/**
-- Class GiaoDienChinhGUI: 
-Khung giao diện chính của hệ thống SALALA Pet Shop.
-- 
-Bao gồm 2 phần:
-- Header (HeaderGUI): 
-Hiển thị logo, thông tin và phân quyền tabs theo vai
-- 
-trò người dùng (BorderLayout.NORTH).
-- 2. Main (panelNoiDung): 
-Vùng nội dung chính hiển thị các tab, chừa sẵn các
-- 
-hàm rỗng để nhúng class khác (BorderLayout.CENTER).
- */
 public class GiaoDienChinhGUI extends JPanel {
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
-    private HeaderGUI headerGUI; // Phần 1: Thanh Header
-    private JPanel panelNoiDung; // Phần 2: Vùng Main chứa nội dung tab bên trong
+    private HeaderGUI headerGUI; 
+    private JPanel panelNoiDung; 
     private JLabel nhanNoiDung;
     private String tabHienTai;
 
@@ -62,7 +51,6 @@ public class GiaoDienChinhGUI extends JPanel {
     // CONSTRUCTORS
     // ==========================================
     public GiaoDienChinhGUI() {
-        // Tự động lấy thông tin từ phiên đăng nhập hiện tại nếu có
         this(dao.DangNhap_DAO.isDaDangNhap() ? dao.DangNhap_DAO.getTenNguoiDung() : "Lê Văn Thành", 
              dao.DangNhap_DAO.isDaDangNhap() ? dao.DangNhap_DAO.getVaiTro() : "Quản lý");
     }
@@ -87,7 +75,6 @@ public class GiaoDienChinhGUI extends JPanel {
                 vatTuGUI::getDanhSachVatTu,
                 vatTuGUI::tangTon,
                 () -> {
-                    // Sự kiện bấm nút "+ Lập phiếu xuất" từ màn hình phiếu nhập
                     try {
                         if (headerGUI != null) {
                             headerGUI.chonMenuCon("Vật tư", "Phiếu xuất kho");
@@ -101,7 +88,6 @@ public class GiaoDienChinhGUI extends JPanel {
                 vatTuGUI::getDanhSachVatTu,
                 vatTuGUI::tangTon, 
                 vatTuGUI::getTonKho);
-        // ------------------------------------------------
 
         // 1. NHÚNG PHẦN HEADER VÀO NORTH
         headerGUI = new HeaderGUI(tenNguoiDung, chucVu);
@@ -111,25 +97,22 @@ public class GiaoDienChinhGUI extends JPanel {
         panelNoiDung = new JPanel(new BorderLayout());
         panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         panelNoiDung.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TAB_TOI_THIEU);
-        panelNoiDung.setPreferredSize(
-                new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
+        panelNoiDung.setPreferredSize(new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
         add(panelNoiDung, BorderLayout.CENTER);
 
         // 3. LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ HEADER
         headerGUI.setTabSelectionListener((tenTab, menuCon) -> {
             if (menuCon != null && !menuCon.isEmpty()) {
                 try {
-					xuLyChonMenuCon(tenTab, menuCon);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+                    xuLyChonMenuCon(tenTab, menuCon);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             } else {
                 xuLyChonTab(tenTab);
             }
         });
 
-        // Hiển thị tab mặc định ban đầu
         if (headerGUI.getTabHienTai() != null) {
             xuLyChonTab(headerGUI.getTabHienTai());
         }
@@ -138,19 +121,8 @@ public class GiaoDienChinhGUI extends JPanel {
     // ==========================================
     // CƠ CHẾ NHÚNG GIAO DIỆN (SET NỘI DUNG)
     // ==========================================
-    /**
-- 
-Nhúng một Component (JPanel, JScrollPane, ...) vào vùng nội dung chính.
-- 
-Mặc định component sẽ co giãn 100% diện tích của tab.
-     */
-    public void setNoiDung(Component comp) {
-        setNoiDung(comp, false);
-    }
-
     public void setNoiDung(Component comp, boolean cuonTrang) {
-        if (panelNoiDung == null)
-            return;
+        if (panelNoiDung == null) return;
         panelNoiDung.removeAll();
         if (comp != null) {
             if (comp instanceof JComponent) {
@@ -173,16 +145,12 @@ Mặc định component sẽ co giãn 100% diện tích của tab.
         panelNoiDung.revalidate();
         panelNoiDung.repaint();
     }
-
-    public void setNoiDung(Object view) {
-        if (view instanceof Component) {
-            setNoiDung((Component) view);
-        }
-    }
+    
+    public void setNoiDung(Component comp) { setNoiDung(comp, false); }
+    public void setNoiDung(Object view) { if (view instanceof Component) setNoiDung((Component) view); }
 
     public void hienThiNoiDungMacDinh(String thongBao) {
-        if (panelNoiDung == null)
-            return;
+        if (panelNoiDung == null) return;
         if (nhanNoiDung == null) {
             nhanNoiDung = new JLabel();
             nhanNoiDung.setHorizontalAlignment(SwingConstants.CENTER);
@@ -209,33 +177,15 @@ Mặc định component sẽ co giãn 100% diện tích của tab.
         hienThiNoiDungMacDinh("Đang xem tab: " + tenTab);
 
         switch (tenTab) {
-            case "Nhân viên":
-                hienThiTabNhanVien();
-                break;
-            case "Bác sĩ":
-                hienThiTabBacSi();
-                break;
-            case "Thú cưng":
-                hienThiTabThuCung();
-                break;
-            case "Khách hàng":
-                hienThiTabKhachHang();
-                break;
-            case "Hóa đơn":
-                hienThiTabHoaDon();
-                break;
-            case "Vật tư":
-                hienThiTabVatTu();
-                break;
-            case "Lịch hẹn":
-                hienThiTabLichHen();
-                break;
-            case "Dịch vụ":
-                hienThiTabDichVu();
-                break;
-            case "Thống kê":
-                hienThiThongKe();
-                break;
+            case "Nhân viên": hienThiTabNhanVien(); break;
+            case "Bác sĩ": hienThiTabBacSi(); break;
+            case "Thú cưng": hienThiTabThuCung(); break;
+            case "Khách hàng": hienThiTabKhachHang(); break;
+            case "Hóa đơn": hienThiTabHoaDon(); break;
+            case "Vật tư": hienThiTabVatTu(); break;
+            case "Lịch": hienThiTabLich(); break; 
+            case "Dịch vụ": hienThiTabDichVu(); break;
+            case "Thống kê": hienThiThongKe(); break;
         }
     }
 
@@ -244,91 +194,42 @@ Mặc định component sẽ co giãn 100% diện tích của tab.
         hienThiNoiDungMacDinh("Đang xem: " + tenTab + " ➔ " + tenMenuCon);
 
         switch (tenMenuCon) {
-            // Tab Nhân viên
-            case "Danh sách nhân viên":
-                hienThiDanhSachNhanVien();
-                break;
-            case "Danh sách bác sĩ":
-                hienThiDanhSachBacSi();
-                break;
-            case "Thống kê":
-                hienThiThongKe();
-                break;
-
-            // Tab Thú cưng
-            case "Hồ sơ thú cưng":
-                hienThiHoSoThuCung();
-                break;
-            case "Đơn Thuốc":
-                hienThiDonThuoc();
-                break;
-            case "Lịch sử khám":
-                hienThiLichSuKham();
-                break;
-
-            // Tab Khách hàng
-            case "Danh sách khách hàng":
-                hienThiDanhSachKhachHang();
-                break;
+            case "Danh sách nhân viên": hienThiDanhSachNhanVien(); break;
+            case "Danh sách bác sĩ": hienThiDanhSachBacSi(); break;
+            case "Thống kê": hienThiThongKe(); break;
+            case "Hồ sơ thú cưng": hienThiHoSoThuCung(); break;
+            case "Đơn Thuốc": hienThiDonThuoc(); break;
+            case "Lịch sử khám": hienThiLichSuKham(); break;
+            case "Danh sách khách hàng": hienThiDanhSachKhachHang(); break;
             case "Quản lý hạng thành viên":
-            case "Thẻ thành viên":
-                hienThiTheThanhVien();
-                break;
-
-            // Tab Hóa đơn
-            case "Tạo hóa đơn mới":
-                hienThiTaoHoaDonMoi();
-                break;
-            case "Danh sách hóa đơn":
-                hienThiDanhSachHoaDon();
-                break;
-
-            // Tab Vật tư
-            case "Vật tư":
-                hienThiVatTu();
-                break;
-            case "Nhà cung cấp":
-                hienThiNhaCungCap();
-                break;
-            case "Phiếu nhập kho":
-                hienThiPhieuNhapKho();
-                break;
-            case "Phiếu xuất kho":
-                hienThiPhieuXuatKho();
-                break;
-
-            // Tab Lịch hẹn
-            case "Xem lịch":
-                hienThiXemLich();
-                break;
-            case "Đặt lịch mới":
-                hienThiDatLichMoi();
-                break;
-
-            // Tab Dịch vụ
-            case "Bảng giá dịch vụ":
-                hienThiBangGiaDichVu();
-                break;
-            case "Khuyến mãi":
-                hienThiKhuyenMai();
-                break;
-            case "Thuế":
-                hienThiThue();
-                break;
+            case "Thẻ thành viên": hienThiTheThanhVien(); break;
+            case "Tạo hóa đơn mới": hienThiTaoHoaDonMoi(); break;
+            case "Danh sách hóa đơn": hienThiDanhSachHoaDon(); break;
+            case "Vật tư": hienThiVatTu(); break;
+            case "Nhà cung cấp": hienThiNhaCungCap(); break;
+            case "Phiếu nhập kho": hienThiPhieuNhapKho(); break;
+            case "Phiếu xuất kho": hienThiPhieuXuatKho(); break;
+            case "Bảng giá dịch vụ": hienThiBangGiaDichVu(); break;
+            case "Khuyến mãi": hienThiKhuyenMai(); break;
+            case "Thuế": hienThiThue(); break;
+            
+            // Tab Lịch & Lịch làm việc
+            case "Lịch hẹn (Khám)": hienThiXemLich(); break; 
+            case "Đặt lịch mới": hienThiDatLichMoi(); break;
+            case "Lịch làm việc": hienThiLichLamViec(); break; 
         }
     }
 
     // =========================================================================
     // CÁC HÀM CHO TAB CHÍNH VÀ MENU CON
     // =========================================================================
-
     public void hienThiTabNhanVien() { hienThiDanhSachNhanVien(); }
     public void hienThiTabBacSi() { hienThiDanhSachBacSi(); }
     public void hienThiTabThuCung() { hienThiHoSoThuCung(); }
     public void hienThiTabKhachHang() { hienThiDanhSachKhachHang(); }
     public void hienThiTabHoaDon() { hienThiDanhSachHoaDon(); }
     public void hienThiTabVatTu() { hienThiVatTu(); }
-    public void hienThiTabLichHen() { hienThiXemLich(); }
+    public void hienThiTabLich() { hienThiXemLich(); } 
     public void hienThiTabDichVu() { hienThiBangGiaDichVu(); }
 
     public void hienThiDanhSachNhanVien() { setNoiDung(new NhanVienGUI()); }
@@ -337,76 +238,46 @@ Mặc định component sẽ co giãn 100% diện tích của tab.
     public void hienThiHoSoThuCung() { setNoiDung(new HoSoThuCungGUI()); }
     public void hienThiDonThuoc() { setNoiDung(new DonThuocGUI()); }
     public void hienThiLichSuKham() { setNoiDung(new LichSuKhamGUI()); }
-    
-    // Khởi tạo các hàm hiển thị tab Vật tư (sử dụng biến đã cấp phát sẵn)
     public void hienThiVatTu() { setNoiDung(vatTuGUI); }
-    public void hienThiNhaCungCap() { setNoiDung(new NhaCungCapGUI()); } // Nhà cung cấp chạy độc lập
+    public void hienThiNhaCungCap() { setNoiDung(new NhaCungCapGUI()); }
     public void hienThiPhieuNhapKho() { setNoiDung(phieuNhapGUI); }
     public void hienThiPhieuXuatKho() { setNoiDung(phieuXuatGUI); }
     
     public void hienThiDanhSachKhachHang() {
-        try {
-            setNoiDung(new DanhSachKhachHangGUI());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage());
-        }
+        try { setNoiDung(new DanhSachKhachHangGUI()); } 
+        catch (Throwable t) { hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage()); }
     }
-
     public void hienThiTheThanhVien() { hienThiQuanLyHangThanhVien(); }
-
     public void hienThiQuanLyHangThanhVien() {
-        try {
-            setNoiDung(new QuanLyHangThanhVienGUI());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            hienThiNoiDungMacDinh("Lỗi hiển thị Hạng thành viên: " + t.getMessage());
-        }
+        try { setNoiDung(new QuanLyHangThanhVienGUI()); } 
+        catch (Throwable t) { hienThiNoiDungMacDinh("Lỗi hiển thị Hạng thành viên: " + t.getMessage()); }
     }
 
     public void hienThiTaoHoaDonMoi() throws SQLException { setNoiDung(new LapHoaDon_gui()); }
     public void hienThiDanhSachHoaDon() {
         setNoiDung(new DSHoaDon_gui(() -> {
-            try {
-                hienThiTaoHoaDonMoi();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            try { hienThiTaoHoaDonMoi(); } catch (SQLException e) { e.printStackTrace(); }
         }));
     }
+    
     public void hienThiXemLich() { setNoiDung(new XemLichGUI()); }
     public void hienThiDatLichMoi() { setNoiDung(new DatLichMoiGUI()); }
+    public void hienThiLichLamViec() { setNoiDung(new LichLamViecGUI()); }
+    
     public void hienThiBangGiaDichVu() { setNoiDung(new DichVuGUI()); }
     public void hienThiKhuyenMai() { setNoiDung(new KhuyenMaiGUI()); }
     public void hienThiThue() { setNoiDung(new ThueGUI()); }
 
-
     // ==========================================
     // TIỆN ÍCH ĐĂNG XUẤT
     // ==========================================
-    /**
-- 
-Gọi hàm này khi người dùng bấm nút Đăng xuất trên HeaderGUI.
-- 
-Xóa dao.DangNhap_DAO, đóng frame chính và mở lại form đăng nhập.
-- 
-@param frameChinh JFrame chứa giao diện hiện tại
-     */
     public static void xuLyDangXuat(JFrame frameChinh) {
-        dao.DangNhap_DAO.dangXuat(); // Hủy thông tin phiên làm việc
-        
-        if (frameChinh != null) {
-            frameChinh.dispose(); // Đóng giao diện chính
-        }
-        
-        // Mở lại màn hình đăng nhập
+        dao.DangNhap_DAO.dangXuat();
+        if (frameChinh != null) frameChinh.dispose();
         DangNhapGUI login = new DangNhapGUI();
         login.setVisible(true);
     }
 
-    // ==========================================
-    // TIỆN ÍCH CÀI ĐẶT CỬA SỔ CHUẨN
-    // ==========================================
     public static void caiDatKichThuocCuaSo(JFrame frame, boolean moFullManHinh) {
         frame.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TOI_THIEU);
         if (moFullManHinh) {
@@ -451,7 +322,7 @@ Xóa dao.DangNhap_DAO, đóng frame chính và mở lại form đăng nhập.
                 connectDB.ConnectDB.getInstance().connect();
             } catch (Exception ignored) {}
 
-            // 2. Chạy ứng dụng: Gọi giao diện Đăng Nhập đầu tiên thay vì giao diện chính
+            // 2. Chạy ứng dụng: Gọi giao diện Đăng Nhập đầu tiên
             DangNhapGUI login = new DangNhapGUI();
             login.setVisible(true);
         });
