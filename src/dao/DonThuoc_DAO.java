@@ -224,4 +224,15 @@ public class DonThuoc_DAO {
         }
         return con;
     }
+    
+ // Thêm hàm cập nhật nhanh trạng thái đơn thuốc
+    public boolean capNhatTrangThai(String maDonThuoc, String trangThaiMoi) throws SQLException {
+        String sql = "UPDATE DonThuoc SET trangThai = ? WHERE maDonThuoc = ?";
+        try (Connection con = ketNoi(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, trangThaiMoi);
+            ps.setString(2, maDonThuoc);
+            return ps.executeUpdate() > 0;
+        }
+    }
+    
 }
