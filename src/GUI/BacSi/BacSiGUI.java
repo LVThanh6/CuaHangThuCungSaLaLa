@@ -728,32 +728,49 @@ public class BacSiGUI extends JPanel {
     private void moForm(BacSi_entity goc, boolean chiXem) {
         String maHienThi;
         if (goc == null) {
-            try {
-                maHienThi = dao.getMaTiepTheo();
-            } catch (SQLException ex) {
-                baoLoi("Không thể tạo mã bác sĩ mới", ex);
-                return;
-            }
+            try { maHienThi = dao.getMaTiepTheo(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
         } else {
             maHienThi = goc.getMaBacSi();
         }
 
         Window cha = SwingUtilities.getWindowAncestor(this);
-        String tieuDe = goc == null ? "Thêm bác sĩ" : (chiXem ? "Thông tin bác sĩ" : "Chỉnh sửa bác sĩ");
+        String tieuDe = goc == null ? "Thêm bác sĩ mới" : (chiXem ? "Chi tiết hồ sơ bác sĩ" : "Cập nhật hồ sơ bác sĩ");
         JDialog dlg = new JDialog(cha, tieuDe, Dialog.ModalityType.APPLICATION_MODAL);
 
         final boolean coTK = goc != null && goc.getMaTK() != null;
 
+        // Khởi tạo các Component
         JTextField txtMa = new JTextField(maHienThi);
-        txtMa.setEditable(false);
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getHoTen()));
-        JComboBox<String> cbGT = new JComboBox<>(new String[] { "Nam", "Nữ" });
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
+        JTextField txtEmail = new JTextField(goc == null ? "" : nz(goc.getEmail()));
+        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(goc.getNgaySinh()));
+        JTextField txtLuongThang = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongThang()));
+        JTextField txtSoCa = new JTextField(String.valueOf(goc == null ? 0 : goc.getSoCaKham()));
+        
+        JComboBox<String> cbGT = new JComboBox<>(new String[] { "Nam", "Nữ" });
         JComboBox<String> cbCN = new JComboBox<>();
         taiDanhSachChuyenNganh(cbCN, false);
+        
+        JComboBox<String> cbTT = coTK
+                ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.TAM_NGHI.nhan })
+                : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
+
+        // Nạp dữ liệu
+        if (goc != null) {
+            if (goc.getGioiTinh() != null) cbGT.setSelectedItem(goc.getGioiTinh());
+            if (goc.getChuyenNganh() != null) cbCN.setSelectedItem(goc.getChuyenNganh());
+            if (coTK) cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
+        }
+
+        // Khóa các trường không cho sửa thủ công
+        txtMa.setEditable(false);
+        txtSoCa.setEditable(false);
+        cbTT.setEnabled(coTK && !chiXem);
+
+        // Thêm chuyên ngành mới
         cbCN.addActionListener(e -> {
-            String selected = (String) cbCN.getSelectedItem();
-            if ("+ Thêm chuyên ngành mới...".equals(selected)) {
+            if (!chiXem && "+ Thêm chuyên ngành mới...".equals(cbCN.getSelectedItem())) {
                 String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành", JOptionPane.QUESTION_MESSAGE);
                 if (tenMoi != null && !tenMoi.isBlank()) {
                     try {
@@ -761,83 +778,68 @@ public class BacSiGUI extends JPanel {
                         taiDanhSachChuyenNganh(cbCN, false);
                         cbCN.setSelectedItem(tenMoi.trim());
                     } catch (SQLException ex) {
-                        JOptionPane.showMessageDialog(dlg, "Không thể thêm chuyên ngành: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dlg, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                         cbCN.setSelectedIndex(0);
                     }
-                } else {
-                    cbCN.setSelectedIndex(0);
-                }
+                } else cbCN.setSelectedIndex(0);
             }
         });
-        JTextField txtEmail = new JTextField(goc == null ? "" : nz(goc.getEmail()));
-        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null
-                ? ""
-                : DINH_DANG_NGAY.format(goc.getNgaySinh()));
-        JTextField txtLuongThang = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongThang()));
-        JTextField txtSoCa = new JTextField(String.valueOf(goc == null ? 0 : goc.getSoCaKham()));
-        txtSoCa.setEditable(false);
 
-        JComboBox<String> cbTT = coTK
-                ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.TAM_NGHI.nhan })
-                : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
-
-        if (goc != null) {
-            if (goc.getGioiTinh() != null)
-                cbGT.setSelectedItem(goc.getGioiTinh());
-            if (goc.getChuyenNganh() != null)
-                cbCN.setSelectedItem(goc.getChuyenNganh());
-            if (coTK)
-                cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
+        // Định dạng style cho Form
+        JComponent[] fields = {txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT};
+        for (JComponent f : fields) {
+            f.setFont(RangBuocGiaoDien.fontDam(13));
+            if (f instanceof JTextField) {
+                JTextField tf = (JTextField) f;
+                tf.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
+                if (chiXem || !tf.isEditable()) {
+                    tf.setEditable(false);
+                    tf.setBackground(new Color(248, 250, 252));
+                    tf.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+                }
+            }
         }
-        cbTT.setEnabled(coTK && !chiXem);
-
+        
         if (chiXem) {
-            txtTen.setEditable(false);
-            txtSdt.setEditable(false);
-            txtEmail.setEditable(false);
-            txtNgay.setEditable(false);
-            txtLuongThang.setEditable(false);
-            cbGT.setEnabled(false);
-            cbCN.setEnabled(false);
+            cbGT.setEnabled(false); cbCN.setEnabled(false);
         }
 
-        JPanel noiDung = new JPanel(new GridBagLayout());
-        noiDung.setBackground(Color.WHITE);
-        noiDung.setBorder(new EmptyBorder(20, 24, 16, 24));
-        GridBagConstraints gc = new GridBagConstraints();
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        gc.weightx = 1;
-        gc.gridx = 0;
-        gc.insets = new Insets(0, 0, 4, 0);
+        // Bố cục Form (Grid 2 Cột)
+        JPanel pnlForm = new JPanel(new GridLayout(0, 2, 24, 16));
+        pnlForm.setBackground(Color.WHITE);
+        pnlForm.setBorder(new EmptyBorder(24, 32, 16, 32));
 
-        String[] nhan = { "Mã bác sĩ", "Họ và tên", "Giới tính", "Số điện thoại", "Chuyên ngành",
-                "Email", "Ngày sinh (dd/MM/yyyy)", "Lương tháng (₫)", "Số ca khám tháng này", "Trạng thái tài khoản" };
-        JComponent[] truong = { txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT };
-        for (int i = 0; i < nhan.length; i++) {
-            JLabel l = new JLabel(nhan[i]);
-            l.setFont(RangBuocGiaoDien.fontThuong(12));
-            l.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-            gc.gridy = i * 2;
-            noiDung.add(l, gc);
-            truong[i].setFont(RangBuocGiaoDien.fontThuong(13));
-            truong[i].setPreferredSize(new Dimension(340, 34));
-            gc.gridy = i * 2 + 1;
-            gc.insets = new Insets(0, 0, 10, 0);
-            noiDung.add(truong[i], gc);
-            gc.insets = new Insets(0, 0, 4, 0);
+        String[] nhanLbl = { 
+            "Mã bác sĩ", "Họ và tên (*)", 
+            "Số điện thoại (*)", "Email", 
+            "Giới tính", "Ngày sinh (dd/MM/yyyy)", 
+            "Chuyên ngành", "Lương cơ bản (VNĐ)", 
+            "Trạng thái hoạt động", "Số ca khám tháng này"
+        };
+        JComponent[] nhanCmp = {txtMa, txtTen, txtSdt, txtEmail, cbGT, txtNgay, cbCN, txtLuongThang, cbTT, txtSoCa};
+
+        for (int i = 0; i < nhanLbl.length; i++) {
+            JPanel box = new JPanel(new BorderLayout(0, 6));
+            box.setBackground(Color.WHITE);
+            JLabel lbl = new JLabel(nhanLbl[i]);
+            lbl.setFont(RangBuocGiaoDien.fontThuong(12));
+            lbl.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+            box.add(lbl, BorderLayout.NORTH);
+            box.add(nhanCmp[i], BorderLayout.CENTER);
+            pnlForm.add(box);
         }
 
         JLabel lblLoi = new JLabel(" ");
         lblLoi.setFont(RangBuocGiaoDien.fontThuong(12));
         lblLoi.setForeground(MAU_DO);
-        gc.gridy = nhan.length * 2;
-        noiDung.add(lblLoi, gc);
+        lblLoi.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JButton btnHuy = new JButton(chiXem ? "Đóng" : "Hủy");
+        JButton btnHuy = new JButton(chiXem ? "Đóng" : "Hủy thao tác");
         dinhDangNut(btnHuy, false);
         btnHuy.addActionListener(e -> dlg.dispose());
 
-        JButton btnLuu = new JButton("Lưu");
+        JButton btnLuu = new JButton("Lưu thay đổi");
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             String ten = txtTen.getText().trim();
@@ -848,71 +850,62 @@ public class BacSiGUI extends JPanel {
             LocalDate ngay = null;
             double luongThang = 0;
 
-            if (ten.isEmpty()) {
-                loi = "Vui lòng nhập họ và tên.";
-            } else if (!sdt.matches("0\\d{9}")) {
-                loi = "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.";
-            } else if (!email.isEmpty() && !email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
-                loi = "Email không hợp lệ.";
-            } else if (!ngayStr.isEmpty()) {
+            if (ten.isEmpty()) loi = "Vui lòng nhập họ và tên.";
+            else if (!sdt.matches("0\\d{9}")) loi = "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.";
+            else if (!email.isEmpty() && !email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) loi = "Email không hợp lệ.";
+            else if (!ngayStr.isEmpty()) {
                 try {
                     ngay = LocalDate.parse(ngayStr, DINH_DANG_NGAY);
-                    if (ngay.isAfter(LocalDate.now()))
-                        loi = "Ngày sinh không được ở tương lai.";
-                } catch (DateTimeParseException ex) {
-                    loi = "Ngày sinh không hợp lệ (định dạng dd/MM/yyyy).";
-                }
+                    if (ngay.isAfter(LocalDate.now())) loi = "Ngày sinh không được ở tương lai.";
+                } catch (DateTimeParseException ex) { loi = "Ngày sinh không hợp lệ (dd/MM/yyyy)."; }
             }
+            
             if (loi == null) {
                 try {
                     luongThang = Double.parseDouble(txtLuongThang.getText().replaceAll("[.,\\s]", ""));
-                    if (luongThang < 0)
-                        loi = "Lương tháng không được âm.";
-                } catch (NumberFormatException ex) {
-                    loi = "Lương tháng không hợp lệ (nhập số, ví dụ 25000000).";
-                }
+                    if (luongThang < 0) loi = "Lương tháng không được âm.";
+                } catch (NumberFormatException ex) { loi = "Lương tháng không hợp lệ (nhập số)."; }
             }
-            if (loi != null) {
-                lblLoi.setText(loi);
-                return;
-            }
+            
+            if (loi != null) { lblLoi.setText(loi); return; }
 
-            String gt = (String) cbGT.getSelectedItem();
-            String cn = (String) cbCN.getSelectedItem();
             try {
                 if (goc == null) {
-                    dao.them(new BacSi_entity(txtMa.getText(), null, ten, gt, sdt, cn, email, ngay, luongThang, 0, null));
+                    dao.them(new BacSi_entity(txtMa.getText(), null, ten, (String) cbGT.getSelectedItem(), sdt, (String) cbCN.getSelectedItem(), email, ngay, luongThang, 0, null));
                 } else {
-                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten, gt, sdt, cn, email, ngay, luongThang, goc.getSoCaKham(), goc.getTrangThaiTK()));
-                    if (coTK) {
-                        boolean hoatDong = cbTT.getSelectedIndex() == 0;
-                        if (hoatDong != Boolean.TRUE.equals(goc.getTrangThaiTK())) {
-                            dao.doiTrangThaiTaiKhoan(goc.getMaBacSi(), hoatDong);
-                        }
+                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten, (String) cbGT.getSelectedItem(), sdt, (String) cbCN.getSelectedItem(), email, ngay, luongThang, goc.getSoCaKham(), goc.getTrangThaiTK()));
+                    if (coTK && cbTT.getSelectedIndex() == 0 != Boolean.TRUE.equals(goc.getTrangThaiTK())) {
+                        dao.doiTrangThaiTaiKhoan(goc.getMaBacSi(), cbTT.getSelectedIndex() == 0);
                     }
                 }
-            } catch (SQLException ex) {
-                lblLoi.setText("Lỗi CSDL: " + ex.getMessage());
-                return;
-            }
-            dlg.dispose();
-            taiLai();
+            } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
+            
+            dlg.dispose(); taiLai();
         });
 
-        JPanel nut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel pnlLoi = new JPanel(new BorderLayout());
+        pnlLoi.setBackground(Color.WHITE);
+        pnlLoi.add(lblLoi, BorderLayout.CENTER);
+
+        JPanel nut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         nut.setBackground(Color.WHITE);
-        nut.setBorder(new EmptyBorder(0, 24, 16, 24));
+        nut.setBorder(new EmptyBorder(16, 32, 24, 32));
         nut.add(btnHuy);
-        if (!chiXem)
-            nut.add(btnLuu);
+        if (!chiXem) nut.add(btnLuu);
+
+        JPanel pnlDuoi = new JPanel(new BorderLayout());
+        pnlDuoi.setBackground(Color.WHITE);
+        pnlDuoi.add(pnlLoi, BorderLayout.NORTH);
+        pnlDuoi.add(nut, BorderLayout.SOUTH);
 
         dlg.getContentPane().setLayout(new BorderLayout());
         dlg.getContentPane().setBackground(Color.WHITE);
-        dlg.getContentPane().add(noiDung, BorderLayout.CENTER);
-        dlg.getContentPane().add(nut, BorderLayout.SOUTH);
+        dlg.getContentPane().add(pnlForm, BorderLayout.CENTER);
+        dlg.getContentPane().add(pnlDuoi, BorderLayout.SOUTH);
         dlg.pack();
+        dlg.setSize(750, dlg.getHeight() + 20);
         dlg.setResizable(false);
-        dlg.setLocationRelativeTo(this);
+        dlg.setLocationRelativeTo(null); // HIỂN THỊ GIỮA MÀN HÌNH
         dlg.setVisible(true);
     }
 
