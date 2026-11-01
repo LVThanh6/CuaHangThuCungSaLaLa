@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  * Quy tắc: chỉ phiếu "Đã xuất" mới trừ tồn kho; không được xuất quá số lượng tồn hiện tại.
  * (Lưu file với encoding UTF-8 để hiển thị đúng tiếng Việt.)
  */
-public class PhieuXuatKho extends JPanel {
+public class PhieuXuatKhoGUI extends JPanel {
 
     // ===== Màu sắc =====
     private static final Color BG          = new Color(0xF8FAFC);
@@ -136,7 +136,7 @@ public class PhieuXuatKho extends JPanel {
      * @param stockUpdater    được gọi khi xác nhận phiếu: (mã vật tư, -số lượng xuất)
      * @param tonKho          trả về tồn kho hiện tại của một mã vật tư
      */
-    public PhieuXuatKho(Supplier<java.util.List<Object[]>> catalogSupplier,
+    public PhieuXuatKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
                         BiConsumer<String, Integer> stockUpdater,
                         Function<String, Integer> tonKho) {
         this.catalogSupplier = catalogSupplier;
@@ -315,10 +315,39 @@ public class PhieuXuatKho extends JPanel {
         filterLeft.add(btnDate);
         filterLeft.add(cboTrangThai);
 
+        RoundButton btnXem = new RoundButton("Xem", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnSua = new RoundButton("Sửa", WHITE, BORDER, TEXT_DARK);
         RoundButton btnExport = new RoundButton("⤓  Xuất danh sách", WHITE, BORDER, TEXT_DARK);
+
+        btnXem.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiếu xuất trong danh sách để xem.", "Chưa chọn phiếu", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < pageRows.size()) {
+                xemPhieu(pageRows.get(modelRow));
+            }
+        });
+
+        btnSua.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiếu xuất trong danh sách để sửa.", "Chưa chọn phiếu", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < pageRows.size()) {
+                suaPhieu(pageRows.get(modelRow));
+            }
+        });
         btnExport.addActionListener(e -> xuatDanhSach());
-        JPanel filterRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+
+        JPanel filterRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         filterRight.setOpaque(false);
+        filterRight.add(btnXem);
+        filterRight.add(btnSua);
         filterRight.add(btnExport);
 
         JPanel filter = new JPanel(new BorderLayout());
@@ -329,7 +358,7 @@ public class PhieuXuatKho extends JPanel {
 
         // ---- bảng ----
         String[] cols = {"Mã phiếu xuất", "Ngày xuất", "Nhân viên", "Lý do xuất",
-                "Số lượng mặt hàng", "Tổng giá trị", "Trạng thái", "Thao tác"};
+                "Số lượng mặt hàng", "Tổng giá trị", "Trạng thái"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -358,23 +387,10 @@ public class PhieuXuatKho extends JPanel {
         table.getColumnModel().getColumn(4).setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.RIGHT, false));
         table.getColumnModel().getColumn(5).setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.RIGHT, true));
         table.getColumnModel().getColumn(6).setCellRenderer(new StatusRenderer());
-        table.getColumnModel().getColumn(7).setCellRenderer(new ActionRenderer());
-        int[] widths = {90, 100, 140, 190, 120, 110, 110, 110};
+        int[] widths = {90, 100, 140, 190, 120, 110, 110};
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
-
-        table.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onTableClick(e); }
-        });
-        table.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override public void mouseMoved(MouseEvent e) {
-                int c = table.columnAtPoint(e.getPoint());
-                int r = table.rowAtPoint(e.getPoint());
-                boolean hand = c == 7 && r >= 0;
-                table.setCursor(Cursor.getPredefinedCursor(hand ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
-            }
-        });
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER));
@@ -583,16 +599,6 @@ public class PhieuXuatKho extends JPanel {
         else text = "Ngày xuất: đến " + denNgay.format(DF);
         btnDate.setText(text);
         reload(true);
-    }
-
-    private void onTableClick(MouseEvent e) {
-        int r = table.rowAtPoint(e.getPoint());
-        int c = table.columnAtPoint(e.getPoint());
-        if (r < 0 || c != 7 || r >= pageRows.size()) return;
-        int relX = e.getX() - table.getCellRect(r, c, false).x;
-        Phieu p = pageRows.get(r);
-        if (relX < 58) xemPhieu(p);
-        else if (relX < 104) suaPhieu(p);
     }
 
     // =====================================================================
@@ -1239,28 +1245,7 @@ public class PhieuXuatKho extends JPanel {
         }
     }
 
-    /** Cột thao tác: "Xem" và "Sửa" (vị trí khớp với onTableClick: Xem 12-58px, Sửa 58-104px). */
-    private static class ActionRenderer implements TableCellRenderer {
-        private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        ActionRenderer() {
-            panel.setBorder(new EmptyBorder(11, 12, 0, 0));
-            panel.add(link("Xem"));
-            panel.add(link("Sửa"));
-        }
-        private static JLabel link(String text) {
-            JLabel l = new JLabel(text);
-            l.setFont(new Font(FONT, Font.BOLD, 12));
-            l.setForeground(PRIMARY);
-            l.setPreferredSize(new Dimension(46, 20));
-            return l;
-        }
-        @Override
-        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            panel.setOpaque(true);
-            panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
-            return panel;
-        }
-    }
+
 
     private static class Badge extends JLabel {
         private Color bg = GRAY_BG;
