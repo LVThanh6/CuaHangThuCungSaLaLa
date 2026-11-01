@@ -189,9 +189,9 @@ public class DonThuoc_DAO {
         if (donThuoc == null || donThuoc.getMaDonThuoc() == null
                 || donThuoc.getMaTC() == null || donThuoc.getMaBacSi() == null
                 || donThuoc.getMaHSSK() == null || donThuoc.getNgayKeDon() == null
-                || !("Chờ lấy thuốc".equals(donThuoc.getTrangThai())
-                        || "Đã cấp thuốc".equals(donThuoc.getTrangThai()))) {
-            throw new IllegalArgumentException("Đơn thuốc phải có ngày kê và trạng thái hợp lệ.");
+                || donThuoc.getTrangThai() == null || donThuoc.getTrangThai().trim().isEmpty()) {
+            // Đã fix lỗi: Gỡ bỏ ràng buộc cứng "Chờ lấy thuốc" và "Đã cấp thuốc", cho phép các trạng thái khác (như "Hoàn thành") được thêm/sửa/load bình thường.
+            throw new IllegalArgumentException("Đơn thuốc phải có ngày kê và trạng thái không được để trống.");
         }
         if (chiTiet == null || chiTiet.isEmpty()) {
             throw new IllegalArgumentException("Đơn thuốc phải có ít nhất một loại thuốc.");
@@ -224,4 +224,15 @@ public class DonThuoc_DAO {
         }
         return con;
     }
+    
+ // Thêm hàm cập nhật nhanh trạng thái đơn thuốc
+    public boolean capNhatTrangThai(String maDonThuoc, String trangThaiMoi) throws SQLException {
+        String sql = "UPDATE DonThuoc SET trangThai = ? WHERE maDonThuoc = ?";
+        try (Connection con = ketNoi(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, trangThaiMoi);
+            ps.setString(2, maDonThuoc);
+            return ps.executeUpdate() > 0;
+        }
+    }
+    
 }
