@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  * Quy tắc: chỉ phiếu "Đã xuất" mới trừ tồn kho; không được xuất quá số lượng tồn hiện tại.
  * (Lưu file với encoding UTF-8 để hiển thị đúng tiếng Việt.)
  */
-public class PhieuXuatKho extends JPanel {
+public class PhieuXuatKhoGUI extends JPanel {
 
     // ===== Màu sắc =====
     private static final Color BG          = new Color(0xF8FAFC);
@@ -136,7 +136,7 @@ public class PhieuXuatKho extends JPanel {
      * @param stockUpdater    được gọi khi xác nhận phiếu: (mã vật tư, -số lượng xuất)
      * @param tonKho          trả về tồn kho hiện tại của một mã vật tư
      */
-    public PhieuXuatKho(Supplier<java.util.List<Object[]>> catalogSupplier,
+    public PhieuXuatKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
                         BiConsumer<String, Integer> stockUpdater,
                         Function<String, Integer> tonKho) {
         this.catalogSupplier = catalogSupplier;

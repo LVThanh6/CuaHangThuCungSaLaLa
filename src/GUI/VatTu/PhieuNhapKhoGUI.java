@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  *            hủy phiếu, xuất / in phiếu.
  * (Lưu file với encoding UTF-8 để hiển thị đúng tiếng Việt.)
  */
-public class PhieuNhapKho extends JPanel {
+public class PhieuNhapKhoGUI extends JPanel {
 
     // ===== Màu sắc =====
     private static final Color BG          = new Color(0xF8FAFC);
@@ -114,7 +114,7 @@ public class PhieuNhapKho extends JPanel {
      * @param stockUpdater    được gọi khi xác nhận phiếu: (mã vật tư, số lượng cộng thêm)
      * @param onLapPhieuXuat  được gọi khi bấm "+ Lập phiếu xuất" (có thể null)
      */
-    public PhieuNhapKho(Supplier<java.util.List<Object[]>> catalogSupplier,
+    public PhieuNhapKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
                         BiConsumer<String, Integer> stockUpdater,
                         Runnable onLapPhieuXuat) {
         this.catalogSupplier = catalogSupplier;

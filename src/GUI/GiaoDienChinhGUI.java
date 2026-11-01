@@ -22,17 +22,28 @@ import GUI.ThongKe.ThongKeGUI;
 import GUI.ThuCung.DonThuocGUI;
 import GUI.ThuCung.HoSoThuCungGUI;
 import GUI.ThuCung.LichSuKhamGUI;
-import GUI.VatTu.VatTu;
 import GUI.TaiKhoan.DangNhapGUI;
 import dao.DangNhap_DAO;
 
+// Các GUI thuộc tab Vật tư
+import GUI.VatTu.VatTuGUI;
+import GUI.VatTu.NhaCungCapGUI;
+import GUI.VatTu.PhieuNhapKhoGUI;
+import GUI.VatTu.PhieuXuatKhoGUI;
+
 /**
- * Class GiaoDienChinhGUI: Khung giao diện chính của hệ thống SALALA Pet Shop.
- * Bao gồm 2 phần:
- * 1. Header (HeaderGUI): Hiển thị logo, thông tin và phân quyền tabs theo vai
- * trò người dùng (BorderLayout.NORTH).
- * 2. Main (panelNoiDung): Vùng nội dung chính hiển thị các tab, chừa sẵn các
- * hàm rỗng để nhúng class khác (BorderLayout.CENTER).
+- Class GiaoDienChinhGUI: 
+Khung giao diện chính của hệ thống SALALA Pet Shop.
+- 
+Bao gồm 2 phần:
+- Header (HeaderGUI): 
+Hiển thị logo, thông tin và phân quyền tabs theo vai
+- 
+trò người dùng (BorderLayout.NORTH).
+- 2. Main (panelNoiDung): 
+Vùng nội dung chính hiển thị các tab, chừa sẵn các
+- 
+hàm rỗng để nhúng class khác (BorderLayout.CENTER).
  */
 public class GiaoDienChinhGUI extends JPanel {
 
@@ -41,6 +52,11 @@ public class GiaoDienChinhGUI extends JPanel {
     private JPanel panelNoiDung; // Phần 2: Vùng Main chứa nội dung tab bên trong
     private JLabel nhanNoiDung;
     private String tabHienTai;
+
+    // --- KHAI BÁO CÁC ĐỐI TƯỢNG DÙNG CHUNG CHO TAB VẬT TƯ ---
+    private VatTuGUI vatTuGUI;
+    private PhieuNhapKhoGUI phieuNhapGUI;
+    private PhieuXuatKhoGUI phieuXuatGUI;
 
     // ==========================================
     // CONSTRUCTORS
@@ -63,6 +79,29 @@ public class GiaoDienChinhGUI extends JPanel {
         setBackground(Color.WHITE);
         setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TOI_THIEU);
         setPreferredSize(RangBuocGiaoDien.KICH_THUOC_MAC_DINH);
+
+        // --- KHỞI TẠO DỮ LIỆU LIÊN KẾT CHO TAB VẬT TƯ ---
+        vatTuGUI = new VatTuGUI();
+        
+        phieuNhapGUI = new PhieuNhapKhoGUI(
+                vatTuGUI::getDanhSachVatTu,
+                vatTuGUI::tangTon,
+                () -> {
+                    // Sự kiện bấm nút "+ Lập phiếu xuất" từ màn hình phiếu nhập
+                    try {
+                        if (headerGUI != null) {
+                            headerGUI.chonMenuCon("Vật tư", "Phiếu xuất kho");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+        phieuXuatGUI = new PhieuXuatKhoGUI(
+                vatTuGUI::getDanhSachVatTu,
+                vatTuGUI::tangTon, 
+                vatTuGUI::getTonKho);
+        // ------------------------------------------------
 
         // 1. NHÚNG PHẦN HEADER VÀO NORTH
         headerGUI = new HeaderGUI(tenNguoiDung, chucVu);
@@ -100,8 +139,10 @@ public class GiaoDienChinhGUI extends JPanel {
     // CƠ CHẾ NHÚNG GIAO DIỆN (SET NỘI DUNG)
     // ==========================================
     /**
-     * Nhúng một Component (JPanel, JScrollPane, ...) vào vùng nội dung chính.
-     * Mặc định component sẽ co giãn 100% diện tích của tab.
+- 
+Nhúng một Component (JPanel, JScrollPane, ...) vào vùng nội dung chính.
+- 
+Mặc định component sẽ co giãn 100% diện tích của tab.
      */
     public void setNoiDung(Component comp) {
         setNoiDung(comp, false);
@@ -242,6 +283,20 @@ public class GiaoDienChinhGUI extends JPanel {
                 hienThiDanhSachHoaDon();
                 break;
 
+            // Tab Vật tư
+            case "Vật tư":
+                hienThiVatTu();
+                break;
+            case "Nhà cung cấp":
+                hienThiNhaCungCap();
+                break;
+            case "Phiếu nhập kho":
+                hienThiPhieuNhapKho();
+                break;
+            case "Phiếu xuất kho":
+                hienThiPhieuXuatKho();
+                break;
+
             // Tab Lịch hẹn
             case "Xem lịch":
                 hienThiXemLich();
@@ -272,7 +327,7 @@ public class GiaoDienChinhGUI extends JPanel {
     public void hienThiTabThuCung() { hienThiHoSoThuCung(); }
     public void hienThiTabKhachHang() { hienThiDanhSachKhachHang(); }
     public void hienThiTabHoaDon() { hienThiDanhSachHoaDon(); }
-    public void hienThiTabVatTu() { setNoiDung(new VatTu()); }
+    public void hienThiTabVatTu() { hienThiVatTu(); }
     public void hienThiTabLichHen() { hienThiXemLich(); }
     public void hienThiTabDichVu() { hienThiBangGiaDichVu(); }
 
@@ -282,6 +337,12 @@ public class GiaoDienChinhGUI extends JPanel {
     public void hienThiHoSoThuCung() { setNoiDung(new HoSoThuCungGUI()); }
     public void hienThiDonThuoc() { setNoiDung(new DonThuocGUI()); }
     public void hienThiLichSuKham() { setNoiDung(new LichSuKhamGUI()); }
+    
+    // Khởi tạo các hàm hiển thị tab Vật tư (sử dụng biến đã cấp phát sẵn)
+    public void hienThiVatTu() { setNoiDung(vatTuGUI); }
+    public void hienThiNhaCungCap() { setNoiDung(new NhaCungCapGUI()); } // Nhà cung cấp chạy độc lập
+    public void hienThiPhieuNhapKho() { setNoiDung(phieuNhapGUI); }
+    public void hienThiPhieuXuatKho() { setNoiDung(phieuXuatGUI); }
     
     public void hienThiDanhSachKhachHang() {
         try {
@@ -324,9 +385,12 @@ public class GiaoDienChinhGUI extends JPanel {
     // TIỆN ÍCH ĐĂNG XUẤT
     // ==========================================
     /**
-     * Gọi hàm này khi người dùng bấm nút Đăng xuất trên HeaderGUI.
-     * Xóa dao.DangNhap_DAO, đóng frame chính và mở lại form đăng nhập.
-     * @param frameChinh JFrame chứa giao diện hiện tại
+- 
+Gọi hàm này khi người dùng bấm nút Đăng xuất trên HeaderGUI.
+- 
+Xóa dao.DangNhap_DAO, đóng frame chính và mở lại form đăng nhập.
+- 
+@param frameChinh JFrame chứa giao diện hiện tại
      */
     public static void xuLyDangXuat(JFrame frameChinh) {
         dao.DangNhap_DAO.dangXuat(); // Hủy thông tin phiên làm việc
