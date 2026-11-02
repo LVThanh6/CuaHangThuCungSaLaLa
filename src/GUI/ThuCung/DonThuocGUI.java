@@ -59,7 +59,6 @@ public class DonThuocGUI extends JPanel {
         "Tùy chỉnh khoảng ngày..."
     };
     
-    private final String[] dsSoDongTrang = { "8", "16", "32" };
     
     private final DonThuoc_DAO donThuocDAO = new DonThuoc_DAO();
     private final ChiTietDonThuoc_DAO chiTietDAO = new ChiTietDonThuoc_DAO();
@@ -70,8 +69,6 @@ public class DonThuocGUI extends JPanel {
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<DonThuoc_entity> danhSachDonThuoc = new ArrayList<>();
     private List<DonThuoc_entity> daLoc = new ArrayList<>();
-    private int trangHienTai = 1;
-    private int soDongMoiTrang = 8;
     
     private LocalDate tuNgay;
     private LocalDate denNgay;
@@ -89,9 +86,8 @@ public class DonThuocGUI extends JPanel {
     private TableMau bangDonThuoc;
     private JScrollPane thanhCuonBang;
 
-    private JPanel panelPhanTrang, panelTrang;
+    private JPanel panelPhanTrang;
     private JLabel nhanThongTinTrang;
-    private JComboBox<String> cboSoDongTrang;
 
     public DonThuocGUI() {
         khoiTaoGiaoDien();
@@ -222,24 +218,16 @@ public class DonThuocGUI extends JPanel {
     }
 
     private void khoiTaoPhanTrang() {
-        panelPhanTrang = new JPanel(new BorderLayout()); panelPhanTrang.setOpaque(false);
+        panelPhanTrang = new JPanel(new BorderLayout());
+        panelPhanTrang.setOpaque(false);
         panelPhanTrang.setPreferredSize(new Dimension(0, CHIEU_CAO_THANH_PHAN_TRANG));
-        panelPhanTrang.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(0, 20, 0, 20)));
-
-        nhanThongTinTrang = new JLabel("Hiển thị 0 trong 0 đơn thuốc");
-        nhanThongTinTrang.setFont(RangBuocGiaoDien.fontThuong(12)); nhanThongTinTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        JLabel nhanSoDongTrang = new JLabel("Số dòng / trang"); nhanSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(12)); nhanSoDongTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        cboSoDongTrang = new JComboBox<>(dsSoDongTrang); cboSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(13));
-        cboSoDongTrang.setBackground(RangBuocGiaoDien.MAU_NEN_THE); cboSoDongTrang.setPreferredSize(new Dimension(64, 34));
-
-        panelTrang = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 11)); panelTrang.setOpaque(false);
-
-        JPanel panelBenPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 11)); panelBenPhai.setOpaque(false);
-        panelBenPhai.add(nhanSoDongTrang); panelBenPhai.add(cboSoDongTrang); panelBenPhai.add(Box.createHorizontalStrut(10)); panelBenPhai.add(panelTrang);
-
-        panelPhanTrang.add(nhanThongTinTrang, BorderLayout.WEST); panelPhanTrang.add(panelBenPhai, BorderLayout.EAST);
+        panelPhanTrang.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
+                new EmptyBorder(0, 20, 0, 20)));
+        nhanThongTinTrang = new JLabel();
+        nhanThongTinTrang.setFont(RangBuocGiaoDien.fontThuong(12));
+        nhanThongTinTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        panelPhanTrang.add(nhanThongTinTrang, BorderLayout.WEST);
     }
 
     private void caiDatSuKien() {
@@ -254,11 +242,6 @@ public class DonThuocGUI extends JPanel {
         
         // Sự kiện xuất thuốc & tự động tạo hóa đơn
         nutXuatThuoc.addActionListener(e -> xuatThuocVaTaoHoaDon());
-        
-        cboSoDongTrang.addActionListener(e -> {
-            soDongMoiTrang = Integer.parseInt((String) cboSoDongTrang.getSelectedItem());
-            trangHienTai = 1; capNhatBang();
-        });
         
         txtTimKiem.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
@@ -337,40 +320,21 @@ public class DonThuocGUI extends JPanel {
             }
         }
         
-        trangHienTai = 1;
         capNhatBang();
         capNhatThongKe(); 
     }
 
-    private int tongTrang() { return Math.max(1, (int) Math.ceil(daLoc.size() / (double) soDongMoiTrang)); }
-
     private void capNhatBang() {
         int tong = daLoc.size();
-        int tu = (trangHienTai - 1) * soDongMoiTrang;
-        int den = Math.min(tu + soDongMoiTrang, tong);
-        
         DefaultTableModel model = (DefaultTableModel) bangDonThuoc.getModel();
         model.setRowCount(0);
         
-        for (int i = tu; i < den; i++) {
+        for (int i = 0; i < tong; i++) {
             DonThuoc_entity don = daLoc.get(i);
             model.addRow(new Object[] { don.getMaDonThuoc(), value(don.getTenThuCung()) + " (" + don.getMaTC() + ")", don.getMaHSSK(), don.getTenBacSi(), don.getNgayKeDon() == null ? "" : DINH_DANG_NGAY_GIO.format(don.getNgayKeDon()), don.getSoLoaiThuoc(), value(don.getGhiChu()), don.getTrangThai() });
         }
         bangDonThuoc.clearSelection(); capNhatTrangThaiNutHanhDong();
-        nhanThongTinTrang.setText(tong == 0 ? "Không có đơn thuốc phù hợp" : "Hiển thị " + (tu + 1) + "–" + den + " trong " + tong + " đơn thuốc");
-        veNutTrang();
-    }
-
-    private void veNutTrang() {
-        panelTrang.removeAll(); int tong = tongTrang();
-        panelTrang.add(taoNutTrang("<", false, trangHienTai > 1, () -> { trangHienTai--; capNhatBang(); }));
-        int dau = Math.max(1, Math.min(trangHienTai - 2, tong - 4)), cuoi = Math.min(tong, dau + 4);
-        for (int p = dau; p <= cuoi; p++) {
-            final int trang = p;
-            panelTrang.add(taoNutTrang(String.valueOf(p), p == trangHienTai, true, () -> { trangHienTai = trang; capNhatBang(); }));
-        }
-        panelTrang.add(taoNutTrang(">", false, trangHienTai < tong, () -> { trangHienTai++; capNhatBang(); }));
-        panelTrang.revalidate(); panelTrang.repaint();
+        nhanThongTinTrang.setText(tong == 0 ? "Không có đơn thuốc phù hợp" : "Hiển thị tất cả " + tong + " đơn thuốc");
     }
 
     private void capNhatThongKe() {
@@ -631,12 +595,6 @@ public class DonThuocGUI extends JPanel {
 
     private JComboBox<String> taoOChon(String[] ds, int rong) { JComboBox<String> o = new JComboBox<>(ds); o.setFont(RangBuocGiaoDien.fontThuong(13)); o.setBackground(RangBuocGiaoDien.MAU_NEN_THE); o.setPreferredSize(new Dimension(rong, CHIEU_CAO_O_NHAP)); return o; }
     private JButton taoNutLienKet(String chu, Color mau) { JButton nut = new JButton(chu); nut.setFont(RangBuocGiaoDien.fontThuong(12)); nut.setForeground(mau); nut.setContentAreaFilled(false); nut.setBorderPainted(false); nut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); return nut; }
-    private NutBoTron taoNutTrang(String chu, boolean dangChon, boolean choPhep, Runnable hanhDong) {
-        NutBoTron nut = dangChon ? new NutBoTron(chu, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8) : new NutBoTron(chu, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH, 8);
-        nut.setFont(RangBuocGiaoDien.fontThuong(12)); nut.setPreferredSize(new Dimension(chu.length() > 2 ? 40 : 34, 34));
-        nut.setEnabled(choPhep); if (choPhep) nut.addActionListener(e -> hanhDong.run()); return nut;
-    }
-
     private static class OTrangThai extends JPanel implements TableCellRenderer {
         private final JTable bang; private String chu = ""; private Color mauNen = RangBuocGiaoDien.MAU_TRUNG_TINH_NEN, mauChu = RangBuocGiaoDien.MAU_TRUNG_TINH_CHU;
         OTrangThai(JTable bang) { this.bang = bang; }

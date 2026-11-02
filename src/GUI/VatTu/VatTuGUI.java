@@ -84,16 +84,13 @@ public class VatTuGUI extends JPanel {
     private final List<VatTuEntity> tatCa = new ArrayList<>();
     private final List<VatTuEntity> daLoc = new ArrayList<>();
     private final Set<String> daChon = new HashSet<>();
-    private int trangHienTai = 1;
-    private int soDongMoiTrang = 8;
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
-    private JComboBox<String> cbDanhMuc, cbTrangThai, cbSoDong;
+    private JComboBox<String> cbDanhMuc, cbTrangThai;
     private JTable bang;
     private BangModel model;
     private JLabel lblHienThi;
-    private JPanel panelTrang;
     private final JLabel[] lblSoLieu = new JLabel[4];
 
     public VatTuGUI() {
@@ -301,35 +298,10 @@ public class VatTuGUI extends JPanel {
         lblHienThi.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         chan.add(lblHienThi, BorderLayout.WEST);
 
-        JPanel phai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        phai.setOpaque(false);
-
-        JLabel lblSoDong = new JLabel("Số dòng / trang");
-        lblSoDong.setFont(RangBuocGiaoDien.fontThuong(12));
-        lblSoDong.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        cbSoDong = new JComboBox<>(new String[] { "8", "16", "24" });
-        cbSoDong.setFont(RangBuocGiaoDien.fontThuong(12));
-        cbSoDong.setPreferredSize(new Dimension(64, 32));
-        cbSoDong.addActionListener(e -> {
-            soDongMoiTrang = Integer.parseInt((String) cbSoDong.getSelectedItem());
-            trangHienTai = 1;
-            capNhatBang();
-        });
-
-        panelTrang = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        panelTrang.setOpaque(false);
-
-        phai.add(lblSoDong);
-        phai.add(cbSoDong);
-        phai.add(Box.createHorizontalStrut(10));
-        phai.add(panelTrang);
-        chan.add(phai, BorderLayout.EAST);
         return chan;
     }
 
     private void locTuDau() {
-        trangHienTai = 1;
         apDungLoc();
     }
 
@@ -378,71 +350,17 @@ public class VatTuGUI extends JPanel {
             });
         }
 
-        trangHienTai = Math.max(1, Math.min(trangHienTai, tongTrang()));
         capNhatBang();
-    }
-
-    private int tongTrang() {
-        return Math.max(1, (int) Math.ceil(daLoc.size() / (double) soDongMoiTrang));
     }
 
     private void capNhatBang() {
         int tong = daLoc.size();
-        int tu = (trangHienTai - 1) * soDongMoiTrang;
-        int den = Math.min(tu + soDongMoiTrang, tong);
-        model.datHang(tu < den ? daLoc.subList(tu, den) : new ArrayList<VatTuEntity>());
+        model.datHang(daLoc);
         lblHienThi.setText(tong == 0
                 ? "Không có mặt hàng phù hợp"
-                : "Hiển thị " + (tu + 1) + "–" + den + " trong " + tong + " mặt hàng");
-        veNutTrang();
+                : "Hiển thị tất cả " + tong + " mặt hàng");
         bang.getTableHeader().repaint();
     }
-
-    private void veNutTrang() {
-        panelTrang.removeAll();
-        int tong = tongTrang();
-        panelTrang.add(taoNutTrang("<", false, trangHienTai > 1, () -> {
-            trangHienTai--;
-            capNhatBang();
-        }));
-
-        int dau = Math.max(1, Math.min(trangHienTai - 2, tong - 4));
-        int cuoi = Math.min(tong, dau + 4);
-        for (int p = dau; p <= cuoi; p++) {
-            final int trang = p;
-            panelTrang.add(taoNutTrang(String.valueOf(p), p == trangHienTai, true, () -> {
-                trangHienTai = trang;
-                capNhatBang();
-            }));
-        }
-
-        panelTrang.add(taoNutTrang(">", false, trangHienTai < tong, () -> {
-            trangHienTai++;
-            capNhatBang();
-        }));
-        panelTrang.revalidate();
-        panelTrang.repaint();
-    }
-
-    private JButton taoNutTrang(String text, boolean chon, boolean choPhep, Runnable hanhDong) {
-        JButton b = new JButton(text);
-        b.setFont(RangBuocGiaoDien.fontVua(12));
-        b.setFocusPainted(false);
-        b.setContentAreaFilled(false);
-        b.setOpaque(true);
-        b.setMargin(new Insets(0, 0, 0, 0));
-        b.setPreferredSize(new Dimension(34, 32));
-        b.setBorder(new LineBorder(chon ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
-        b.setBackground(chon ? RangBuocGiaoDien.MAU_CHU_DAO : Color.WHITE);
-        b.setForeground(chon ? Color.WHITE : RangBuocGiaoDien.MAU_CHU_CHINH);
-        b.setEnabled(choPhep);
-        if (choPhep) {
-            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            b.addActionListener(e -> hanhDong.run());
-        }
-        return b;
-    }
-
 
     private static String boDau(String s) {
         String t = Normalizer.normalize(s.toLowerCase(VN), Normalizer.Form.NFD).replaceAll("\\p{M}", "");

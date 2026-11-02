@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Giao diện Danh sách khách hàng:
- * Hiển thị thẻ thống kê, thanh tìm kiếm, bộ lọc, bảng dữ liệu và phân trang.
+ * Hiển thị thẻ thống kê, thanh tìm kiếm, bộ lọc và toàn bộ bảng dữ liệu.
  * Tích hợp toàn bộ chức năng Thêm, Xem chi tiết, Chỉnh sửa, Xóa, Lọc, Xuất CSV
  * từ CSDL SALALA.
  */
@@ -231,7 +231,6 @@ public class DanhSachKhachHangGUI extends JPanel {
                 "Tìm theo tên, mã khách hàng, số điện thoại...",
                 danhSachBoLoc);
 
-        panelQuanLyTable.anPhanTrang();
         panelQuanLyTable.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     }
 

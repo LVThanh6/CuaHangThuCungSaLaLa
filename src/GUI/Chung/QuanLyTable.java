@@ -11,7 +11,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
- * Lớp PanelQuanLyMau: Tích hợp TableMau cùng Thanh tìm kiếm, Bộ lọc, Nút xuất file và Phân trang chuẩn giao diện SALALA.
+ * Lớp PanelQuanLyMau: Tích hợp TableMau cùng thanh tìm kiếm, bộ lọc và nút xuất file.
  */
 public class QuanLyTable extends JPanel {
 
@@ -19,8 +19,6 @@ public class QuanLyTable extends JPanel {
     private JTextField txtTimKiem;
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> rowSorter;
-    private JLabel lblThongTinTrang;
-    private JPanel panelPhanTrang;
     private java.util.List<JComboBox<String>> listComboBoxBoLoc = new java.util.ArrayList<>();
 
     public QuanLyTable(String[] tenCot, Object[][] duLieu, String placeholderTimKiem, String[] danhSachBoLoc) {
@@ -124,57 +122,7 @@ public class QuanLyTable extends JPanel {
         panelCardBang.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
         panelCardBang.add(scrollPane, BorderLayout.CENTER);
 
-        // 3. THANH PHÂN TRANG PHÍA DƯỚI
-        panelPhanTrang = new JPanel(new BorderLayout());
-        panelPhanTrang.setOpaque(false);
-        panelPhanTrang.setBorder(new EmptyBorder(12, 16, 12, 16));
-
-        lblThongTinTrang = new JLabel("Hiển thị 1–" + (duLieu != null ? duLieu.length : 0) + " trong " + (duLieu != null ? duLieu.length : 0) + " bản ghi");
-        lblThongTinTrang.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblThongTinTrang.setForeground(new Color(100, 116, 139));
-        panelPhanTrang.add(lblThongTinTrang, BorderLayout.WEST);
-
-        JPanel panelNutTrang = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        panelNutTrang.setOpaque(false);
-        
-        JLabel lblSoDong = new JLabel("Số dòng / trang");
-        lblSoDong.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSoDong.setForeground(new Color(100, 116, 139));
-        panelNutTrang.add(lblSoDong);
-
-        JComboBox<String> cbSoDong = new JComboBox<>(new String[]{"8", "10", "15", "20"});
-        cbSoDong.setPreferredSize(new Dimension(60, 32));
-        panelNutTrang.add(cbSoDong);
-
-        panelNutTrang.add(taoNutPhanTrang("‹", false));
-        panelNutTrang.add(taoNutPhanTrang("1", true)); // Trang đang chọn
-        panelNutTrang.add(taoNutPhanTrang("2", false));
-        panelNutTrang.add(taoNutPhanTrang("3", false));
-        panelNutTrang.add(taoNutPhanTrang("›", false));
-
-        panelPhanTrang.add(panelNutTrang, BorderLayout.EAST);
-        panelCardBang.add(panelPhanTrang, BorderLayout.SOUTH);
-
         add(panelCardBang, BorderLayout.CENTER);
-    }
-
-    // Hàm phụ trợ tạo nút phân trang phong cách hiện đại
-    private JButton taoNutPhanTrang(String text, boolean dangChon) {
-        JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(32, 32));
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        if (dangChon) {
-            btn.setBackground(new Color(14, 116, 101)); // Màu chủ đạo SALALA
-            btn.setForeground(Color.WHITE);
-            btn.setBorder(BorderFactory.createLineBorder(new Color(14, 116, 101), 1));
-        } else {
-            btn.setBackground(Color.WHITE);
-            btn.setForeground(new Color(30, 41, 59));
-            btn.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
-        }
-        return btn;
     }
 
     public DefaultTableModel getModel() {
@@ -255,33 +203,7 @@ public class QuanLyTable extends JPanel {
                     model.addRow(row);
                 }
             }
-            if (lblThongTinTrang != null) {
-                int total = model.getRowCount();
-                lblThongTinTrang.setText("Hiển thị 1–" + total + " trong " + total + " bản ghi");
-            }
         }
-    }
-
-    public void setHienThiPhanTrang(boolean hienThi) {
-        if (panelPhanTrang != null) {
-            panelPhanTrang.setVisible(hienThi);
-        }
-    }
-
-    public void anPhanTrang() {
-        if (panelPhanTrang != null) {
-            panelPhanTrang.setVisible(false);
-            Container parent = panelPhanTrang.getParent();
-            if (parent != null) {
-                parent.remove(panelPhanTrang);
-                parent.revalidate();
-                parent.repaint();
-            }
-        }
-    }
-
-    public JPanel getPanelPhanTrang() {
-        return panelPhanTrang;
     }
 
     // --- TÍCH HỢP CLASS TableMau ---
