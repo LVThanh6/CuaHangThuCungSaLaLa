@@ -14,6 +14,8 @@ import java.text.Collator;
 import java.text.Normalizer;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
@@ -33,8 +35,10 @@ import javax.swing.table.TableCellRenderer;
 
 import dao.BacSi_DAO;
 import dao.ChuyenNganh_DAO;
+import dao.LichLamViec_DAO;
 import entity.ChuyenNganh_entity;
 import entity.BacSi_entity;
+import entity.LichLamViec_entity;
 
 /**
  * Class BacSiGUI: Màn hình "Danh sách bác sĩ" kết nối CSDL SALALA.
@@ -909,26 +913,51 @@ public class BacSiGUI extends JPanel {
         dlg.setVisible(true);
     }
 
-    private void moLich(BacSi_entity bs) {
-        String[] cot = { "Thứ", "Ca sáng (08:00–12:00)", "Ca chiều (13:30–17:30)" };
-        String[] thu = { "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy", "Chủ nhật" };
-        int ngayNghi;
-        try {
-            ngayNghi = Integer.parseInt(bs.getMaBacSi().replaceAll("\\D", "")) % 6;
-        } catch (NumberFormatException ex) {
-            ngayNghi = 0;
-        }
+    private String dinhDangGio(java.time.LocalTime gio) {
+        return gio == null ? "—" : gio.format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
 
+    private void moLich(BacSi_entity bs) {
+        LocalDate dauTuan = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate cuoiTuan = dauTuan.plusWeeks(1);
+        String[] cot = { "Ngày", "Bắt đầu", "Kết thúc", "Trạng thái" };
         DefaultTableModel m = new DefaultTableModel(cot, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
             }
         };
-        boolean lamViec = TrangThai.tuEntity(bs) == TrangThai.DANG_LAM;
-        for (int i = 0; i < 7; i++) {
-            boolean nghi = !lamViec || i == 6 || i == ngayNghi;
-            m.addRow(new Object[] { thu[i], nghi ? "Nghỉ" : "Khám bệnh", (nghi || i == 5) ? "Nghỉ" : "Khám bệnh" });
+
+        try {
+            List<LichLamViec_entity> lichTrongTuan =
+                    new LichLamViec_DAO().getLichTrongKhoang(dauTuan, cuoiTuan);
+            for (LocalDate ngay = dauTuan; ngay.isBefore(cuoiTuan); ngay = ngay.plusDays(1)) {
+                boolean coLich = false;
+                for (LichLamViec_entity lich : lichTrongTuan) {
+                    if (lich.getLoaiNhanSu() == LichLamViec_entity.LoaiNhanSu.BAC_SI
+                            && bs.getMaBacSi().equals(lich.getMaNhanSu())
+                            && ngay.equals(lich.getNgay())) {
+                        coLich = true;
+                        m.addRow(new Object[]{
+                                ngay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                                dinhDangGio(lich.getGioBatDau()),
+                                dinhDangGio(lich.getGioKetThuc()),
+                                lich.getTrangThai()
+                        });
+                    }
+                }
+                if (!coLich) {
+                    m.addRow(new Object[]{
+                            ngay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                            "—", "—", "Không có lịch"
+                    });
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Không tải được lịch làm việc của bác sĩ: " + ex.getMessage(),
+                    "Lỗi tải lịch", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         JTable t = new JTable(m);
@@ -942,8 +971,9 @@ public class BacSiGUI extends JPanel {
         JLabel lblTieuDe = new JLabel(bs.getHoTen() + " · " + bs.getChuyenNganh());
         lblTieuDe.setFont(RangBuocGiaoDien.fontDam(14));
         lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
-        JLabel lblGhiChu = new JLabel(lamViec ? "Lịch làm việc trong tuần"
-                : "Bác sĩ hiện không làm việc (" + TrangThai.tuEntity(bs).nhan + ")");
+        JLabel lblGhiChu = new JLabel("Lịch đã xếp từ "
+                + dauTuan.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + " đến " + cuoiTuan.minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         lblGhiChu.setFont(RangBuocGiaoDien.fontThuong(12));
         lblGhiChu.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 

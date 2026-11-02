@@ -149,7 +149,8 @@ GO
 CREATE TABLE LichLamViec
 (
     maLLV        VARCHAR(20) NOT NULL,
-    maNhanVien   VARCHAR(20) NOT NULL,
+    maNhanVien   VARCHAR(20) NULL,
+    maBacSi      VARCHAR(20) NULL,
     ngay         DATE,
     gioBatDau    TIME,
     gioKetThuc   TIME,
@@ -157,6 +158,11 @@ CREATE TABLE LichLamViec
 
     CONSTRAINT PK_LichLamViec PRIMARY KEY (maLLV),
     CONSTRAINT FK_LichLamViec_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
+    CONSTRAINT FK_LichLamViec_BacSi FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi),
+    CONSTRAINT CK_LichLamViec_NhanSu CHECK (
+        (maNhanVien IS NOT NULL AND maBacSi IS NULL)
+        OR (maNhanVien IS NULL AND maBacSi IS NOT NULL)
+    ),
     CONSTRAINT CK_LichLamViec_Gio CHECK (gioKetThuc IS NULL OR gioBatDau IS NULL OR gioKetThuc > gioBatDau)
 );
 GO
