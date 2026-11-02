@@ -1,8 +1,8 @@
-package GUI.TaiKhoan;
+﻿package GUI.TaiKhoan;
 
 import dao.DangNhap_DAO;
 import dao.TaiKhoan_DAO;
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.GiaoDienChinhGUI;

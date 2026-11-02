@@ -1,4 +1,4 @@
-package GUI.HoaDon;
+﻿package GUI.HoaDon;
 
 import dao.KhachHang_DAO;
 import dao.ThuCung_DAO;
@@ -14,7 +14,7 @@ import dao.DangNhap_DAO;
 import dao.DonThuoc_DAO;
 import dao.ChiTietDonThuoc_DAO;
 import connectDB.ConnectDB;
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 import entity.KhachHang;
 import entity.ChiTietDonThuoc_entity;

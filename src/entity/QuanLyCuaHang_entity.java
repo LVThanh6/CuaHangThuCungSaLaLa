@@ -1,13 +1,14 @@
-package model;
+package entity;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
- * Model đại diện cho bảng QuanLyCuaHang trong CSDL SALALA.
+ * Entity đại diện cho bảng QuanLyCuaHang trong CSDL SALALA.
  */
-public class QuanLyCuaHang implements Serializable {
+public class QuanLyCuaHang_entity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String maQuanLy;
@@ -15,14 +16,14 @@ public class QuanLyCuaHang implements Serializable {
     private String hoTenQuanLy;
     private String sdt;
     private String diaChi;
-    private Date ngaySinh;
+    private LocalDate ngaySinh;
     private String gioiTinh;
     private double luongCoBan;
 
-    public QuanLyCuaHang() {
+    public QuanLyCuaHang_entity() {
     }
 
-    public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh, String gioiTinh, double luongCoBan) {
+    public QuanLyCuaHang_entity(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, LocalDate ngaySinh, String gioiTinh, double luongCoBan) {
         this.maQuanLy = maQuanLy;
         this.maTK = maTK;
         this.hoTenQuanLy = hoTenQuanLy;
@@ -31,6 +32,10 @@ public class QuanLyCuaHang implements Serializable {
         this.ngaySinh = ngaySinh;
         this.gioiTinh = gioiTinh;
         this.luongCoBan = luongCoBan;
+    }
+
+    public QuanLyCuaHang_entity(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh, String gioiTinh, double luongCoBan) {
+        this(maQuanLy, maTK, hoTenQuanLy, sdt, diaChi, ngaySinh != null ? ngaySinh.toLocalDate() : null, gioiTinh, luongCoBan);
     }
 
     public String getMaQuanLy() {
@@ -73,11 +78,11 @@ public class QuanLyCuaHang implements Serializable {
         this.diaChi = diaChi;
     }
 
-    public Date getNgaySinh() {
+    public LocalDate getNgaySinh() {
         return ngaySinh;
     }
 
-    public void setNgaySinh(Date ngaySinh) {
+    public void setNgaySinh(LocalDate ngaySinh) {
         this.ngaySinh = ngaySinh;
     }
 
@@ -101,7 +106,7 @@ public class QuanLyCuaHang implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        QuanLyCuaHang that = (QuanLyCuaHang) o;
+        QuanLyCuaHang_entity that = (QuanLyCuaHang_entity) o;
         return Objects.equals(maQuanLy, that.maQuanLy);
     }
 
@@ -112,6 +117,12 @@ public class QuanLyCuaHang implements Serializable {
 
     @Override
     public String toString() {
-        return hoTenQuanLy + " (" + maQuanLy + ")";
+        return "QuanLyCuaHang_entity{" +
+                "maQuanLy='" + maQuanLy + '\'' +
+                ", hoTenQuanLy='" + hoTenQuanLy + '\'' +
+                ", sdt='" + sdt + '\'' +
+                ", luongCoBan=" + luongCoBan +
+                '}';
     }
 }
+

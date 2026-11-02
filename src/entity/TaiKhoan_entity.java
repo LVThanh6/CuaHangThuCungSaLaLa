@@ -1,12 +1,12 @@
-package model;
+package entity;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Model đại diện cho bảng TaiKhoan trong CSDL SALALA.
+ * Entity đại diện cho bảng TaiKhoan trong CSDL SALALA.
  */
-public class TaiKhoan implements Serializable {
+public class TaiKhoan_entity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String maTK;
@@ -16,10 +16,10 @@ public class TaiKhoan implements Serializable {
     private boolean trangThai;
     private String maQuanLy;
 
-    public TaiKhoan() {
+    public TaiKhoan_entity() {
     }
 
-    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, String maQuanLy) {
+    public TaiKhoan_entity(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, String maQuanLy) {
         this.maTK = maTK;
         this.tenDangNhap = tenDangNhap;
         this.matKhau = matKhau;
@@ -80,7 +80,7 @@ public class TaiKhoan implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TaiKhoan taiKhoan = (TaiKhoan) o;
+        TaiKhoan_entity taiKhoan = (TaiKhoan_entity) o;
         return Objects.equals(maTK, taiKhoan.maTK);
     }
 
@@ -91,7 +91,7 @@ public class TaiKhoan implements Serializable {
 
     @Override
     public String toString() {
-        return "TaiKhoan{" +
+        return "TaiKhoan_entity{" +
                 "maTK='" + maTK + '\'' +
                 ", tenDangNhap='" + tenDangNhap + '\'' +
                 ", vaiTro='" + vaiTro + '\'' +
@@ -99,3 +99,4 @@ public class TaiKhoan implements Serializable {
                 '}';
     }
 }
+
