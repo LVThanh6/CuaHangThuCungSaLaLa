@@ -35,6 +35,10 @@ public class QuanLyTaiKhoanGUI extends JPanel {
     private JTextField txtTimKiem;
     private JComboBox<String> cbLocVaiTro;
     private JComboBox<String> cbLocTrangThai;
+    private JButton btnKhoaMo;
+    private JButton btnResetPass;
+    private JButton btnSua;
+    private JButton btnXoa;
 
     private JLabel lblTongTK;
     private JLabel lblDangHoatDong;
@@ -241,19 +245,19 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         JPanel pThaoTacPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         pThaoTacPhai.setOpaque(false);
 
-        JButton btnKhoaMo = taoNutPhu("🔒 Khóa / Mở");
+        btnKhoaMo = taoNutPhu("Khóa / Mở");
         btnKhoaMo.addActionListener(e -> xuLyKhoaMoKhoa());
         pThaoTacPhai.add(btnKhoaMo);
 
-        JButton btnResetPass = taoNutPhu("🔑 Đặt lại MK");
+        btnResetPass = taoNutPhu("Đặt lại MK");
         btnResetPass.addActionListener(e -> xuLyResetMatKhau());
         pThaoTacPhai.add(btnResetPass);
 
-        JButton btnSua = taoNutPhu("✏ Sửa vai trò");
+        btnSua = taoNutPhu("Sửa vai trò");
         btnSua.addActionListener(e -> xuLySuaTaiKhoan());
         pThaoTacPhai.add(btnSua);
 
-        JButton btnXoa = taoNutPhu("🗑 Xóa");
+        btnXoa = taoNutPhu("Xóa");
         btnXoa.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
         btnXoa.addActionListener(e -> xuLyXoaTaiKhoan());
         pThaoTacPhai.add(btnXoa);
@@ -271,6 +275,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
 
         bangTaiKhoan = new TableMau();
         bangTaiKhoan.setModel(modelBang);
+        bangTaiKhoan.getSelectionModel().addListSelectionListener(e -> capNhatNutThaoTac());
 
         rowSorter = new TableRowSorter<>(modelBang);
         bangTaiKhoan.setRowSorter(rowSorter);
@@ -293,15 +298,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
             }
         });
 
-        // Double click để sửa nhanh
-        bangTaiKhoan.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    xuLySuaTaiKhoan();
-                }
-            }
-        });
+        capNhatNutThaoTac();
 
         JScrollPane scroll = new JScrollPane(bangTaiKhoan);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -311,13 +308,21 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         // Footer gợi ý
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
-        JLabel lblGoiY = new JLabel("💡 Mẹo: Nhấp đúp chuột vào tài khoản để chỉnh sửa vai trò / quản lý. Mật khẩu được mã hóa an toàn SHA-256.");
+        JLabel lblGoiY = new JLabel("Chọn một dòng rồi dùng các nút thao tác phía trên. Mật khẩu được mã hóa SHA-256.");
         lblGoiY.setFont(RangBuocGiaoDien.fontThuong(11));
         lblGoiY.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
         footer.add(lblGoiY, BorderLayout.WEST);
 
         card.add(footer, BorderLayout.SOUTH);
         return card;
+    }
+
+    private void capNhatNutThaoTac() {
+        boolean coDong = bangTaiKhoan != null && bangTaiKhoan.getSelectedRow() >= 0;
+        if (btnKhoaMo != null) btnKhoaMo.setEnabled(coDong);
+        if (btnResetPass != null) btnResetPass.setEnabled(coDong);
+        if (btnSua != null) btnSua.setEnabled(coDong);
+        if (btnXoa != null) btnXoa.setEnabled(coDong);
     }
 
     // ==========================================
@@ -369,6 +374,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         lblPhanBo.setText(ql + " QL / " + nv + " NV / " + bs + " BS");
 
         locDuLieu();
+        capNhatNutThaoTac();
     }
 
     private void locDuLieu() {

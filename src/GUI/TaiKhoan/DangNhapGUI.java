@@ -41,6 +41,7 @@ public class DangNhapGUI extends JFrame {
         setSize(880, 540);
         setMinimumSize(new Dimension(800, 500));
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         getContentPane().setLayout(new GridLayout(1, 2));
 
         // 1. CỘT TRÁI: BANNER THƯƠNG HIỆU
@@ -349,7 +350,7 @@ public class DangNhapGUI extends JFrame {
 
                     GiaoDienChinhGUI giaoDienChinh = new GiaoDienChinhGUI(tenHienThi, vaiTro);
                     frameMain.setContentPane(giaoDienChinh);
-                    GiaoDienChinhGUI.caiDatKichThuocCuaSo(frameMain, false);
+                    GiaoDienChinhGUI.caiDatKichThuocCuaSo(frameMain, true);
                     frameMain.setVisible(true);
 
                     // Đóng cửa sổ đăng nhập

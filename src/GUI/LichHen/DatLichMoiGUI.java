@@ -1,6 +1,18 @@
 package GUI.LichHen;
 
 import GUI.Chung.RangBuocGiaoDien;
+import dao.DichVu_DAO;
+import dao.HoSoSucKhoe_DAO;
+import dao.KhachHang_DAO;
+import dao.LichHen_DAO;
+import dao.NhanVien_DAO;
+import dao.ThuCung_DAO;
+import entity.DichVu_entity;
+import entity.HoSoSucKhoe_entity;
+import entity.KhachHang;
+import entity.LichHen_entity;
+import entity.NhanVien_entity;
+import entity.ThuCung_entity;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -24,6 +36,14 @@ import java.awt.event.FocusEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
@@ -33,6 +53,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -50,9 +71,8 @@ import javax.swing.text.JTextComponent;
  * Class DatLichMoiGUI: Giao diện "Đặt lịch mới" (tạo lịch khám) của hệ thống SALALA Pet Shop.
  * Bố cục gồm:
  * 1. Phần đầu trang: đường dẫn, tiêu đề, mô tả và nút "Xem lịch".
- * 2. Cột trái (3 thẻ nhập liệu): Khách hàng - Thú cưng - Lịch khám (ngày, bác sĩ, nội dung, giờ, ghi chú).
+ * 2. Cột trái (3 thẻ nhập liệu): Khách hàng - Thú cưng - Lịch khám.
  * 3. Cột phải: thẻ "Tóm tắt lịch hẹn" + nút "Đặt lịch khám" / "Nhập lại".
- * Chỉ dựng giao diện, chưa xử lý nghiệp vụ.
  */
 public class DatLichMoiGUI extends JPanel {
 
@@ -68,12 +88,8 @@ public class DatLichMoiGUI extends JPanel {
     private static final int RONG_COT_PHAI = 330;
     private static final int SO_COT_LUOI = 3;
 
-    private static final String[] DANH_SACH_THU_CUNG = {
-            "-- Chọn thú cưng --", "Bánh Bao", "Milu", "Cục Bông"
-    };
-    private static final String[] DANH_SACH_BAC_SI = {
-            "-- Chọn bác sĩ --", "BS. Lê Minh", "BS. Bùi Anh Tuấn", "BS. Nguyễn Thảo Vy"
-    };
+    private static final String[] DANH_SACH_THU_CUNG = { "-- Chọn thú cưng --" };
+    private static final String[] DANH_SACH_NHAN_VIEN = { "-- Chọn nhân viên --" };
     private static final String[] DANH_SACH_NOI_DUNG_KHAM = {
             "-- Chọn nội dung khám --", "Khám tổng quát", "Khám định kỳ", "Tiêm phòng", "Tái khám",
             "Kiểm tra da và lông", "Kiểm tra răng miệng", "Tư vấn dinh dưỡng"
@@ -84,6 +100,21 @@ public class DatLichMoiGUI extends JPanel {
     };
 
     private static final String GIA_TRI_TRONG = "—";
+    private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+    private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
+    private final LichHen_DAO lichHenDAO = new LichHen_DAO();
+    private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private final ThuCung_DAO thuCungDAO = new ThuCung_DAO();
+    private final NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
+    private final DichVu_DAO dichVuDAO = new DichVu_DAO();
+    private final HoSoSucKhoe_DAO hoSoSucKhoeDAO = new HoSoSucKhoe_DAO();
+    private final Map<String, ThuCung_entity> thuCungTheoNhan = new HashMap<>();
+    private final Map<String, NhanVien_entity> nhanVienTheoNhan = new HashMap<>();
+    private final Map<String, DichVu_entity> dichVuTheoNhan = new HashMap<>();
+    private final Map<String, String> canNangGanNhatTheoThuCung = new HashMap<>();
+    private KhachHang khachHangDuocChon;
+    private String gioKhamDuocChon;
+    private Runnable xuLySauKhiDatLich;
 
     // =========================================================================
     // 2. CÁC THÀNH PHẦN GIAO DIỆN
@@ -148,6 +179,11 @@ public class DatLichMoiGUI extends JPanel {
     // =========================================================================
     public DatLichMoiGUI() {
         khoiTaoGiaoDien();
+        taiDuLieuCombobox();
+        caiDatSuKien();
+        txtNgayKham.setText(DINH_DANG_NGAY.format(LocalDate.now()));
+        nhanMaLichHen.setText(lichHenDAO.phatSinhMaLichHenMoi());
+        capNhatTomTat();
     }
 
     private void khoiTaoGiaoDien() {
@@ -270,14 +306,14 @@ public class DatLichMoiGUI extends JPanel {
 
         cboThuCung = new ComboHienDai(DANH_SACH_THU_CUNG, 10, CHIEU_CAO_O);
         txtLoaiThuCung = new TruongVanBan("Tự động hiển thị");
-        txtGiongThuCung = new TruongVanBan("Tự động hiển thị");
+        txtGiongThuCung = new TruongVanBan("Chưa lưu trong hồ sơ thú cưng");
         txtGioiTinhThuCung = new TruongVanBan("Tự động hiển thị");
         txtNgaySinhThuCung = new TruongVanBan("Tự động hiển thị");
         txtCanNangThuCung = new TruongVanBan("Tự động hiển thị");
 
         themVaoLuoi(luoi, taoNhomTruong("Thú cưng", true, cboThuCung), 0, 0, 1);
         themVaoLuoi(luoi, taoNhomTruong("Loại thú cưng", false, taoOVanBan(txtLoaiThuCung, true)), 1, 0, 1);
-        themVaoLuoi(luoi, taoNhomTruong("Giống", false, taoOVanBan(txtGiongThuCung, true)), 2, 0, 1);
+        themVaoLuoi(luoi, taoNhomTruong("Đặc điểm nhận diện", false, taoOVanBan(txtGiongThuCung, true)), 2, 0, 1);
         themVaoLuoi(luoi, taoNhomTruong("Giới tính", false, taoOVanBan(txtGioiTinhThuCung, true)), 0, 1, 1);
         themVaoLuoi(luoi, taoNhomTruong("Ngày sinh", false, taoOVanBan(txtNgaySinhThuCung, true)), 1, 1, 1);
         themVaoLuoi(luoi, taoNhomTruong("Cân nặng (kg)", false, taoOVanBan(txtCanNangThuCung, true)), 2, 1, 1);
@@ -296,7 +332,7 @@ public class DatLichMoiGUI extends JPanel {
         TheBoGoc oNgayKham = taoOVanBan(txtNgayKham, false);
         oNgayKham.add(new JLabel(new BieuTuong(BieuTuong.LICH, 16, RangBuocGiaoDien.MAU_CHU_PHU)), BorderLayout.EAST);
 
-        cboBacSi = new ComboHienDai(DANH_SACH_BAC_SI, 10, CHIEU_CAO_O);
+        cboBacSi = new ComboHienDai(DANH_SACH_NHAN_VIEN, 10, CHIEU_CAO_O);
         cboNoiDungKham = new ComboHienDai(DANH_SACH_NOI_DUNG_KHAM, 10, CHIEU_CAO_O);
 
         // Lưới chọn giờ khám
@@ -307,6 +343,8 @@ public class DatLichMoiGUI extends JPanel {
             for (NutBo nut : nutGioKham) {
                 nut.datChon(nut == e.getSource());
             }
+            gioKhamDuocChon = ((NutBo) e.getSource()).getText();
+            capNhatTomTat();
         };
         for (int i = 0; i < DANH_SACH_GIO_KHAM.length; i++) {
             nutGioKham[i] = new NutBo(DANH_SACH_GIO_KHAM[i], NutBo.KIEU_VIEN);
@@ -321,12 +359,12 @@ public class DatLichMoiGUI extends JPanel {
         TheBoGoc oGhiChu = taoOVungVanBan(vungGhiChu, 86);
 
         themVaoLuoi(luoi, taoNhomTruong("Ngày khám", true, oNgayKham), 0, 0, 1);
-        themVaoLuoi(luoi, taoNhomTruong("Bác sĩ phụ trách", true, cboBacSi), 1, 0, 1);
+        themVaoLuoi(luoi, taoNhomTruong("Nhân viên phụ trách", true, cboBacSi), 1, 0, 1);
         themVaoLuoi(luoi, taoNhomTruong("Nội dung khám", true, cboNoiDungKham), 2, 0, 1);
         themVaoLuoi(luoi, taoNhomTruong("Giờ khám", true, panelGioKham), 0, 1, 3);
         themVaoLuoi(luoi, taoNhomTruong("Ghi chú", false, oGhiChu), 0, 2, 3);
 
-        theLichKham = taoTheNhapLieu("Thông tin lịch khám", "Chọn ngày, bác sĩ, nội dung và khung giờ khám.", luoi);
+        theLichKham = taoTheNhapLieu("Thông tin lịch khám", "Chọn ngày, nhân viên phụ trách, nội dung và khung giờ khám.", luoi);
         return theLichKham;
     }
 
@@ -380,7 +418,7 @@ public class DatLichMoiGUI extends JPanel {
         themVaoCot(theTomTat, taoDongTomTat("Trạng thái", nhanTrangThai), 2, 0);
         themVaoCot(theTomTat, taoDongTomTat("Chủ nuôi", nhanTomTatChuNuoi), 3, 0);
         themVaoCot(theTomTat, taoDongTomTat("Thú cưng", nhanTomTatThuCung), 4, 0);
-        themVaoCot(theTomTat, taoDongTomTat("Bác sĩ", nhanTomTatBacSi), 5, 0);
+        themVaoCot(theTomTat, taoDongTomTat("Nhân viên", nhanTomTatBacSi), 5, 0);
         themVaoCot(theTomTat, taoDongTomTat("Thời gian", nhanTomTatThoiGian), 6, 0);
         themVaoCot(theTomTat, taoDongTomTat("Nội dung khám", nhanTomTatNoiDung), 7, 0);
         themVaoCot(theTomTat, hopLuuY, 8, 16);
@@ -529,7 +567,337 @@ public class DatLichMoiGUI extends JPanel {
     }
 
     // =========================================================================
-    // 5. GETTERS (để nhúng xử lý nghiệp vụ sau này)
+    // 5. NGHIỆP VỤ ĐẶT LỊCH
+    // =========================================================================
+    private void taiDuLieuCombobox() {
+        try {
+            cboBacSi.removeAllItems();
+            cboBacSi.addItem("-- Chọn nhân viên --");
+            nhanVienTheoNhan.clear();
+            for (NhanVien_entity nhanVien : nhanVienDAO.getAll()) {
+                String nhan = nhanVien.getHoTen() + " (" + nhanVien.getMaNhanVien() + ")";
+                cboBacSi.addItem(nhan);
+                nhanVienTheoNhan.put(nhan, nhanVien);
+            }
+        } catch (Exception ex) {
+            hienThiLoi("Không thể tải danh sách nhân viên phụ trách.", ex);
+        }
+
+        cboNoiDungKham.removeAllItems();
+        cboNoiDungKham.addItem(DANH_SACH_NOI_DUNG_KHAM[0]);
+        dichVuTheoNhan.clear();
+        try {
+            for (DichVu_entity dichVu : dichVuDAO.getAllDichVu()) {
+                if (dichVu == null || dichVu.getTenDV() == null
+                        || laDichVuNgungHoatDong(dichVu.getTrangThai())) {
+                    continue;
+                }
+                String nhan = dichVu.getTenDV() + " (" + dichVu.getMaDV() + ")";
+                cboNoiDungKham.addItem(nhan);
+                dichVuTheoNhan.put(nhan, dichVu);
+            }
+        } catch (Exception ex) {
+            hienThiLoi("Không thể tải danh sách dịch vụ khám.", ex);
+        }
+        if (dichVuTheoNhan.isEmpty()) {
+            for (int i = 1; i < DANH_SACH_NOI_DUNG_KHAM.length; i++) {
+                cboNoiDungKham.addItem(DANH_SACH_NOI_DUNG_KHAM[i]);
+            }
+        }
+    }
+
+    private boolean laDichVuNgungHoatDong(String trangThai) {
+        if (trangThai == null) {
+            return false;
+        }
+        String trangThaiChuanHoa = trangThai.trim().toLowerCase();
+        return trangThaiChuanHoa.contains("ngưng")
+                || trangThaiChuanHoa.contains("ngừng")
+                || trangThaiChuanHoa.contains("không hoạt động");
+    }
+
+    private void caiDatSuKien() {
+        nutTimKhach.addActionListener(e -> timKhachHangTheoSoDienThoai());
+        nutDatLich.addActionListener(e -> datLichKham());
+        nutNhapLai.addActionListener(e -> nhapLaiForm());
+        cboThuCung.addActionListener(e -> capNhatThongTinThuCung());
+        cboBacSi.addActionListener(e -> capNhatTomTat());
+        cboNoiDungKham.addActionListener(e -> capNhatTomTat());
+        txtNgayKham.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                capNhatTomTat();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                capNhatTomTat();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                capNhatTomTat();
+            }
+        });
+        nutXemLich.addActionListener(e -> moManHinhXemLich());
+    }
+
+    private void timKhachHangTheoSoDienThoai() {
+        String soDienThoai = txtSoDienThoai.getText().trim();
+        String soDienThoaiSo = soDienThoai.replaceAll("[^0-9]", "");
+        if (soDienThoaiSo.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập số điện thoại khách hàng.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            txtSoDienThoai.requestFocusInWindow();
+            return;
+        }
+
+        try {
+            List<KhachHang> khachHangTimThay = khachHangDAO.timKiemTongHop(soDienThoaiSo);
+            khachHangDuocChon = null;
+            for (KhachHang khachHang : khachHangTimThay) {
+                if (khachHang.getSdt() != null
+                        && khachHang.getSdt().replaceAll("[^0-9]", "").equals(soDienThoaiSo)) {
+                    khachHangDuocChon = khachHang;
+                    break;
+                }
+            }
+            if (khachHangDuocChon == null) {
+                lamTrongThongTinKhachHang();
+                lamTrongThongTinThuCung();
+                xoaDanhSachThuCung();
+                capNhatTomTat();
+                JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng có số điện thoại này.",
+                        "Không tìm thấy", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            txtTenKhachHang.setText(giaTriHoacMacDinh(khachHangDuocChon.getHoTen()));
+            txtEmailKhachHang.setText(giaTriHoacMacDinh(khachHangDuocChon.getEmail()));
+            txtHangThanhVien.setText(giaTriHoacMacDinh(khachHangDuocChon.getHangThanhVien()));
+            txtDiaChiKhachHang.setText(giaTriHoacMacDinh(khachHangDuocChon.getDiaChi()));
+            taiThuCungCuaKhachHang();
+            capNhatTomTat();
+        } catch (Exception ex) {
+            hienThiLoi("Không thể tìm khách hàng theo số điện thoại.", ex);
+        }
+    }
+
+    private void taiThuCungCuaKhachHang() {
+        thuCungTheoNhan.clear();
+        cboThuCung.removeAllItems();
+        cboThuCung.addItem(DANH_SACH_THU_CUNG[0]);
+        canNangGanNhatTheoThuCung.clear();
+        ngayKhamGanNhat.clear();
+
+        try {
+            for (ThuCung_entity thuCung : thuCungDAO.getThuCungTheoMaKH(khachHangDuocChon.getMaKH())) {
+                String nhan = thuCung.getTenTC() + " (" + thuCung.getMaTC() + ")";
+                cboThuCung.addItem(nhan);
+                thuCungTheoNhan.put(nhan, thuCung);
+            }
+            for (HoSoSucKhoe_entity hoSo : hoSoSucKhoeDAO.getAllHoSoSucKhoe()) {
+                if (hoSo.getCanNang() == null || hoSo.getNgayKham() == null) {
+                    continue;
+                }
+                String maThuCung = hoSo.getMaTC();
+                LocalDateTime ngayGanNhat = ngayKhamGanNhat.get(maThuCung);
+                if (ngayGanNhat == null || hoSo.getNgayKham().isAfter(ngayGanNhat)) {
+                    ngayKhamGanNhat.put(maThuCung, hoSo.getNgayKham());
+                    canNangGanNhatTheoThuCung.put(maThuCung,
+                            hoSo.getCanNang().stripTrailingZeros().toPlainString());
+                }
+            }
+            if (thuCungTheoNhan.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Khách hàng này chưa có hồ sơ thú cưng.",
+                        "Thông tin", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            hienThiLoi("Không thể tải thú cưng hoặc cân nặng gần nhất.", ex);
+        }
+    }
+
+    private final Map<String, LocalDateTime> ngayKhamGanNhat = new HashMap<>();
+
+    private void capNhatThongTinThuCung() {
+        String nhan = (String) cboThuCung.getSelectedItem();
+        ThuCung_entity thuCung = thuCungTheoNhan.get(nhan);
+        if (thuCung == null) {
+            lamTrongThongTinThuCung();
+            capNhatTomTat();
+            return;
+        }
+        txtLoaiThuCung.setText(giaTriHoacMacDinh(thuCung.getLoai()));
+        txtGiongThuCung.setText(giaTriHoacMacDinh(thuCung.getDacDiemNhanDien()));
+        txtGioiTinhThuCung.setText(giaTriHoacMacDinh(thuCung.getGioiTinh()));
+        txtNgaySinhThuCung.setText(thuCung.getNgaySinh() == null
+                ? GIA_TRI_TRONG
+                : DINH_DANG_NGAY.format(thuCung.getNgaySinh()));
+        txtCanNangThuCung.setText(canNangGanNhatTheoThuCung.getOrDefault(thuCung.getMaTC(), "Chưa có dữ liệu"));
+        capNhatTomTat();
+    }
+
+    private void datLichKham() {
+        if (khachHangDuocChon == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng tìm và xác nhận khách hàng trước khi đặt lịch.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String nhanThuCung = (String) cboThuCung.getSelectedItem();
+        ThuCung_entity thuCung = thuCungTheoNhan.get(nhanThuCung);
+        String nhanVienChon = (String) cboBacSi.getSelectedItem();
+        NhanVien_entity nhanVien = nhanVienTheoNhan.get(nhanVienChon);
+        String noiDung = (String) cboNoiDungKham.getSelectedItem();
+        DichVu_entity dichVu = dichVuTheoNhan.get(noiDung);
+
+        if (thuCung == null || nhanVien == null || noiDung == null
+                || noiDung.startsWith("--") || gioKhamDuocChon == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn thú cưng, nhân viên, nội dung khám và giờ khám.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String lyDo = dichVu == null ? noiDung : dichVu.getTenDV();
+        if (lyDo.length() > 255) {
+            JOptionPane.showMessageDialog(this, "Nội dung khám không được vượt quá 255 ký tự.",
+                    "Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            LocalDate ngay = LocalDate.parse(txtNgayKham.getText().trim(), DINH_DANG_NGAY);
+            LocalDateTime ngayGio = LocalDateTime.of(ngay, LocalTime.parse(gioKhamDuocChon));
+            if (ngayGio.isBefore(LocalDateTime.now())) {
+                JOptionPane.showMessageDialog(this, "Thời gian đặt lịch phải ở hiện tại hoặc trong tương lai.",
+                        "Thời gian không hợp lệ", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String ghiChu = vungGhiChu.getText().trim();
+            if (ghiChu.length() > 500) {
+                JOptionPane.showMessageDialog(this, "Ghi chú không được vượt quá 500 ký tự.",
+                        "Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String maLichHen = lichHenDAO.phatSinhMaLichHenMoi();
+            LichHen_entity lichHen = new LichHen_entity(maLichHen, thuCung, khachHangDuocChon,
+                    nhanVien, dichVu, ngayGio, lyDo, "Chờ khám", ghiChu, "Khám bệnh");
+            if (!lichHenDAO.createLichHen(lichHen)) {
+                JOptionPane.showMessageDialog(this, "Không thể lưu lịch hẹn. Vui lòng kiểm tra dữ liệu và kết nối cơ sở dữ liệu.",
+                        "Lỗi đặt lịch", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            JOptionPane.showMessageDialog(this, "Đặt lịch khám thành công. Mã lịch: " + maLichHen,
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            if (xuLySauKhiDatLich != null) {
+                xuLySauKhiDatLich.run();
+            }
+            nhapLaiForm();
+        } catch (DateTimeParseException ex) {
+            JOptionPane.showMessageDialog(this, "Ngày khám không đúng định dạng dd/MM/yyyy.",
+                    "Ngày không hợp lệ", JOptionPane.WARNING_MESSAGE);
+            txtNgayKham.requestFocusInWindow();
+        } catch (Exception ex) {
+            hienThiLoi("Không thể tạo lịch hẹn.", ex);
+        }
+    }
+
+    private void nhapLaiForm() {
+        khachHangDuocChon = null;
+        txtSoDienThoai.setText("");
+        lamTrongThongTinKhachHang();
+        xoaDanhSachThuCung();
+        cboBacSi.setSelectedIndex(0);
+        cboNoiDungKham.setSelectedIndex(0);
+        txtNgayKham.setText(DINH_DANG_NGAY.format(LocalDate.now()));
+        vungGhiChu.setText("");
+        gioKhamDuocChon = null;
+        for (NutBo nut : nutGioKham) {
+            nut.datChon(false);
+        }
+        nhanMaLichHen.setText(lichHenDAO.phatSinhMaLichHenMoi());
+        capNhatTomTat();
+    }
+
+    private void lamTrongThongTinKhachHang() {
+        txtTenKhachHang.setText("");
+        txtEmailKhachHang.setText("");
+        txtHangThanhVien.setText("");
+        txtDiaChiKhachHang.setText("");
+    }
+
+    private void lamTrongThongTinThuCung() {
+        txtLoaiThuCung.setText("");
+        txtGiongThuCung.setText("");
+        txtGioiTinhThuCung.setText("");
+        txtNgaySinhThuCung.setText("");
+        txtCanNangThuCung.setText("");
+    }
+
+    private void xoaDanhSachThuCung() {
+        thuCungTheoNhan.clear();
+        canNangGanNhatTheoThuCung.clear();
+        ngayKhamGanNhat.clear();
+        cboThuCung.removeAllItems();
+        cboThuCung.addItem(DANH_SACH_THU_CUNG[0]);
+    }
+
+    private void capNhatTomTat() {
+        nhanTomTatChuNuoi.setText(khachHangDuocChon == null
+                ? GIA_TRI_TRONG : giaTriHoacMacDinh(khachHangDuocChon.getHoTen()));
+        ThuCung_entity thuCung = thuCungTheoNhan.get(cboThuCung == null
+                ? null : (String) cboThuCung.getSelectedItem());
+        nhanTomTatThuCung.setText(thuCung == null ? GIA_TRI_TRONG : thuCung.getTenTC());
+        NhanVien_entity nhanVien = nhanVienTheoNhan.get(cboBacSi == null
+                ? null : (String) cboBacSi.getSelectedItem());
+        nhanTomTatBacSi.setText(nhanVien == null ? GIA_TRI_TRONG : nhanVien.getHoTen());
+        nhanTomTatNoiDung.setText(cboNoiDungKham == null || cboNoiDungKham.getSelectedIndex() <= 0
+                ? GIA_TRI_TRONG : dichVuTheoNhan.containsKey((String) cboNoiDungKham.getSelectedItem())
+                        ? dichVuTheoNhan.get((String) cboNoiDungKham.getSelectedItem()).getTenDV()
+                        : (String) cboNoiDungKham.getSelectedItem());
+
+        String thoiGian = GIA_TRI_TRONG;
+        if (txtNgayKham != null && gioKhamDuocChon != null) {
+            try {
+                LocalDate ngay = LocalDate.parse(txtNgayKham.getText().trim(), DINH_DANG_NGAY);
+                thoiGian = DINH_DANG_NGAY_GIO.format(LocalDateTime.of(ngay, LocalTime.parse(gioKhamDuocChon)));
+            } catch (DateTimeParseException ignored) {
+                thoiGian = txtNgayKham.getText().trim() + " " + gioKhamDuocChon;
+            }
+        }
+        nhanTomTatThoiGian.setText(thoiGian);
+    }
+
+    private String giaTriHoacMacDinh(String giaTri) {
+        return giaTri == null || giaTri.trim().isEmpty() ? GIA_TRI_TRONG : giaTri;
+    }
+
+    private void moManHinhXemLich() {
+        java.awt.Window cuaSo = javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (cuaSo instanceof javax.swing.JDialog) {
+            cuaSo.dispose();
+            return;
+        }
+        if (cuaSo instanceof javax.swing.JFrame) {
+            ((javax.swing.JFrame) cuaSo).setContentPane(new XemLichGUI());
+            cuaSo.revalidate();
+            cuaSo.repaint();
+        }
+    }
+
+    private void hienThiLoi(String thongDiep, Exception ex) {
+        String chiTiet = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+        JOptionPane.showMessageDialog(this, thongDiep + "\n" + chiTiet,
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void setXuLySauKhiDatLich(Runnable xuLySauKhiDatLich) {
+        this.xuLySauKhiDatLich = xuLySauKhiDatLich;
+    }
+
+    // =========================================================================
+    // 6. GETTERS
     // =========================================================================
     public JButton getNutXemLich() {
         return nutXemLich;

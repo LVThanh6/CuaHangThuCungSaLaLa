@@ -50,7 +50,7 @@ public class BieuDoPanel extends JPanel {
     public void datDuLieu(String tieuDe, String[] nhan, String[] chuoi,
             double[][] giaTri, String donVi) {
         if (nhan == null || chuoi == null || giaTri == null || giaTri.length != chuoi.length) {
-            throw new IllegalArgumentException("Cấu trúc dữ liệu biểu đồ không hợp lệ.");
+            throw new IllegalArgumentException("Dữ liệu biểu đồ phải có một dòng giá trị cho mỗi chuỗi.");
         }
         for (double[] hang : giaTri) {
             if (hang == null || hang.length != nhan.length) {

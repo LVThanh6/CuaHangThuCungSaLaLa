@@ -68,6 +68,21 @@ public class HoaDon_entity{
 	public void setTrangThai(String trangThai) {
 		this.trangThai = trangThai;
 	}
+	public void setMaKH(KhachHang maKH) {
+		this.maKH = maKH;
+	}
+	public void setMaNhanVien(NhanVien_entity maNhanVien) {
+		this.maNhanVien = maNhanVien;
+	}
+	public void setMaKM(KhuyenMai_Entity maKM) {
+		this.maKM = maKM;
+	}
+	public void setMaThue(Thue_entity maThue) {
+		this.maThue = maThue;
+	}
+	public void setMaThanhToan(ThanhToan_entity maThanhToan) {
+		this.maThanhToan = maThanhToan;
+	}
 
     
                   

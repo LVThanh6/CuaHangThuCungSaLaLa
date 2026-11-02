@@ -20,6 +20,7 @@ public class QuanLyTable extends JPanel {
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel lblThongTinTrang;
+    private JPanel panelPhanTrang;
     private java.util.List<JComboBox<String>> listComboBoxBoLoc = new java.util.ArrayList<>();
 
     public QuanLyTable(String[] tenCot, Object[][] duLieu, String placeholderTimKiem, String[] danhSachBoLoc) {
@@ -124,7 +125,7 @@ public class QuanLyTable extends JPanel {
         panelCardBang.add(scrollPane, BorderLayout.CENTER);
 
         // 3. THANH PHÂN TRANG PHÍA DƯỚI
-        JPanel panelPhanTrang = new JPanel(new BorderLayout());
+        panelPhanTrang = new JPanel(new BorderLayout());
         panelPhanTrang.setOpaque(false);
         panelPhanTrang.setBorder(new EmptyBorder(12, 16, 12, 16));
 
@@ -224,9 +225,6 @@ public class QuanLyTable extends JPanel {
                 writer.write('\ufeff');
                 int colCount = model.getColumnCount();
                 int exportCols = colCount;
-                if (model.getColumnName(colCount - 1).equalsIgnoreCase("Thao tác")) {
-                    exportCols--;
-                }
                 for (int c = 0; c < exportCols; c++) {
                     writer.write("\"" + model.getColumnName(c) + "\"" + (c < exportCols - 1 ? "," : ""));
                 }
@@ -262,6 +260,28 @@ public class QuanLyTable extends JPanel {
                 lblThongTinTrang.setText("Hiển thị 1–" + total + " trong " + total + " bản ghi");
             }
         }
+    }
+
+    public void setHienThiPhanTrang(boolean hienThi) {
+        if (panelPhanTrang != null) {
+            panelPhanTrang.setVisible(hienThi);
+        }
+    }
+
+    public void anPhanTrang() {
+        if (panelPhanTrang != null) {
+            panelPhanTrang.setVisible(false);
+            Container parent = panelPhanTrang.getParent();
+            if (parent != null) {
+                parent.remove(panelPhanTrang);
+                parent.revalidate();
+                parent.repaint();
+            }
+        }
+    }
+
+    public JPanel getPanelPhanTrang() {
+        return panelPhanTrang;
     }
 
     // --- TÍCH HỢP CLASS TableMau ---
@@ -328,14 +348,14 @@ public class QuanLyTable extends JPanel {
             frame.setLocationRelativeTo(null);
 
             // Dữ liệu mẫu chuẩn
-            String[] tieuDe = {"Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái", "Thao tác"};
+            String[] tieuDe = {"Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái"};
             Object[][] duLieu = {
-                {"NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc", "👁 ✏ ..."},
-                {"NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc", "👁 ✏ ..."},
-                {"NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc", "👁 ✏ ..."},
-                {"NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc", "👁 ✏ ..."},
-                {"NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ", "👁 ✏ ..."},
-                {"NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc", "👁 ✏ ..."}
+                {"NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc"},
+                {"NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc"},
+                {"NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc"},
+                {"NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc"},
+                {"NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ"},
+                {"NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc"}
             };
 
             // Tiêu đề các bộ lọc thả xuống

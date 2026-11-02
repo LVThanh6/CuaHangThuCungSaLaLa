@@ -42,6 +42,8 @@ public class QuanLyNhanVienGUI extends JPanel {
 
     private JTextField txtTimKiem;
     private JComboBox<String> cbLocChucVu;
+    private JButton btnSuaNhanVien;
+    private JButton btnXoaNhanVien;
     private JLabel lblTongSoNV;
     private final DecimalFormat dfTien = new DecimalFormat("#,### ₫");
     private final SimpleDateFormat dfNgay = new SimpleDateFormat("dd/MM/yyyy");
@@ -104,12 +106,12 @@ public class QuanLyNhanVienGUI extends JPanel {
         JButton btnLamMoi = taoNutPhu("🔄 Làm mới");
         btnLamMoi.addActionListener(e -> taiDuLieuLenBang());
 
-        JButton btnSua = taoNutPhu("✏ Sửa nhân viên");
-        btnSua.addActionListener(e -> xuLySuaNhanVien());
+        btnSuaNhanVien = taoNutPhu("Sửa nhân viên");
+        btnSuaNhanVien.addActionListener(e -> xuLySuaNhanVien());
 
-        JButton btnXoa = taoNutPhu("🗑 Xóa nhân viên");
-        btnXoa.setForeground(RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
-        btnXoa.addActionListener(e -> xuLyXoaNhanVien());
+        btnXoaNhanVien = taoNutPhu("Xóa nhân viên");
+        btnXoaNhanVien.setForeground(RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
+        btnXoaNhanVien.addActionListener(e -> xuLyXoaNhanVien());
 
         JButton btnThem = new JButton("+ Thêm nhân viên");
         btnThem.setFont(RangBuocGiaoDien.fontDam(13));
@@ -121,8 +123,8 @@ public class QuanLyNhanVienGUI extends JPanel {
         btnThem.addActionListener(e -> xuLyThemNhanVien());
 
         benPhai.add(btnLamMoi);
-        benPhai.add(btnSua);
-        benPhai.add(btnXoa);
+        benPhai.add(btnSuaNhanVien);
+        benPhai.add(btnXoaNhanVien);
         benPhai.add(btnThem);
         hangTieuDe.add(benPhai, BorderLayout.EAST);
 
@@ -215,6 +217,7 @@ public class QuanLyNhanVienGUI extends JPanel {
 
         bangNhanVien = new TableMau();
         bangNhanVien.setModel(modelBang);
+        bangNhanVien.getSelectionModel().addListSelectionListener(e -> capNhatNutThaoTac());
 
         rowSorter = new TableRowSorter<>(modelBang);
         bangNhanVien.setRowSorter(rowSorter);
@@ -232,23 +235,20 @@ public class QuanLyNhanVienGUI extends JPanel {
         lblTongSoNV.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         footer.add(lblTongSoNV, BorderLayout.WEST);
 
-        JLabel lblHuongDan = new JLabel("💡 Mẹo: Nhấp đúp chuột vào nhân viên để sửa thông tin nhanh.");
+        JLabel lblHuongDan = new JLabel("Chọn một dòng rồi dùng các nút thao tác phía trên.");
         lblHuongDan.setFont(RangBuocGiaoDien.fontThuong(11));
         lblHuongDan.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
         footer.add(lblHuongDan, BorderLayout.EAST);
 
-        // Double click để sửa nhanh
-        bangNhanVien.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    xuLySuaNhanVien();
-                }
-            }
-        });
-
         card.add(footer, BorderLayout.SOUTH);
+        capNhatNutThaoTac();
         return card;
+    }
+
+    private void capNhatNutThaoTac() {
+        boolean coDong = bangNhanVien != null && bangNhanVien.getSelectedRow() >= 0;
+        if (btnSuaNhanVien != null) btnSuaNhanVien.setEnabled(coDong);
+        if (btnXoaNhanVien != null) btnXoaNhanVien.setEnabled(coDong);
     }
 
     /**
@@ -272,6 +272,7 @@ public class QuanLyNhanVienGUI extends JPanel {
             });
         }
         capNhatSoLuongHienThi();
+        capNhatNutThaoTac();
     }
 
     private void locDuLieu() {
@@ -325,7 +326,8 @@ public class QuanLyNhanVienGUI extends JPanel {
         JComboBox<String> cbGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
         JTextField txtNgaySinh = new JTextField("1995-01-01");
         JTextField txtDiaChi = new JTextField("TP.HCM");
-        JTextField txtLuong = new JTextField("8000000");
+        JTextField txtLuong = new JTextField("Tự động theo chức vụ");
+        txtLuong.setEditable(false);
 
         JPanel form = taoFormDialog(txtMa, txtHoTen, cbChucVu, txtSdt, cbGioiTinh, txtNgaySinh, txtDiaChi, txtLuong);
 
@@ -342,13 +344,11 @@ public class QuanLyNhanVienGUI extends JPanel {
                 return;
             }
 
-            double luong;
-            try {
-                luong = Double.parseDouble(txtLuong.getText().replaceAll("[^0-9]", ""));
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lương cơ bản không hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            double luong = 45000;
+            String cv = (String) cbChucVu.getSelectedItem();
+            if ("Nhân viên dịch vụ".equals(cv)) luong = 60000;
+            else if ("Nhân viên quản lý kho".equals(cv)) luong = 13500000;
+            else if ("Quản lý".equals(cv)) luong = 15000000;
 
             Date ngaySinh;
             try {
@@ -408,7 +408,8 @@ public class QuanLyNhanVienGUI extends JPanel {
         cbGioiTinh.setSelectedItem(nv.getGioiTinh());
         JTextField txtNgaySinh = new JTextField(nv.getNgaySinh() != null ? nv.getNgaySinh().toString() : "1995-01-01");
         JTextField txtDiaChi = new JTextField(nv.getDiaChi());
-        JTextField txtLuong = new JTextField(String.format("%.0f", nv.getLuongCoBan()));
+        JTextField txtLuong = new JTextField("Tự động theo chức vụ");
+        txtLuong.setEditable(false);
 
         JPanel form = taoFormDialog(txtMa, txtHoTen, cbChucVu, txtSdt, cbGioiTinh, txtNgaySinh, txtDiaChi, txtLuong);
 
@@ -421,13 +422,11 @@ public class QuanLyNhanVienGUI extends JPanel {
                 return;
             }
 
-            double luong;
-            try {
-                luong = Double.parseDouble(txtLuong.getText().replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Lương cơ bản không hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            double luong = 45000;
+            String cv = (String) cbChucVu.getSelectedItem();
+            if ("Nhân viên dịch vụ".equals(cv)) luong = 60000;
+            else if ("Nhân viên quản lý kho".equals(cv)) luong = 13500000;
+            else if ("Quản lý".equals(cv)) luong = 15000000;
 
             nv.setHoTen(hoTen);
             nv.setChucVu((String) cbChucVu.getSelectedItem());
