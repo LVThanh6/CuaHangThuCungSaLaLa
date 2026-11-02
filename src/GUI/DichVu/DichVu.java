@@ -45,8 +45,7 @@ public class DichVu extends JPanel {
 
     private final List<DV> tatCa = new ArrayList<>();   // toàn bộ dịch vụ
     private List<DV> loc = new ArrayList<>();           // sau khi tìm kiếm/lọc
-    private List<DV> hienTai = new ArrayList<>();       // các dòng của trang đang xem
-    private int trang = 1, soDong = 8;
+    private List<DV> hienTai = new ArrayList<>();
     private boolean dangNap = false;
 
     // ===== Thành phần giao diện =====
@@ -57,7 +56,6 @@ public class DichVu extends JPanel {
     private JButton btnChinhSua, btnThietLapGia, btnXoa;
     private final JLabel[] giaTri = new JLabel[4], phu = new JLabel[4];
     private JLabel lblThongTin;
-    private JPanel panelTrang;
 
     public DichVu() {
         napDuLieuMau();
@@ -166,7 +164,7 @@ public class DichVu extends JPanel {
     }
 
     // ==========================================
-    // THẺ CHỨA BẢNG: thanh lọc + bảng + phân trang
+    // THẺ CHỨA BẢNG: thanh lọc + bảng
     // ==========================================
     private JPanel taoTheBang() {
         // --- Thanh tìm kiếm / lọc ---
@@ -291,26 +289,12 @@ public class DichVu extends JPanel {
         sp.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, VIEN));
         sp.getViewport().setBackground(Color.WHITE);
 
-        // --- Phân trang ---
         lblThongTin = nhan(" ", 12, false, XAM);
-        panelTrang = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        panelTrang.setOpaque(false);
-        JComboBox<String> cboSoDong = new JComboBox<>(new String[] { "8", "16", "24" });
-        cboSoDong.addActionListener(e -> {
-            soDong = Integer.parseInt((String) cboSoDong.getSelectedItem());
-            napLai(false);
-        });
-        JPanel phai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        phai.setOpaque(false);
-        phai.add(nhan("Số dòng / trang", 12, false, XAM));
-        phai.add(cboSoDong);
-        phai.add(panelTrang);
 
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
         footer.setBorder(new EmptyBorder(10, 20, 10, 20));
         footer.add(lblThongTin, BorderLayout.WEST);
-        footer.add(phai, BorderLayout.EAST);
 
         JPanel the = new JPanel(new BorderLayout());
         the.setBackground(Color.WHITE);
@@ -322,9 +306,9 @@ public class DichVu extends JPanel {
     }
 
     // ==========================================
-    // LỌC + PHÂN TRANG + VẼ LẠI BẢNG
+    // LỌC + VẼ LẠI BẢNG
     // ==========================================
-    /** Lọc dữ liệu rồi vẽ lại bảng. giuTrang=true: giữ nguyên trang đang xem. */
+    /** Lọc dữ liệu rồi vẽ lại toàn bộ kết quả. */
     private void napLai(boolean giuTrang) {
         if (table == null) return;
         String tu = txtTim.getText().trim().toLowerCase();
@@ -337,10 +321,7 @@ public class DichVu extends JPanel {
                 .filter(d -> tt == 0 || (tt == 1) == d.bat)
                 .collect(Collectors.toList());
 
-        int tongTrang = Math.max(1, (loc.size() + soDong - 1) / soDong);
-        trang = giuTrang ? Math.min(trang, tongTrang) : 1;
-        int tuDong = (trang - 1) * soDong, denDong = Math.min(tuDong + soDong, loc.size());
-        hienTai = loc.subList(tuDong, denDong);
+        hienTai = loc;
 
         table.clearSelection();
         model.setRowCount(0);
@@ -348,8 +329,7 @@ public class DichVu extends JPanel {
             model.addRow(new Object[] { d.ma, d, d.moTa, d.phut + " phút", dinhDangGia(d.gia), d, d });
 
         lblThongTin.setText(loc.isEmpty() ? "Không có dịch vụ phù hợp"
-                : "Hiển thị " + (tuDong + 1) + "–" + denDong + " trong " + loc.size() + " dịch vụ");
-        vePhanTrang(tongTrang);
+                : "Hiển thị tất cả " + loc.size() + " dịch vụ");
         capNhatThongKe();
         capNhatNutThaoTac();
     }
@@ -365,26 +345,6 @@ public class DichVu extends JPanel {
         if (btnChinhSua != null) btnChinhSua.setEnabled(chonMot);
         if (btnThietLapGia != null) btnThietLapGia.setEnabled(chonMot);
         if (btnXoa != null) btnXoa.setEnabled(chonMot);
-    }
-
-    private void vePhanTrang(int tongTrang) {
-        panelTrang.removeAll();
-        JButton truoc = nutTrang("<", false);
-        truoc.setEnabled(trang > 1);
-        truoc.addActionListener(e -> { trang--; napLai(true); });
-        panelTrang.add(truoc);
-        for (int p = 1; p <= tongTrang; p++) {
-            JButton b = nutTrang("" + p, p == trang);
-            final int pp = p;
-            b.addActionListener(e -> { trang = pp; napLai(true); });
-            panelTrang.add(b);
-        }
-        JButton sau = nutTrang(">", false);
-        sau.setEnabled(trang < tongTrang);
-        sau.addActionListener(e -> { trang++; napLai(true); });
-        panelTrang.add(sau);
-        panelTrang.revalidate();
-        panelTrang.repaint();
     }
 
     /** Nạp lại danh sách nhóm cho combo (giữ lựa chọn hiện tại nếu còn). */
@@ -559,13 +519,6 @@ public class DichVu extends JPanel {
         b.setForeground(noiBat ? Color.WHITE : CHU);
         b.setBorder(noiBat ? new EmptyBorder(8, 14, 8, 14) : new LineBorder(VIEN));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return b;
-    }
-
-    private static JButton nutTrang(String text, boolean dangChon) {
-        JButton b = nut(text, dangChon);
-        b.setFont(font(true, 12));
-        b.setPreferredSize(new Dimension(34, 34));
         return b;
     }
 

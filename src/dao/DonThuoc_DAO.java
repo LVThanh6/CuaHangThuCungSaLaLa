@@ -31,6 +31,21 @@ public class DonThuoc_DAO {
         return danhSach;
     }
 
+    public List<DonThuoc_entity> getDonThuocTheoMaTC(String maTC) throws SQLException {
+        List<DonThuoc_entity> danhSach = new java.util.ArrayList<>();
+        try (Connection con = ketNoi();
+             PreparedStatement ps = con.prepareStatement(
+                     SELECT_COLUMNS + "WHERE d.maTC = ? ORDER BY d.ngayKeDon DESC, d.maDonThuoc")) {
+            ps.setString(1, maTC);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    danhSach.add(mapDonThuoc(rs));
+                }
+            }
+        }
+        return danhSach;
+    }
+
     public DonThuoc_entity getDonThuocTheoMa(String maDonThuoc) throws SQLException {
         try (Connection con = ketNoi();
              PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "WHERE d.maDonThuoc = ?")) {
