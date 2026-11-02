@@ -100,7 +100,7 @@ public class VatTu extends JPanel {
                 () -> showCard(CARD_PHIEU_XUAT, 3));
 
         // Màn hình 4: Phiếu xuất kho
-        PhieuXuatKho phieuXuat = new PhieuXuatKho(
+        PhieuXuatKhoGUI phieuXuat = new PhieuXuatKhoGUI(
                 this::getDanhSachVatTu,
                 this::tangTon,
                 this::getTonKho);
