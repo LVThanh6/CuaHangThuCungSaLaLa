@@ -56,10 +56,12 @@ public class VatTuGUI extends JPanel {
         String ma, ten, danhMuc, donVi;
         int tonKho;
         long giaNhap;
+        long giaBan;
 
-        public VatTuEntity(String ma, String ten, String danhMuc, int tonKho, String donVi, long giaNhap) {
+        public VatTuEntity(String ma, String ten, String danhMuc, int tonKho, String donVi, long giaNhap, long giaBan) {
             this.ma = ma; this.ten = ten; this.danhMuc = danhMuc;
-            this.tonKho = tonKho; this.donVi = donVi; this.giaNhap = giaNhap;
+            this.tonKho = tonKho; this.donVi = donVi;
+            this.giaNhap = giaNhap; this.giaBan = giaBan;
         }
         // Getters
         public String getMa() { return ma; }
@@ -68,6 +70,7 @@ public class VatTuGUI extends JPanel {
         public int getTonKho() { return tonKho; }
         public String getDonVi() { return donVi; }
         public long getGiaNhap() { return giaNhap; }
+        public long getGiaBan() { return giaBan; }
     }
 
     private static final String[] DANH_MUC = {
@@ -254,7 +257,7 @@ public class VatTuGUI extends JPanel {
         bang.setFillsViewportHeight(true);
         bang.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        int[] rong = { 80, 230, 120, 80, 80, 110, 120 };
+        int[] rong = { 80, 220, 110, 70, 70, 105, 105, 120 };
         for (int i = 0; i < rong.length; i++) {
             bang.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
         }
@@ -265,7 +268,8 @@ public class VatTuGUI extends JPanel {
         bang.getColumnModel().getColumn(3).setCellRenderer(new ChuRenderer(3)); // TỒN KHO
         bang.getColumnModel().getColumn(4).setCellRenderer(new ChuRenderer(4)); // ĐƠN VỊ
         bang.getColumnModel().getColumn(5).setCellRenderer(new ChuRenderer(5)); // GIÁ NHẬP
-        bang.getColumnModel().getColumn(6).setCellRenderer(new TrangThaiRenderer());
+        bang.getColumnModel().getColumn(6).setCellRenderer(new ChuRenderer(6)); // GIÁ BÁN
+        bang.getColumnModel().getColumn(7).setCellRenderer(new TrangThaiRenderer());
 
         JTableHeader header = bang.getTableHeader();
         header.setReorderingAllowed(false);
@@ -372,6 +376,15 @@ public class VatTuGUI extends JPanel {
 
     private void taiDuLieuMau() {
         tatCa.clear();
+
+        // Giá bán tham khảo theo mặt bằng thị trường thú y, lợi nhuận ~25-35% so với giá nhập
+        tatCa.add(new VatTuEntity("VT-001", "Amoxicillin 250mg", "Kháng sinh", 340, "Ống", 45000, 58000));
+        tatCa.add(new VatTuEntity("VT-002", "Rabisin Vắc-xin Dại", "Vắc-xin", 15, "Lọ", 320000, 420000));
+        tatCa.add(new VatTuEntity("VT-003", "Prednisolone 5mg", "Giảm đau", 0, "Viên", 8500, 12000));
+        tatCa.add(new VatTuEntity("VT-004", "Fronil Spot-on Dog", "Ký sinh", 85, "Tuýp", 78000, 99000));
+        tatCa.add(new VatTuEntity("VT-005", "Bông y tế vô trùng", "Tiêu hao", 60, "Gói", 12000, 16000));
+        tatCa.add(new VatTuEntity("VT-006", "Kim tiêm 5ml", "Tiêu hao", 22, "Hộp", 35000, 45000));
+
         for (VatTu_entity vatTu : vatTuDAO.getAllVatTu()) {
             tatCa.add(new VatTuEntity(
                     vatTu.getMaVT(),
@@ -381,6 +394,7 @@ public class VatTuGUI extends JPanel {
                     "-",
                     Math.round(vatTu.getGiaNhap())));
         }
+
         lamMoi();
     }
     
@@ -393,12 +407,20 @@ public class VatTuGUI extends JPanel {
         return 0;
     }
 
+    // Mỗi phần tử: {mã, tên, đơn vị, giá nhập, giá bán}
     public java.util.List<Object[]> getDanhSachVatTu() {
         java.util.List<Object[]> ds = new java.util.ArrayList<>();
         for (VatTuEntity vt : tatCa) {
-            ds.add(new Object[]{vt.getMa(), vt.getTen(), vt.getDonVi(), vt.getGiaNhap()});
+            ds.add(new Object[]{vt.getMa(), vt.getTen(), vt.getDonVi(), vt.getGiaNhap(), vt.getGiaBan()});
         }
         return ds;
+    }
+
+    public long getGiaBan(String ma) {
+        for (VatTuEntity vt : tatCa) {
+            if (vt.getMa().equals(ma)) return vt.getGiaBan();
+        }
+        return 0;
     }
 
     public void tangTon(String ma, int soLuong) {
@@ -413,7 +435,7 @@ public class VatTuGUI extends JPanel {
 
 
     private class BangModel extends AbstractTableModel {
-        private final String[] cot = { "MÃ VT", "TÊN VẬT TƯ", "DANH MỤC", "TỒN KHO", "ĐƠN VỊ", "GIÁ NHẬP", "TRẠNG THÁI" };
+        private final String[] cot = { "MÃ VT", "TÊN VẬT TƯ", "DANH MỤC", "TỒN KHO", "ĐƠN VỊ", "GIÁ NHẬP", "GIÁ BÁN", "TRẠNG THÁI" };
         private List<VatTuEntity> hang = new ArrayList<>();
 
         void datHang(List<VatTuEntity> h) {
@@ -446,6 +468,7 @@ public class VatTuGUI extends JPanel {
             case 3: return String.valueOf(vt.getTonKho());
             case 4: return vt.getDonVi();
             case 5: return NumberFormat.getInstance(VN).format(vt.getGiaNhap()) + " ₫";
+            case 6: return NumberFormat.getInstance(VN).format(vt.getGiaBan()) + " ₫";
             default: return "";
         }
     }
@@ -474,6 +497,9 @@ public class VatTuGUI extends JPanel {
             } else if (cot == 3) {
                  int ton = vt.getTonKho();
                  setForeground(ton <= 0 ? MAU_DO : (ton <= 30 ? MAU_CAM : RangBuocGiaoDien.MAU_CHU_CHINH));
+                 setFont(RangBuocGiaoDien.fontDam(13));
+            } else if (cot == 6) {
+                 setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
                  setFont(RangBuocGiaoDien.fontDam(13));
             } else {
                  setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);

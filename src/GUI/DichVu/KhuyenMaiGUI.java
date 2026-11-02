@@ -67,7 +67,6 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private static final int COT_TRANG_THAI = 7;
-    private static final int COT_THAO_TAC = 8;
 
     /** Mã các khuyến mãi đang tạm dừng (chỉ lưu trong bộ nhớ). */
     private static final Set<String> TAM_DUNG = new HashSet<>();
@@ -268,10 +267,48 @@ public class KhuyenMaiGUI extends JPanel {
         locTrai.add(cboTrangThai);
         locTrai.add(btnThoiGian);
 
+        RoundButton btnSua = new RoundButton("Sửa", Color.WHITE, VIEN, CHU);
+        RoundButton btnNhanBan = new RoundButton("Nhân bản", XANH, XANH, Color.WHITE);
+        RoundButton btnTamNgung = new RoundButton("Tạm ngưng", DO, DO, Color.WHITE);
         RoundButton btnXuat = new RoundButton("⤓  Xuất danh sách", Color.WHITE, VIEN, CHU);
+
+        btnSua.addActionListener(e -> {
+            int sel = table.getSelectedRow();
+            if (sel < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để sửa.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int mr = table.convertRowIndexToModel(sel);
+            if (mr >= 0 && mr < dongHienTai.size()) moForm(dongHienTai.get(mr), CheDo.SUA);
+        });
+
+        btnNhanBan.addActionListener(e -> {
+            int sel = table.getSelectedRow();
+            if (sel < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để nhân bản.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int mr = table.convertRowIndexToModel(sel);
+            if (mr >= 0 && mr < dongHienTai.size()) moForm(dongHienTai.get(mr), CheDo.NHAN_BAN);
+        });
+
+        btnTamNgung.addActionListener(e -> {
+            int sel = table.getSelectedRow();
+            if (sel < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để tạm ngưng/kích hoạt.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int mr = table.convertRowIndexToModel(sel);
+            if (mr >= 0 && mr < dongHienTai.size()) doiTamDung(dongHienTai.get(mr));
+        });
+
         btnXuat.addActionListener(e -> xuatDanhSach());
-        JPanel locPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+
+        JPanel locPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         locPhai.setOpaque(false);
+        locPhai.add(btnSua);
+        locPhai.add(btnNhanBan);
+        locPhai.add(btnTamNgung);
         locPhai.add(btnXuat);
 
         JPanel loc = new JPanel(new BorderLayout());
@@ -282,7 +319,7 @@ public class KhuyenMaiGUI extends JPanel {
 
         // ---- bảng ----
         String[] cot = {"Mã khuyến mãi", "Tên khuyến mãi", "Mức giảm", "Loại giảm", "Ngày bắt đầu",
-                "Ngày kết thúc", "Điều kiện", "Trạng thái", "Thao tác"};
+                "Ngày kết thúc", "Điều kiện", "Trạng thái"};
         model = new DefaultTableModel(cot, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -315,22 +352,10 @@ public class KhuyenMaiGUI extends JPanel {
         table.getColumnModel().getColumn(5).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(6).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(7).setCellRenderer(new StatusRenderer());
-        table.getColumnModel().getColumn(8).setCellRenderer(new ActionRenderer());
-        int[] rong = {95, 160, 95, 80, 95, 95, 210, 110, 230};
+        int[] rong = {95, 160, 95, 80, 95, 95, 210, 110};
         for (int i = 0; i < rong.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
         }
-        table.getColumnModel().getColumn(COT_THAO_TAC).setMinWidth(230); // đủ chỗ cho 3 thao tác
-
-        table.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { khiClickBang(e); }
-        });
-        table.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override public void mouseMoved(MouseEvent e) {
-                boolean tay = table.columnAtPoint(e.getPoint()) == COT_THAO_TAC && table.rowAtPoint(e.getPoint()) >= 0;
-                table.setCursor(Cursor.getPredefinedCursor(tay ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
-            }
-        });
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, VIEN));
@@ -482,21 +507,7 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
     // Thao tác trên dòng
     // =====================================================================
-    /** Vị trí các thao tác trong ô (khớp với ActionRenderer): Sửa 12-64, Nhân bản 64-140, Tạm dừng/Kích hoạt 140-224. */
-    private void khiClickBang(MouseEvent e) {
-        int r = table.rowAtPoint(e.getPoint());
-        int c = table.columnAtPoint(e.getPoint());
-        if (r < 0 || c != COT_THAO_TAC || r >= dongHienTai.size()) return;
-        int x = e.getX() - table.getCellRect(r, c, false).x;
-        KhuyenMai_Entity km = dongHienTai.get(r);
-        if (x >= 12 && x < 64) {
-            moForm(km, CheDo.SUA);
-        } else if (x >= 64 && x < 140) {
-            moForm(km, CheDo.NHAN_BAN);
-        } else if (x >= 140 && x < 224) {
-            doiTamDung(km);
-        }
-    }
+
 
     private void doiTamDung(KhuyenMai_Entity km) {
         TT tt = trangThai(km);
@@ -757,47 +768,7 @@ public class KhuyenMaiGUI extends JPanel {
         }
     }
 
-    /** Cột thao tác: Sửa | Nhân bản | Tạm dừng (hoặc Kích hoạt). Vị trí khớp với khiClickBang. */
-    private static class ActionRenderer implements TableCellRenderer {
-        private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        private final JLabel lblSua = link("✎ Sửa", XANH, 52);
-        private final JLabel lblNhanBan = link("❐ Nhân bản", XANH, 76);
-        private final JLabel lblDoi = link("", DO, 84);
 
-        ActionRenderer() {
-            panel.setBorder(new EmptyBorder(11, 12, 0, 0));
-            panel.add(lblSua);
-            panel.add(lblNhanBan);
-            panel.add(lblDoi);
-        }
-
-        private static JLabel link(String text, Color color, int width) {
-            JLabel l = new JLabel(text);
-            l.setFont(new Font(FONT, Font.PLAIN, 12));
-            l.setForeground(color);
-            l.setPreferredSize(new Dimension(width, 20));
-            return l;
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            String tt = String.valueOf(t.getValueAt(r, COT_TRANG_THAI));
-            if (TT.HET_HAN.text.equals(tt)) {
-                lblDoi.setVisible(false);
-            } else if (TT.TAM_DUNG.text.equals(tt)) {
-                lblDoi.setVisible(true);
-                lblDoi.setText("▶ Kích hoạt");
-                lblDoi.setForeground(XANH);
-            } else {
-                lblDoi.setVisible(true);
-                lblDoi.setText("‖ Tạm dừng");
-                lblDoi.setForeground(DO);
-            }
-            panel.setOpaque(true);
-            panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
-            return panel;
-        }
-    }
 
     private static class Badge extends JLabel {
         private Color bg = XAM_BG;
