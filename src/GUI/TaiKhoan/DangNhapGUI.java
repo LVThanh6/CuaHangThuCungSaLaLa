@@ -1,5 +1,4 @@
 package GUI.TaiKhoan;
-
 import dao.DangNhap_DAO;
 import dao.TaiKhoan_DAO;
 import model.TaiKhoan;
@@ -17,7 +16,7 @@ import java.awt.event.KeyEvent;
 
 /**
  * Giao diện Đăng nhập hệ thống SALALA Pet Shop.
- * Hỗ trợ xác thực bảo mật SHA-256 khớp CSDL SALALA, lưu Session và phân quyền 6 vai trò người dùng.
+ * Hỗ trợ xác thực bảo mật SHA-256 khớp CSDL SALALA, lưu Session và phân quyền 6 vai trò người dùng
  */
 public class DangNhapGUI extends JFrame {
     private static final long serialVersionUID = 1L;
