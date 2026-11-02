@@ -14,12 +14,12 @@ import dao.NhaCungCap_DAO;
 import entity.NhaCungCap_entity;
 
 /**
- * Giao diện "Quản lý Nhà cung cấp" - SALALA Pet Shop.
- * Quản lý danh sách nhà cung cấp với thanh toolbar (Thêm, Sửa, Xóa) và tìm kiếm.
+ * Giao dien "Quan ly Nha cung cap" - SALALA Pet Shop.
+ * JPanel doc lap voi chuc nang CRUD day du.
  */
 public class NhaCungCapGUI extends JPanel {
 
-    // ===== Màu sắc =====
+    // ===== Mau sac =====
     private static final Color BG          = new Color(0xF8FAFC);
     private static final Color WHITE       = Color.WHITE;
     private static final Color BORDER      = new Color(0xE5E7EB);
@@ -34,7 +34,7 @@ public class NhaCungCapGUI extends JPanel {
 
     private static final String FONT = "Segoe UI";
 
-    // ===== Thành phần =====
+    // ===== Thanh phan =====
     private JTextField txtSearch;
     private JTable table;
     private DefaultTableModel model;
@@ -60,7 +60,7 @@ public class NhaCungCapGUI extends JPanel {
     }
 
     // =====================================================================
-    // Tiêu đề
+    // Tieu de
     // =====================================================================
     private JComponent createTitle() {
         JPanel p = new JPanel(new BorderLayout());
@@ -70,10 +70,10 @@ public class NhaCungCapGUI extends JPanel {
         JPanel left = new JPanel();
         left.setOpaque(false);
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-        JLabel t = new JLabel("Quản lý Nhà cung cấp");
+        JLabel t = new JLabel("Quan ly Nha cung cap");
         t.setFont(new Font(FONT, Font.BOLD, 18));
         t.setForeground(TEXT_DARK);
-        JLabel s = new JLabel("Thêm, sửa, xóa thông tin nhà cung cấp vật tư");
+        JLabel s = new JLabel("Them, sua, xoa thong tin nha cung cap vat tu");
         s.setFont(new Font(FONT, Font.PLAIN, 12));
         s.setForeground(TEXT_GRAY);
         t.setAlignmentX(LEFT_ALIGNMENT);
@@ -82,13 +82,16 @@ public class NhaCungCapGUI extends JPanel {
         left.add(Box.createVerticalStrut(2));
         left.add(s);
 
-        lblTongNCC = new JLabel("0 nhà cung cấp");
+        lblTongNCC = new JLabel("0 nha cung cap");
         lblTongNCC.setFont(new Font(FONT, Font.BOLD, 13));
         lblTongNCC.setForeground(PRIMARY);
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
         right.add(lblTongNCC);
+        RoundButton btnThem = new RoundButton("+ Them nha cung cap", PRIMARY, PRIMARY, WHITE);
+        btnThem.addActionListener(e -> themNhaCungCap());
+        right.add(btnThem);
 
         p.add(left, BorderLayout.WEST);
         p.add(right, BorderLayout.EAST);
@@ -96,65 +99,29 @@ public class NhaCungCapGUI extends JPanel {
     }
 
     // =====================================================================
-    // Bảng dữ liệu & Toolbar
+    // Bang du lieu
     // =====================================================================
     private JComponent createTablePanel() {
         RoundedPanel box = new RoundedPanel(12, WHITE, BORDER);
         box.setLayout(new BorderLayout());
 
-        // ---- thanh lọc & nút thao tác ----
-        JPanel filterLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 10));
-        filterLeft.setOpaque(false);
-
-        txtSearch = new SearchField("Tìm theo tên, mã, SĐT...");
-        txtSearch.setPreferredSize(new Dimension(280, 34));
-        txtSearch.getDocument().addDocumentListener(new SimpleDocListener(this::applyFilter));
-        filterLeft.add(txtSearch);
-
-        RoundButton btnThem = new RoundButton("+ Thêm", PRIMARY, PRIMARY, WHITE);
-        RoundButton btnSua = new RoundButton("Sửa", WHITE, BORDER, TEXT_DARK);
-        RoundButton btnXoa = new RoundButton("Xóa", WHITE, new Color(0xFCA5A5), RED);
-
-        btnThem.addActionListener(e -> themNhaCungCap());
-        btnSua.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhà cung cấp trong bảng để sửa.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            int modelRow = table.convertRowIndexToModel(row);
-            suaNhaCungCap(modelRow);
-        });
-        btnXoa.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhà cung cấp trong bảng để xóa.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            int modelRow = table.convertRowIndexToModel(row);
-            String maNCC = (String) model.getValueAt(modelRow, 0);
-            xoaNhaCungCap(modelRow, maNCC);
-        });
-
-        JPanel filterRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
-        filterRight.setOpaque(false);
-        filterRight.add(btnThem);
-        filterRight.add(btnSua);
-        filterRight.add(btnXoa);
-
-        JPanel filter = new JPanel(new BorderLayout());
+        // ---- thanh loc ----
+        JPanel filter = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 10));
         filter.setOpaque(false);
-        filter.setBorder(new EmptyBorder(4, 6, 4, 6));
-        filter.add(filterLeft, BorderLayout.WEST);
-        filter.add(filterRight, BorderLayout.EAST);
+
+        txtSearch = new SearchField("Tim theo ten, ma, SDT...");
+        txtSearch.setPreferredSize(new Dimension(280, 30));
+        txtSearch.getDocument().addDocumentListener(new SimpleDocListener(this::applyFilter));
+        filter.add(txtSearch);
 
         JPanel filterWrap = new JPanel(new BorderLayout());
         filterWrap.setOpaque(false);
+        filterWrap.setBorder(new EmptyBorder(0, 6, 0, 6));
         filterWrap.add(filter, BorderLayout.CENTER);
         filterWrap.add(new JSeparator(), BorderLayout.SOUTH);
 
-        // ---- bảng ----
-        String[] cols = {"MÃ NCC", "TÊN NHÀ CUNG CẤP", "ĐỊA CHỈ", "SỐ ĐIỆN THOẠI", "EMAIL"};
+        // ---- bang ----
+        String[] cols = {"MA NCC", "TEN NHA CUNG CAP", "DIA CHI", "SO DIEN THOAI", "EMAIL", "THAO TAC"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -168,6 +135,7 @@ public class NhaCungCapGUI extends JPanel {
         table.setSelectionBackground(new Color(0xE8F5F2));
         table.setSelectionForeground(TEXT_DARK);
         table.setFillsViewportHeight(true);
+        table.setFocusable(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         sorter = new TableRowSorter<>(model);
@@ -185,11 +153,39 @@ public class NhaCungCapGUI extends JPanel {
         table.getColumnModel().getColumn(2).setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(3).setCellRenderer(new TextRenderer(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(4).setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ActionRenderer());
 
-        int[] widths = {100, 240, 220, 140, 180};
+        int[] widths = {90, 220, 200, 130, 180, 120};
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
+
+        // Click handler cho cot Thao tac
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                int col = table.columnAtPoint(e.getPoint());
+                if (row < 0 || col != 5) return;
+                int modelRow = table.convertRowIndexToModel(row);
+                String maNCC = (String) model.getValueAt(modelRow, 0);
+
+                int relX = e.getX() - table.getCellRect(row, col, false).x;
+                if (relX < 50) {
+                    suaNhaCungCap(modelRow);
+                } else {
+                    xoaNhaCungCap(modelRow, maNCC);
+                }
+            }
+        });
+        table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override public void mouseMoved(MouseEvent e) {
+                int c = table.columnAtPoint(e.getPoint());
+                int r = table.rowAtPoint(e.getPoint());
+                boolean hand = c == 5 && r >= 0;
+                table.setCursor(Cursor.getPredefinedCursor(hand ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+            }
+        });
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
@@ -202,7 +198,7 @@ public class NhaCungCapGUI extends JPanel {
     }
 
     // =====================================================================
-    // Dữ liệu
+    // Du lieu
     // =====================================================================
     public void loadData() {
         model.setRowCount(0);
@@ -214,22 +210,24 @@ public class NhaCungCapGUI extends JPanel {
                     ncc.getTenNCC(),
                     ncc.getDiaChi(),
                     ncc.getSdt(),
-                    ncc.getEmail()
+                    ncc.getEmail(),
+                    ""
                 });
             }
-            lblTongNCC.setText(dsNCC.size() + " nhà cung cấp");
+            lblTongNCC.setText(dsNCC.size() + " nha cung cap");
         } catch (Exception e) {
             e.printStackTrace();
+            // Load du lieu mau neu khong co ket noi CSDL
             loadSampleData();
         }
     }
 
     private void loadSampleData() {
         model.setRowCount(0);
-        model.addRow(new Object[]{"NCC001", "Công ty Dược Thú Y VetGroup", "123 Nguyễn Văn Linh, Q.7, TP.HCM", "0901234567", "vetgroup@email.com"});
-        model.addRow(new Object[]{"NCC002", "Công ty TNHH Thú Y Á Châu", "456 Lê Văn Việt, Q.9, TP.HCM", "0912345678", "achau@email.com"});
-        model.addRow(new Object[]{"NCC003", "Pharma Pet Việt Nam", "789 Phạm Văn Đồng, Thủ Đức, TP.HCM", "0923456789", "pharmapet@email.com"});
-        lblTongNCC.setText(model.getRowCount() + " nhà cung cấp");
+        model.addRow(new Object[]{"NCC001", "Cong ty Duoc Thu Y VetGroup", "123 Nguyen Van Linh, Q.7, TP.HCM", "0901234567", "vetgroup@email.com", ""});
+        model.addRow(new Object[]{"NCC002", "Cong ty TNHH Thu Y A Chau", "456 Le Van Viet, Q.9, TP.HCM", "0912345678", "achau@email.com", ""});
+        model.addRow(new Object[]{"NCC003", "Pharma Pet Viet Nam", "789 Pham Van Dong, Thu Duc, TP.HCM", "0923456789", "pharmapet@email.com", ""});
+        lblTongNCC.setText(model.getRowCount() + " nha cung cap");
     }
 
     // =====================================================================
@@ -245,12 +243,13 @@ public class NhaCungCapGUI extends JPanel {
                 e.printStackTrace();
             }
             if (ok) {
-                JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Them nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
                 loadData();
             } else {
-                model.addRow(new Object[]{ncc.getMaNCC(), ncc.getTenNCC(), ncc.getDiaChi(), ncc.getSdt(), ncc.getEmail()});
-                lblTongNCC.setText(model.getRowCount() + " nhà cung cấp");
-                JOptionPane.showMessageDialog(this, "Đã thêm nhà cung cấp vào bảng (chưa lưu CSDL).", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                // Them vao bang tam thoi neu khong co CSDL
+                model.addRow(new Object[]{ncc.getMaNCC(), ncc.getTenNCC(), ncc.getDiaChi(), ncc.getSdt(), ncc.getEmail(), ""});
+                lblTongNCC.setText(model.getRowCount() + " nha cung cap");
+                JOptionPane.showMessageDialog(this, "Da them nha cung cap vao bang (chua luu CSDL).", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }
@@ -272,14 +271,15 @@ public class NhaCungCapGUI extends JPanel {
                 e.printStackTrace();
             }
             if (ok) {
-                JOptionPane.showMessageDialog(this, "Cập nhật nhà cung cấp thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Cap nhat nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
                 loadData();
             } else {
+                // Cap nhat bang tam thoi
                 model.setValueAt(updated.getTenNCC(), modelRow, 1);
                 model.setValueAt(updated.getDiaChi(), modelRow, 2);
                 model.setValueAt(updated.getSdt(), modelRow, 3);
                 model.setValueAt(updated.getEmail(), modelRow, 4);
-                JOptionPane.showMessageDialog(this, "Đã cập nhật nhà cung cấp (chưa lưu CSDL).", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Da cap nhat nha cung cap (chua luu CSDL).", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }
@@ -287,8 +287,8 @@ public class NhaCungCapGUI extends JPanel {
     private void xoaNhaCungCap(int modelRow, String maNCC) {
         String tenNCC = (String) model.getValueAt(modelRow, 1);
         int ok = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc chắn muốn xóa nhà cung cấp \"" + tenNCC + "\" (Mã: " + maNCC + ")?\nThao tác này không thể hoàn tác.",
-                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                "Ban co chac chan muon xoa nha cung cap \"" + tenNCC + "\" (Ma: " + maNCC + ")?\nThao tac nay khong the hoan tac.",
+                "Xac nhan xoa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (ok != JOptionPane.YES_OPTION) return;
 
         boolean deleted = false;
@@ -298,24 +298,25 @@ public class NhaCungCapGUI extends JPanel {
             e.printStackTrace();
         }
         if (deleted) {
-            JOptionPane.showMessageDialog(this, "Đã xóa nhà cung cấp thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Da xoa nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
             loadData();
         } else {
+            // Xoa khoi bang tam thoi
             model.removeRow(modelRow);
-            lblTongNCC.setText(model.getRowCount() + " nhà cung cấp");
-            JOptionPane.showMessageDialog(this, "Đã xóa nhà cung cấp khỏi bảng (chưa lưu CSDL).", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            lblTongNCC.setText(model.getRowCount() + " nha cung cap");
+            JOptionPane.showMessageDialog(this, "Da xoa nha cung cap khoi bang (chua luu CSDL).", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     // =====================================================================
-    // Hộp thoại thêm / sửa
+    // Hop thoai them / sua
     // =====================================================================
     private NhaCungCap_entity openEditor(NhaCungCap_entity src) {
         final NhaCungCap_entity[] result = {null};
         boolean isNew = (src == null);
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
-                isNew ? "Thêm nhà cung cấp mới" : "Sửa nhà cung cấp", Dialog.ModalityType.APPLICATION_MODAL);
+                isNew ? "Them nha cung cap moi" : "Sua nha cung cap", Dialog.ModalityType.APPLICATION_MODAL);
 
         JTextField txtMa = new JTextField(isNew ? taoMaMoi() : src.getMaNCC());
         txtMa.setEditable(isNew);
@@ -325,16 +326,24 @@ public class NhaCungCapGUI extends JPanel {
         JTextField txtEmail = new JTextField(isNew ? "" : src.getEmail());
 
         JPanel form = new JPanel(new GridBagLayout());
-        form.setBackground(WHITE);
         form.setBorder(new EmptyBorder(16, 20, 10, 20));
-        addFormRow(form, 0, "Mã NCC", txtMa);
-        addFormRow(form, 1, "Tên nhà cung cấp (*)", txtTen);
-        addFormRow(form, 2, "Địa chỉ", txtDiaChi);
-        addFormRow(form, 3, "Số điện thoại", txtSDT);
+        addFormRow(form, 0, "Ma NCC", txtMa);
+        addFormRow(form, 1, "Ten nha cung cap (*)", txtTen);
+        addFormRow(form, 2, "Dia chi", txtDiaChi);
+        addFormRow(form, 3, "So dien thoai", txtSDT);
         addFormRow(form, 4, "Email", txtEmail);
 
-        RoundButton btnLuu = new RoundButton(isNew ? "Thêm mới" : "Lưu thay đổi", PRIMARY, PRIMARY, WHITE);
-        RoundButton btnHuy = new RoundButton("Hủy", WHITE, BORDER, TEXT_DARK);
+        JButton btnLuu = new JButton(isNew ? "Them moi" : "Luu thay doi");
+        btnLuu.setFont(new Font(FONT, Font.BOLD, 13));
+        btnLuu.setBackground(PRIMARY);
+        btnLuu.setForeground(WHITE);
+        btnLuu.setFocusPainted(false);
+        btnLuu.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JButton btnHuy = new JButton("Huy");
+        btnHuy.setFont(new Font(FONT, Font.PLAIN, 13));
+        btnHuy.setFocusPainted(false);
+        btnHuy.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         btnHuy.addActionListener(e -> d.dispose());
         btnLuu.addActionListener(e -> {
@@ -345,11 +354,11 @@ public class NhaCungCapGUI extends JPanel {
             String email = txtEmail.getText().trim();
 
             if (ma.isEmpty()) {
-                JOptionPane.showMessageDialog(d, "Mã NCC không được để trống.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(d, "Ma NCC khong duoc de trong.", "Loi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(d, "Tên nhà cung cấp không được để trống.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(d, "Ten nha cung cap khong duoc de trong.", "Loi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -358,7 +367,6 @@ public class NhaCungCapGUI extends JPanel {
         });
 
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
-        btns.setBackground(WHITE);
         btns.add(btnLuu);
         btns.add(btnHuy);
 
@@ -405,7 +413,7 @@ public class NhaCungCapGUI extends JPanel {
     }
 
     // =====================================================================
-    // Lọc
+    // Loc
     // =====================================================================
     private static String normalize(String s) {
         String n = Normalizer.normalize(s == null ? "" : s, Normalizer.Form.NFD);
@@ -463,8 +471,30 @@ public class NhaCungCapGUI extends JPanel {
         }
     }
 
+    private static class ActionRenderer implements TableCellRenderer {
+        private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        ActionRenderer() {
+            panel.setBorder(new EmptyBorder(11, 12, 0, 0));
+            panel.add(link("Sua", PRIMARY));
+            panel.add(link("Xoa", RED));
+        }
+        private static JLabel link(String text, Color color) {
+            JLabel l = new JLabel(text);
+            l.setFont(new Font(FONT, Font.BOLD, 12));
+            l.setForeground(color);
+            l.setPreferredSize(new Dimension(46, 20));
+            return l;
+        }
+        @Override
+        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+            panel.setOpaque(true);
+            panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
+            return panel;
+        }
+    }
+
     // =====================================================================
-    // Component phụ
+    // Component phu
     // =====================================================================
     private static class RoundedPanel extends JPanel {
         private final int arc;
@@ -545,5 +575,19 @@ public class NhaCungCapGUI extends JPanel {
         public void insertUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
         public void removeUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
         public void changedUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
+    }
+
+    // =====================================================================
+    // Chay thu doc lap
+    // =====================================================================
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame f = new JFrame("SALALA Pet Shop - Nha cung cap");
+            f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            f.setSize(1100, 700);
+            f.setLocationRelativeTo(null);
+            f.setContentPane(new NhaCungCapGUI());
+            f.setVisible(true);
+        });
     }
 }
