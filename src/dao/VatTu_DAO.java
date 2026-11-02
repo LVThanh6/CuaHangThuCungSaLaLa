@@ -3,6 +3,7 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -21,9 +22,7 @@ public class VatTu_DAO {
     public ArrayList<VatTu_entity> getAllVatTu() {
         ArrayList<VatTu_entity> dsVT = new ArrayList<>();
 
-        String sql = "SELECT maVT, maNCC, tenVT, soLuongTon, "
-                   + "trangThai, giaBanCoBan, giaNhap "
-                   + "FROM VatTu";
+        String sql = "SELECT * FROM VatTu";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -51,7 +50,8 @@ public class VatTu_DAO {
                         rs.getInt("soLuongTon"),
                         rs.getString("trangThai"),
                         rs.getDouble("giaBanCoBan"),
-                        rs.getDouble("giaNhap")
+                        rs.getDouble("giaNhap"),
+                        layMaThuoc(rs)
                     );
 
                     dsVT.add(vt);
@@ -72,8 +72,8 @@ public class VatTu_DAO {
     public boolean createVatTu(VatTu_entity vt) {
         String sql = "INSERT INTO VatTu "
                    + "(maVT, maNCC, tenVT, soLuongTon, "
-                   + "trangThai, giaBanCoBan, giaNhap) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                   + "trangThai, giaBanCoBan, giaNhap, maThuoc) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -90,6 +90,7 @@ public class VatTu_DAO {
                 ps.setString(5, vt.getTrangThai());
                 ps.setDouble(6, vt.getGiaBanCoBan());
                 ps.setDouble(7, vt.getGiaNhap());
+                ps.setString(8, vt.getMaThuoc());
 
                 return ps.executeUpdate() > 0;
             }
@@ -133,7 +134,7 @@ public class VatTu_DAO {
     public boolean updateVatTu(VatTu_entity vt) {
         String sql = "UPDATE VatTu SET "
                    + "maNCC = ?, tenVT = ?, soLuongTon = ?, "
-                   + "trangThai = ?, giaBanCoBan = ?, giaNhap = ? "
+                   + "trangThai = ?, giaBanCoBan = ?, giaNhap = ?, maThuoc = ? "
                    + "WHERE maVT = ?";
 
         try {
@@ -150,7 +151,8 @@ public class VatTu_DAO {
                 ps.setString(4, vt.getTrangThai());
                 ps.setDouble(5, vt.getGiaBanCoBan());
                 ps.setDouble(6, vt.getGiaNhap());
-                ps.setString(7, vt.getMaVT());
+                ps.setString(7, vt.getMaThuoc());
+                ps.setString(8, vt.getMaVT());
 
                 return ps.executeUpdate() > 0;
             }
@@ -166,9 +168,7 @@ public class VatTu_DAO {
      * Tìm vật tư theo mã
      */
     public VatTu_entity getVatTuTheoMa(String maVT) {
-        String sql = "SELECT maVT, maNCC, tenVT, soLuongTon, "
-                   + "trangThai, giaBanCoBan, giaNhap "
-                   + "FROM VatTu WHERE maVT = ?";
+        String sql = "SELECT * FROM VatTu WHERE maVT = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -197,7 +197,8 @@ public class VatTu_DAO {
                             rs.getInt("soLuongTon"),
                             rs.getString("trangThai"),
                             rs.getDouble("giaBanCoBan"),
-                            rs.getDouble("giaNhap")
+                            rs.getDouble("giaNhap"),
+                            layMaThuoc(rs)
                         );
                     }
                 }
@@ -207,6 +208,16 @@ public class VatTu_DAO {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    private String layMaThuoc(ResultSet rs) throws SQLException {
+        ResultSetMetaData metadata = rs.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+            if ("maThuoc".equalsIgnoreCase(metadata.getColumnLabel(i))) {
+                return rs.getString(i);
+            }
+        }
         return null;
     }
 }

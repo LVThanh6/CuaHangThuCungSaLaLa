@@ -27,25 +27,23 @@ public class LichHen_DAO {
     /**
      * Lấy toàn bộ danh sách lịch hẹn
      */
-    public ArrayList<LichHen_entity> getAllLichHen() {
+    public ArrayList<LichHen_entity> getAllLichHen() throws SQLException {
         ArrayList<LichHen_entity> dsLichHen = new ArrayList<>();
 
         String sql = "SELECT maLichHen, maTC, maKH, maNhanVien, maDV, ngayGio, lyDo, trangThai, ghiChu, loaiHen "
                    + "FROM LichHen ORDER BY ngayGio DESC";
 
-        try {
-            Connection con = ConnectDB.getCon();
-            if (con == null) return dsLichHen;
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            throw new SQLException("Không thể kết nối cơ sở dữ liệu để tải lịch hẹn.");
+        }
 
-            try (PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-                while (rs.next()) {
-                    dsLichHen.add(mapToEntity(rs));
-                }
+            while (rs.next()) {
+                dsLichHen.add(mapToEntity(rs));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         return dsLichHen;

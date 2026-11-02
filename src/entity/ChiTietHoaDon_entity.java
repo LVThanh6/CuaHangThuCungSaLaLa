@@ -5,6 +5,7 @@ public class ChiTietHoaDon_entity {
 	private HoaDon_entity maHD;
 	private DichVu_entity maDV;
 	private VatTu_entity maVT;
+	private String maCTDT;
 	private NhanVien_entity nhanVienThucHien;
 	private BacSi_entity bacSiThucHien;
 	private int soLuong;
@@ -46,6 +47,12 @@ public class ChiTietHoaDon_entity {
 	public VatTu_entity getMaVT() {
 		return maVT;
 	}
+	public String getMaCTDT() {
+		return maCTDT;
+	}
+	public void setMaCTDT(String maCTDT) {
+		this.maCTDT = maCTDT;
+	}
 	public NhanVien_entity getNhanVienThucHien() {
 		return nhanVienThucHien;
 	}
@@ -79,4 +86,3 @@ public class ChiTietHoaDon_entity {
 	
 	
 }
-

@@ -749,8 +749,13 @@ public class XemLichGUI extends JPanel {
 
     private void capNhatThongTinHienThi() {
         int soDong = bangLichKham.getRowCount();
-        nhanThongTinHienThi.setText(soDong == 0 ? "Không có lịch khám"
-                : "Hiển thị tất cả " + soDong + " lịch khám");
+        if (soDong > 0) {
+            nhanThongTinHienThi.setText("Hiển thị " + soDong + " lịch khám");
+        } else if (danhSachLichHen.isEmpty()) {
+            nhanThongTinHienThi.setText("Chưa có lịch khám. Nhấn “Tạo lịch khám” để thêm mới.");
+        } else {
+            nhanThongTinHienThi.setText("Không có lịch khám phù hợp với bộ lọc.");
+        }
     }
 
     // =========================================================================

@@ -1,6 +1,8 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
+import dao.VatTu_DAO;
+import entity.VatTu_entity;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -69,7 +71,7 @@ public class VatTuGUI extends JPanel {
     }
 
     private static final String[] DANH_MUC = {
-            "Kháng sinh", "Vắc-xin", "Giảm đau", "Ký sinh", "Tiêu hao"
+            "Vật tư"
     };
 
     private static final Color NEN_CHON = new Color(240, 250, 247);
@@ -84,6 +86,7 @@ public class VatTuGUI extends JPanel {
     private final List<VatTuEntity> tatCa = new ArrayList<>();
     private final List<VatTuEntity> daLoc = new ArrayList<>();
     private final Set<String> daChon = new HashSet<>();
+    private final VatTu_DAO vatTuDAO = new VatTu_DAO();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -369,12 +372,15 @@ public class VatTuGUI extends JPanel {
 
     private void taiDuLieuMau() {
         tatCa.clear();
-        tatCa.add(new VatTuEntity("VT-001", "Amoxicillin 250mg", "Kháng sinh", 340, "Ống", 45000));
-        tatCa.add(new VatTuEntity("VT-002", "Rabisin Vắc-xin Dại", "Vắc-xin", 15, "Lọ", 320000));
-        tatCa.add(new VatTuEntity("VT-003", "Prednisolone 5mg", "Giảm đau", 0, "Viên", 8500));
-        tatCa.add(new VatTuEntity("VT-004", "Fronil Spot-on Dog", "Ký sinh", 85, "Tuýp", 78000));
-        tatCa.add(new VatTuEntity("VT-005", "Bông y tế vô trùng", "Tiêu hao", 60, "Gói", 12000));
-        tatCa.add(new VatTuEntity("VT-006", "Kim tiêm 5ml", "Tiêu hao", 22, "Hộp", 35000));
+        for (VatTu_entity vatTu : vatTuDAO.getAllVatTu()) {
+            tatCa.add(new VatTuEntity(
+                    vatTu.getMaVT(),
+                    vatTu.getTenVT(),
+                    "Vật tư",
+                    vatTu.getSoLuongTon(),
+                    "-",
+                    Math.round(vatTu.getGiaNhap())));
+        }
         lamMoi();
     }
     
