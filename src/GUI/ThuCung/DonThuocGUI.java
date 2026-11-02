@@ -499,20 +499,29 @@ public class DonThuocGUI extends JPanel {
         if (maDon == null) return;
 
         int confirm = JOptionPane.showConfirmDialog(this, 
-            "Xác nhận xuất thuốc cho đơn \"" + maDon + "\"?\nThao tác này sẽ đổi trạng thái thành 'Hoàn thành' và tự động tạo 1 Hóa Đơn chờ thanh toán.", 
+            "Xác nhận xuất thuốc cho đơn \"" + maDon + "\"?\nThao tác này sẽ đổi trạng thái thành 'Hoàn thành' và tự động tạo 1 Hóa Đơn có thú cưng và chi tiết tiền thuốc.", 
             "Xác nhận xuất thuốc", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
         
         if (confirm != JOptionPane.YES_OPTION) return;
 
+        java.sql.Connection con = null;
         try {
             // 1. Lấy thông tin Đơn Thuốc và Chi Tiết đơn thuốc
             DonThuoc_entity don = donThuocDAO.getDonThuocTheoMa(maDon);
+            if (don == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin đơn thuốc " + maDon, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             List<ChiTietDonThuoc_entity> chiTietList = donThuocDAO.getChiTietDonThuoc(maDon);
+            if (chiTietList == null || chiTietList.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Đơn thuốc này không có chi tiết thuốc nào!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
             // 2. Lấy thông tin Khách Hàng (Chủ nuôi) từ Thú Cưng
             ThuCung_entity tc = thuCungDAO.getThuCungTheoMa(don.getMaTC());
             if (tc == null || tc.getMaKH() == null) {
-                JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy thông tin Khách hàng để tạo hóa đơn!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy thông tin Thú cưng / Khách hàng để tạo hóa đơn!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -527,7 +536,15 @@ public class DonThuocGUI extends JPanel {
             dao.ChiTietHoaDon_DAO cthdDAO = new dao.ChiTietHoaDon_DAO();
             dao.VatTu_DAO vtDAO = new dao.VatTu_DAO();
 
-            // 4. Tạo Hóa Đơn mới trạng thái Chờ thanh toán
+            // Mở kết nối transaction
+            con = connectDB.ConnectDB.getCon();
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "Không thể kết nối cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            con.setAutoCommit(false);
+
+            // 4. Tạo Hóa Đơn mới trạng thái Chờ thanh toán và GẮN THÚ CƯNG
             int soHD = hdDAO.laySoHoaDonLonNhat() + 1;
             String maHD = String.format("HD%03d", soHD);
 
@@ -539,43 +556,85 @@ public class DonThuocGUI extends JPanel {
                     nv,
                     null, null, null
             );
+            hd.setMaTC(tc.getMaTC()); // GẮN MÃ THÚ CƯNG CHO HÓA ĐƠN
 
-            if (!hdDAO.themHD(hd)) {
-                JOptionPane.showMessageDialog(this, "Lỗi hệ thống khi tạo Hóa Đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
+            if (!hdDAO.themHD(con, hd)) {
+                throw new java.sql.SQLException("Không thể lưu thông tin Hóa Đơn " + maHD);
             }
 
-            // 5. Thêm Chi Tiết Hóa Đơn dựa trên Chi Tiết Đơn Thuốc (Vật tư)
+            // 5. Thêm Chi Tiết Hóa Đơn dựa trên Chi Tiết Đơn Thuốc (tìm đúng Vật Tư liên kết qua maThuoc)
             int ctIndex = 1;
+            double tongTienThuoc = 0.0;
             for (ChiTietDonThuoc_entity ctDon : chiTietList) {
-                entity.VatTu_entity vt = vtDAO.getVatTuTheoMa(ctDon.getMaThuoc()); 
-                double donGia = (vt != null) ? vt.getGiaBanCoBan() : 0.0;
+                // Tìm vật tư kho liên kết với mã thuốc (ví dụ maThuoc TH005 -> maVT VT010)
+                entity.VatTu_entity vt = vtDAO.getVatTuTheoMaThuoc(ctDon.getMaThuoc());
+                if (vt == null) {
+                    vt = vtDAO.getVatTuTheoMa(ctDon.getMaThuoc());
+                }
+
+                if (vt == null) {
+                    throw new java.sql.SQLException("Không tìm thấy mặt hàng trong kho cho thuốc: " 
+                            + ctDon.getTenThuoc() + " (Mã: " + ctDon.getMaThuoc() + ")");
+                }
+
+                double donGia = vt.getGiaBanCoBan();
+                int soLuong = ctDon.getSoLuong().intValue();
+                if (soLuong <= 0) soLuong = 1;
 
                 String maCTHD = "CT" + maHD + String.format("%02d", ctIndex++);
                 entity.ChiTietHoaDon_entity cthd = new entity.ChiTietHoaDon_entity(
                         maCTHD,
                         hd,
                         null, // Không có dịch vụ
-                        vt,   // Thuốc đóng vai trò vật tư
+                        vt,   // Thuốc đóng vai trò vật tư kho
                         nv,   // Nhân viên xử lý
                         null, // Không truyền mã Bác Sĩ vì xuất thuốc do thu ngân/nhân viên làm
-                        ctDon.getSoLuong().intValue(),
+                        soLuong,
                         donGia
                 );
-                cthdDAO.createChiTietHoaDon(cthd);
+                cthd.setMaCTDT(ctDon.getMaCTDT()); // GẮN MÃ CHI TIẾT ĐƠN THUỐC ĐỂ KHỚP RÀNG BUỘC CSDL
+
+                if (!cthdDAO.createChiTietHoaDon(con, cthd)) {
+                    throw new java.sql.SQLException("Không thể lưu chi tiết hóa đơn " + maCTHD + " cho thuốc: " + vt.getTenVT());
+                }
+                tongTienThuoc += donGia * soLuong;
             }
 
             // 6. Đổi trạng thái Đơn Thuốc thành "Hoàn thành"
-            if (donThuocDAO.capNhatTrangThai(maDon, "Hoàn thành")) {
-                JOptionPane.showMessageDialog(this, "Đã xuất đơn thuốc thành công!\nHóa đơn [" + maHD + "] đã được tạo tự động trong hệ thống.");
-                loadDataToTable();
-            } else {
-                JOptionPane.showMessageDialog(this, "Tạo hóa đơn thành công nhưng lỗi cập nhật trạng thái đơn thuốc!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            if (!donThuocDAO.capNhatTrangThai(maDon, "Hoàn thành")) {
+                throw new java.sql.SQLException("Không thể cập nhật trạng thái đơn thuốc sang 'Hoàn thành'!");
             }
 
+            // Commit toàn bộ giao dịch
+            con.commit();
+
+            java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0 ₫");
+            JOptionPane.showMessageDialog(this,
+                    "Đã xuất đơn thuốc thành công!\n"
+                    + "Hóa đơn [" + maHD + "] đã được tạo tự động cho thú cưng " + tc.getTenTC() + ".\n"
+                    + "Tổng tiền thuốc: " + df.format(tongTienThuoc),
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            loadDataToTable();
+
         } catch (Exception ex) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (java.sql.SQLException rEx) {
+                    rEx.printStackTrace();
+                }
+            }
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi quá trình xuất thuốc: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (java.sql.SQLException cEx) {
+                    cEx.printStackTrace();
+                }
+            }
         }
     }
 

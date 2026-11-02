@@ -211,6 +211,53 @@ public class VatTu_DAO {
         return null;
     }
 
+    /**
+     * Tìm vật tư theo mã thuốc liên kết
+     */
+    public VatTu_entity getVatTuTheoMaThuoc(String maThuoc) {
+        if (maThuoc == null || maThuoc.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM VatTu WHERE maThuoc = ?";
+
+        try {
+            Connection con = ConnectDB.getCon();
+            if (con == null) {
+                return null;
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, maThuoc.trim());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String maNCC = rs.getString("maNCC");
+                        NhaCungCap_entity ncc =
+                                maNCC != null
+                                ? nccDAO.getNhaCungCapTheoMa(maNCC)
+                                : null;
+
+                        return new VatTu_entity(
+                            rs.getString("maVT"),
+                            ncc,
+                            rs.getString("tenVT"),
+                            rs.getInt("soLuongTon"),
+                            rs.getString("trangThai"),
+                            rs.getDouble("giaBanCoBan"),
+                            rs.getDouble("giaNhap"),
+                            layMaThuoc(rs)
+                        );
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     private String layMaThuoc(ResultSet rs) throws SQLException {
         ResultSetMetaData metadata = rs.getMetaData();
         for (int i = 1; i <= metadata.getColumnCount(); i++) {
