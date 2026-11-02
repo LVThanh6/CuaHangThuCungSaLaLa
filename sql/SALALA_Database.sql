@@ -1078,6 +1078,27 @@ DROP TABLE #N;
 DROP FUNCTION dbo.fn_C3;
 GO
 
+-- 20. DỮ LIỆU MẪU LỊCH HẸN (THÁNG 11/2026)
+INSERT INTO LichHen (maLichHen, maTC, maKH, maNhanVien, maDV, ngayGio, lyDo, trangThai, ghiChu, loaiHen)
+VALUES 
+-- Lịch ngày hôm qua (01/11)
+('LH001', 'TC001', 'KH001', 'NV006', 'DV001', '2026-11-01 08:30:00', N'Khám tổng quát', N'Đã khám', NULL, N'Khám bệnh'),
+('LH002', 'TC002', 'KH002', 'NV007', 'DV002', '2026-11-01 10:00:00', N'Tiêm phòng dại', N'Đã khám', NULL, N'Khám bệnh'),
+
+-- Lịch ngày hôm nay (02/11/2026) - Giúp hiển thị số liệu lên 4 thẻ thống kê ở đầu giao diện
+('LH003', 'TC003', 'KH003', 'NV008', 'DV003', '2026-11-02 09:00:00', N'Tắm vệ sinh', N'Đã khám', N'Khách đến sớm', N'Dịch vụ'),
+('LH004', 'TC004', 'KH004', 'NV009', 'DV004', '2026-11-02 10:30:00', N'Cắt tỉa lông', N'Đang khám', NULL, N'Dịch vụ'),
+('LH005', 'TC005', 'KH005', 'NV010', 'DV005', '2026-11-02 14:00:00', N'Cạo vôi răng', N'Chờ khám', N'Bé hơi nhát', N'Khám bệnh'),
+('LH006', 'TC006', 'KH006', 'NV006', 'DV001', '2026-11-02 15:30:00', N'Khám tiêu hóa', N'Chờ khám', NULL, N'Khám bệnh'),
+('LH007', 'TC007', 'KH007', 'NV007', NULL,    '2026-11-02 16:30:00', N'Tái khám', N'Đã hủy', N'Khách bận đột xuất', N'Khám bệnh'),
+
+-- Lịch hẹn cho các ngày tiếp theo trong tháng 11
+('LH008', 'TC008', 'KH008', 'NV008', 'DV002', '2026-11-03 08:30:00', N'Tiêm vắc xin', N'Chờ khám', NULL, N'Khám bệnh'),
+('LH009', 'TC009', 'KH009', 'NV009', 'DV003', '2026-11-04 09:30:00', N'Tắm vệ sinh', N'Chờ khám', NULL, N'Dịch vụ'),
+('LH010', 'TC010', 'KH010', 'NV010', 'DV001', '2026-11-05 10:00:00', N'Khám da liễu', N'Chờ khám', N'Bé bị rụng lông nhiều', N'Khám bệnh'),
+('LH011', 'TC001', 'KH001', 'NV006', 'DV004', '2026-11-06 14:30:00', N'Cắt tỉa lông', N'Chờ khám', NULL, N'Dịch vụ'),
+('LH012', 'TC002', 'KH002', 'NV007', 'DV001', '2026-11-08 15:00:00', N'Khám định kỳ', N'Chờ khám', NULL, N'Khám bệnh');
+
 /* =========================================================
    KIỂM TRA DỮ LIỆU CÁC BẢNG
    ========================================================= */
