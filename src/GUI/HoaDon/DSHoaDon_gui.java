@@ -325,7 +325,7 @@ public class DSHoaDon_gui extends JPanel {
         capNhatNutThaoTac();
     }
 
-    // TỐI ƯU HÓA: Chạy load dữ liệu ngầm để không bị đơ giật UI
+    // TỐI ƯU HÓA: Chạy load dữ liệu ngầm để không bị đơ giật UI TẢI DỮ LIỆU NGẦM
     public void taiDuLieu() {
         SwingWorker<ArrayList<HoaDon_entity>, Void> worker = new SwingWorker<>() {
             @Override
@@ -348,7 +348,7 @@ public class DSHoaDon_gui extends JPanel {
         };
         worker.execute();
     }
-
+//==================CẬP NHẬT THỐNG KÊ==================
     private void capNhatThongKe(ArrayList<HoaDon_entity> ds) {
         int daThanhToan = 0;
         int chuaThanhToan = 0;
@@ -367,6 +367,8 @@ public class DSHoaDon_gui extends JPanel {
                 || trangThai.equalsIgnoreCase("Paid");
     }
 
+    
+    //====================Hiển thị table gui==================
     private void hienThiBang(ArrayList<HoaDon_entity> ds) {
         table.clearSelection();
         model.setRowCount(0);
@@ -406,6 +408,7 @@ public class DSHoaDon_gui extends JPanel {
         return doiTuong.toString();
     }
 
+    //================LỌC DỮ LIỆU CHO TÌM KIẾM VÀ TRẠNG THÁI===========
     private void locDuLieu() {
         String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
 
@@ -428,7 +431,7 @@ public class DSHoaDon_gui extends JPanel {
         }
         hienThiBang(ketQua);
     }
-
+//====================XEM HÓA ĐƠN=================
     private void xemHoaDon() {
         int viewRow = table.getSelectedRow();
         if (viewRow < 0 || table.getSelectedRowCount() != 1) {
@@ -441,6 +444,7 @@ public class DSHoaDon_gui extends JPanel {
         int modelRow = table.convertRowIndexToModel(viewRow);
         String maHD = model.getValueAt(modelRow, 0).toString();
         ChiTietHoaDon_gui.hienThi(this, maHD, this);
+        
     }
 
     private void xoaHoaDon() {
