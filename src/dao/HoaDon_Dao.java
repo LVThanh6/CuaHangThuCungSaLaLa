@@ -3,6 +3,7 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -30,8 +31,7 @@ public class HoaDon_Dao {
         ArrayList<HoaDon_entity> dsHD = new ArrayList<>();
 
         String sql = """
-            SELECT maHD, ngayLap, trangThai,
-                   maKH, maNhanVien, maKM, maThue, maThanhToan
+            SELECT *
             FROM HoaDon
             ORDER BY ngayLap DESC, maHD DESC
             """;
@@ -110,6 +110,7 @@ public class HoaDon_Dao {
                         maHD, ngayLap, trangThai,
                         kh, nv, km, thue, tt
                     );
+                    hd.setMaTC(layMaTC(rs));
 
                     dsHD.add(hd);
                 }
@@ -122,6 +123,26 @@ public class HoaDon_Dao {
 
     // 2. Thêm hóa đơn mới
     public boolean themHD(HoaDon_entity hd) {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
+
+        try {
+            return themHD(con, hd);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean themHD(Connection con, HoaDon_entity hd) throws SQLException {
         if (hd == null
                 || hd.getMaHD() == null
                 || hd.getNgayLap() == null
@@ -133,54 +154,46 @@ public class HoaDon_Dao {
 
         String sql = """
             INSERT INTO HoaDon
-                (maHD, ngayLap, trangThai, maKH,
+                (maHD, ngayLap, trangThai, maKH, maTC,
                  maNhanVien, maKM, maThue, maThanhToan)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
-        try {
-            Connection con = ConnectDB.getCon();
-
-            if (con == null) {
-                return false;
-            }
-
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, hd.getMaHD());
                 ps.setTimestamp(2,
                     Timestamp.valueOf(hd.getNgayLap().atStartOfDay()));
                 ps.setString(3, hd.getTrangThai());
 
                 ps.setString(4, hd.getMaKH().getMaKH());
-                ps.setString(5, hd.getMaNhanVien().getMaNhanVien());
+                if (hd.getMaTC() != null) {
+                    ps.setString(5, hd.getMaTC());
+                } else {
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                }
+                ps.setString(6, hd.getMaNhanVien().getMaNhanVien());
 
                 if (hd.getMaKM() != null) {
-                    ps.setString(6, hd.getMaKM().getMaKM());
-                } else {
-                    ps.setNull(6, java.sql.Types.VARCHAR);
-                }
-
-                if (hd.getMaThue() != null) {
-                    ps.setString(7, hd.getMaThue().getMaThue());
+                    ps.setString(7, hd.getMaKM().getMaKM());
                 } else {
                     ps.setNull(7, java.sql.Types.VARCHAR);
                 }
 
-                if (hd.getMaThanhToan() != null) {
-                    ps.setString(8,
-                        hd.getMaThanhToan().getMaThanhToan());
+                if (hd.getMaThue() != null) {
+                    ps.setString(8, hd.getMaThue().getMaThue());
                 } else {
                     ps.setNull(8, java.sql.Types.VARCHAR);
                 }
 
+                if (hd.getMaThanhToan() != null) {
+                    ps.setString(9,
+                        hd.getMaThanhToan().getMaThanhToan());
+                } else {
+                    ps.setNull(9, java.sql.Types.VARCHAR);
+                }
+
                 return ps.executeUpdate() > 0;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
-        return false;
     }
 
     // 3. Xóa hóa đơn và chi tiết hóa đơn
@@ -247,8 +260,7 @@ public class HoaDon_Dao {
     // 4. Tìm hóa đơn theo mã
     public HoaDon_entity getHDTheoMa(String maHD) {
         String sql = """
-            SELECT maHD, ngayLap, trangThai,
-                   maKH, maNhanVien, maKM, maThue, maThanhToan
+            SELECT *
             FROM HoaDon
             WHERE maHD = ?
             """;
@@ -278,7 +290,7 @@ public class HoaDon_Dao {
                         String maThue = rs.getString("maThue");
                         String maTT = rs.getString("maThanhToan");
 
-                        return new HoaDon_entity(
+                        HoaDon_entity hoaDon = new HoaDon_entity(
                             rs.getString("maHD"),
                             ngayLap,
                             rs.getString("trangThai"),
@@ -291,6 +303,8 @@ public class HoaDon_Dao {
                             maTT != null
                                 ? ttDAO.getThanhToanTheoMa(maTT) : null
                         );
+                        hoaDon.setMaTC(layMaTC(rs));
+                        return hoaDon;
                     }
                 }
             }
@@ -299,6 +313,16 @@ public class HoaDon_Dao {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    private String layMaTC(ResultSet rs) throws SQLException {
+        ResultSetMetaData metadata = rs.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+            if ("maTC".equalsIgnoreCase(metadata.getColumnLabel(i))) {
+                return rs.getString(i);
+            }
+        }
         return null;
     }
 

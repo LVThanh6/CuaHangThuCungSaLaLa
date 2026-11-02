@@ -212,7 +212,7 @@ public class ThueGUI extends JPanel {
 
     private void dinhDangNut(JButton b, boolean chinh) {
         b.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        b.setForeground(chinh ? Color.WHITE : CHU);
+        b.setForeground(chinh ? Color.BLACK : CHU);
         b.setBackground(chinh ? XANH : Color.WHITE);
         b.setFocusPainted(false);
         b.setBorder(BorderFactory.createCompoundBorder(

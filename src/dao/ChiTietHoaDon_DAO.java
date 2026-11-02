@@ -4,7 +4,9 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 import connectDB.ConnectDB;
@@ -26,7 +28,7 @@ public class ChiTietHoaDon_DAO {
         ArrayList<ChiTietHoaDon_entity> dsCTHD = new ArrayList<>();
 
         String sql = """
-            SELECT maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia
+            SELECT *
             FROM ChiTietHoaDon
             """;
 
@@ -72,6 +74,7 @@ public class ChiTietHoaDon_DAO {
                             rs.getInt("soLuong"),
                             rs.getDouble("donGia")
                         );
+                    cthd.setMaCTDT(layMaCTDT(rs));
 
                     dsCTHD.add(cthd);
                 }
@@ -86,27 +89,41 @@ public class ChiTietHoaDon_DAO {
 
     // 2. Thêm chi tiết hóa đơn
     public boolean createChiTietHoaDon(ChiTietHoaDon_entity ct) {
-
         if (!duLieuHopLe(ct)) {
             System.out.println("Lỗi: Dữ liệu chi tiết hóa đơn không hợp lệ!");
             return false;
         }
 
-        String sql = """
-            INSERT INTO ChiTietHoaDon
-                (maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """;
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
 
         try {
-            Connection con = ConnectDB.getCon();
-
-            if (con == null) {
-                return false;
+            return createChiTietHoaDon(con, ct);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
+        }
+    }
 
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
+    public boolean createChiTietHoaDon(Connection con, ChiTietHoaDon_entity ct) throws SQLException {
+        if (!duLieuHopLe(ct)) {
+            return false;
+        }
+        String sql = """
+            INSERT INTO ChiTietHoaDon
+                (maCTHD, maHD, maDV, maVT, maCTDT, maNhanVien, maBacSi, soLuong, donGia)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
 
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, ct.getMaCTHD());
                 ps.setString(2, ct.getMaHD().getMaHD());
 
@@ -119,35 +136,31 @@ public class ChiTietHoaDon_DAO {
                     ps.setString(4, ct.getMaVT().getMaVT());
                 }
 
-                // Nhân viên hoặc bác sĩ thực hiện
-                if (ct.getNhanVienThucHien() != null) {
-                    ps.setString(5,
-                        ct.getNhanVienThucHien().getMaNhanVien());
+                if (ct.getMaCTDT() != null) {
+                    ps.setString(5, ct.getMaCTDT());
                 } else {
                     ps.setNull(5, java.sql.Types.VARCHAR);
                 }
 
-                if (ct.getBacSiThucHien() != null) {
+                // Nhân viên hoặc bác sĩ thực hiện
+                if (ct.getNhanVienThucHien() != null) {
                     ps.setString(6,
-                        ct.getBacSiThucHien().getMaBacSi());
+                        ct.getNhanVienThucHien().getMaNhanVien());
                 } else {
                     ps.setNull(6, java.sql.Types.VARCHAR);
                 }
 
-                ps.setInt(7, ct.getSoLuong());
-                ps.setDouble(8, ct.getDonGia());
+                if (ct.getBacSiThucHien() != null) {
+                    ps.setString(7,
+                        ct.getBacSiThucHien().getMaBacSi());
+                } else {
+                    ps.setNull(7, java.sql.Types.VARCHAR);
+                }
 
-                int ketQua = ps.executeUpdate();
-
-
-                return ketQua > 0;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+                ps.setInt(8, ct.getSoLuong());
+                ps.setDouble(9, ct.getDonGia());
+                return ps.executeUpdate() > 0;
         }
-
-        return false;
     }
 
     // 3. Xóa chi tiết hóa đơn theo mã
@@ -186,7 +199,7 @@ public class ChiTietHoaDon_DAO {
 
         String sql = """
             UPDATE ChiTietHoaDon
-            SET maHD = ?, maDV = ?, maVT = ?, maNhanVien = ?, maBacSi = ?,
+            SET maHD = ?, maDV = ?, maVT = ?, maCTDT = ?, maNhanVien = ?, maBacSi = ?,
                 soLuong = ?, donGia = ?
             WHERE maCTHD = ?
             """;
@@ -209,19 +222,25 @@ public class ChiTietHoaDon_DAO {
                     ps.setString(3, ct.getMaVT().getMaVT());
                 }
 
-                if (ct.getNhanVienThucHien() != null) {
-                    ps.setString(4, ct.getNhanVienThucHien().getMaNhanVien());
-                    ps.setNull(5, java.sql.Types.VARCHAR);
-                } else if (ct.getBacSiThucHien() != null) {
-                    ps.setNull(4, java.sql.Types.VARCHAR);
-                    ps.setString(5, ct.getBacSiThucHien().getMaBacSi());
+                if (ct.getMaCTDT() != null) {
+                    ps.setString(4, ct.getMaCTDT());
                 } else {
                     ps.setNull(4, java.sql.Types.VARCHAR);
-                    ps.setNull(5, java.sql.Types.VARCHAR);
                 }
-                ps.setInt(6, ct.getSoLuong());
-                ps.setDouble(7, ct.getDonGia());
-                ps.setString(8, ct.getMaCTHD());
+
+                if (ct.getNhanVienThucHien() != null) {
+                    ps.setString(5, ct.getNhanVienThucHien().getMaNhanVien());
+                    ps.setNull(6, java.sql.Types.VARCHAR);
+                } else if (ct.getBacSiThucHien() != null) {
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                    ps.setString(6, ct.getBacSiThucHien().getMaBacSi());
+                } else {
+                    ps.setNull(5, java.sql.Types.VARCHAR);
+                    ps.setNull(6, java.sql.Types.VARCHAR);
+                }
+                ps.setInt(7, ct.getSoLuong());
+                ps.setDouble(8, ct.getDonGia());
+                ps.setString(9, ct.getMaCTHD());
 
                 return ps.executeUpdate() > 0;
             }
@@ -238,7 +257,7 @@ public class ChiTietHoaDon_DAO {
             String maCTHD) {
 
         String sql = """
-            SELECT maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia
+            SELECT *
             FROM ChiTietHoaDon
             WHERE maCTHD = ?
             """;
@@ -274,7 +293,7 @@ public class ChiTietHoaDon_DAO {
         ArrayList<ChiTietHoaDon_entity> dsCTHD = new ArrayList<>();
 
         String sql = """
-            SELECT maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia
+            SELECT *
             FROM ChiTietHoaDon
             WHERE maHD = ?
             """;
@@ -326,7 +345,7 @@ public class ChiTietHoaDon_DAO {
         NhanVien_entity nv = maNhanVien != null ? new NhanVien_DAO().getNhanVienTheoMa(maNhanVien) : null;
         BacSi_entity bs = maBacSi != null ? new BacSi_DAO().getAll().stream().filter(x -> x.getMaBacSi().equals(maBacSi)).findFirst().orElse(null) : null;
 
-        return new ChiTietHoaDon_entity(
+        ChiTietHoaDon_entity chiTiet = new ChiTietHoaDon_entity(
             rs.getString("maCTHD"),
             hd,
             dv,
@@ -336,6 +355,32 @@ public class ChiTietHoaDon_DAO {
             rs.getInt("soLuong"),
             rs.getDouble("donGia")
         );
+        chiTiet.setMaCTDT(layMaCTDT(rs));
+        return chiTiet;
+    }
+
+    private String layMaCTDT(ResultSet rs) throws SQLException {
+        ResultSetMetaData metadata = rs.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+            if ("maCTDT".equalsIgnoreCase(metadata.getColumnLabel(i))) {
+                return rs.getString(i);
+            }
+        }
+        return null;
+    }
+
+    public BigDecimal getSoLuongThuocDaCap(String maCTDT) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(soLuong), 0) FROM ChiTietHoaDon WHERE maCTDT = ?";
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            throw new SQLException("Không thể kết nối cơ sở dữ liệu SALALA.");
+        }
+        try (con; PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maCTDT);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getBigDecimal(1) : BigDecimal.ZERO;
+            }
+        }
     }
 
     // 8. Kiểm tra dữ liệu trước khi thêm hoặc cập nhật
@@ -353,6 +398,9 @@ public class ChiTietHoaDon_DAO {
         boolean coDichVu = ct.getMaDV() != null;
         boolean coVatTu = ct.getMaVT() != null;
 
+        if (ct.getMaCTDT() != null && !coVatTu) {
+            return false;
+        }
         return coDichVu ^ coVatTu;
     }
 }
