@@ -1,4 +1,4 @@
-package GUI.NhanVien;
+package GUI.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
@@ -217,14 +217,15 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         // Lọc vai trò
         cbLocVaiTro = new JComboBox<>(new String[]{
                 "Vai trò: Tất cả",
+                "Admin",
                 "Quản lý",
+                "Bác sĩ",
                 "Nhân viên bán hàng",
                 "Nhân viên dịch vụ",
-                "Nhân viên quản lý kho",
-                "Bác sĩ"
+                "Nhân viên quản lý kho"
         });
         cbLocVaiTro.setFont(RangBuocGiaoDien.fontThuong(12));
-        cbLocVaiTro.setPreferredSize(new Dimension(170, 36));
+        cbLocVaiTro.setPreferredSize(new Dimension(180, 36));
         cbLocVaiTro.addActionListener(e -> locDuLieu());
         pLocTrai.add(cbLocVaiTro);
 
@@ -345,7 +346,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
             }
 
             String vt = item.getVaiTro();
-            if ("Quản lý".equalsIgnoreCase(vt)) {
+            if (vt != null && (vt.equalsIgnoreCase("Quản lý") || vt.equalsIgnoreCase("Admin"))) {
                 ql++;
             } else if (vt != null && vt.toLowerCase().contains("bác sĩ")) {
                 bs++;
@@ -371,7 +372,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         lblTongTK.setText(String.valueOf(tong));
         lblDangHoatDong.setText(String.valueOf(hoatDong));
         lblBiKhoa.setText(String.valueOf(biKhoa));
-        lblPhanBo.setText(ql + " QL / " + nv + " NV / " + bs + " BS");
+        lblPhanBo.setText(ql + " QL/Admin / " + nv + " NV / " + bs + " BS");
 
         locDuLieu();
         capNhatNutThaoTac();
@@ -443,11 +444,12 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         txtPass.setBorder(new CompoundBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true), new EmptyBorder(0, 10, 0, 10)));
 
         JComboBox<String> cbVaiTro = new JComboBox<>(new String[]{
+                "Admin",
+                "Quản lý",
+                "Bác sĩ",
                 "Nhân viên bán hàng",
                 "Nhân viên dịch vụ",
-                "Nhân viên quản lý kho",
-                "Bác sĩ",
-                "Quản lý"
+                "Nhân viên quản lý kho"
         });
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
@@ -596,11 +598,12 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         JTextField txtChu = taoInputText(chon.getHoTenNguoiDung(), false);
 
         JComboBox<String> cbVaiTro = new JComboBox<>(new String[]{
+                "Admin",
+                "Quản lý",
+                "Bác sĩ",
                 "Nhân viên bán hàng",
                 "Nhân viên dịch vụ",
-                "Nhân viên quản lý kho",
-                "Bác sĩ",
-                "Quản lý"
+                "Nhân viên quản lý kho"
         });
         cbVaiTro.setSelectedItem(chon.getVaiTro());
         cbVaiTro.setPreferredSize(new Dimension(300, 36));

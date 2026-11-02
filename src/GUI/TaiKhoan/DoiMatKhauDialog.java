@@ -1,4 +1,4 @@
-package GUI.NhanVien;
+package GUI.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
 

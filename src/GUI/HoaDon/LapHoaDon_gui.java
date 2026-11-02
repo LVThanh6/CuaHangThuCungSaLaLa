@@ -11,9 +11,14 @@ import dao.Thue_DAO;
 import dao.BacSi_DAO;
 import dao.NhanVien_DAO;
 import dao.DangNhap_DAO;
+import dao.DonThuoc_DAO;
+import dao.ChiTietDonThuoc_DAO;
+import connectDB.ConnectDB;
 import model.TaiKhoan;
 
 import entity.KhachHang;
+import entity.ChiTietDonThuoc_entity;
+import entity.DonThuoc_entity;
 import entity.ThuCung_entity;
 import entity.DichVu_entity;
 import entity.VatTu_entity;
@@ -28,11 +33,15 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -50,6 +59,8 @@ public class LapHoaDon_gui extends JPanel {
     private final Thue_DAO thueDAO = new Thue_DAO();
     private final NhanVien_DAO nvDAO = new NhanVien_DAO();
     private final BacSi_DAO bacSiDAO = new BacSi_DAO();
+    private final DonThuoc_DAO donThuocDAO = new DonThuoc_DAO();
+    private final ChiTietDonThuoc_DAO chiTietDonThuocDAO = new ChiTietDonThuoc_DAO();
 
     // Nhân viên đang đăng nhập
     private NhanVien_entity nhanVienDangNhap;
@@ -74,6 +85,7 @@ public class LapHoaDon_gui extends JPanel {
     private JTable tblChiTiet;
     private DefaultTableModel model;
     private final Map<Integer, Object> nguoiThucHienTheoDong = new HashMap<>();
+    private final Map<Integer, String> chiTietDonThuocTheoDong = new HashMap<>();
 
     private JLabel lblTamTinh;
     private JLabel lblTienGiam;
@@ -254,7 +266,7 @@ public class LapHoaDon_gui extends JPanel {
                 if (value instanceof ThuCung_entity tc) {
                     setText(tc.getMaTC() + " - " + tc.getTenTC());
                 } else {
-                    setText("-- Chọn thú cưng --");
+                    setText("-- Không gắn thú cưng (vật tư thông thường) --");
                 }
 
                 return this;
@@ -499,6 +511,14 @@ public class LapHoaDon_gui extends JPanel {
 
         cboLoai.addActionListener(
                 e -> {
+                    if ("Dịch vụ".equals(cboLoai.getSelectedItem())
+                            && cboThuCung.getSelectedItem() == null) {
+                        JOptionPane.showMessageDialog(this,
+                                "Vui lòng chọn khách hàng và thú cưng trước khi chọn dịch vụ.");
+                        cboLoai.setSelectedItem("Vật tư");
+                        cboThuCung.requestFocusInWindow();
+                        return;
+                    }
                     taiDanhSachMatHang();
                     taiDanhSachNguoiThucHien();
                 }
@@ -650,6 +670,7 @@ public class LapHoaDon_gui extends JPanel {
     private void taiThuCungTheoKhachHang() {
 
         cboThuCung.removeAllItems();
+        cboThuCung.addItem(null);
 
         KhachHang kh =
                 (KhachHang) cboKhachHang.getSelectedItem();
@@ -767,6 +788,7 @@ public class LapHoaDon_gui extends JPanel {
                     setText(
                             vt.getMaVT()
                             + " - " + vt.getTenVT()
+                            + (vt.getMaThuoc() != null ? " (Thuốc)" : "")
                             + " - " + dinhDangTien(vt.getGiaBanCoBan())
                     );
 
@@ -777,6 +799,68 @@ public class LapHoaDon_gui extends JPanel {
                 return this;
             }
         });
+    }
+
+    private ChiTietDonThuoc_entity chonChiTietDonThuoc(VatTu_entity vatTu) {
+        ThuCung_entity thuCung = (ThuCung_entity) cboThuCung.getSelectedItem();
+        List<ChiTietDonThuoc_entity> chiTietKhaDung = new ArrayList<>();
+        List<String> luaChon = new ArrayList<>();
+
+        try {
+            for (DonThuoc_entity donThuoc : donThuocDAO.getDonThuocTheoMaTC(thuCung.getMaTC())) {
+                for (ChiTietDonThuoc_entity chiTiet : chiTietDonThuocDAO
+                        .getChiTietTheoMaDon(donThuoc.getMaDonThuoc())) {
+                    if (!vatTu.getMaThuoc().equals(chiTiet.getMaThuoc())) {
+                        continue;
+                    }
+
+                    BigDecimal daCap = ctDAO.getSoLuongThuocDaCap(chiTiet.getMaCTDT());
+                    if (chiTiet.getSoLuong().compareTo(daCap) <= 0) {
+                        continue;
+                    }
+
+                    chiTietKhaDung.add(chiTiet);
+                    luaChon.add(donThuoc.getMaDonThuoc() + " / " + chiTiet.getMaCTDT()
+                            + " - " + chiTiet.getTenThuoc() + " (còn "
+                            + chiTiet.getSoLuong().subtract(daCap).stripTrailingZeros().toPlainString()
+                            + ")");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể tải đơn thuốc của thú cưng: " + ex.getMessage(),
+                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+
+        if (luaChon.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Không tìm thấy đơn thuốc còn thuốc này của thú cưng đã chọn.");
+            return null;
+        }
+
+        Object chon = JOptionPane.showInputDialog(this,
+                "Chọn chi tiết đơn thuốc cần cấp:",
+                "Liên kết đơn thuốc",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                luaChon.toArray(),
+                luaChon.get(0));
+        if (chon == null) {
+            return null;
+        }
+        return chiTietKhaDung.get(luaChon.indexOf(chon.toString()));
+    }
+
+    private BigDecimal soLuongThuocTrongHoaDon(String maCTDT) {
+        BigDecimal soLuong = BigDecimal.ZERO;
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (maCTDT.equals(chiTietDonThuocTheoDong.get(i))) {
+                soLuong = soLuong.add(BigDecimal.valueOf(
+                        Integer.parseInt(model.getValueAt(i, 4).toString())));
+            }
+        }
+        return soLuong;
     }
 
     // ==================== TẢI KHUYẾN MÃI ====================
@@ -866,9 +950,16 @@ public class LapHoaDon_gui extends JPanel {
         String ten;
         String loai;
         double donGia;
+        String maCTDT = null;
 
         if (item instanceof DichVu_entity dv) {
 
+            if (cboThuCung.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(this,
+                        "Vui lòng chọn thú cưng trước khi thêm dịch vụ.");
+                cboThuCung.requestFocusInWindow();
+                return;
+            }
             ma = dv.getMaDV();
             ten = dv.getTenDV();
             loai = "Dịch vụ";
@@ -878,7 +969,6 @@ public class LapHoaDon_gui extends JPanel {
 
             ma = vt.getMaVT();
             ten = vt.getTenVT();
-            loai = "Vật tư";
             donGia = vt.getGiaBanCoBan();
 
             if (vt.getSoLuongTon() < soLuong) {
@@ -887,6 +977,36 @@ public class LapHoaDon_gui extends JPanel {
                         "Số lượng tồn kho không đủ."
                 );
                 return;
+            }
+
+            if (vt.getMaThuoc() != null) {
+                if (cboThuCung.getSelectedItem() == null) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn thú cưng trước khi thêm thuốc.");
+                    return;
+                }
+                ChiTietDonThuoc_entity chiTietDon = chonChiTietDonThuoc(vt);
+                if (chiTietDon == null) {
+                    return;
+                }
+                maCTDT = chiTietDon.getMaCTDT();
+                loai = "Thuốc";
+
+                try {
+                    BigDecimal daCap = ctDAO.getSoLuongThuocDaCap(maCTDT)
+                            .add(soLuongThuocTrongHoaDon(maCTDT));
+                    BigDecimal conLai = chiTietDon.getSoLuong().subtract(daCap);
+                    if (BigDecimal.valueOf(soLuong).compareTo(conLai) > 0) {
+                        JOptionPane.showMessageDialog(this, "Số lượng bán vượt quá số thuốc còn lại trong đơn kê.");
+                        return;
+                    }
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(this,
+                            "Không thể kiểm tra số lượng thuốc đã cấp: " + ex.getMessage(),
+                            "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else {
+                loai = "Vật tư";
             }
 
         } else {
@@ -906,6 +1026,7 @@ public class LapHoaDon_gui extends JPanel {
 
             if (ma.equals(model.getValueAt(i, 0))
                     && loai.equals(model.getValueAt(i, 2))
+                    && Objects.equals(chiTietDonThuocTheoDong.get(i), maCTDT)
                     && Objects.equals(nguoiThucHienTheoDong.get(i), nguoiThucHien)) {
 
                 int slCu = Integer.parseInt(
@@ -926,6 +1047,9 @@ public class LapHoaDon_gui extends JPanel {
                 }
 
                 model.setValueAt(slMoi, i, 4);
+                if (maCTDT != null) {
+                    chiTietDonThuocTheoDong.put(i, maCTDT);
+                }
 
                 model.setValueAt(
                         dinhDangTien(donGia * slMoi),
@@ -947,6 +1071,9 @@ public class LapHoaDon_gui extends JPanel {
                 dinhDangTien(donGia * soLuong)
         });
         nguoiThucHienTheoDong.put(model.getRowCount() - 1, nguoiThucHien);
+        if (maCTDT != null) {
+            chiTietDonThuocTheoDong.put(model.getRowCount() - 1, maCTDT);
+        }
 
         capNhatTongTien();
     }
@@ -978,6 +1105,16 @@ public class LapHoaDon_gui extends JPanel {
         }
         nguoiThucHienTheoDong.clear();
         nguoiThucHienTheoDong.putAll(daCapNhat);
+        Map<Integer, String> donThuocDaCapNhat = new HashMap<>();
+        for (Map.Entry<Integer, String> entry : chiTietDonThuocTheoDong.entrySet()) {
+            if (entry.getKey() < modelRow) {
+                donThuocDaCapNhat.put(entry.getKey(), entry.getValue());
+            } else if (entry.getKey() > modelRow) {
+                donThuocDaCapNhat.put(entry.getKey() - 1, entry.getValue());
+            }
+        }
+        chiTietDonThuocTheoDong.clear();
+        chiTietDonThuocTheoDong.putAll(donThuocDaCapNhat);
 
         capNhatTongTien();
     }
@@ -1124,18 +1261,18 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-        if (tc == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Vui lòng chọn thú cưng."
-            );
-            return;
-        }
-
         if (model.getRowCount() == 0) {
             JOptionPane.showMessageDialog(
                     this,
                     "Hóa đơn phải có ít nhất một dòng chi tiết."
+            );
+            return;
+        }
+
+        if (tc == null && hoaDonCanThuCung()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Hóa đơn có dịch vụ hoặc thuốc kê đơn phải gắn với thú cưng."
             );
             return;
         }
@@ -1169,86 +1306,84 @@ public class LapHoaDon_gui extends JPanel {
                 thue,
                 null // Chưa tạo đối tượng thanh toán
         );
+        hd.setMaTC(tc == null ? null : tc.getMaTC());
 
-        if (!hdDAO.themHD(hd)) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Không thể lưu hóa đơn.\n"
-                    + "Vui lòng kiểm tra console và ràng buộc database."
-            );
-
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể kết nối cơ sở dữ liệu SALALA.",
+                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        boolean thanhCong = true;
-
-        ArrayList<DichVu_entity> dsDV =
-                dvDAO.getAllDichVu();
-
-        for (int i = 0; i < model.getRowCount(); i++) {
-
-            String ma = model.getValueAt(i, 0).toString();
-
-            String loai = model.getValueAt(i, 2).toString();
-
-            double donGia = Double.parseDouble(
-                    model.getValueAt(i, 3).toString()
-            );
-
-            int soLuong = Integer.parseInt(
-                    model.getValueAt(i, 4).toString()
-            );
-
-            DichVu_entity dv = null;
-            VatTu_entity vt = null;
-            NhanVien_entity nvThucHien = null;
-            BacSi_entity bsThucHien = null;
-            Object nguoiThucHien = nguoiThucHienTheoDong.get(i);
-            if (nguoiThucHien instanceof NhanVien_entity) {
-                nvThucHien = (NhanVien_entity) nguoiThucHien;
-            } else if (nguoiThucHien instanceof BacSi_entity) {
-                bsThucHien = (BacSi_entity) nguoiThucHien;
+        boolean thanhCong = false;
+        boolean autoCommitCu = true;
+        String loiLuu = null;
+        try {
+            autoCommitCu = con.getAutoCommit();
+            con.setAutoCommit(false);
+            if (!hdDAO.themHD(con, hd)) {
+                throw new SQLException("Không thể lưu thông tin hóa đơn.");
             }
 
-            if ("Dịch vụ".equals(loai)) {
+            ArrayList<DichVu_entity> dsDV = dvDAO.getAllDichVu();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String ma = model.getValueAt(i, 0).toString();
+                String loai = model.getValueAt(i, 2).toString();
+                double donGia = Double.parseDouble(model.getValueAt(i, 3).toString());
+                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
 
-                for (DichVu_entity x : dsDV) {
-
-                    if (ma.equals(x.getMaDV())) {
-                        dv = x;
-                        break;
-                    }
+                DichVu_entity dv = null;
+                VatTu_entity vt = null;
+                NhanVien_entity nvThucHien = null;
+                BacSi_entity bsThucHien = null;
+                Object nguoiThucHien = nguoiThucHienTheoDong.get(i);
+                if (nguoiThucHien instanceof NhanVien_entity) {
+                    nvThucHien = (NhanVien_entity) nguoiThucHien;
+                } else if (nguoiThucHien instanceof BacSi_entity) {
+                    bsThucHien = (BacSi_entity) nguoiThucHien;
                 }
 
-            } else {
+                if ("Dịch vụ".equals(loai)) {
+                    for (DichVu_entity x : dsDV) {
+                        if (ma.equals(x.getMaDV())) {
+                            dv = x;
+                            break;
+                        }
+                    }
+                } else {
+                    vt = vtDAO.getVatTuTheoMa(ma);
+                }
 
-                vt = vtDAO.getVatTuTheoMa(ma);
+                if (dv == null && vt == null) {
+                    throw new SQLException("Không tìm thấy mặt hàng " + ma + " trong cơ sở dữ liệu.");
+                }
+
+                String maCTHD = "CT" + maHD + String.format("%02d", i + 1);
+                ChiTietHoaDon_entity ct = new ChiTietHoaDon_entity(
+                        maCTHD, hd, dv, vt, nvThucHien, bsThucHien, soLuong, donGia);
+                ct.setMaCTDT(chiTietDonThuocTheoDong.get(i));
+
+                if (!ctDAO.createChiTietHoaDon(con, ct)) {
+                    throw new SQLException("Không thể lưu chi tiết hóa đơn " + maCTHD + ".");
+                }
             }
-
-            if (dv == null && vt == null) {
-                thanhCong = false;
-                break;
+            con.commit();
+            thanhCong = true;
+        } catch (SQLException e) {
+            loiLuu = e.getMessage();
+            e.printStackTrace();
+            try {
+                con.rollback();
+            } catch (SQLException rollbackError) {
+                rollbackError.printStackTrace();
             }
-
-            String maCTHD =
-                    "CT" + maHD + String.format("%02d", i + 1);
-
-            ChiTietHoaDon_entity ct =
-                    new ChiTietHoaDon_entity(
-                            maCTHD,
-                            hd,
-                            dv,
-                            vt,
-                            nvThucHien,
-                            bsThucHien,
-                            soLuong,
-                            donGia
-                    );
-
-            if (!ctDAO.createChiTietHoaDon(ct)) {
-                thanhCong = false;
-                break;
+        } finally {
+            try {
+                con.setAutoCommit(autoCommitCu);
+                con.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
 
@@ -1283,11 +1418,22 @@ public class LapHoaDon_gui extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Hóa đơn đã được tạo nhưng có chi tiết "
-                    + "chưa lưu thành công.\n"
-                    + "Cần kiểm tra dữ liệu trong SQL Server."
+                    "Không thể lưu hóa đơn; mọi thay đổi đã được hoàn tác.\n"
+                    + "Chi tiết: " + (loiLuu == null ? "Lỗi dữ liệu không xác định." : loiLuu),
+                    "Lỗi dữ liệu",
+                    JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    private boolean hoaDonCanThuCung() {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            String loai = model.getValueAt(i, 2).toString();
+            if ("Dịch vụ".equals(loai) || "Thuốc".equals(loai)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ==================== LÀM MỚI ====================
@@ -1296,6 +1442,7 @@ public class LapHoaDon_gui extends JPanel {
 
         model.setRowCount(0);
         nguoiThucHienTheoDong.clear();
+        chiTietDonThuocTheoDong.clear();
 
         txtMaHD.setText(phatSinhMaHD());
 

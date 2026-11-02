@@ -72,7 +72,7 @@ import javax.swing.table.TableCellRenderer;
  * 1. Phần đầu trang: đường dẫn, tiêu đề, mô tả và nút "Tạo lịch khám".
  * 2. Hàng thẻ thống kê nhanh (hôm nay, chờ khám, đang khám, đã khám / đã hủy).
  * 3. Thẻ danh sách: thanh bộ lọc (ngày, bác sĩ, trạng thái, chế độ xem),
- *    bảng lịch khám (dùng TableMau) và chân bảng phân trang.
+ *    bảng lịch khám (dùng TableMau) và phần hướng dẫn thao tác.
  */
 public class XemLichGUI extends JPanel {
 
@@ -98,7 +98,6 @@ public class XemLichGUI extends JPanel {
     private static final String[] DANH_SACH_TRANG_THAI = {
             "Trạng thái: Tất cả", "Chờ khám", "Đang khám", "Đã khám", "Đã hủy"
     };
-    private static final String[] DANH_SACH_SO_DONG = { "8", "16", "32" };
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
     private final LichHen_DAO lichHenDAO = new LichHen_DAO();
@@ -148,18 +147,10 @@ public class XemLichGUI extends JPanel {
     private TableMau bangLichKham;
     private JScrollPane khungCuonBang;
 
-    // Chân bảng + phân trang
+    // Chân bảng
     private JPanel panelChanBang;
     private JLabel nhanThongTinHienThi;
     private JLabel nhanGoiYChon;
-    private JLabel nhanSoDongTrang;
-    private ComboHienDai cboSoDong;
-    private NutBo nutTrangTruoc;
-    private NutBo nutTrang1;
-    private NutBo nutTrang2;
-    private NutBo nutTrang3;
-    private NutBo nutTrangCham;
-    private NutBo nutTrangSau;
 
     // =========================================================================
     // 3. KHỞI TẠO
@@ -388,7 +379,7 @@ public class XemLichGUI extends JPanel {
                 BorderFactory.createEmptyBorder(10, 20, 10, 20)));
 
         // --- Bên trái: thông tin hiển thị ---
-        nhanThongTinHienThi = new JLabel("Hiển thị 1–8 trong 8 lịch khám");
+        nhanThongTinHienThi = new JLabel("Không có lịch khám");
         nhanThongTinHienThi.setFont(RangBuocGiaoDien.fontThuong(12));
         nhanThongTinHienThi.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
@@ -401,45 +392,7 @@ public class XemLichGUI extends JPanel {
         khoiTrai.add(nhanThongTinHienThi, BorderLayout.NORTH);
         khoiTrai.add(nhanGoiYChon, BorderLayout.CENTER);
 
-        // --- Bên phải: số dòng / trang + nút phân trang ---
-        nhanSoDongTrang = new JLabel("Số dòng / trang");
-        nhanSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(12));
-        nhanSoDongTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        cboSoDong = new ComboHienDai(DANH_SACH_SO_DONG, 66, 34);
-
-        nutTrangTruoc = taoNutTrang("‹");
-        nutTrang1 = taoNutTrang("1");
-        nutTrang2 = taoNutTrang("2");
-        nutTrang3 = taoNutTrang("3");
-        nutTrangCham = taoNutTrang("…");
-        nutTrangSau = taoNutTrang("›");
-        nutTrang1.datChon(true);
-
-        // Chỉ đổi trạng thái hiển thị của số trang đang chọn
-        ActionListener chonTrang = e -> {
-            nutTrang1.datChon(e.getSource() == nutTrang1);
-            nutTrang2.datChon(e.getSource() == nutTrang2);
-            nutTrang3.datChon(e.getSource() == nutTrang3);
-        };
-        nutTrang1.addActionListener(chonTrang);
-        nutTrang2.addActionListener(chonTrang);
-        nutTrang3.addActionListener(chonTrang);
-
-        JPanel khoiPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        khoiPhai.setOpaque(false);
-        khoiPhai.add(nhanSoDongTrang);
-        khoiPhai.add(cboSoDong);
-        khoiPhai.add(Box.createHorizontalStrut(6));
-        khoiPhai.add(nutTrangTruoc);
-        khoiPhai.add(nutTrang1);
-        khoiPhai.add(nutTrang2);
-        khoiPhai.add(nutTrang3);
-        khoiPhai.add(nutTrangCham);
-        khoiPhai.add(nutTrangSau);
-
         panelChanBang.add(khoiTrai, BorderLayout.WEST);
-        panelChanBang.add(khoiPhai, BorderLayout.EAST);
         return panelChanBang;
     }
 
@@ -460,7 +413,6 @@ public class XemLichGUI extends JPanel {
         nutTaoLichKham.addActionListener(e -> moFormDatLich());
         cboBacSi.addActionListener(e -> locDuLieu());
         cboTrangThai.addActionListener(e -> locDuLieu());
-        cboSoDong.addActionListener(e -> capNhatThongTinHienThi());
         bangLichKham.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -797,15 +749,13 @@ public class XemLichGUI extends JPanel {
 
     private void capNhatThongTinHienThi() {
         int soDong = bangLichKham.getRowCount();
-        nhanThongTinHienThi.setText(soDong == 0 ? "Không có lịch khám"
-                : "Hiển thị 1–" + soDong + " trong " + soDong + " lịch khám");
-    }
-
-    private NutBo taoNutTrang(String chu) {
-        NutBo nut = new NutBo(chu, NutBo.KIEU_VIEN);
-        nut.setFont(RangBuocGiaoDien.fontVua(12));
-        nut.setPreferredSize(new Dimension(32, 32));
-        return nut;
+        if (soDong > 0) {
+            nhanThongTinHienThi.setText("Hiển thị " + soDong + " lịch khám");
+        } else if (danhSachLichHen.isEmpty()) {
+            nhanThongTinHienThi.setText("Chưa có lịch khám. Nhấn “Tạo lịch khám” để thêm mới.");
+        } else {
+            nhanThongTinHienThi.setText("Không có lịch khám phù hợp với bộ lọc.");
+        }
     }
 
     // =========================================================================

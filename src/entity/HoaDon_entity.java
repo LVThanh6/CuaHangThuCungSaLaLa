@@ -19,6 +19,7 @@ public class HoaDon_entity{
     private LocalDate ngayLap;
     private String trangThai;
     private KhachHang maKH;
+    private String maTC;
     private NhanVien_entity maNhanVien;
     private KhuyenMai_Entity maKM;
     private Thue_entity maThue;
@@ -43,6 +44,12 @@ public class HoaDon_entity{
 	}
 	public KhachHang getMaKH() {
 		return maKH;
+	}
+	public String getMaTC() {
+		return maTC;
+	}
+	public void setMaTC(String maTC) {
+		this.maTC = maTC;
 	}
 	public NhanVien_entity getMaNhanVien() {
 		return maNhanVien;

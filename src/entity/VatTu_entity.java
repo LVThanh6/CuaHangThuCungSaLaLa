@@ -8,6 +8,7 @@ public class VatTu_entity {
     private String trangThai ;
     private double giaBanCoBan;
     private double giaNhap ;
+    private String maThuoc;
 	public VatTu_entity() {
 		super();
 	}
@@ -21,6 +22,11 @@ public class VatTu_entity {
 		this.trangThai = trangThai;
 		this.giaBanCoBan = giaBanCoBan;
 		this.giaNhap = giaNhap;
+	}
+	public VatTu_entity(String maVT, NhaCungCap_entity maNCC, String tenVT, int soLuongTon, String trangThai,
+			double giaBanCoBan, double giaNhap, String maThuoc) {
+		this(maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap);
+		this.maThuoc = maThuoc;
 	}
 	public String getMaVT() {
 		return maVT;
@@ -56,6 +62,12 @@ public class VatTu_entity {
 	}
 	public double getGiaNhap() {
 		return giaNhap;
+	}
+	public String getMaThuoc() {
+		return maThuoc;
+	}
+	public void setMaThuoc(String maThuoc) {
+		this.maThuoc = maThuoc;
 	}
 	public void setGiaNhap(double giaNhap) {
 		this.giaNhap = giaNhap;
