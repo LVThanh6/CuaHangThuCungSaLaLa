@@ -2,7 +2,7 @@ package GUI.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
 
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;

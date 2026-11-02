@@ -1,7 +1,7 @@
 package dao;
 
 import connectDB.ConnectDB;
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

@@ -1,11 +1,11 @@
-package model;
+package entity;
 
 import java.io.Serializable;
 import java.sql.Date;
 import java.util.Objects;
 
 /**
- * Model đại diện cho bảng QuanLyCuaHang trong CSDL SALALA.
+ * Entity đại diện cho bảng QuanLyCuaHang trong CSDL SALALA.
  */
 public class QuanLyCuaHang implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -22,7 +22,8 @@ public class QuanLyCuaHang implements Serializable {
     public QuanLyCuaHang() {
     }
 
-    public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh, String gioiTinh, double luongCoBan) {
+    public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
+            String gioiTinh, double luongCoBan) {
         this.maQuanLy = maQuanLy;
         this.maTK = maTK;
         this.hoTenQuanLy = hoTenQuanLy;
@@ -99,8 +100,10 @@ public class QuanLyCuaHang implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         QuanLyCuaHang that = (QuanLyCuaHang) o;
         return Objects.equals(maQuanLy, that.maQuanLy);
     }
@@ -112,6 +115,9 @@ public class QuanLyCuaHang implements Serializable {
 
     @Override
     public String toString() {
-        return hoTenQuanLy + " (" + maQuanLy + ")";
+        return "QuanLyCuaHang{" +
+                "maQuanLy='" + maQuanLy + '\'' +
+                ", hoTenQuanLy='" + hoTenQuanLy + '\'' +
+                '}';
     }
 }
