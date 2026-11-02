@@ -51,15 +51,16 @@ public class VatTuGUI extends JPanel {
         }
     }
 
-    // --- Entity tạm thời cho Vật Tư (vì không có file entity gốc) ---
+    // --- Entity cho Vật Tư ---
     public static class VatTuEntity {
-        String ma, ten, danhMuc, donVi;
+        String ma, ten, danhMuc, donVi, maThuoc;
         int tonKho;
         long giaNhap;
 
-        public VatTuEntity(String ma, String ten, String danhMuc, int tonKho, String donVi, long giaNhap) {
+        public VatTuEntity(String ma, String ten, String danhMuc, int tonKho, String donVi, long giaNhap, String maThuoc) {
             this.ma = ma; this.ten = ten; this.danhMuc = danhMuc;
             this.tonKho = tonKho; this.donVi = donVi; this.giaNhap = giaNhap;
+            this.maThuoc = maThuoc;
         }
         // Getters
         public String getMa() { return ma; }
@@ -68,10 +69,12 @@ public class VatTuGUI extends JPanel {
         public int getTonKho() { return tonKho; }
         public String getDonVi() { return donVi; }
         public long getGiaNhap() { return giaNhap; }
+        public String getMaThuoc() { return maThuoc; }
     }
 
     private static final String[] DANH_MUC = {
-            "Vật tư"
+            "Vật tư thông thường",
+            "Thuốc điều trị"
     };
 
     private static final Color NEN_CHON = new Color(240, 250, 247);
@@ -231,11 +234,22 @@ public class VatTuGUI extends JPanel {
             cb.addActionListener(e -> locTuDau());
         }
 
+        JButton btnLamMoi = new JButton("Làm mới");
+        btnLamMoi.setFont(RangBuocGiaoDien.fontThuong(13));
+        btnLamMoi.setBackground(Color.WHITE);
+        btnLamMoi.setFocusPainted(false);
+        btnLamMoi.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnLamMoi.setPreferredSize(new Dimension(100, 38));
+        btnLamMoi.setMaximumSize(new Dimension(100, 38));
+        btnLamMoi.addActionListener(e -> taiDuLieuMau());
+
         bar.add(txtTim);
         bar.add(Box.createHorizontalStrut(12));
         bar.add(cbDanhMuc);
         bar.add(Box.createHorizontalStrut(12));
         bar.add(cbTrangThai);
+        bar.add(Box.createHorizontalStrut(12));
+        bar.add(btnLamMoi);
         bar.add(Box.createHorizontalGlue());
         return bar;
     }
@@ -373,13 +387,17 @@ public class VatTuGUI extends JPanel {
     private void taiDuLieuMau() {
         tatCa.clear();
         for (VatTu_entity vatTu : vatTuDAO.getAllVatTu()) {
+            boolean laThuoc = vatTu.getMaThuoc() != null && !vatTu.getMaThuoc().isBlank();
+            String danhMuc = laThuoc ? "Thuốc điều trị" : "Vật tư thông thường";
+            String donVi = laThuoc ? "Viên" : "Gói / Hộp";
             tatCa.add(new VatTuEntity(
                     vatTu.getMaVT(),
                     vatTu.getTenVT(),
-                    "Vật tư",
+                    danhMuc,
                     vatTu.getSoLuongTon(),
-                    "-",
-                    Math.round(vatTu.getGiaNhap())));
+                    donVi,
+                    Math.round(vatTu.getGiaNhap()),
+                    vatTu.getMaThuoc()));
         }
         lamMoi();
     }

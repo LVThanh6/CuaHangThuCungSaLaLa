@@ -1,5 +1,8 @@
 package GUI.DichVu;
 
+import dao.DichVu_DAO;
+import entity.DichVu_entity;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -7,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,8 +20,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 /**
- * Giao diện "Danh sách dịch vụ" (chỉ phần nội dung, không gồm Header/Tab).
- * Nhúng vào GiaoDienChinhGUI: setNoiDung(new DichVu());
+ * Giao diện "Danh sách dịch vụ" kết nối CSDL SALALA thật qua DichVu_DAO.
  */
 public class DichVu extends JPanel {
 
@@ -30,20 +33,28 @@ public class DichVu extends JPanel {
         return new Font("Segoe UI", dam ? Font.BOLD : Font.PLAIN, size);
     }
 
-    // ===== Dữ liệu =====
-    static class DV {
-        String ma, ten, nhom, moTa;
-        int phut;
-        long gia;
-        boolean bat;
+    // ===== DAO =====
+    private final DichVu_DAO dvDAO = new DichVu_DAO();
 
-        DV(String ma, String ten, String nhom, String moTa, int phut, long gia, boolean bat) {
-            this.ma = ma; this.ten = ten; this.nhom = nhom; this.moTa = moTa;
-            this.phut = phut; this.gia = gia; this.bat = bat;
+    // ===== Dữ liệu hiển thị =====
+    public static class DV {
+        public String ma, ten, nhom, moTa;
+        public int phut;
+        public long gia;
+        public boolean bat;
+
+        public DV(String ma, String ten, String nhom, String moTa, int phut, long gia, boolean bat) {
+            this.ma = ma;
+            this.ten = ten;
+            this.nhom = nhom;
+            this.moTa = moTa;
+            this.phut = phut;
+            this.gia = gia;
+            this.bat = bat;
         }
     }
 
-    private final List<DV> tatCa = new ArrayList<>();   // toàn bộ dịch vụ
+    private final List<DV> tatCa = new ArrayList<>();   // toàn bộ dịch vụ lấy từ DB
     private List<DV> loc = new ArrayList<>();           // sau khi tìm kiếm/lọc
     private List<DV> hienTai = new ArrayList<>();
     private boolean dangNap = false;
@@ -58,7 +69,6 @@ public class DichVu extends JPanel {
     private JLabel lblThongTin;
 
     public DichVu() {
-        napDuLieuMau();
         setLayout(new BorderLayout(0, 16));
         setBackground(NEN);
         setBorder(new EmptyBorder(16, 20, 20, 20));
@@ -72,28 +82,43 @@ public class DichVu extends JPanel {
         add(tren, BorderLayout.NORTH);
         add(taoTheBang(), BorderLayout.CENTER);
 
+        napDuLieuTuDatabase();
+    }
+
+    // ==========================================
+    // NẠP DỮ LIỆU TỪ CƠ SỞ DỮ LIỆU SALALA
+    // ==========================================
+    public void napDuLieuTuDatabase() {
+        tatCa.clear();
+        ArrayList<DichVu_entity> ds = dvDAO.getAllDichVu();
+        for (DichVu_entity e : ds) {
+            int phut = 30;
+            if (e.getThoiGian() != null) {
+                phut = e.getThoiGian().getHour() * 60 + e.getThoiGian().getMinute();
+                if (phut <= 0) phut = 30;
+            }
+            long gia = Math.round(e.getGiaDV());
+            boolean bat = e.getTrangThai() != null && 
+                    (e.getTrangThai().equalsIgnoreCase("Đang áp dụng") || 
+                     e.getTrangThai().equalsIgnoreCase("Đang cung cấp"));
+
+            String nhom = xacDinhNhom(e.getTenDV());
+            tatCa.add(new DV(e.getMaDV(), e.getTenDV(), nhom, e.getMoTa() == null ? "" : e.getMoTa(), phut, gia, bat));
+        }
+
         napNhom();
         napLai(false);
     }
 
-    // ==========================================
-    // DỮ LIỆU MẪU (thay bằng dữ liệu từ DAO khi có)
-    // ==========================================
-    private void napDuLieuMau() {
-        them("Tắm cơ bản", "Tắm", "Tắm, sấy khô và chải lông theo loại da", 45, 180000, true);
-        them("Tắm và vệ sinh toàn diện", "Tắm", "Tắm, vệ sinh tai, mắt và cắt móng", 60, 300000, true);
-        them("Vệ sinh tai và cắt móng", "Vệ sinh", "Làm sạch tai, kẽ chân và cắt móng an toàn", 30, 100000, true);
-        them("Cắt tỉa tạo kiểu", "Cắt tỉa", "Tư vấn và tạo kiểu lông theo giống thú cưng", 90, 450000, true);
-        them("Chải lông chuyên sâu", "Chăm sóc thú cưng", "Gỡ rối, loại bỏ lông rụng và dưỡng bóng", 40, 150000, true);
-        them("Chăm sóc thú cưng theo giờ", "Chăm sóc thú cưng", "Trông giữ, cho ăn và vận động tại cửa hàng", 120, 220000, false);
-        them("Khám sức khỏe tổng quát", "Khám sức khỏe", "Khám lâm sàng và tư vấn chăm sóc định kỳ", 30, 250000, true);
-        them("Vệ sinh răng miệng", "Chăm sóc sức khỏe", "Làm sạch răng, nướu và kiểm tra khoang miệng", 45, 280000, false);
-        for (int i = 9; i <= 24; i++) // 16 dịch vụ còn lại cho đủ 24
-            them("Dịch vụ mẫu " + i, "Tắm", "Mô tả dịch vụ mẫu " + i, 30 + i, 100000 + i * 5000L, i != 24);
-    }
-
-    private void them(String ten, String nhom, String moTa, int phut, long gia, boolean bat) {
-        tatCa.add(new DV(String.format("DV%03d", tatCa.size() + 1), ten, nhom, moTa, phut, gia, bat));
+    private String xacDinhNhom(String tenDV) {
+        if (tenDV == null) return "Dịch vụ chung";
+        String lower = tenDV.toLowerCase();
+        if (lower.contains("tắm")) return "Tắm & Vệ sinh";
+        if (lower.contains("cắt") || lower.contains("tỉa") || lower.contains("lông")) return "Cắt tỉa & Tạo kiểu";
+        if (lower.contains("tiêm") || lower.contains("phòng") || lower.contains("dại")) return "Tiêm phòng";
+        if (lower.contains("khám") || lower.contains("chẩn đoán")) return "Khám bệnh";
+        if (lower.contains("răng") || lower.contains("tai") || lower.contains("móng")) return "Chăm sóc sức khỏe";
+        return "Dịch vụ chung";
     }
 
     // ==========================================
@@ -106,16 +131,29 @@ public class DichVu extends JPanel {
         trai.add(nhan("Dịch vụ / Danh sách dịch vụ", 12, false, XAM));
         trai.add(Box.createVerticalStrut(6));
         trai.add(nhan("Danh sách dịch vụ", 26, true, CHU));
-        trai.add(nhan("Quản lý danh mục, giá bán và trạng thái cung cấp dịch vụ tại SALALA.", 12, false, XAM));
+        trai.add(nhan("Quản lý danh mục, giá bán và trạng thái cung cấp dịch vụ tại SALALA (Dữ liệu thật CSDL).", 12, false, XAM));
 
         JButton btnThem = nut("+  Thêm dịch vụ", true);
         btnThem.setPreferredSize(new Dimension(142, 40));
         btnThem.addActionListener(e -> {
-            DV moi = new DV(String.format("DV%03d", tatCa.size() + 1), "", "", "", 30, 0, true);
-            if (hopThoai(moi, "Thêm dịch vụ")) {
-                tatCa.add(moi);
-                napNhom();
-                napLai(true);
+            String maTiepTheo = dvDAO.getMaTiepTheo();
+            DV moi = new DV(maTiepTheo, "", "Dịch vụ chung", "", 30, 0, true);
+            if (hopThoai(moi, "Thêm dịch vụ mới", true)) {
+                LocalTime thoiGian = LocalTime.of(moi.phut / 60, moi.phut % 60);
+                DichVu_entity dvMoi = new DichVu_entity(
+                        moi.ma,
+                        moi.ten,
+                        moi.moTa,
+                        moi.gia,
+                        thoiGian,
+                        moi.bat ? "Đang áp dụng" : "Tạm ẩn"
+                );
+                if (dvDAO.createDichVu(dvMoi)) {
+                    JOptionPane.showMessageDialog(this, "Đã thêm dịch vụ " + moi.ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    napDuLieuTuDatabase();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không thể thêm dịch vụ vào cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
@@ -169,7 +207,7 @@ public class DichVu extends JPanel {
     private JPanel taoTheBang() {
         // --- Thanh tìm kiếm / lọc ---
         txtTim = new JTextField();
-        txtTim.setPreferredSize(new Dimension(300, 38));
+        txtTim.setPreferredSize(new Dimension(280, 38));
         txtTim.setToolTipText("Tìm mã hoặc tên dịch vụ...");
         txtTim.setBorder(new CompoundBorder(new LineBorder(VIEN), new EmptyBorder(0, 10, 0, 10)));
         txtTim.addKeyListener(new KeyAdapter() {
@@ -178,29 +216,46 @@ public class DichVu extends JPanel {
         });
 
         cboNhom = new JComboBox<>();
-        cboNhom.setPreferredSize(new Dimension(220, 38));
+        cboNhom.setPreferredSize(new Dimension(180, 38));
         cboNhom.addActionListener(e -> { if (!dangNap) napLai(false); });
-        cboTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đang cung cấp", "Tạm ẩn" });
+        cboTrangThai = new JComboBox<>(new String[] { "Tất cả trạng thái", "Đang cung cấp", "Tạm ẩn" });
         cboTrangThai.setPreferredSize(new Dimension(160, 38));
         cboTrangThai.addActionListener(e -> napLai(false));
 
+        JButton btnLamMoi = nut("Làm mới", false);
+        btnLamMoi.setPreferredSize(new Dimension(100, 38));
+        btnLamMoi.addActionListener(e -> napDuLieuTuDatabase());
+
         JButton btnXuat = nut("Xuất danh sách", false);
-        btnXuat.setPreferredSize(new Dimension(150, 38));
+        btnXuat.setPreferredSize(new Dimension(130, 38));
         btnXuat.addActionListener(e -> xuatCSV());
 
         btnChinhSua = nut("Chỉnh sửa", false);
-        btnChinhSua.setPreferredSize(new Dimension(110, 38));
+        btnChinhSua.setPreferredSize(new Dimension(100, 38));
         btnChinhSua.setEnabled(false);
         btnChinhSua.addActionListener(e -> {
             DV d = dichVuDaChon();
-            if (d != null && hopThoai(d, "Sửa dịch vụ")) {
-                napNhom();
-                napLai(true);
+            if (d != null && hopThoai(d, "Sửa thông tin dịch vụ", false)) {
+                LocalTime thoiGian = LocalTime.of(d.phut / 60, d.phut % 60);
+                DichVu_entity dvCapNhat = new DichVu_entity(
+                        d.ma,
+                        d.ten,
+                        d.moTa,
+                        d.gia,
+                        thoiGian,
+                        d.bat ? "Đang áp dụng" : "Tạm ẩn"
+                );
+                if (dvDAO.updateDichVu(dvCapNhat)) {
+                    JOptionPane.showMessageDialog(this, "Đã cập nhật dịch vụ " + d.ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    napDuLieuTuDatabase();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật dịch vụ vào cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
         btnThietLapGia = nut("Thiết lập giá", false);
-        btnThietLapGia.setPreferredSize(new Dimension(130, 38));
+        btnThietLapGia.setPreferredSize(new Dimension(120, 38));
         btnThietLapGia.setEnabled(false);
         btnThietLapGia.addActionListener(e -> {
             DV d = dichVuDaChon();
@@ -216,17 +271,20 @@ public class DichVu extends JPanel {
             if (d != null) xoa(d);
         });
 
-        JPanel trai = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        JPanel trai = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         trai.setOpaque(false);
         trai.add(txtTim);
         trai.add(new JLabel("Nhóm:"));
         trai.add(cboNhom);
         trai.add(new JLabel("Trạng thái:"));
         trai.add(cboTrangThai);
+        trai.add(btnLamMoi);
+
         JPanel toolbar = new JPanel(new BorderLayout());
         toolbar.setOpaque(false);
         toolbar.setBorder(new EmptyBorder(16, 20, 16, 20));
         toolbar.add(trai, BorderLayout.WEST);
+
         JPanel phaiToolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         phaiToolbar.setOpaque(false);
         phaiToolbar.add(btnChinhSua);
@@ -236,7 +294,7 @@ public class DichVu extends JPanel {
         toolbar.add(phaiToolbar, BorderLayout.EAST);
 
         // --- Bảng ---
-        String[] cot = { "Mã dịch vụ", "Tên dịch vụ", "Mô tả", "Thời gian thực hiện", "Giá", "Trạng thái", "Bật / tắt" };
+        String[] cot = { "Mã dịch vụ", "Tên dịch vụ", "Mô tả", "Thời gian", "Giá", "Trạng thái", "Bật / tắt" };
         model = new DefaultTableModel(cot, 0) {
             @Override
             public boolean isCellEditable(int r, int c) { return false; }
@@ -251,7 +309,7 @@ public class DichVu extends JPanel {
         table.setFocusable(false);
         table.setFillsViewportHeight(true);
         table.setDefaultRenderer(Object.class, new OBangRenderer());
-        int[] rong = { 90, 200, 330, 130, 110, 140, 110 };
+        int[] rong = { 90, 200, 330, 110, 120, 130, 100 };
         for (int i = 0; i < rong.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
 
@@ -271,7 +329,7 @@ public class DichVu extends JPanel {
             if (!e.getValueIsAdjusting()) capNhatNutThaoTac();
         });
 
-        // Click vào cột "Bật / tắt"
+        // Click vào cột "Bật / tắt" (cột 6) để toggle trạng thái
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -279,8 +337,14 @@ public class DichVu extends JPanel {
                 if (r < 0 || r >= hienTai.size()) return;
                 DV d = hienTai.get(r);
                 if (c == 6) {
-                    d.bat = !d.bat;
-                    napLai(true);
+                    boolean batMoi = !d.bat;
+                    String ttMoi = batMoi ? "Đang áp dụng" : "Tạm ẩn";
+                    if (dvDAO.updateTrangThai(d.ma, ttMoi)) {
+                        d.bat = batMoi;
+                        napLai(true);
+                    } else {
+                        JOptionPane.showMessageDialog(DichVu.this, "Không thể cập nhật trạng thái trong cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -308,7 +372,6 @@ public class DichVu extends JPanel {
     // ==========================================
     // LỌC + VẼ LẠI BẢNG
     // ==========================================
-    /** Lọc dữ liệu rồi vẽ lại toàn bộ kết quả. */
     private void napLai(boolean giuTrang) {
         if (table == null) return;
         String tu = txtTim.getText().trim().toLowerCase();
@@ -316,9 +379,9 @@ public class DichVu extends JPanel {
         int tt = cboTrangThai.getSelectedIndex(); // 0: tất cả, 1: đang cung cấp, 2: tạm ẩn
 
         loc = tatCa.stream()
-                .filter(d -> (d.ma + " " + d.ten).toLowerCase().contains(tu))
+                .filter(d -> (d.ma + " " + d.ten + " " + d.moTa).toLowerCase().contains(tu))
                 .filter(d -> nhom == null || nhom.equals("Tất cả") || nhom.equals(d.nhom))
-                .filter(d -> tt == 0 || (tt == 1) == d.bat)
+                .filter(d -> tt == 0 || (tt == 1 && d.bat) || (tt == 2 && !d.bat))
                 .collect(Collectors.toList());
 
         hienTai = loc;
@@ -329,7 +392,7 @@ public class DichVu extends JPanel {
             model.addRow(new Object[] { d.ma, d, d.moTa, d.phut + " phút", dinhDangGia(d.gia), d, d });
 
         lblThongTin.setText(loc.isEmpty() ? "Không có dịch vụ phù hợp"
-                : "Hiển thị tất cả " + loc.size() + " dịch vụ");
+                : "Hiển thị tất cả " + loc.size() + " dịch vụ từ cơ sở dữ liệu");
         capNhatThongKe();
         capNhatNutThaoTac();
     }
@@ -347,7 +410,6 @@ public class DichVu extends JPanel {
         if (btnXoa != null) btnXoa.setEnabled(chonMot);
     }
 
-    /** Nạp lại danh sách nhóm cho combo (giữ lựa chọn hiện tại nếu còn). */
     private void napNhom() {
         dangNap = true;
         Object chon = cboNhom.getSelectedItem();
@@ -360,26 +422,48 @@ public class DichVu extends JPanel {
     }
 
     // ==========================================
-    // CÁC THAO TÁC: SỬA / ĐẶT GIÁ / XÓA / XUẤT CSV
+    // CÁC THAO TÁC: THÊM / SỬA / ĐẶT GIÁ / XÓA / XUẤT CSV
     // ==========================================
-    /** Hộp thoại thêm/sửa. Trả về true nếu người dùng bấm OK và dữ liệu hợp lệ. */
-    private boolean hopThoai(DV d, String tieuDe) {
-        JTextField ten = new JTextField(d.ten), nhom = new JTextField(d.nhom), mo = new JTextField(d.moTa);
-        JTextField phut = new JTextField("" + d.phut), gia = new JTextField("" + d.gia);
-        Object[] form = { "Tên dịch vụ", ten, "Nhóm dịch vụ", nhom, "Mô tả", mo, "Thời gian (phút)", phut, "Giá (VNĐ)", gia };
-        while (JOptionPane.showConfirmDialog(this, form, tieuDe, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+    private boolean hopThoai(DV d, String tieuDe, boolean laThemMoi) {
+        JTextField txtMa = new JTextField(d.ma);
+        txtMa.setEditable(false);
+        JTextField ten = new JTextField(d.ten);
+        JTextField mo = new JTextField(d.moTa);
+        JTextField phut = new JTextField("" + (d.phut > 0 ? d.phut : 30));
+        JTextField gia = new JTextField("" + d.gia);
+        JComboBox<String> cboTrangThaiDialog = new JComboBox<>(new String[] { "Đang áp dụng", "Tạm ẩn" });
+        cboTrangThaiDialog.setSelectedItem(d.bat ? "Đang áp dụng" : "Tạm ẩn");
+
+        Object[] form = {
+            "Mã dịch vụ", txtMa,
+            "Tên dịch vụ", ten,
+            "Mô tả dịch vụ", mo,
+            "Thời gian thực hiện (phút)", phut,
+            "Giá dịch vụ (VNĐ)", gia,
+            "Trạng thái", cboTrangThaiDialog
+        };
+
+        while (JOptionPane.showConfirmDialog(this, form, tieuDe, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             try {
                 int p = Integer.parseInt(phut.getText().trim());
-                long g = Long.parseLong(gia.getText().trim());
-                if (ten.getText().isBlank() || nhom.getText().isBlank()) throw new NumberFormatException();
+                long g = Long.parseLong(gia.getText().trim().replaceAll("[^0-9]", ""));
+                if (ten.getText().isBlank()) {
+                    JOptionPane.showMessageDialog(this, "Tên dịch vụ không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                if (p <= 0 || g < 0) {
+                    JOptionPane.showMessageDialog(this, "Thời gian thực hiện phải > 0 và giá dịch vụ phải >= 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                d.ma = txtMa.getText().trim();
                 d.ten = ten.getText().trim();
-                d.nhom = nhom.getText().trim();
                 d.moTa = mo.getText().trim();
                 d.phut = p;
                 d.gia = g;
+                d.bat = "Đang áp dụng".equals(cboTrangThaiDialog.getSelectedItem());
                 return true;
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Dữ liệu không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Thời gian hoặc giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
         return false;
@@ -389,19 +473,46 @@ public class DichVu extends JPanel {
         String s = JOptionPane.showInputDialog(this, "Giá mới cho \"" + d.ten + "\" (VNĐ):", d.gia);
         if (s == null) return;
         try {
-            d.gia = Long.parseLong(s.replaceAll("[^0-9]", ""));
-            napLai(true);
+            long giaMoi = Long.parseLong(s.replaceAll("[^0-9]", ""));
+            if (giaMoi < 0) throw new NumberFormatException();
+            
+            LocalTime thoiGian = LocalTime.of(d.phut / 60, d.phut % 60);
+            DichVu_entity dvCapNhat = new DichVu_entity(
+                    d.ma,
+                    d.ten,
+                    d.moTa,
+                    giaMoi,
+                    thoiGian,
+                    d.bat ? "Đang áp dụng" : "Tạm ẩn"
+            );
+            if (dvDAO.updateDichVu(dvCapNhat)) {
+                d.gia = giaMoi;
+                JOptionPane.showMessageDialog(this, "Đã cập nhật giá dịch vụ thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                napDuLieuTuDatabase();
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thể cập nhật giá trong cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void xoa(DV d) {
-        if (JOptionPane.showConfirmDialog(this, "Xóa dịch vụ \"" + d.ten + "\"?", "Xác nhận",
-                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            tatCa.remove(d);
-            napNhom();
-            napLai(true);
+        int xacNhan = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc muốn xóa dịch vụ \"" + d.ten + "\" (" + d.ma + ") khỏi cơ sở dữ liệu?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (xacNhan == JOptionPane.YES_OPTION) {
+            if (dvDAO.deleteDichVu(d.ma)) {
+                JOptionPane.showMessageDialog(this, "Đã xóa dịch vụ " + d.ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                napDuLieuTuDatabase();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Không thể xóa dịch vụ này vì đã có dữ liệu hóa đơn hoặc lịch hẹn liên kết!\n"
+                        + "Gợi ý: Bạn có thể tắt công tắc để chuyển trạng thái dịch vụ sang \"Tạm ẩn\".",
+                        "Không thể xóa", JOptionPane.WARNING_MESSAGE);
+            }
         }
     }
 
@@ -412,16 +523,17 @@ public class DichVu extends JPanel {
         StringBuilder sb = new StringBuilder("\uFEFFMã,Tên,Nhóm,Mô tả,Phút,Giá,Trạng thái\n");
         for (DV d : loc)
             sb.append(String.format("%s,\"%s\",\"%s\",\"%s\",%d,%d,%s\n", d.ma, d.ten, d.nhom, d.moTa, d.phut, d.gia,
-                    d.bat ? "Đang cung cấp" : "Tạm ẩn"));
+                    d.bat ? "Đang áp dụng" : "Tạm ẩn"));
         try {
             Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+            JOptionPane.showMessageDialog(this, "Xuất file CSV thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Không ghi được file: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Không ghi được file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     // ==========================================
-    // VẼ Ô CỦA BẢNG (mỗi cột một kiểu)
+    // VẼ Ô CỦA BẢNG
     // ==========================================
     private static class OBangRenderer implements TableCellRenderer {
         @Override
@@ -435,6 +547,7 @@ public class DichVu extends JPanel {
                 l.setBorder(new EmptyBorder(0, 10, 0, 14));
                 return o(l, nen);
             }
+            if (!(v instanceof DV)) return o(nhan(String.valueOf(v), 13, false, CHU), nen);
             DV d = (DV) v;
             JPanel p = new JPanel(new GridBagLayout());
             p.setBackground(nen);
@@ -451,7 +564,7 @@ public class DichVu extends JPanel {
                     p.add(hai, g);
                     break;
                 case 5: // trạng thái
-                    JLabel tt = nhan(d.bat ? "Đang cung cấp" : "Tạm ẩn", 11, true, d.bat ? XANH : XAM);
+                    JLabel tt = nhan(d.bat ? "Đang áp dụng" : "Tạm ẩn", 11, true, d.bat ? XANH : XAM);
                     tt.setOpaque(true);
                     tt.setBackground(d.bat ? XANH_NHAT : new Color(0xEEF0F3));
                     tt.setBorder(new EmptyBorder(3, 10, 3, 10));
@@ -470,7 +583,7 @@ public class DichVu extends JPanel {
             return p;
         }
 
-        private static JLabel o(JLabel l, Color nen) { // ô nền trắng
+        private static JLabel o(JLabel l, Color nen) {
             l.setOpaque(true);
             l.setBackground(nen);
             if (l.getBorder() == null) l.setBorder(new EmptyBorder(0, 10, 0, 10));
@@ -478,7 +591,6 @@ public class DichVu extends JPanel {
         }
     }
 
-    /** Công tắc bật/tắt vẽ bằng Graphics2D. */
     private static class Toggle extends JComponent {
         private final boolean bat;
 
@@ -525,6 +637,6 @@ public class DichVu extends JPanel {
     private static String dinhDangGia(long v) {
         DecimalFormatSymbols s = new DecimalFormatSymbols();
         s.setGroupingSeparator('.');
-        return new DecimalFormat("#,##0", s).format(v) + " \u20AB";
+        return new DecimalFormat("#,##0", s).format(v) + " ₫";
     }
 }
