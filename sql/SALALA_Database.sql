@@ -523,6 +523,7 @@ SELECT 'TK' + dbo.fn_C3(n),
        END,
        CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', '123456'), 2),
        CASE 
+            WHEN n = 1 THEN N'Admin'
             WHEN n <= 3 THEN N'Quản lý'
             WHEN n <= 8 THEN N'Nhân viên bán hàng'
             WHEN n <= 13 THEN N'Nhân viên dịch vụ'
