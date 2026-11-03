@@ -29,7 +29,7 @@ public class BacSi_DAO {
                      "(SELECT COUNT(*) FROM HoSoSucKhoe h WHERE h.maBacSi = bs.maBacSi " +
                      " AND MONTH(h.ngayKham) = MONTH(GETDATE()) AND YEAR(h.ngayKham) = YEAR(GETDATE())) AS soCaKham " +
                      "FROM BacSyThuY bs " +
-                     "JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
+                     "LEFT JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
                      "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
                      "ORDER BY bs.maBacSi ASC";
 
@@ -64,6 +64,50 @@ public class BacSi_DAO {
     }
 
     /**
+     * Lấy thông tin một bác sĩ theo mã (nhanh, không cần đếm ca khám toàn hệ thống)
+     */
+    public BacSi_entity getBacSiTheoMa(String maBacSi) throws SQLException {
+        if (maBacSi == null || maBacSi.isBlank()) return null;
+        Connection con = ConnectDB.getCon();
+        if (con == null) return null;
+
+        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, cn.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, " +
+                     "tk.trangThai AS trangThaiTK " +
+                     "FROM BacSyThuY bs " +
+                     "LEFT JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
+                     "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
+                     "WHERE bs.maBacSi = ?";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maBacSi.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Date nsSQL = rs.getDate("ngaySinh");
+                    LocalDate ngaySinh = nsSQL != null ? nsSQL.toLocalDate() : null;
+                    Boolean trangThaiTK = null;
+                    if (rs.getObject("trangThaiTK") != null) {
+                        trangThaiTK = rs.getBoolean("trangThaiTK");
+                    }
+                    return new BacSi_entity(
+                        rs.getString("maBacSi"),
+                        rs.getString("maTK"),
+                        rs.getString("hoTen"),
+                        rs.getString("gioiTinh"),
+                        rs.getString("sdt"),
+                        rs.getString("tenChuyenNganh"),
+                        rs.getString("email"),
+                        ngaySinh,
+                        rs.getDouble("luongThang"),
+                        0,
+                        trangThaiTK
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Lấy tổng số nhân viên cửa hàng (cho thẻ thông tin "Thuộc N nhân viên")
      */
     public int getTongNhanVien() throws SQLException {
@@ -87,7 +131,7 @@ public class BacSi_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return "BS001";
 
-        String sql = "SELECT ISNULL(MAX(CAST(SUBSTRING(maBacSi, 3, LEN(maBacSi)) AS INT)), 0) FROM BacSyThuY WHERE maBacSi LIKE 'BS%'";
+        String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maBacSi, 3, LEN(maBacSi)) AS INT)), 0) FROM BacSyThuY WHERE maBacSi LIKE 'BS%'";
         try (Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
@@ -102,12 +146,13 @@ public class BacSi_DAO {
      * Thêm bác sĩ mới vào CSDL
      */
     public boolean them(BacSi_entity bs) throws SQLException {
+        if (bs == null || bs.getMaBacSi() == null) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
         ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
         String maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
-        if (maCN == null) {
+        if (maCN == null && bs.getChuyenNganh() != null && !bs.getChuyenNganh().isBlank()) {
             cnDao.them(bs.getChuyenNganh());
             maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
         }
@@ -121,7 +166,11 @@ public class BacSi_DAO {
             } else {
                 ps.setNull(2, Types.VARCHAR);
             }
-            ps.setString(3, maCN);
+            if (maCN != null) {
+                ps.setString(3, maCN);
+            } else {
+                ps.setNull(3, Types.VARCHAR);
+            }
             ps.setString(4, bs.getHoTen());
             ps.setString(5, bs.getGioiTinh());
             ps.setString(6, bs.getSdt());
@@ -141,12 +190,13 @@ public class BacSi_DAO {
      * Cập nhật thông tin bác sĩ
      */
     public boolean capNhat(BacSi_entity bs) throws SQLException {
+        if (bs == null || bs.getMaBacSi() == null) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
         ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
         String maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
-        if (maCN == null) {
+        if (maCN == null && bs.getChuyenNganh() != null && !bs.getChuyenNganh().isBlank()) {
             cnDao.them(bs.getChuyenNganh());
             maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
         }
@@ -154,7 +204,11 @@ public class BacSi_DAO {
         String sql = "UPDATE BacSyThuY SET maChuyenNganh = ?, hoTen = ?, gioiTinh = ?, " +
                      "sdt = ?, email = ?, ngaySinh = ?, luongThang = ? WHERE maBacSi = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maCN);
+            if (maCN != null) {
+                ps.setString(1, maCN);
+            } else {
+                ps.setNull(1, Types.VARCHAR);
+            }
             ps.setString(2, bs.getHoTen());
             ps.setString(3, bs.getGioiTinh());
             ps.setString(4, bs.getSdt());
@@ -175,12 +229,13 @@ public class BacSi_DAO {
      * Xóa bác sĩ theo mã
      */
     public boolean xoa(String maBacSi) throws SQLException {
+        if (maBacSi == null || maBacSi.isBlank()) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
         String sql = "DELETE FROM BacSyThuY WHERE maBacSi = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maBacSi);
+            ps.setString(1, maBacSi.trim());
             return ps.executeUpdate() > 0;
         }
     }
@@ -189,13 +244,14 @@ public class BacSi_DAO {
      * Đổi trạng thái tài khoản của bác sĩ (Hoạt động / Tạm nghỉ)
      */
     public boolean doiTrangThaiTaiKhoan(String maBacSi, boolean trangThai) throws SQLException {
+        if (maBacSi == null || maBacSi.isBlank()) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
         String sql = "UPDATE TaiKhoan SET trangThai = ? WHERE maTK = (SELECT maTK FROM BacSyThuY WHERE maBacSi = ?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setBoolean(1, trangThai);
-            ps.setString(2, maBacSi);
+            ps.setString(2, maBacSi.trim());
             return ps.executeUpdate() > 0;
         }
     }
