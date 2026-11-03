@@ -1,119 +1,57 @@
 package dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import connectDB.ConnectDB;
 import entity.HoaDon_entity;
 import entity.KhachHang;
-import entity.NhanVien_entity;
 import entity.KhuyenMai_Entity;
-import entity.Thue_entity;
+import entity.NhanVien_entity;
 import entity.ThanhToan_entity;
+import entity.Thue_entity;
 
+/**
+ * DAO Hóa Đơn (Đã tối ưu hóa bằng JOIN, triệt tiêu hoàn toàn N+1 Query).
+ */
 public class HoaDon_Dao {
 
-    private final KhachHang_DAO khDAO = new KhachHang_DAO();
-    private final NhanVien_DAO nvDAO = new NhanVien_DAO();
-    private final KhuyenMai_DAO kmDAO = new KhuyenMai_DAO();
-    private final Thue_DAO thueDAO = new Thue_DAO();
-    private final ThanhToan_DAO ttDAO = new ThanhToan_DAO();
+    private static final String SELECT_BASE =
+            "SELECT h.maHD, h.ngayLap, h.trangThai, h.maTC, " +
+            "k.maKH, k.hoTen AS hoTenKH, k.sdt AS sdtKH, k.email AS emailKH, k.diaChi AS diaChiKH, " +
+            "nv.maNhanVien, nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, " +
+            "km.maKM, km.tenKM, km.mucKM, km.ngayBatDau, km.ngayKetThuc, km.dieuKien, " +
+            "th.maThue, th.tenThue, th.mucThue, " +
+            "tt.maThanhToan, tt.soTien, tt.thoiGian, tt.phuongThuc, tt.trangThai AS trangThaiTT " +
+            "FROM HoaDon h " +
+            "LEFT JOIN KhachHang k ON k.maKH = h.maKH " +
+            "LEFT JOIN NhanVien nv ON nv.maNhanVien = h.maNhanVien " +
+            "LEFT JOIN KhuyenMai km ON km.maKM = h.maKM " +
+            "LEFT JOIN Thue th ON th.maThue = h.maThue " +
+            "LEFT JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan ";
 
-    // 1. Lấy danh sách hóa đơn và các đối tượng khóa ngoại (Đã tối ưu tốc độ bằng Caching)
+    /**
+     * Lấy toàn bộ danh sách hóa đơn bằng 1 query duy nhất.
+     */
     public ArrayList<HoaDon_entity> getDSHD() {
         ArrayList<HoaDon_entity> dsHD = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return dsHD;
+        }
 
-        String sql = """
-            SELECT *
-            FROM HoaDon
-            ORDER BY ngayLap DESC, maHD DESC
-            """;
+        String sql = SELECT_BASE + "ORDER BY h.ngayLap DESC, h.maHD DESC";
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-        try {
-            Connection con = ConnectDB.getCon();
-            if (con == null) {
-                return dsHD;
-            }
-
-            // TỐI ƯU HÓA: Sử dụng Map để cache dữ liệu, tránh lỗi N+1 Query gây lag
-            Map<String, KhachHang> cacheKH = new HashMap<>();
-            Map<String, NhanVien_entity> cacheNV = new HashMap<>();
-            Map<String, KhuyenMai_Entity> cacheKM = new HashMap<>();
-            Map<String, Thue_entity> cacheThue = new HashMap<>();
-            Map<String, ThanhToan_entity> cacheTT = new HashMap<>();
-
-            try (PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-                    String maHD = rs.getString("maHD");
-
-                    Timestamp timestamp = rs.getTimestamp("ngayLap");
-                    java.time.LocalDate ngayLap =
-                        timestamp != null
-                            ? timestamp.toLocalDateTime().toLocalDate()
-                            : null;
-
-                    String trangThai = rs.getString("trangThai");
-
-                    // Lấy Khách Hàng (có dùng cache)
-                    String maKH = rs.getString("maKH");
-                    KhachHang kh = null;
-                    if (maKH != null) {
-                        kh = cacheKH.computeIfAbsent(maKH, k -> khDAO.getKhachHangTheoMa(k));
-                    }
-
-                    // Lấy Nhân Viên (có dùng cache)
-                 // Lấy Nhân Viên (có dùng cache)
-                    String maNV = rs.getString("maNhanVien");
-                    NhanVien_entity nv = null;
-                    if (maNV != null) {
-                        nv = cacheNV.computeIfAbsent(maNV, k -> {
-                            try {
-                                return nvDAO.getNhanVienTheoMa(k);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                return null; // Sửa 'return nv;' thành 'return null;' ở đây
-                            }
-                        });
-                    }
-
-                    // Lấy Khuyến Mãi (có dùng cache)
-                    String maKM = rs.getString("maKM");
-                    KhuyenMai_Entity km = null;
-                    if (maKM != null) {
-                        km = cacheKM.computeIfAbsent(maKM, k -> kmDAO.getKhuyenMaiTheoMa(k));
-                    }
-
-                    // Lấy Thuế (có dùng cache)
-                    String maThue = rs.getString("maThue");
-                    Thue_entity thue = null;
-                    if (maThue != null) {
-                        thue = cacheThue.computeIfAbsent(maThue, k -> thueDAO.getThueTheoMa(k));
-                    }
-
-                    // Lấy Thanh Toán (có dùng cache)
-                    String maThanhToan = rs.getString("maThanhToan");
-                    ThanhToan_entity tt = null;
-                    if (maThanhToan != null) {
-                        tt = cacheTT.computeIfAbsent(maThanhToan, k -> ttDAO.getThanhToanTheoMa(k));
-                    }
-
-                    HoaDon_entity hd = new HoaDon_entity(
-                        maHD, ngayLap, trangThai,
-                        kh, nv, km, thue, tt
-                    );
-                    hd.setMaTC(layMaTC(rs));
-
-                    dsHD.add(hd);
-                }
+            while (rs.next()) {
+                dsHD.add(mapRowToHoaDon(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -121,117 +59,114 @@ public class HoaDon_Dao {
         return dsHD;
     }
 
-    // 2. Thêm hóa đơn mới
+    /**
+     * Tìm hóa đơn theo mã chính xác bằng 1 query JOIN
+     */
+    public HoaDon_entity getHDTheoMa(String maHD) {
+        if (maHD == null || maHD.isBlank()) return null;
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return null;
+        }
+
+        String sql = SELECT_BASE + "WHERE h.maHD = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maHD.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToHoaDon(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Thêm hóa đơn mới
+     */
     public boolean themHD(HoaDon_entity hd) {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
+        try {
+            return themHD(con, hd);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean themHD(Connection con, HoaDon_entity hd) throws SQLException {
+        if (con == null || hd == null) {
+            return false;
+        }
+
+        boolean coCotMaTC = kiemTraCotTonTai(con, "HoaDon", "maTC");
+        String sql;
+        if (coCotMaTC) {
+            sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan, maTC) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        } else {
+            sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, hd.getMaHD());
+            ps.setTimestamp(2,
+                    hd.getNgayLap() != null
+                            ? Timestamp.valueOf(hd.getNgayLap().atStartOfDay())
+                            : new Timestamp(System.currentTimeMillis()));
+            ps.setString(3, hd.getTrangThai() != null ? hd.getTrangThai() : "Chờ thanh toán");
+            ps.setString(4, hd.getMaKH() != null ? hd.getMaKH().getMaKH() : null);
+            ps.setString(5, hd.getMaNhanVien() != null ? hd.getMaNhanVien().getMaNhanVien() : null);
+            ps.setString(6, hd.getMaKM() != null ? hd.getMaKM().getMaKM() : null);
+            ps.setString(7, hd.getMaThue() != null ? hd.getMaThue().getMaThue() : null);
+            ps.setString(8, hd.getMaThanhToan() != null ? hd.getMaThanhToan().getMaThanhToan() : null);
+
+            if (coCotMaTC) {
+                if (hd.getMaTC() != null && !hd.getMaTC().isBlank()) {
+                    ps.setString(9, hd.getMaTC());
+                } else {
+                    ps.setNull(9, java.sql.Types.VARCHAR);
+                }
+            }
+
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Xóa hóa đơn và các dòng chi tiết liên quan
+     */
+    public boolean xoaHD(String maHD) {
+        if (maHD == null || maHD.isBlank()) {
+            return false;
+        }
+
+        String sqlXoaChiTiet = "DELETE FROM ChiTietHoaDon WHERE maHD = ?";
+        String sqlXoaHoaDon = "DELETE FROM HoaDon WHERE maHD = ?";
+
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return false;
         }
 
         try {
-            return themHD(con, hd);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public boolean themHD(Connection con, HoaDon_entity hd) throws SQLException {
-        if (hd == null
-                || hd.getMaHD() == null
-                || hd.getNgayLap() == null
-                || hd.getTrangThai() == null
-                || hd.getMaKH() == null
-                || hd.getMaNhanVien() == null) {
-            return false;
-        }
-
-        String sql = """
-            INSERT INTO HoaDon
-                (maHD, ngayLap, trangThai, maKH, maTC,
-                 maNhanVien, maKM, maThue, maThanhToan)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, hd.getMaHD());
-                ps.setTimestamp(2,
-                    Timestamp.valueOf(hd.getNgayLap().atStartOfDay()));
-                ps.setString(3, hd.getTrangThai());
-
-                ps.setString(4, hd.getMaKH().getMaKH());
-                if (hd.getMaTC() != null) {
-                    ps.setString(5, hd.getMaTC());
-                } else {
-                    ps.setNull(5, java.sql.Types.VARCHAR);
-                }
-                ps.setString(6, hd.getMaNhanVien().getMaNhanVien());
-
-                if (hd.getMaKM() != null) {
-                    ps.setString(7, hd.getMaKM().getMaKM());
-                } else {
-                    ps.setNull(7, java.sql.Types.VARCHAR);
-                }
-
-                if (hd.getMaThue() != null) {
-                    ps.setString(8, hd.getMaThue().getMaThue());
-                } else {
-                    ps.setNull(8, java.sql.Types.VARCHAR);
-                }
-
-                if (hd.getMaThanhToan() != null) {
-                    ps.setString(9,
-                        hd.getMaThanhToan().getMaThanhToan());
-                } else {
-                    ps.setNull(9, java.sql.Types.VARCHAR);
-                }
-
-                return ps.executeUpdate() > 0;
-        }
-    }
-
-    // 3. Xóa hóa đơn và chi tiết hóa đơn
-    public boolean xoaHD(String maHD) {
-        if (maHD == null || maHD.isBlank()) {
-            return false;
-        }
-
-        String sqlXoaChiTiet =
-            "DELETE FROM ChiTietHoaDon WHERE maHD = ?";
-        String sqlXoaHoaDon =
-            "DELETE FROM HoaDon WHERE maHD = ?";
-
-        Connection con = null;
-
-        try {
-            con = ConnectDB.getCon();
-
-            if (con == null) {
-                return false;
-            }
-
             boolean autoCommitCu = con.getAutoCommit();
-
             try {
                 con.setAutoCommit(false);
 
-                // Xóa các dòng chi tiết trước để không vi phạm FK
-                try (PreparedStatement ps =
-                         con.prepareStatement(sqlXoaChiTiet)) {
+                try (PreparedStatement ps = con.prepareStatement(sqlXoaChiTiet)) {
                     ps.setString(1, maHD);
                     ps.executeUpdate();
                 }
 
                 int soDongXoa;
-
-                try (PreparedStatement ps =
-                         con.prepareStatement(sqlXoaHoaDon)) {
+                try (PreparedStatement ps = con.prepareStatement(sqlXoaHoaDon)) {
                     ps.setString(1, maHD);
                     soDongXoa = ps.executeUpdate();
                 }
@@ -243,107 +178,36 @@ public class HoaDon_Dao {
 
                 con.commit();
                 return true;
-
             } catch (SQLException e) {
                 con.rollback();
                 throw e;
             } finally {
                 con.setAutoCommit(autoCommitCu);
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    // 4. Tìm hóa đơn theo mã
-    public HoaDon_entity getHDTheoMa(String maHD) {
-        String sql = """
-            SELECT *
-            FROM HoaDon
-            WHERE maHD = ?
-            """;
-
-        try {
-            Connection con = ConnectDB.getCon();
-
-            if (con == null) {
-                return null;
-            }
-
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, maHD);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        Timestamp timestamp = rs.getTimestamp("ngayLap");
-
-                        java.time.LocalDate ngayLap =
-                            timestamp != null
-                                ? timestamp.toLocalDateTime().toLocalDate()
-                                : null;
-
-                        String maKH = rs.getString("maKH");
-                        String maNV = rs.getString("maNhanVien");
-                        String maKM = rs.getString("maKM");
-                        String maThue = rs.getString("maThue");
-                        String maTT = rs.getString("maThanhToan");
-
-                        HoaDon_entity hoaDon = new HoaDon_entity(
-                            rs.getString("maHD"),
-                            ngayLap,
-                            rs.getString("trangThai"),
-                            khDAO.getKhachHangTheoMa(maKH),
-                            nvDAO.getNhanVienTheoMa(maNV),
-                            maKM != null
-                                ? kmDAO.getKhuyenMaiTheoMa(maKM) : null,
-                            maThue != null
-                                ? thueDAO.getThueTheoMa(maThue) : null,
-                            maTT != null
-                                ? ttDAO.getThanhToanTheoMa(maTT) : null
-                        );
-                        hoaDon.setMaTC(layMaTC(rs));
-                        return hoaDon;
-                    }
-                }
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    private String layMaTC(ResultSet rs) throws SQLException {
-        ResultSetMetaData metadata = rs.getMetaData();
-        for (int i = 1; i <= metadata.getColumnCount(); i++) {
-            if ("maTC".equalsIgnoreCase(metadata.getColumnLabel(i))) {
-                return rs.getString(i);
-            }
-        }
-        return null;
-    }
-
-    // 5. Xác nhận đã thanh toán hóa đơn
+    /**
+     * Xác nhận đã thanh toán hóa đơn
+     */
     public boolean xacNhanThanhToan(String maHD, String phuongThuc, double soTien) {
         if (maHD == null || maHD.isBlank()) {
             return false;
         }
 
-        Connection con = null;
-        try {
-            con = ConnectDB.getCon();
-            if (con == null) {
-                return false;
-            }
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
 
+        try {
             boolean autoCommitCu = con.getAutoCommit();
             try {
                 con.setAutoCommit(false);
 
-                // Kiểm tra maThanhToan hiện tại của hóa đơn
                 String sqlCheck = "SELECT maThanhToan FROM HoaDon WHERE maHD = ?";
                 String maTT = null;
                 try (PreparedStatement ps = con.prepareStatement(sqlCheck)) {
@@ -356,7 +220,6 @@ public class HoaDon_Dao {
                 }
 
                 if (maTT == null || maTT.isBlank()) {
-                    // Tạo mã thanh toán mới (tối đa 20 ký tự)
                     maTT = "TT" + System.currentTimeMillis();
                     if (maTT.length() > 20) {
                         maTT = maTT.substring(0, 20);
@@ -396,42 +259,136 @@ public class HoaDon_Dao {
 
                 con.commit();
                 return true;
-
             } catch (SQLException e) {
                 con.rollback();
                 throw e;
             } finally {
                 con.setAutoCommit(autoCommitCu);
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
-    //Lấy số hóa đơn lớn nhất
+
+    /**
+     * Lấy số thứ tự hóa đơn lớn nhất hiện tại
+     */
     public int laySoHoaDonLonNhat() {
-        String sql = """
-            SELECT ISNULL(
-                MAX(TRY_CAST(SUBSTRING(maHD, 3, LEN(maHD)) AS INT)),
-                0
-            )
-            FROM HoaDon
-            WHERE maHD LIKE 'HD%'
-        """;
+        String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maHD, 3, LEN(maHD)) AS INT)), 0) FROM HoaDon WHERE maHD LIKE 'HD%'";
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0;
 
-        try (Connection con = ConnectDB.getCon();
-             PreparedStatement ps = con.prepareStatement(sql);
+        try (PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-
             if (rs.next()) {
                 return rs.getInt(1);
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return 0;
+    }
+
+    private HoaDon_entity mapRowToHoaDon(ResultSet rs) throws SQLException {
+        String maHD = rs.getString("maHD");
+        Timestamp ts = rs.getTimestamp("ngayLap");
+        java.time.LocalDate ngayLap = ts != null ? ts.toLocalDateTime().toLocalDate() : null;
+        String trangThai = rs.getString("trangThai");
+
+        String maKH = rs.getString("maKH");
+        KhachHang kh = null;
+        if (maKH != null) {
+            kh = new KhachHang(
+                    maKH,
+                    rs.getString("hoTenKH"),
+                    rs.getString("sdtKH"),
+                    rs.getString("emailKH"),
+                    rs.getString("diaChiKH")
+            );
+        }
+
+        String maNV = rs.getString("maNhanVien");
+        NhanVien_entity nv = null;
+        if (maNV != null) {
+            Date ngaySinhNV = rs.getDate("ngaySinhNV");
+            nv = new NhanVien_entity(
+                    maNV,
+                    rs.getString("maTKNV"),
+                    rs.getString("hoTenNV"),
+                    rs.getString("chucVu"),
+                    rs.getString("sdtNV"),
+                    rs.getString("diaChiNV"),
+                    ngaySinhNV != null ? ngaySinhNV.toLocalDate() : null,
+                    rs.getString("gioiTinhNV"),
+                    rs.getDouble("luongCoBan"),
+                    null
+            );
+        }
+
+        String maKM = rs.getString("maKM");
+        KhuyenMai_Entity km = null;
+        if (maKM != null) {
+            Date ngayBD = rs.getDate("ngayBatDau");
+            Date ngayKT = rs.getDate("ngayKetThuc");
+            km = new KhuyenMai_Entity(
+                    maKM,
+                    rs.getString("tenKM"),
+                    rs.getDouble("mucKM"),
+                    ngayBD != null ? ngayBD.toLocalDate() : null,
+                    ngayKT != null ? ngayKT.toLocalDate() : null,
+                    rs.getString("dieuKien")
+            );
+        }
+
+        String maThue = rs.getString("maThue");
+        Thue_entity thue = null;
+        if (maThue != null) {
+            thue = new Thue_entity(
+                    maThue,
+                    rs.getString("tenThue"),
+                    rs.getDouble("mucThue")
+            );
+        }
+
+        String maTT = rs.getString("maThanhToan");
+        ThanhToan_entity tt = null;
+        if (maTT != null) {
+            Date thoiGianTT = rs.getDate("thoiGian");
+            tt = new ThanhToan_entity(
+                    maTT,
+                    rs.getDouble("soTien"),
+                    thoiGianTT != null ? thoiGianTT.toLocalDate() : null,
+                    rs.getString("phuongThuc"),
+                    rs.getString("trangThaiTT")
+            );
+        }
+
+        HoaDon_entity hd = new HoaDon_entity(maHD, ngayLap, trangThai, kh, nv, km, thue, tt);
+        hd.setMaTC(layMaTC(rs));
+        return hd;
+    }
+
+    private String layMaTC(ResultSet rs) throws SQLException {
+        ResultSetMetaData metadata = rs.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+            if ("maTC".equalsIgnoreCase(metadata.getColumnLabel(i))) {
+                return rs.getString(i);
+            }
+        }
+        return null;
+    }
+
+    private boolean kiemTraCotTonTai(Connection con, String tenBang, String tenCot) {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tenBang);
+            ps.setString(2, tenCot);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            return false;
+        }
     }
 }

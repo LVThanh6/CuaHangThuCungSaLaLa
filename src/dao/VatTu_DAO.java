@@ -8,56 +8,37 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import connectDB.ConnectDB;
-import entity.VatTu_entity;
 import entity.NhaCungCap_entity;
+import entity.VatTu_entity;
 
+/**
+ * DAO Vật Tư (Đã tối ưu hóa bằng JOIN, triệt tiêu N+1 Query sang NhaCungCap).
+ */
 public class VatTu_DAO {
 
-    private NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
+    private static final String SELECT_BASE =
+            "SELECT v.maVT, v.maNCC, v.tenVT, v.soLuongTon, v.trangThai, v.giaBanCoBan, v.giaNhap, v.maThuoc, " +
+            "ncc.tenNCC, ncc.diaChi, ncc.sdt, ncc.email " +
+            "FROM VatTu v " +
+            "LEFT JOIN NhaCungCap ncc ON ncc.maNCC = v.maNCC ";
 
     /**
-     * Lấy toàn bộ danh sách vật tư
-     * Đồng thời lấy thông tin nhà cung cấp theo maNCC
+     * Lấy toàn bộ danh sách vật tư kèm thông tin nhà cung cấp bằng 1 query JOIN duy nhất.
      */
     public ArrayList<VatTu_entity> getAllVatTu() {
         ArrayList<VatTu_entity> dsVT = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return dsVT;
+        }
 
-        String sql = "SELECT * FROM VatTu";
+        String sql = SELECT_BASE + "ORDER BY v.maVT ASC";
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-        try {
-            Connection con = ConnectDB.getCon();
-
-            if (con == null) {
-                return dsVT;
+            while (rs.next()) {
+                dsVT.add(mapRowToEntity(rs));
             }
-
-            try (PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-                    String maNCC = rs.getString("maNCC");
-
-                    // Lấy đối tượng nhà cung cấp theo mã
-                    NhaCungCap_entity ncc =
-                            maNCC != null
-                            ? nccDAO.getNhaCungCapTheoMa(maNCC)
-                            : null;
-
-                    VatTu_entity vt = new VatTu_entity(
-                        rs.getString("maVT"),
-                        ncc,
-                        rs.getString("tenVT"),
-                        rs.getInt("soLuongTon"),
-                        rs.getString("trangThai"),
-                        rs.getDouble("giaBanCoBan"),
-                        rs.getDouble("giaNhap"),
-                        layMaThuoc(rs)
-                    );
-
-                    dsVT.add(vt);
-                }
-            }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -67,34 +48,32 @@ public class VatTu_DAO {
 
     /**
      * Thêm vật tư mới
-     * Lấy maNCC từ đối tượng NhaCungCap_entity
      */
     public boolean createVatTu(VatTu_entity vt) {
+        if (vt == null || vt.getMaVT() == null || vt.getMaNCC() == null) {
+            return false;
+        }
+
         String sql = "INSERT INTO VatTu "
-                   + "(maVT, maNCC, tenVT, soLuongTon, "
-                   + "trangThai, giaBanCoBan, giaNhap, maThuoc) "
+                   + "(maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try {
-            Connection con = ConnectDB.getCon();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
 
-            if (con == null || vt.getMaNCC() == null) {
-                return false;
-            }
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, vt.getMaVT());
+            ps.setString(2, vt.getMaNCC().getMaNCC());
+            ps.setString(3, vt.getTenVT());
+            ps.setInt(4, vt.getSoLuongTon());
+            ps.setString(5, vt.getTrangThai());
+            ps.setDouble(6, vt.getGiaBanCoBan());
+            ps.setDouble(7, vt.getGiaNhap());
+            ps.setString(8, vt.getMaThuoc());
 
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, vt.getMaVT());
-                ps.setString(2, vt.getMaNCC().getMaNCC());
-                ps.setString(3, vt.getTenVT());
-                ps.setInt(4, vt.getSoLuongTon());
-                ps.setString(5, vt.getTrangThai());
-                ps.setDouble(6, vt.getGiaBanCoBan());
-                ps.setDouble(7, vt.getGiaNhap());
-                ps.setString(8, vt.getMaThuoc());
-
-                return ps.executeUpdate() > 0;
-            }
-
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -106,21 +85,17 @@ public class VatTu_DAO {
      * Xóa vật tư theo mã
      */
     public boolean deleteVatTu(String maVT) {
+        if (maVT == null || maVT.isBlank()) return false;
         String sql = "DELETE FROM VatTu WHERE maVT = ?";
 
-        try {
-            Connection con = ConnectDB.getCon();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
 
-            if (con == null) {
-                return false;
-            }
-
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, maVT);
-
-                return ps.executeUpdate() > 0;
-            }
-
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maVT.trim());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -132,31 +107,31 @@ public class VatTu_DAO {
      * Cập nhật thông tin vật tư
      */
     public boolean updateVatTu(VatTu_entity vt) {
+        if (vt == null || vt.getMaVT() == null || vt.getMaNCC() == null) {
+            return false;
+        }
+
         String sql = "UPDATE VatTu SET "
-                   + "maNCC = ?, tenVT = ?, soLuongTon = ?, "
-                   + "trangThai = ?, giaBanCoBan = ?, giaNhap = ?, maThuoc = ? "
+                   + "maNCC = ?, tenVT = ?, soLuongTon = ?, trangThai = ?, "
+                   + "giaBanCoBan = ?, giaNhap = ?, maThuoc = ? "
                    + "WHERE maVT = ?";
 
-        try {
-            Connection con = ConnectDB.getCon();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
 
-            if (con == null || vt.getMaNCC() == null) {
-                return false;
-            }
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, vt.getMaNCC().getMaNCC());
+            ps.setString(2, vt.getTenVT());
+            ps.setInt(3, vt.getSoLuongTon());
+            ps.setString(4, vt.getTrangThai());
+            ps.setDouble(5, vt.getGiaBanCoBan());
+            ps.setDouble(6, vt.getGiaNhap());
+            ps.setString(7, vt.getMaThuoc());
+            ps.setString(8, vt.getMaVT());
 
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, vt.getMaNCC().getMaNCC());
-                ps.setString(2, vt.getTenVT());
-                ps.setInt(3, vt.getSoLuongTon());
-                ps.setString(4, vt.getTrangThai());
-                ps.setDouble(5, vt.getGiaBanCoBan());
-                ps.setDouble(6, vt.getGiaNhap());
-                ps.setString(7, vt.getMaThuoc());
-                ps.setString(8, vt.getMaVT());
-
-                return ps.executeUpdate() > 0;
-            }
-
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -168,42 +143,20 @@ public class VatTu_DAO {
      * Tìm vật tư theo mã
      */
     public VatTu_entity getVatTuTheoMa(String maVT) {
-        String sql = "SELECT * FROM VatTu WHERE maVT = ?";
+        if (maVT == null || maVT.isBlank()) return null;
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return null;
+        }
 
-        try {
-            Connection con = ConnectDB.getCon();
-
-            if (con == null) {
-                return null;
-            }
-
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, maVT);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        String maNCC = rs.getString("maNCC");
-
-                        // Lấy đối tượng nhà cung cấp từ DAO
-                        NhaCungCap_entity ncc =
-                                maNCC != null
-                                ? nccDAO.getNhaCungCapTheoMa(maNCC)
-                                : null;
-
-                        return new VatTu_entity(
-                            rs.getString("maVT"),
-                            ncc,
-                            rs.getString("tenVT"),
-                            rs.getInt("soLuongTon"),
-                            rs.getString("trangThai"),
-                            rs.getDouble("giaBanCoBan"),
-                            rs.getDouble("giaNhap"),
-                            layMaThuoc(rs)
-                        );
-                    }
+        String sql = SELECT_BASE + "WHERE v.maVT = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maVT.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToEntity(rs);
                 }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -219,43 +172,49 @@ public class VatTu_DAO {
             return null;
         }
 
-        String sql = "SELECT * FROM VatTu WHERE maThuoc = ?";
+        String sql = SELECT_BASE + "WHERE v.maThuoc = ?";
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return null;
+        }
 
-        try {
-            Connection con = ConnectDB.getCon();
-            if (con == null) {
-                return null;
-            }
-
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, maThuoc.trim());
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        String maNCC = rs.getString("maNCC");
-                        NhaCungCap_entity ncc =
-                                maNCC != null
-                                ? nccDAO.getNhaCungCapTheoMa(maNCC)
-                                : null;
-
-                        return new VatTu_entity(
-                            rs.getString("maVT"),
-                            ncc,
-                            rs.getString("tenVT"),
-                            rs.getInt("soLuongTon"),
-                            rs.getString("trangThai"),
-                            rs.getDouble("giaBanCoBan"),
-                            rs.getDouble("giaNhap"),
-                            layMaThuoc(rs)
-                        );
-                    }
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maThuoc.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToEntity(rs);
                 }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         return null;
+    }
+
+    private VatTu_entity mapRowToEntity(ResultSet rs) throws SQLException {
+        String maNCC = rs.getString("maNCC");
+        NhaCungCap_entity ncc = null;
+        if (maNCC != null) {
+            ncc = new NhaCungCap_entity(
+                    maNCC,
+                    rs.getString("tenNCC"),
+                    rs.getString("diaChi"),
+                    rs.getString("sdt"),
+                    rs.getString("email")
+            );
+        }
+
+        return new VatTu_entity(
+                rs.getString("maVT"),
+                ncc,
+                rs.getString("tenVT"),
+                rs.getInt("soLuongTon"),
+                rs.getString("trangThai"),
+                rs.getDouble("giaBanCoBan"),
+                rs.getDouble("giaNhap"),
+                layMaThuoc(rs)
+        );
     }
 
     private String layMaThuoc(ResultSet rs) throws SQLException {

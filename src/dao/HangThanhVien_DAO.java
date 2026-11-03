@@ -7,8 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import connectDB.ConnectDB;
 import entity.HangThanhVien;
@@ -16,6 +17,7 @@ import entity.KhachHang;
 
 /**
  * DAO HangThanhVien - Truy xuất và cập nhật trực tiếp bảng QuanLyHangThanhVien trong CSDL SALALA.
+ * (Đã tối ưu hóa truy vấn tổng hợp và phát sinh mã, loại bỏ quét toàn bảng).
  */
 public class HangThanhVien_DAO {
 
@@ -74,12 +76,12 @@ public class HangThanhVien_DAO {
     }
 
     /**
-     * Lấy 4 thẻ nhóm hạng (Đồng, Bạc, Vàng, Kim Cương) tổng hợp từ bảng QuanLyHangThanhVien
+     * Lấy 4 thẻ nhóm hạng (Đồng, Bạc, Vàng, Kim Cương) tổng hợp từ bảng QuanLyHangThanhVien.
+     * Đã tối ưu hóa bằng 1 truy vấn GROUP BY duy nhất thay vì 4 truy vấn lặp.
      */
     public List<HangThanhVien> getAllHangThanhVien() {
         List<HangThanhVien> dsHang = new ArrayList<>();
 
-        // 4 hạng chuẩn theo kịch bản SALALA
         String[] tenCacHang = {"Đồng", "Bạc", "Vàng", "Kim cương"};
         double[] defaultMin = {0.0, 5_000_000.0, 15_000_000.0, 30_000_000.0};
         Double[] defaultMax = {5_000_000.0, 15_000_000.0, 30_000_000.0, null};
@@ -92,7 +94,38 @@ public class HangThanhVien_DAO {
                 "Giảm 15% hóa đơn dịch vụ\nTích 2 điểm / 10.000 ₫\n02 lần khám tổng quát / năm\nHotline bác sĩ ưu tiên 24/7"
         };
 
+        Map<String, Object[]> mapData = new HashMap<>();
         Connection con = ConnectDB.getCon();
+        if (con != null) {
+            String sql = "SELECT tenHang, COUNT(*) AS soLuong, " +
+                    "ISNULL(SUM(tongChiTieu), 0) AS tongChiTieu, " +
+                    "MIN(chiTieuToiThieu) AS minChiTieu, " +
+                    "MAX(chiTieuToiDa) AS maxChiTieu, " +
+                    "MAX(mucGiamGia) AS mucGiam, " +
+                    "MAX(diemTichLuy1Van) AS diem1Van, " +
+                    "MAX(quyenLoi) AS ql " +
+                    "FROM QuanLyHangThanhVien GROUP BY tenHang";
+            try (Statement stmt = con.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    String th = rs.getString("tenHang");
+                    if (th != null) {
+                        mapData.put(th.trim(), new Object[]{
+                                rs.getInt("soLuong"),
+                                rs.getDouble("tongChiTieu"),
+                                rs.getObject("minChiTieu") != null ? rs.getDouble("minChiTieu") : null,
+                                rs.getObject("maxChiTieu") != null ? rs.getDouble("maxChiTieu") : null,
+                                rs.getObject("mucGiam") != null ? rs.getDouble("mucGiam") : null,
+                                rs.getObject("diem1Van") != null ? rs.getDouble("diem1Van") : null,
+                                rs.getString("ql")
+                        });
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
         for (int i = 0; i < tenCacHang.length; i++) {
             String ten = tenCacHang[i];
             int count = 0;
@@ -103,34 +136,18 @@ public class HangThanhVien_DAO {
             double diem = defaultDiem[i];
             String quyenLoi = defaultQL[i];
 
-            if (con != null) {
-                String sql = "SELECT COUNT(*) AS soLuong, " +
-                        "ISNULL(SUM(tongChiTieu), 0) AS tongChiTieu, " +
-                        "MIN(chiTieuToiThieu) AS minChiTieu, " +
-                        "MAX(chiTieuToiDa) AS maxChiTieu, " +
-                        "MAX(mucGiamGia) AS mucGiam, " +
-                        "MAX(diemTichLuy1Van) AS diem1Van, " +
-                        "MAX(quyenLoi) AS ql " +
-                        "FROM QuanLyHangThanhVien WHERE tenHang = ?";
-                try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                    pstmt.setString(1, ten);
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        if (rs.next()) {
-                            count = rs.getInt("soLuong");
-                            tongChiTieu = rs.getDouble("tongChiTieu");
-                            if (count > 0) {
-                                if (rs.getObject("minChiTieu") != null) minSpend = rs.getDouble("minChiTieu");
-                                if (rs.getObject("maxChiTieu") != null) maxSpend = rs.getDouble("maxChiTieu");
-                                if (rs.getObject("mucGiam") != null) giamGia = rs.getDouble("mucGiam");
-                                if (rs.getObject("diem1Van") != null) diem = rs.getDouble("diem1Van");
-                                if (rs.getString("ql") != null && !rs.getString("ql").trim().isEmpty()) {
-                                    quyenLoi = rs.getString("ql");
-                                }
-                            }
-                        }
+            Object[] d = mapData.get(ten);
+            if (d != null) {
+                count = (Integer) d[0];
+                tongChiTieu = (Double) d[1];
+                if (count > 0) {
+                    if (d[2] != null) minSpend = (Double) d[2];
+                    if (d[3] != null) maxSpend = (Double) d[3];
+                    if (d[4] != null) giamGia = (Double) d[4];
+                    if (d[5] != null) diem = (Double) d[5];
+                    if (d[6] != null && !((String) d[6]).trim().isEmpty()) {
+                        quyenLoi = (String) d[6];
                     }
-                } catch (SQLException e) {
-                    e.printStackTrace();
                 }
             }
 
@@ -147,7 +164,7 @@ public class HangThanhVien_DAO {
     public List<HangThanhVien> getDanhSachThanhVienTheoHang(String tenHang) {
         List<HangThanhVien> ds = new ArrayList<>();
         Connection con = ConnectDB.getCon();
-        if (con == null) return ds;
+        if (con == null || tenHang == null) return ds;
 
         String sql = "SELECT q.maHang, q.maKH, q.tenHang, q.chiTieuToiThieu, q.chiTieuToiDa, " +
                 "q.mucGiamGia, q.diemTichLuy1Van, q.quyenLoi, q.tongChiTieu, q.diemTichLuy, " +
@@ -159,7 +176,7 @@ public class HangThanhVien_DAO {
                 "ORDER BY q.tongChiTieu DESC, q.maKH ASC";
 
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setString(1, tenHang);
+            pstmt.setString(1, tenHang.trim());
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     String maHang = rs.getString("maHang");
@@ -196,6 +213,7 @@ public class HangThanhVien_DAO {
      * Lấy thông tin hạng của một khách hàng theo maKH
      */
     public HangThanhVien getHangThanhVienTheoMaKH(String maKH) {
+        if (maKH == null || maKH.isBlank()) return null;
         Connection con = ConnectDB.getCon();
         if (con == null) return null;
 
@@ -208,7 +226,7 @@ public class HangThanhVien_DAO {
                 "WHERE q.maKH = ?";
 
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setString(1, maKH);
+            pstmt.setString(1, maKH.trim());
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     String maHang = rs.getString("maHang");
@@ -241,11 +259,11 @@ public class HangThanhVien_DAO {
         return null;
     }
 
-
     /**
      * Thêm bản ghi hạng thành viên mới vào bảng QuanLyHangThanhVien
      */
     public boolean themHangThanhVien(HangThanhVien htv) {
+        if (htv == null || htv.getMaHang() == null || htv.getMaKH() == null) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
@@ -283,6 +301,7 @@ public class HangThanhVien_DAO {
      * Cập nhật thông tin hạng của một khách hàng trong QuanLyHangThanhVien
      */
     public boolean capNhatHangThanhVien(HangThanhVien htv) {
+        if (htv == null) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
@@ -322,6 +341,7 @@ public class HangThanhVien_DAO {
      */
     public boolean capNhatChinhSachHang(String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
                                        double mucGiamGia, double diemTichLuy1Van, String quyenLoi) {
+        if (tenHang == null || tenHang.isBlank()) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
@@ -342,7 +362,7 @@ public class HangThanhVien_DAO {
             pstmt.setDouble(4, diemTichLuy1Van);
             pstmt.setString(5, quyenLoi);
             pstmt.setDouble(6, diemTichLuy1Van);
-            pstmt.setString(7, tenHang);
+            pstmt.setString(7, tenHang.trim());
 
             return pstmt.executeUpdate() >= 0;
         } catch (SQLException e) {
@@ -355,12 +375,13 @@ public class HangThanhVien_DAO {
      * Xóa bản ghi trong QuanLyHangThanhVien
      */
     public boolean xoaHangThanhVien(String maHang) {
+        if (maHang == null || maHang.isBlank()) return false;
         Connection con = ConnectDB.getCon();
         if (con == null) return false;
 
         String sql = "DELETE FROM QuanLyHangThanhVien WHERE maHang = ?";
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setString(1, maHang);
+            pstmt.setString(1, maHang.trim());
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -369,79 +390,68 @@ public class HangThanhVien_DAO {
     }
 
     /**
-     * Tự động phát sinh mã hạng mới tiếp theo (ví dụ HTV016)
+     * Tự động phát sinh mã hạng mới tiếp theo (ví dụ HTV016).
+     * Đã tối ưu truy vấn MAX trực tiếp thay vì quét toàn bộ bảng.
      */
     public String phatSinhMaHangMoi() {
         Connection con = ConnectDB.getCon();
-        int maxIndex = 0;
         if (con != null) {
-            String sql = "SELECT maHang FROM QuanLyHangThanhVien";
+            String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maHang, 4, LEN(maHang)) AS INT)), 0) FROM QuanLyHangThanhVien WHERE maHang LIKE 'HTV%'";
             try (Statement stmt = con.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
-                while (rs.next()) {
-                    String ma = rs.getString(1);
-                    if (ma != null && ma.toUpperCase().startsWith("HTV")) {
-                        try {
-                            int num = Integer.parseInt(ma.substring(3).trim());
-                            if (num > maxIndex) {
-                                maxIndex = num;
-                            }
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
+                if (rs.next()) {
+                    int max = rs.getInt(1);
+                    return String.format("HTV%03d", max + 1);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return String.format("HTV%03d", maxIndex + 1);
+        return "HTV001";
     }
 
     /**
      * Tổng số lượng khách hàng đã được phân hạng trong QuanLyHangThanhVien
      */
     public int getTongSoThanhVien() {
-        int tong = 0;
         Connection con = ConnectDB.getCon();
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM QuanLyHangThanhVien";
             try (Statement stmt = con.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
-                    tong = rs.getInt(1);
+                    return rs.getInt(1);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return tong;
+        return 0;
     }
 
     /**
      * Tổng chi tiêu của toàn bộ thành viên trong QuanLyHangThanhVien
      */
     public double getTongChiTieuThanhVien() {
-        double tong = 0.0;
         Connection con = ConnectDB.getCon();
         if (con != null) {
             String sql = "SELECT ISNULL(SUM(tongChiTieu), 0) FROM QuanLyHangThanhVien";
             try (Statement stmt = con.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
-                    tong = rs.getDouble(1);
+                    return rs.getDouble(1);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return tong;
+        return 0.0;
     }
 
     /**
      * Tổng số tiền giảm giá khuyến mãi đã áp dụng từ các hóa đơn
      */
     public double getTongGiamGiaDaApDung() {
-        double tong = 0.0;
         Connection con = ConnectDB.getCon();
         if (con != null) {
             String sql = "SELECT ISNULL(SUM(c.soLuong * c.donGia * (ISNULL(km.mucKM, 0) / 100.0)), 0) " +
@@ -451,33 +461,32 @@ public class HangThanhVien_DAO {
             try (Statement stmt = con.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
-                    tong = rs.getDouble(1);
+                    return rs.getDouble(1);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return tong;
+        return 0.0;
     }
 
     /**
      * Số lượng thành viên có hạng cao hơn Đồng hoặc được cập nhật gần đây
      */
     public int getSoLuongNangHangGanDay() {
-        int count = 0;
         Connection con = ConnectDB.getCon();
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM QuanLyHangThanhVien WHERE tenHang <> N'Đồng' OR ngayCapNhatHang >= DATEADD(month, -1, SYSDATETIME())";
             try (Statement stmt = con.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
-                    count = rs.getInt(1);
+                    return rs.getInt(1);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return count;
+        return 0;
     }
 
     /**

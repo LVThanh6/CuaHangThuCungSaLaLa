@@ -325,21 +325,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         try {
 
-            for (KhachHang k : new KhachHang_DAO()
-
-                    .timKiemTongHop(kh.getMaKH())) {
-
-                if (!kh.getMaKH().equals(k.getMaKH())) {
-
-                    continue;
-
-                }
-
-                // KhachHang_DAO.timKiemTongHop đã tính sẵn hạng thành viên
-
-                return k.getHangThanhVien();
-
-            }
+            if (kh.getHangThanhVien() != null) return kh.getHangThanhVien();
+            entity.HangThanhVien htv = new dao.HangThanhVien_DAO().getHangThanhVienTheoMaKH(kh.getMaKH());
+            if (htv != null && htv.getTenHang() != null) return htv.getTenHang();
 
         } catch (Exception ignored) {
 
