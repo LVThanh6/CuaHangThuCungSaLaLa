@@ -1,5 +1,7 @@
 package GUI.VatTu;
 
+import GUI.Chung.RangBuocGiaoDien;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
@@ -957,7 +959,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         private final int arc;
         private final Color fill, line;
         RoundedPanel(int arc, Color fill, Color line) {
-            this.arc = arc; this.fill = fill; this.line = line;
+            this.arc = arc; this.fill = RangBuocGiaoDien.theMo(fill); this.line = line;
             setOpaque(false);
         }
         @Override protected void paintComponent(Graphics g) {

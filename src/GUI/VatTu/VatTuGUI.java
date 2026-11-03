@@ -204,7 +204,7 @@ public class VatTuGUI extends JPanel {
     private JComponent taoThanhBoLoc() {
         JPanel bar = new JPanel();
         bar.setLayout(new BoxLayout(bar, BoxLayout.X_AXIS));
-        bar.setBackground(Color.WHITE);
+        bar.setOpaque(false); // nền trắng đã có ở thẻ bao ngoài, tránh chồng lớp
         bar.setBorder(new EmptyBorder(16, 18, 16, 18));
 
         txtTim = new OTimKiem("Tìm theo tên hoặc mã...");
@@ -305,7 +305,7 @@ public class VatTuGUI extends JPanel {
 
     private JComponent taoChanTrang() {
         JPanel chan = new JPanel(new BorderLayout());
-        chan.setBackground(Color.WHITE);
+        chan.setOpaque(false); // nền trắng đã có ở thẻ bao ngoài, tránh chồng lớp
         chan.setBorder(BorderFactory.createCompoundBorder(
                 new MatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
                 new EmptyBorder(12, 18, 12, 18)));
