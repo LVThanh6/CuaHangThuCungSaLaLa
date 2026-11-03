@@ -5,7 +5,7 @@ import GUI.Chung.TableMau;
 
 import dao.TaiKhoan_DAO;
 import dao.TaiKhoan_DAO.TaiKhoanChiTiet;
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;

@@ -696,7 +696,23 @@ public class DatLichMoiGUI extends JPanel {
                 cboThuCung.addItem(nhan);
                 thuCungTheoNhan.put(nhan, thuCung);
             }
-            for (HoSoSucKhoe_entity hoSo : hoSoSucKhoeDAO.getAllHoSoSucKhoe()) {
+            for (ThuCung_entity tcItem : thuCungTheoNhan.values()) {
+                try {
+                    for (HoSoSucKhoe_entity hoSo : hoSoSucKhoeDAO.getHoSoSucKhoeTheoMaTC(tcItem.getMaTC())) {
+                        if (hoSo.getCanNang() == null || hoSo.getNgayKham() == null) {
+                            continue;
+                        }
+                        String maThuCung = hoSo.getMaTC();
+                        LocalDateTime ngayGanNhat = ngayKhamGanNhat.get(maThuCung);
+                        if (ngayGanNhat == null || hoSo.getNgayKham().isAfter(ngayGanNhat)) {
+                            ngayKhamGanNhat.put(maThuCung, hoSo.getNgayKham());
+                            canNangGanNhatTheoThuCung.put(maThuCung,
+                                    hoSo.getCanNang().stripTrailingZeros().toPlainString());
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+            for (HoSoSucKhoe_entity hoSo : new java.util.ArrayList<HoSoSucKhoe_entity>()) {
                 if (hoSo.getCanNang() == null || hoSo.getNgayKham() == null) {
                     continue;
                 }

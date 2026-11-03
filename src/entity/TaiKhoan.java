@@ -1,10 +1,10 @@
-package model;
+package entity;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Model đại diện cho bảng TaiKhoan trong CSDL SALALA.
+ * Entity đại diện cho bảng TaiKhoan trong CSDL SALALA.
  */
 public class TaiKhoan implements Serializable {
     private static final long serialVersionUID = 1L;

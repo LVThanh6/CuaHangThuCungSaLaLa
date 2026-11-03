@@ -3,7 +3,7 @@ package GUI.TaiKhoan;
 import GUI.Chung.RangBuocGiaoDien;
 
 import dao.TaiKhoan_DAO;
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;

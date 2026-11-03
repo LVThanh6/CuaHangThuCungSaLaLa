@@ -1,7 +1,7 @@
 package dao;
 
 
-import model.TaiKhoan;
+import entity.TaiKhoan;
 
 /**
  * Lớp Session quản lý phiên làm việc của người dùng hiện tại sau khi đăng nhập thành công.
