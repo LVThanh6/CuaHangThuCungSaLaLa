@@ -141,6 +141,7 @@ CREATE TABLE ThuCung
     dacDiemNhanDien   NVARCHAR(255),
 
     CONSTRAINT PK_ThuCung PRIMARY KEY (maTC),
+    CONSTRAINT UQ_ThuCung_MaKH_MaTC UNIQUE (maKH, maTC),
     CONSTRAINT FK_ThuCung_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH)
 );
 GO
@@ -318,6 +319,7 @@ CREATE TABLE HoaDon
     ngayLap      DATETIME2    NOT NULL,
     trangThai    NVARCHAR(50) NOT NULL,
     maKH         VARCHAR(20)  NOT NULL,
+    maTC         VARCHAR(20)  NULL,
     maNhanVien   VARCHAR(20)  NOT NULL,
     maKM         VARCHAR(20)  NULL,
     maThue       VARCHAR(20)  NULL,
@@ -325,6 +327,7 @@ CREATE TABLE HoaDon
 
     CONSTRAINT PK_HoaDon PRIMARY KEY (maHD),
     CONSTRAINT FK_HoaDon_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
+    CONSTRAINT FK_HoaDon_ThuCung_KhachHang FOREIGN KEY (maKH, maTC) REFERENCES ThuCung(maKH, maTC),
     CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
     CONSTRAINT FK_HoaDon_KhuyenMai FOREIGN KEY (maKM) REFERENCES KhuyenMai(maKM),
     CONSTRAINT FK_HoaDon_Thue FOREIGN KEY (maThue) REFERENCES Thue(maThue),
@@ -355,13 +358,37 @@ CREATE TABLE VatTu
     trangThai    NVARCHAR(50)  NOT NULL,
     giaBanCoBan  DECIMAL(18,2) NOT NULL,
     giaNhap      DECIMAL(18,2) NOT NULL,
+    maThuoc      VARCHAR(20)   NULL,
 
     CONSTRAINT PK_VatTu PRIMARY KEY (maVT),
     CONSTRAINT FK_VatTu_NhaCungCap FOREIGN KEY (maNCC) REFERENCES NhaCungCap(maNCC),
+    CONSTRAINT FK_VatTu_Thuoc FOREIGN KEY (maThuoc) REFERENCES Thuoc(maThuoc),
     CONSTRAINT CK_VatTu_SoLuong CHECK (soLuongTon >= 0),
     CONSTRAINT CK_VatTu_GiaBan CHECK (giaBanCoBan >= 0),
     CONSTRAINT CK_VatTu_GiaNhap CHECK (giaNhap >= 0)
 );
+GO
+CREATE UNIQUE INDEX UQ_VatTu_Thuoc ON VatTu(maThuoc) WHERE maThuoc IS NOT NULL;
+GO
+
+CREATE TRIGGER trg_ChiTietDonThuoc_KiemTraVatTu
+ON ChiTietDonThuoc
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted ctdt
+        LEFT JOIN VatTu vt ON vt.maThuoc = ctdt.maThuoc
+        WHERE vt.maVT IS NULL
+    )
+    BEGIN
+        ;THROW 51000, N'Thuốc kê đơn phải được liên kết với một vật tư trong kho.', 1;
+    END;
+
+END;
 GO
 
 -- 20. CHI TIẾT HÓA ĐƠN
@@ -371,6 +398,7 @@ CREATE TABLE ChiTietHoaDon
     maHD       VARCHAR(20)   NOT NULL,
     maDV       VARCHAR(20)   NULL,
     maVT       VARCHAR(20)   NULL,
+    maCTDT     VARCHAR(20)   NULL,
     maNhanVien VARCHAR(20)   NULL,
     maBacSi    VARCHAR(20)   NULL,
     soLuong    DECIMAL(18,2) NOT NULL,
@@ -380,6 +408,7 @@ CREATE TABLE ChiTietHoaDon
     CONSTRAINT FK_ChiTietHoaDon_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
     CONSTRAINT FK_ChiTietHoaDon_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
     CONSTRAINT FK_ChiTietHoaDon_VatTu FOREIGN KEY (maVT) REFERENCES VatTu(maVT),
+    CONSTRAINT FK_ChiTietHoaDon_ChiTietDonThuoc FOREIGN KEY (maCTDT) REFERENCES ChiTietDonThuoc(maCTDT),
     CONSTRAINT FK_ChiTietHoaDon_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
     CONSTRAINT FK_ChiTietHoaDon_BacSy FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi),
     CONSTRAINT CK_ChiTietHoaDon_SoLuong CHECK (soLuong > 0),
@@ -387,6 +416,208 @@ CREATE TABLE ChiTietHoaDon
     CONSTRAINT CK_ChiTietHoaDon_DV_hoac_VT
         CHECK ((CASE WHEN maDV IS NULL THEN 0 ELSE 1 END) + (CASE WHEN maVT IS NULL THEN 0 ELSE 1 END) = 1)
 );
+GO
+
+CREATE TRIGGER trg_ChiTietDonThuoc_BaoVeHoaDonDaCap
+ON ChiTietDonThuoc
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted ctdt
+        JOIN ChiTietHoaDon cthd ON cthd.maCTDT = ctdt.maCTDT
+        JOIN VatTu vt ON vt.maVT = cthd.maVT
+        WHERE vt.maThuoc <> ctdt.maThuoc
+    )
+    BEGIN
+        ;THROW 51007, N'Không thể đổi thuốc trong đơn đã được cấp trên hóa đơn.', 1;
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted ctdt
+        JOIN (
+            SELECT maCTDT, SUM(soLuong) AS soLuongDaCap
+            FROM ChiTietHoaDon
+            WHERE maCTDT IS NOT NULL
+            GROUP BY maCTDT
+        ) daCap ON daCap.maCTDT = ctdt.maCTDT
+        WHERE daCap.soLuongDaCap > ctdt.soLuong
+    )
+    BEGIN
+        ;THROW 51010, N'Số lượng kê không thể thấp hơn số thuốc đã cấp.', 1;
+    END;
+END;
+GO
+
+CREATE TRIGGER trg_DonThuoc_BaoVeHoaDonDaCap
+ON DonThuoc
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted dt
+        JOIN ChiTietDonThuoc ctdt ON ctdt.maDonThuoc = dt.maDonThuoc
+        JOIN ChiTietHoaDon cthd ON cthd.maCTDT = ctdt.maCTDT
+        JOIN HoaDon h ON h.maHD = cthd.maHD
+        WHERE dt.maTC <> h.maTC
+    )
+    BEGIN
+        ;THROW 51008, N'Không thể đổi thú cưng của đơn thuốc đã được cấp trên hóa đơn.', 1;
+    END;
+END;
+GO
+
+CREATE TRIGGER trg_VatTu_BaoVeLienKetThuoc
+ON VatTu
+AFTER UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM deleted d
+        LEFT JOIN inserted i ON i.maVT = d.maVT
+        JOIN ChiTietDonThuoc ctdt ON ctdt.maThuoc = d.maThuoc
+        WHERE d.maThuoc IS NOT NULL
+          AND (i.maVT IS NULL OR i.maThuoc IS NULL OR i.maThuoc <> d.maThuoc)
+    )
+    BEGIN
+        ;THROW 51009, N'Không thể xóa hoặc đổi liên kết vật tư của thuốc đã kê đơn.', 1;
+    END;
+END;
+GO
+
+CREATE TRIGGER trg_ChiTietHoaDon_DongBoKhoVaDonThuoc
+ON ChiTietHoaDon
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN HoaDon h ON h.maHD = i.maHD
+        LEFT JOIN VatTu vt ON vt.maVT = i.maVT
+        WHERE (i.maDV IS NOT NULL OR vt.maThuoc IS NOT NULL)
+          AND h.maTC IS NULL
+    )
+    BEGIN
+        ;THROW 51001, N'Hóa đơn có dịch vụ hoặc thuốc phải gắn với thú cưng.', 1;
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        LEFT JOIN VatTu vt ON vt.maVT = i.maVT
+        LEFT JOIN ChiTietDonThuoc ctdt ON ctdt.maCTDT = i.maCTDT
+        LEFT JOIN DonThuoc dt ON dt.maDonThuoc = ctdt.maDonThuoc
+        JOIN HoaDon h ON h.maHD = i.maHD
+        WHERE (vt.maThuoc IS NOT NULL AND (
+                    i.maCTDT IS NULL
+                    OR ctdt.maThuoc <> vt.maThuoc
+                    OR dt.maTC <> h.maTC
+                ))
+           OR (vt.maThuoc IS NULL AND i.maCTDT IS NOT NULL)
+    )
+    BEGIN
+        ;THROW 51002, N'Thuốc trên hóa đơn phải khớp với đơn thuốc của thú cưng trên hóa đơn.', 1;
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM ChiTietDonThuoc ctdt
+        JOIN (
+            SELECT maCTDT, SUM(soLuong) AS soLuongDaCap
+            FROM ChiTietHoaDon
+            WHERE maCTDT IS NOT NULL
+            GROUP BY maCTDT
+        ) daCap ON daCap.maCTDT = ctdt.maCTDT
+        WHERE daCap.soLuongDaCap > ctdt.soLuong
+    )
+    BEGIN
+        ;THROW 51003, N'Số lượng thuốc bán vượt quá số lượng được kê.', 1;
+    END;
+
+    DECLARE @BienDong TABLE (maVT VARCHAR(20) PRIMARY KEY, soLuong DECIMAL(18,2));
+
+    INSERT INTO @BienDong (maVT, soLuong)
+    SELECT thayDoi.maVT, SUM(thayDoi.soLuong)
+    FROM (
+        SELECT maVT, CAST(soLuong AS DECIMAL(18,2)) AS soLuong
+        FROM inserted
+        WHERE maVT IS NOT NULL
+        UNION ALL
+        SELECT maVT, -CAST(soLuong AS DECIMAL(18,2))
+        FROM deleted
+        WHERE maVT IS NOT NULL
+    ) thayDoi
+    GROUP BY thayDoi.maVT
+    HAVING SUM(thayDoi.soLuong) <> 0;
+
+    IF EXISTS (
+        SELECT 1
+        FROM VatTu vt
+        JOIN @BienDong bd ON bd.maVT = vt.maVT
+        WHERE vt.soLuongTon - bd.soLuong < 0
+    )
+    BEGIN
+        ;THROW 51004, N'Số lượng vật tư tồn kho không đủ.', 1;
+    END;
+
+    UPDATE vt
+    SET soLuongTon = vt.soLuongTon - bd.soLuong,
+        trangThai = CASE
+            WHEN vt.soLuongTon - bd.soLuong <= 0 THEN N'Hết tồn'
+            WHEN vt.soLuongTon - bd.soLuong <= 30 THEN N'Sắp hết'
+            ELSE N'Còn hàng'
+        END
+    FROM VatTu vt
+    JOIN @BienDong bd ON bd.maVT = vt.maVT;
+END;
+GO
+
+CREATE TRIGGER trg_HoaDon_ThuCungBatBuoc
+ON HoaDon
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted h
+        JOIN ChiTietHoaDon cthd ON cthd.maHD = h.maHD
+        LEFT JOIN VatTu vt ON vt.maVT = cthd.maVT
+        WHERE (cthd.maDV IS NOT NULL OR vt.maThuoc IS NOT NULL)
+          AND h.maTC IS NULL
+    )
+    BEGIN
+        ;THROW 51005, N'Hóa đơn có dịch vụ hoặc thuốc phải gắn với thú cưng.', 1;
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM inserted h
+        JOIN ChiTietHoaDon cthd ON cthd.maHD = h.maHD
+        JOIN VatTu vt ON vt.maVT = cthd.maVT
+        JOIN ChiTietDonThuoc ctdt ON ctdt.maCTDT = cthd.maCTDT
+        JOIN DonThuoc dt ON dt.maDonThuoc = ctdt.maDonThuoc
+        WHERE vt.maThuoc IS NOT NULL
+          AND (ctdt.maThuoc <> vt.maThuoc OR dt.maTC <> h.maTC)
+    )
+    BEGIN
+        ;THROW 51006, N'Đơn thuốc phải thuộc thú cưng trên hóa đơn.', 1;
+    END;
+END;
 GO
 
 -- 21. PHIẾU XUẤT KHO
@@ -523,6 +754,7 @@ SELECT 'TK' + dbo.fn_C3(n),
        END,
        CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', '123456'), 2),
        CASE 
+            WHEN n = 1 THEN N'Admin'
             WHEN n <= 3 THEN N'Quản lý'
             WHEN n <= 8 THEN N'Nhân viên bán hàng'
             WHEN n <= 13 THEN N'Nhân viên dịch vụ'
@@ -694,6 +926,15 @@ FROM (VALUES
 ) v(n, ten);
 GO
 
+INSERT INTO VatTu (maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc)
+VALUES
+('VT006', 'NCC001', N'Amoxicillin 250mg', 100, N'Còn hàng', 5000, 3500, 'TH001'),
+('VT007', 'NCC001', N'Cefalexin 500mg', 100, N'Còn hàng', 7000, 5000, 'TH002'),
+('VT008', 'NCC002', N'Men tiêu hóa Probiotic', 100, N'Còn hàng', 6000, 4000, 'TH003'),
+('VT009', 'NCC002', N'Vitamin B Complex', 100, N'Còn hàng', 5000, 3000, 'TH004'),
+('VT010', 'NCC003', N'Ivermectin 1%', 100, N'Còn hàng', 15000, 10000, 'TH005');
+GO
+
 -- 13. Đơn thuốc & Chi tiết đơn thuốc
 INSERT INTO DonThuoc (maDonThuoc, maTC, maBacSi, maHSSK, ngayKeDon, ghiChu, trangThai)
 SELECT 'DT' + dbo.fn_C3(n), 'TC' + dbo.fn_C3((n % 10) + 1), 'BS001', 'HS' + dbo.fn_C3(n), '2026-10-02', N'Uống đủ liều', N'Hoàn thành'
@@ -727,11 +968,12 @@ SELECT 'TT' + dbo.fn_C3(n),
        N'Đã thanh toán'
 FROM #N WHERE n <= 75;
 
-INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan)
+INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maTC, maNhanVien, maKM, maThue, maThanhToan)
 SELECT 'HD' + dbo.fn_C3(n), 
        DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')), 
        N'Đã thanh toán', 
        'KH' + dbo.fn_C3((n % 10) + 1), 
+       'TC' + dbo.fn_C3((n % 10) + 1),
        'NV' + dbo.fn_C3((n % 5) + 1),  
        CHOOSE((n % 4) + 1, 'KM001', 'KM002', 'KM003', NULL), 
        'TX001', 
@@ -835,6 +1077,27 @@ GO
 DROP TABLE #N;
 DROP FUNCTION dbo.fn_C3;
 GO
+
+-- 20. DỮ LIỆU MẪU LỊCH HẸN (THÁNG 11/2026)
+INSERT INTO LichHen (maLichHen, maTC, maKH, maNhanVien, maDV, ngayGio, lyDo, trangThai, ghiChu, loaiHen)
+VALUES 
+-- Lịch ngày hôm qua (01/11)
+('LH001', 'TC001', 'KH001', 'NV006', 'DV001', '2026-11-01 08:30:00', N'Khám tổng quát', N'Đã khám', NULL, N'Khám bệnh'),
+('LH002', 'TC002', 'KH002', 'NV007', 'DV002', '2026-11-01 10:00:00', N'Tiêm phòng dại', N'Đã khám', NULL, N'Khám bệnh'),
+
+-- Lịch ngày hôm nay (02/11/2026) - Giúp hiển thị số liệu lên 4 thẻ thống kê ở đầu giao diện
+('LH003', 'TC003', 'KH003', 'NV008', 'DV003', '2026-11-02 09:00:00', N'Tắm vệ sinh', N'Đã khám', N'Khách đến sớm', N'Dịch vụ'),
+('LH004', 'TC004', 'KH004', 'NV009', 'DV004', '2026-11-02 10:30:00', N'Cắt tỉa lông', N'Đang khám', NULL, N'Dịch vụ'),
+('LH005', 'TC005', 'KH005', 'NV010', 'DV005', '2026-11-02 14:00:00', N'Cạo vôi răng', N'Chờ khám', N'Bé hơi nhát', N'Khám bệnh'),
+('LH006', 'TC006', 'KH006', 'NV006', 'DV001', '2026-11-02 15:30:00', N'Khám tiêu hóa', N'Chờ khám', NULL, N'Khám bệnh'),
+('LH007', 'TC007', 'KH007', 'NV007', NULL,    '2026-11-02 16:30:00', N'Tái khám', N'Đã hủy', N'Khách bận đột xuất', N'Khám bệnh'),
+
+-- Lịch hẹn cho các ngày tiếp theo trong tháng 11
+('LH008', 'TC008', 'KH008', 'NV008', 'DV002', '2026-11-03 08:30:00', N'Tiêm vắc xin', N'Chờ khám', NULL, N'Khám bệnh'),
+('LH009', 'TC009', 'KH009', 'NV009', 'DV003', '2026-11-04 09:30:00', N'Tắm vệ sinh', N'Chờ khám', NULL, N'Dịch vụ'),
+('LH010', 'TC010', 'KH010', 'NV010', 'DV001', '2026-11-05 10:00:00', N'Khám da liễu', N'Chờ khám', N'Bé bị rụng lông nhiều', N'Khám bệnh'),
+('LH011', 'TC001', 'KH001', 'NV006', 'DV004', '2026-11-06 14:30:00', N'Cắt tỉa lông', N'Chờ khám', NULL, N'Dịch vụ'),
+('LH012', 'TC002', 'KH002', 'NV007', 'DV001', '2026-11-08 15:00:00', N'Khám định kỳ', N'Chờ khám', NULL, N'Khám bệnh');
 
 /* =========================================================
    KIỂM TRA DỮ LIỆU CÁC BẢNG

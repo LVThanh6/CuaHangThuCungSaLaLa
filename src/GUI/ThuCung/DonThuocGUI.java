@@ -59,7 +59,6 @@ public class DonThuocGUI extends JPanel {
         "Tùy chỉnh khoảng ngày..."
     };
     
-    private final String[] dsSoDongTrang = { "8", "16", "32" };
     
     private final DonThuoc_DAO donThuocDAO = new DonThuoc_DAO();
     private final ChiTietDonThuoc_DAO chiTietDAO = new ChiTietDonThuoc_DAO();
@@ -70,8 +69,6 @@ public class DonThuocGUI extends JPanel {
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<DonThuoc_entity> danhSachDonThuoc = new ArrayList<>();
     private List<DonThuoc_entity> daLoc = new ArrayList<>();
-    private int trangHienTai = 1;
-    private int soDongMoiTrang = 8;
     
     private LocalDate tuNgay;
     private LocalDate denNgay;
@@ -89,9 +86,8 @@ public class DonThuocGUI extends JPanel {
     private TableMau bangDonThuoc;
     private JScrollPane thanhCuonBang;
 
-    private JPanel panelPhanTrang, panelTrang;
+    private JPanel panelPhanTrang;
     private JLabel nhanThongTinTrang;
-    private JComboBox<String> cboSoDongTrang;
 
     public DonThuocGUI() {
         khoiTaoGiaoDien();
@@ -222,24 +218,16 @@ public class DonThuocGUI extends JPanel {
     }
 
     private void khoiTaoPhanTrang() {
-        panelPhanTrang = new JPanel(new BorderLayout()); panelPhanTrang.setOpaque(false);
+        panelPhanTrang = new JPanel(new BorderLayout());
+        panelPhanTrang.setOpaque(false);
         panelPhanTrang.setPreferredSize(new Dimension(0, CHIEU_CAO_THANH_PHAN_TRANG));
-        panelPhanTrang.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(0, 20, 0, 20)));
-
-        nhanThongTinTrang = new JLabel("Hiển thị 0 trong 0 đơn thuốc");
-        nhanThongTinTrang.setFont(RangBuocGiaoDien.fontThuong(12)); nhanThongTinTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        JLabel nhanSoDongTrang = new JLabel("Số dòng / trang"); nhanSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(12)); nhanSoDongTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        cboSoDongTrang = new JComboBox<>(dsSoDongTrang); cboSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(13));
-        cboSoDongTrang.setBackground(RangBuocGiaoDien.MAU_NEN_THE); cboSoDongTrang.setPreferredSize(new Dimension(64, 34));
-
-        panelTrang = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 11)); panelTrang.setOpaque(false);
-
-        JPanel panelBenPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 11)); panelBenPhai.setOpaque(false);
-        panelBenPhai.add(nhanSoDongTrang); panelBenPhai.add(cboSoDongTrang); panelBenPhai.add(Box.createHorizontalStrut(10)); panelBenPhai.add(panelTrang);
-
-        panelPhanTrang.add(nhanThongTinTrang, BorderLayout.WEST); panelPhanTrang.add(panelBenPhai, BorderLayout.EAST);
+        panelPhanTrang.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
+                new EmptyBorder(0, 20, 0, 20)));
+        nhanThongTinTrang = new JLabel();
+        nhanThongTinTrang.setFont(RangBuocGiaoDien.fontThuong(12));
+        nhanThongTinTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        panelPhanTrang.add(nhanThongTinTrang, BorderLayout.WEST);
     }
 
     private void caiDatSuKien() {
@@ -254,11 +242,6 @@ public class DonThuocGUI extends JPanel {
         
         // Sự kiện xuất thuốc & tự động tạo hóa đơn
         nutXuatThuoc.addActionListener(e -> xuatThuocVaTaoHoaDon());
-        
-        cboSoDongTrang.addActionListener(e -> {
-            soDongMoiTrang = Integer.parseInt((String) cboSoDongTrang.getSelectedItem());
-            trangHienTai = 1; capNhatBang();
-        });
         
         txtTimKiem.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
@@ -337,40 +320,21 @@ public class DonThuocGUI extends JPanel {
             }
         }
         
-        trangHienTai = 1;
         capNhatBang();
         capNhatThongKe(); 
     }
 
-    private int tongTrang() { return Math.max(1, (int) Math.ceil(daLoc.size() / (double) soDongMoiTrang)); }
-
     private void capNhatBang() {
         int tong = daLoc.size();
-        int tu = (trangHienTai - 1) * soDongMoiTrang;
-        int den = Math.min(tu + soDongMoiTrang, tong);
-        
         DefaultTableModel model = (DefaultTableModel) bangDonThuoc.getModel();
         model.setRowCount(0);
         
-        for (int i = tu; i < den; i++) {
+        for (int i = 0; i < tong; i++) {
             DonThuoc_entity don = daLoc.get(i);
             model.addRow(new Object[] { don.getMaDonThuoc(), value(don.getTenThuCung()) + " (" + don.getMaTC() + ")", don.getMaHSSK(), don.getTenBacSi(), don.getNgayKeDon() == null ? "" : DINH_DANG_NGAY_GIO.format(don.getNgayKeDon()), don.getSoLoaiThuoc(), value(don.getGhiChu()), don.getTrangThai() });
         }
         bangDonThuoc.clearSelection(); capNhatTrangThaiNutHanhDong();
-        nhanThongTinTrang.setText(tong == 0 ? "Không có đơn thuốc phù hợp" : "Hiển thị " + (tu + 1) + "–" + den + " trong " + tong + " đơn thuốc");
-        veNutTrang();
-    }
-
-    private void veNutTrang() {
-        panelTrang.removeAll(); int tong = tongTrang();
-        panelTrang.add(taoNutTrang("<", false, trangHienTai > 1, () -> { trangHienTai--; capNhatBang(); }));
-        int dau = Math.max(1, Math.min(trangHienTai - 2, tong - 4)), cuoi = Math.min(tong, dau + 4);
-        for (int p = dau; p <= cuoi; p++) {
-            final int trang = p;
-            panelTrang.add(taoNutTrang(String.valueOf(p), p == trangHienTai, true, () -> { trangHienTai = trang; capNhatBang(); }));
-        }
-        panelTrang.add(taoNutTrang(">", false, trangHienTai < tong, () -> { trangHienTai++; capNhatBang(); }));
-        panelTrang.revalidate(); panelTrang.repaint();
+        nhanThongTinTrang.setText(tong == 0 ? "Không có đơn thuốc phù hợp" : "Hiển thị tất cả " + tong + " đơn thuốc");
     }
 
     private void capNhatThongKe() {
@@ -535,20 +499,29 @@ public class DonThuocGUI extends JPanel {
         if (maDon == null) return;
 
         int confirm = JOptionPane.showConfirmDialog(this, 
-            "Xác nhận xuất thuốc cho đơn \"" + maDon + "\"?\nThao tác này sẽ đổi trạng thái thành 'Hoàn thành' và tự động tạo 1 Hóa Đơn chờ thanh toán.", 
+            "Xác nhận xuất thuốc cho đơn \"" + maDon + "\"?\nThao tác này sẽ đổi trạng thái thành 'Hoàn thành' và tự động tạo 1 Hóa Đơn có thú cưng và chi tiết tiền thuốc.", 
             "Xác nhận xuất thuốc", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
         
         if (confirm != JOptionPane.YES_OPTION) return;
 
+        java.sql.Connection con = null;
         try {
             // 1. Lấy thông tin Đơn Thuốc và Chi Tiết đơn thuốc
             DonThuoc_entity don = donThuocDAO.getDonThuocTheoMa(maDon);
+            if (don == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin đơn thuốc " + maDon, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             List<ChiTietDonThuoc_entity> chiTietList = donThuocDAO.getChiTietDonThuoc(maDon);
+            if (chiTietList == null || chiTietList.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Đơn thuốc này không có chi tiết thuốc nào!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
             // 2. Lấy thông tin Khách Hàng (Chủ nuôi) từ Thú Cưng
             ThuCung_entity tc = thuCungDAO.getThuCungTheoMa(don.getMaTC());
             if (tc == null || tc.getMaKH() == null) {
-                JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy thông tin Khách hàng để tạo hóa đơn!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy thông tin Thú cưng / Khách hàng để tạo hóa đơn!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -563,7 +536,15 @@ public class DonThuocGUI extends JPanel {
             dao.ChiTietHoaDon_DAO cthdDAO = new dao.ChiTietHoaDon_DAO();
             dao.VatTu_DAO vtDAO = new dao.VatTu_DAO();
 
-            // 4. Tạo Hóa Đơn mới trạng thái Chờ thanh toán
+            // Mở kết nối transaction
+            con = connectDB.ConnectDB.getCon();
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "Không thể kết nối cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            con.setAutoCommit(false);
+
+            // 4. Tạo Hóa Đơn mới trạng thái Chờ thanh toán và GẮN THÚ CƯNG
             int soHD = hdDAO.laySoHoaDonLonNhat() + 1;
             String maHD = String.format("HD%03d", soHD);
 
@@ -575,43 +556,85 @@ public class DonThuocGUI extends JPanel {
                     nv,
                     null, null, null
             );
+            hd.setMaTC(tc.getMaTC()); // GẮN MÃ THÚ CƯNG CHO HÓA ĐƠN
 
-            if (!hdDAO.themHD(hd)) {
-                JOptionPane.showMessageDialog(this, "Lỗi hệ thống khi tạo Hóa Đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
+            if (!hdDAO.themHD(con, hd)) {
+                throw new java.sql.SQLException("Không thể lưu thông tin Hóa Đơn " + maHD);
             }
 
-            // 5. Thêm Chi Tiết Hóa Đơn dựa trên Chi Tiết Đơn Thuốc (Vật tư)
+            // 5. Thêm Chi Tiết Hóa Đơn dựa trên Chi Tiết Đơn Thuốc (tìm đúng Vật Tư liên kết qua maThuoc)
             int ctIndex = 1;
+            double tongTienThuoc = 0.0;
             for (ChiTietDonThuoc_entity ctDon : chiTietList) {
-                entity.VatTu_entity vt = vtDAO.getVatTuTheoMa(ctDon.getMaThuoc()); 
-                double donGia = (vt != null) ? vt.getGiaBanCoBan() : 0.0;
+                // Tìm vật tư kho liên kết với mã thuốc (ví dụ maThuoc TH005 -> maVT VT010)
+                entity.VatTu_entity vt = vtDAO.getVatTuTheoMaThuoc(ctDon.getMaThuoc());
+                if (vt == null) {
+                    vt = vtDAO.getVatTuTheoMa(ctDon.getMaThuoc());
+                }
+
+                if (vt == null) {
+                    throw new java.sql.SQLException("Không tìm thấy mặt hàng trong kho cho thuốc: " 
+                            + ctDon.getTenThuoc() + " (Mã: " + ctDon.getMaThuoc() + ")");
+                }
+
+                double donGia = vt.getGiaBanCoBan();
+                int soLuong = ctDon.getSoLuong().intValue();
+                if (soLuong <= 0) soLuong = 1;
 
                 String maCTHD = "CT" + maHD + String.format("%02d", ctIndex++);
                 entity.ChiTietHoaDon_entity cthd = new entity.ChiTietHoaDon_entity(
                         maCTHD,
                         hd,
                         null, // Không có dịch vụ
-                        vt,   // Thuốc đóng vai trò vật tư
+                        vt,   // Thuốc đóng vai trò vật tư kho
                         nv,   // Nhân viên xử lý
                         null, // Không truyền mã Bác Sĩ vì xuất thuốc do thu ngân/nhân viên làm
-                        ctDon.getSoLuong().intValue(),
+                        soLuong,
                         donGia
                 );
-                cthdDAO.createChiTietHoaDon(cthd);
+                cthd.setMaCTDT(ctDon.getMaCTDT()); // GẮN MÃ CHI TIẾT ĐƠN THUỐC ĐỂ KHỚP RÀNG BUỘC CSDL
+
+                if (!cthdDAO.createChiTietHoaDon(con, cthd)) {
+                    throw new java.sql.SQLException("Không thể lưu chi tiết hóa đơn " + maCTHD + " cho thuốc: " + vt.getTenVT());
+                }
+                tongTienThuoc += donGia * soLuong;
             }
 
             // 6. Đổi trạng thái Đơn Thuốc thành "Hoàn thành"
-            if (donThuocDAO.capNhatTrangThai(maDon, "Hoàn thành")) {
-                JOptionPane.showMessageDialog(this, "Đã xuất đơn thuốc thành công!\nHóa đơn [" + maHD + "] đã được tạo tự động trong hệ thống.");
-                loadDataToTable();
-            } else {
-                JOptionPane.showMessageDialog(this, "Tạo hóa đơn thành công nhưng lỗi cập nhật trạng thái đơn thuốc!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            if (!donThuocDAO.capNhatTrangThai(maDon, "Hoàn thành")) {
+                throw new java.sql.SQLException("Không thể cập nhật trạng thái đơn thuốc sang 'Hoàn thành'!");
             }
 
+            // Commit toàn bộ giao dịch
+            con.commit();
+
+            java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0 ₫");
+            JOptionPane.showMessageDialog(this,
+                    "Đã xuất đơn thuốc thành công!\n"
+                    + "Hóa đơn [" + maHD + "] đã được tạo tự động cho thú cưng " + tc.getTenTC() + ".\n"
+                    + "Tổng tiền thuốc: " + df.format(tongTienThuoc),
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            loadDataToTable();
+
         } catch (Exception ex) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (java.sql.SQLException rEx) {
+                    rEx.printStackTrace();
+                }
+            }
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi quá trình xuất thuốc: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (java.sql.SQLException cEx) {
+                    cEx.printStackTrace();
+                }
+            }
         }
     }
 
@@ -631,12 +654,6 @@ public class DonThuocGUI extends JPanel {
 
     private JComboBox<String> taoOChon(String[] ds, int rong) { JComboBox<String> o = new JComboBox<>(ds); o.setFont(RangBuocGiaoDien.fontThuong(13)); o.setBackground(RangBuocGiaoDien.MAU_NEN_THE); o.setPreferredSize(new Dimension(rong, CHIEU_CAO_O_NHAP)); return o; }
     private JButton taoNutLienKet(String chu, Color mau) { JButton nut = new JButton(chu); nut.setFont(RangBuocGiaoDien.fontThuong(12)); nut.setForeground(mau); nut.setContentAreaFilled(false); nut.setBorderPainted(false); nut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); return nut; }
-    private NutBoTron taoNutTrang(String chu, boolean dangChon, boolean choPhep, Runnable hanhDong) {
-        NutBoTron nut = dangChon ? new NutBoTron(chu, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT, null, Color.WHITE, 8) : new NutBoTron(chu, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DONG_RE_CHUOT, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH, 8);
-        nut.setFont(RangBuocGiaoDien.fontThuong(12)); nut.setPreferredSize(new Dimension(chu.length() > 2 ? 40 : 34, 34));
-        nut.setEnabled(choPhep); if (choPhep) nut.addActionListener(e -> hanhDong.run()); return nut;
-    }
-
     private static class OTrangThai extends JPanel implements TableCellRenderer {
         private final JTable bang; private String chu = ""; private Color mauNen = RangBuocGiaoDien.MAU_TRUNG_TINH_NEN, mauChu = RangBuocGiaoDien.MAU_TRUNG_TINH_CHU;
         OTrangThai(JTable bang) { this.bang = bang; }

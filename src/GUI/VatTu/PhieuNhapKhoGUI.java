@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 /**
  * Giao diện "Phiếu nhập kho" - SALALA Pet Shop.
- * Danh sách quản lý phiếu nhập kho với tìm kiếm, lọc, phân trang,
+ * Danh sách quản lý phiếu nhập kho với tìm kiếm, lọc,
  * các nút Xem / Sửa / Xuất danh sách trên toolbar, lập phiếu mới, xác nhận nhập kho.
  */
 public class PhieuNhapKhoGUI extends JPanel {
@@ -97,8 +97,6 @@ public class PhieuNhapKhoGUI extends JPanel {
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
 
-    private int page = 1;
-    private int pageSize = 8;
     private LocalDate tuNgay, denNgay;
     private int seq = 42;
     private String nhanVien = "Lê Minh";
@@ -109,7 +107,6 @@ public class PhieuNhapKhoGUI extends JPanel {
     private JTable table;
     private DefaultTableModel model;
     private JLabel lblShowing;
-    private JPanel pager;
 
     public PhieuNhapKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
                            BiConsumer<String, Integer> stockUpdater,
@@ -280,7 +277,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         sp.getViewport().setBackground(WHITE);
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
-        // Chân bảng (Phân trang)
+        // Thông tin bên dưới bảng
         lblShowing = new JLabel();
         lblShowing.setFont(new Font(FONT, Font.PLAIN, 12));
         lblShowing.setForeground(TEXT_GRAY);
@@ -296,32 +293,12 @@ public class PhieuNhapKhoGUI extends JPanel {
         chanTrai.add(Box.createVerticalStrut(2));
         chanTrai.add(note);
 
-        JLabel lblSize = new JLabel("Số dòng / trang");
-        lblSize.setFont(new Font(FONT, Font.PLAIN, 12));
-        lblSize.setForeground(TEXT_GRAY);
-        JComboBox<Integer> cboSize = new JComboBox<>(new Integer[]{8, 16, 32});
-        cboSize.setFont(new Font(FONT, Font.PLAIN, 12));
-        cboSize.setBackground(WHITE);
-        cboSize.addActionListener(e -> {
-            pageSize = (Integer) cboSize.getSelectedItem();
-            reload(true);
-        });
-        pager = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        pager.setOpaque(false);
-
-        JPanel chanPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        chanPhai.setOpaque(false);
-        chanPhai.add(lblSize);
-        chanPhai.add(cboSize);
-        chanPhai.add(pager);
-
         JPanel chan = new JPanel(new BorderLayout());
         chan.setOpaque(false);
         chan.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER),
                 new EmptyBorder(10, 16, 10, 12)));
         chan.add(chanTrai, BorderLayout.WEST);
-        chan.add(chanPhai, BorderLayout.EAST);
 
         box.add(filter, BorderLayout.NORTH);
         box.add(sp, BorderLayout.CENTER);
@@ -373,16 +350,9 @@ public class PhieuNhapKhoGUI extends JPanel {
             filtered.add(p);
         }
 
-        int totalPages = Math.max(1, (int) Math.ceil(filtered.size() / (double) pageSize));
-        if (resetPage) page = 1;
-        if (page > totalPages) page = totalPages;
-
         model.setRowCount(0);
         pageRows.clear();
-        int start = (page - 1) * pageSize;
-        int end = Math.min(start + pageSize, filtered.size());
-
-        for (int i = start; i < end; i++) {
+        for (int i = 0; i < filtered.size(); i++) {
             Phieu p = filtered.get(i);
             pageRows.add(p);
             model.addRow(new Object[]{
@@ -398,37 +368,7 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         lblShowing.setText(filtered.isEmpty()
                 ? "Không có phiếu nhập nào"
-                : "Hiển thị " + (start + 1) + "–" + end + " trong " + filtered.size() + " phiếu nhập");
-        buildPager(totalPages);
-    }
-
-    private void buildPager(int totalPages) {
-        pager.removeAll();
-        pager.add(pageButton("‹", page > 1, false, () -> { page--; reload(false); }));
-        int start = Math.max(1, Math.min(page - 2, totalPages - 4));
-        int end = Math.min(totalPages, start + 4);
-        for (int i = start; i <= end; i++) {
-            final int p = i;
-            pager.add(pageButton(String.valueOf(i), true, i == page, () -> { page = p; reload(false); }));
-        }
-        if (end < totalPages) {
-            JLabel dots = new JLabel("…");
-            dots.setForeground(TEXT_GRAY);
-            pager.add(dots);
-        }
-        pager.add(pageButton("›", page < totalPages, false, () -> { page++; reload(false); }));
-        pager.revalidate();
-        pager.repaint();
-    }
-
-    private RoundButton pageButton(String text, boolean enabled, boolean selected, Runnable action) {
-        RoundButton b = selected
-                ? new RoundButton(text, PRIMARY, PRIMARY, WHITE)
-                : new RoundButton(text, WHITE, BORDER, TEXT_DARK);
-        b.setBorder(new EmptyBorder(6, 11, 6, 11));
-        b.setEnabled(enabled);
-        b.addActionListener(e -> action.run());
-        return b;
+                : "Hiển thị tất cả " + filtered.size() + " phiếu nhập");
     }
 
     private void showDateFilter() {

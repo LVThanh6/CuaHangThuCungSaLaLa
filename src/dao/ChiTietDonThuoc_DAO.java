@@ -35,7 +35,8 @@ public class ChiTietDonThuoc_DAO {
 
     public List<Thuoc_entity> getAllThuoc() throws SQLException {
         List<Thuoc_entity> danhSach = new ArrayList<>();
-        String sql = "SELECT maThuoc, tenThuoc, donViTinh, huongDanSuDung FROM Thuoc ORDER BY tenThuoc";
+        String sql = "SELECT maThuoc, tenThuoc, donViTinh, huongDanSuDung "
+                + "FROM Thuoc ORDER BY tenThuoc";
         try (Connection con = ketNoi();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

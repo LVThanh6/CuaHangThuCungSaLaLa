@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 
 /**
  * Giao diện "Quản lý xuất kho" - SALALA Pet Shop.
- * Chức năng: danh sách phiếu xuất (tìm kiếm, lọc ngày, lọc trạng thái, phân trang),
+ * Chức năng: danh sách phiếu xuất (tìm kiếm, lọc ngày, lọc trạng thái),
  *            lập phiếu xuất, xem / sửa phiếu, xác nhận & trừ tồn kho, hủy phiếu,
  *            xuất / in phiếu, xuất danh sách ra CSV.
  * Quy tắc: chỉ phiếu "Đã xuất" mới trừ tồn kho; không được xuất quá số lượng tồn hiện tại.
@@ -114,8 +114,6 @@ public class PhieuXuatKhoGUI extends JPanel {
     private final java.util.List<Phieu> all = new ArrayList<>();      // mới nhất ở đầu
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
-    private int page = 1;
-    private int pageSize = 8;
     private LocalDate tuNgay, denNgay;
     private int seq = 12;
     private String nhanVien = "Lê Minh";
@@ -125,8 +123,6 @@ public class PhieuXuatKhoGUI extends JPanel {
     private SearchField txtSearch;
     private RoundButton btnDate;
     private JComboBox<String> cboTrangThai;
-    private JComboBox<Integer> cboPageSize;
-    private JPanel pager;
     private JTable table;
     private DefaultTableModel model;
     private boolean loading = false;
@@ -286,7 +282,7 @@ public class PhieuXuatKhoGUI extends JPanel {
     }
 
     // =====================================================================
-    // Khung danh sách: bộ lọc + bảng + phân trang
+    // Khung danh sách: bộ lọc + bảng
     // =====================================================================
     private JComponent createListCard() {
         RoundedPanel box = new RoundedPanel(12, WHITE, BORDER);
@@ -397,7 +393,7 @@ public class PhieuXuatKhoGUI extends JPanel {
         sp.getViewport().setBackground(WHITE);
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
-        // ---- chân bảng: thông tin + phân trang ----
+        // ---- thông tin bên dưới bảng ----
         lblShowing = new JLabel();
         lblShowing.setFont(new Font(FONT, Font.PLAIN, 12));
         lblShowing.setForeground(TEXT_GRAY);
@@ -413,33 +409,12 @@ public class PhieuXuatKhoGUI extends JPanel {
         footLeft.add(Box.createVerticalStrut(2));
         footLeft.add(note);
 
-        JLabel lblRows = new JLabel("Số dòng / trang");
-        lblRows.setFont(new Font(FONT, Font.PLAIN, 12));
-        lblRows.setForeground(TEXT_GRAY);
-        cboPageSize = new JComboBox<>(new Integer[]{8, 16, 32});
-        cboPageSize.setFont(new Font(FONT, Font.PLAIN, 12));
-        cboPageSize.setBackground(WHITE);
-        cboPageSize.addActionListener(e -> {
-            if (loading) return;
-            pageSize = (Integer) cboPageSize.getSelectedItem();
-            reload(true);
-        });
-        pager = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        pager.setOpaque(false);
-
-        JPanel footRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        footRight.setOpaque(false);
-        footRight.add(lblRows);
-        footRight.add(cboPageSize);
-        footRight.add(pager);
-
         JPanel foot = new JPanel(new BorderLayout());
         foot.setOpaque(false);
         foot.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER),
                 new EmptyBorder(10, 16, 10, 12)));
         foot.add(footLeft, BorderLayout.WEST);
-        foot.add(footRight, BorderLayout.EAST);
 
         box.add(filter, BorderLayout.NORTH);
         box.add(sp, BorderLayout.CENTER);
@@ -513,15 +488,9 @@ public class PhieuXuatKhoGUI extends JPanel {
         if (model == null) return;
         loading = true;
         applyFilter();
-        int totalPages = Math.max(1, (int) Math.ceil(filtered.size() / (double) pageSize));
-        if (resetPage) page = 1;
-        if (page > totalPages) page = totalPages;
-
         model.setRowCount(0);
         pageRows.clear();
-        int from = (page - 1) * pageSize;
-        int to = Math.min(from + pageSize, filtered.size());
-        for (int i = from; i < to; i++) {
+        for (int i = 0; i < filtered.size(); i++) {
             Phieu p = filtered.get(i);
             pageRows.add(p);
             model.addRow(new Object[]{p.so, p.ngay.format(DF), p.nhanVien, p.lyDo,
@@ -529,39 +498,9 @@ public class PhieuXuatKhoGUI extends JPanel {
         }
         lblShowing.setText(filtered.isEmpty()
                 ? "Không có phiếu xuất kho nào"
-                : "Hiển thị " + (from + 1) + "–" + to + " trong " + filtered.size() + " phiếu xuất kho");
+                : "Hiển thị tất cả " + filtered.size() + " phiếu xuất kho");
         refreshStats();
-        rebuildPager(totalPages);
         loading = false;
-    }
-
-    private void rebuildPager(int totalPages) {
-        pager.removeAll();
-        pager.add(pageButton("‹", page > 1, false, () -> { page--; reload(false); }));
-        int start = Math.max(1, Math.min(page - 2, totalPages - 4));
-        int end = Math.min(totalPages, start + 4);
-        for (int i = start; i <= end; i++) {
-            final int n = i;
-            pager.add(pageButton(String.valueOf(i), true, i == page, () -> { page = n; reload(false); }));
-        }
-        if (end < totalPages) {
-            JLabel dots = new JLabel("…");
-            dots.setForeground(TEXT_GRAY);
-            pager.add(dots);
-        }
-        pager.add(pageButton("›", page < totalPages, false, () -> { page++; reload(false); }));
-        pager.revalidate();
-        pager.repaint();
-    }
-
-    private RoundButton pageButton(String text, boolean enabled, boolean selected, Runnable action) {
-        RoundButton b = selected
-                ? new RoundButton(text, PRIMARY, PRIMARY, WHITE)
-                : new RoundButton(text, WHITE, BORDER, TEXT_DARK);
-        b.setBorder(new EmptyBorder(6, 11, 6, 11));
-        b.setEnabled(enabled);
-        b.addActionListener(e -> action.run());
-        return b;
     }
 
     private void showDateFilter() {

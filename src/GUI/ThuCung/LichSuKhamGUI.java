@@ -57,7 +57,6 @@ public class LichSuKhamGUI extends JPanel {
             "Chẩn đoán", "Cân nặng (kg)", "Bác sĩ phụ trách" };
     private final String[] dsBacSiLoc = { "Bác sĩ: Tất cả" };
     private final String[] dsThoiGianLoc = { "Thời gian: Tất cả", "Hôm nay", "7 ngày qua", "Tháng này" };
-    private final String[] dsSoDongTrang = { "8", "16", "32" };
     private final HoSoSucKhoe_DAO hoSoDAO = new HoSoSucKhoe_DAO();
     private final ThuCung_DAO thuCungDAO = new ThuCung_DAO();
     private final BacSi_DAO bacSiDAO = new BacSi_DAO();
@@ -93,18 +92,9 @@ public class LichSuKhamGUI extends JPanel {
     private TableMau bangLichSuKham;
     private JScrollPane thanhCuonBang;
 
-    // --- Phần phân trang ---
+    // --- Thông tin dưới bảng ---
     private JPanel panelPhanTrang;
     private JLabel nhanThongTinTrang;
-    private JLabel nhanSoDongTrang;
-    private JComboBox<String> cboSoDongTrang;
-    private NutBoTron nutTrangTruoc;
-    private NutBoTron nutTrang1;
-    private NutBoTron nutTrang2;
-    private NutBoTron nutTrang3;
-    private NutBoTron nutTrangRutGon;
-    private NutBoTron nutTrangCuoi;
-    private NutBoTron nutTrangSau;
 
     // =========================================================================
     // CONSTRUCTOR
@@ -335,42 +325,10 @@ public class LichSuKhamGUI extends JPanel {
                 BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
                 new EmptyBorder(0, 20, 0, 20)));
 
-        nhanThongTinTrang = new JLabel("Hiển thị 1–8 trong 256 lượt khám");
+        nhanThongTinTrang = new JLabel();
         nhanThongTinTrang.setFont(RangBuocGiaoDien.fontThuong(12));
         nhanThongTinTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        nhanSoDongTrang = new JLabel("Số dòng / trang");
-        nhanSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(12));
-        nhanSoDongTrang.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-
-        cboSoDongTrang = new JComboBox<>(dsSoDongTrang);
-        cboSoDongTrang.setFont(RangBuocGiaoDien.fontThuong(13));
-        cboSoDongTrang.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
-        cboSoDongTrang.setPreferredSize(new Dimension(64, 34));
-
-        nutTrangTruoc = taoNutTrang("<", false);
-        nutTrang1 = taoNutTrang("1", true);
-        nutTrang2 = taoNutTrang("2", false);
-        nutTrang3 = taoNutTrang("3", false);
-        nutTrangRutGon = taoNutTrang("...", false);
-        nutTrangCuoi = taoNutTrang("32", false);
-        nutTrangSau = taoNutTrang(">", false);
-
-        JPanel panelBenPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 11));
-        panelBenPhai.setOpaque(false);
-        panelBenPhai.add(nhanSoDongTrang);
-        panelBenPhai.add(cboSoDongTrang);
-        panelBenPhai.add(Box.createHorizontalStrut(10));
-        panelBenPhai.add(nutTrangTruoc);
-        panelBenPhai.add(nutTrang1);
-        panelBenPhai.add(nutTrang2);
-        panelBenPhai.add(nutTrang3);
-        panelBenPhai.add(nutTrangRutGon);
-        panelBenPhai.add(nutTrangCuoi);
-        panelBenPhai.add(nutTrangSau);
-
         panelPhanTrang.add(nhanThongTinTrang, BorderLayout.WEST);
-        panelPhanTrang.add(panelBenPhai, BorderLayout.EAST);
     }
 
     // =========================================================================
@@ -471,7 +429,7 @@ public class LichSuKhamGUI extends JPanel {
         }
         bangLichSuKham.clearSelection();
         capNhatTrangThaiNutHanhDong();
-        nhanThongTinTrang.setText("Hiển thị " + model.getRowCount() + " trong " + model.getRowCount() + " lượt khám");
+        nhanThongTinTrang.setText("Hiển thị tất cả " + model.getRowCount() + " lượt khám");
     }
 
     private void capNhatThongKe() {
@@ -764,20 +722,6 @@ public class LichSuKhamGUI extends JPanel {
         nut.setFocusPainted(false);
         nut.setMargin(new Insets(0, 0, 0, 0));
         nut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return nut;
-    }
-
-    private NutBoTron taoNutTrang(String chu, boolean dangChon) {
-        NutBoTron nut;
-        if (dangChon) {
-            nut = new NutBoTron(chu, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO_RE_CHUOT,
-                    null, Color.WHITE, 8);
-        } else {
-            nut = new NutBoTron(chu, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DONG_RE_CHUOT,
-                    RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH, 8);
-        }
-        nut.setFont(RangBuocGiaoDien.fontThuong(12));
-        nut.setPreferredSize(new Dimension(chu.length() > 2 ? 40 : 34, 34));
         return nut;
     }
 

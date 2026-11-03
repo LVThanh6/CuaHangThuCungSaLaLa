@@ -161,11 +161,13 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         KhachHang kh = hd.getMaKH();
 
-        ArrayList<ThuCung_entity> thuCung = kh == null
-
-                ? new ArrayList<>()
-
-                : new ThuCung_DAO().getThuCungTheoMaKH(kh.getMaKH());
+        ArrayList<ThuCung_entity> thuCung = new ArrayList<>();
+        if (hd.getMaTC() != null) {
+            ThuCung_entity tc = new ThuCung_DAO().getThuCungTheoMa(hd.getMaTC());
+            if (tc != null) {
+                thuCung.add(tc);
+            }
+        }
 
         Window chu = cha == null
 
@@ -507,11 +509,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         JPanel the = taoThe("Thú cưng", null);
 
-        if (thuCung.isEmpty()) {
+        if (hd.getMaTC() == null) {
 
-            JLabel lbl = new JLabel(
-
-                    "Khách hàng chưa có hồ sơ thú cưng.");
+            JLabel lbl = new JLabel("Hóa đơn vật tư thông thường không gắn với thú cưng.");
 
             lbl.setFont(new Font("Arial", Font.PLAIN, 12));
 
@@ -523,7 +523,21 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         }
 
-        // Hóa đơn không lưu mã thú cưng nên hiển thị thú cưng đầu tiên
+        if (thuCung.isEmpty()) {
+
+            JLabel lbl = new JLabel(
+
+                    "Không tìm thấy hồ sơ thú cưng của hóa đơn.");
+
+            lbl.setFont(new Font("Arial", Font.PLAIN, 12));
+
+            lbl.setForeground(XAM);
+
+            the.add(lbl, BorderLayout.CENTER);
+
+            return the;
+
+        }
 
         ThuCung_entity tc = thuCung.get(0);
 
@@ -553,41 +567,23 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         }));
 
-        if (thuCung.size() > 1) {
-
-            JLabel ghiChu = new JLabel(
-
-                    "Khách hàng có " + thuCung.size()
-
-                            + " thú cưng, đang hiển thị thú cưng đầu tiên.");
-
-            ghiChu.setFont(new Font("Arial", Font.ITALIC, 11));
-
-            ghiChu.setForeground(XAM);
-
-            ghiChu.setBorder(new EmptyBorder(4, 0, 0, 0));
-
-            noi.add(ghiChu);
-
-        }
-
         the.add(noi, BorderLayout.CENTER);
 
         return the;
 
     }
 
-    // ==================== DỊCH VỤ VÀ VẬT TƯ ====================
+    // ==================== DỊCH VỤ, VẬT TƯ VÀ THUỐC ====================
 
     private JPanel taoTheDichVu() {
 
-        JPanel the = taoThe("Dịch vụ và vật tư",
+        JPanel the = taoThe("Dịch vụ, vật tư và thuốc",
 
                 dong.size() + " khoản mục · Đơn vị tiền tệ: VNĐ");
 
         String[] cot = {
 
-                "Mã", "Dịch vụ / Vật tư", "Loại",
+                "Mã", "Dịch vụ / Vật tư / Thuốc", "Loại",
 
                 "Số lượng", "Đơn giá", "Khuyến mãi", "Tổng tiền"
 
@@ -627,7 +623,7 @@ public class ChiTietHoaDon_gui extends JPanel {
 
                 ten = c.getMaVT().getTenVT();
 
-                loai = "Vật tư";
+                loai = c.getMaVT().getMaThuoc() == null ? "Vật tư" : "Thuốc kê đơn";
 
             } else {
 
@@ -1108,95 +1104,55 @@ public class ChiTietHoaDon_gui extends JPanel {
     }
 
     private void inHoaDon() {
-
-
-        // Hóa đơn chưa thanh toán: chỉ hiện 1 hộp thoại duy nhất để xác nhận
-
-        // thanh toán; đồng ý thì lưu thanh toán rồi tiếp tục in.
-
         if (!isHoaDonDaThanhToan() && !xuLyXacNhanThanhToan()) {
-
-
-        // Hóa đơn chưa thanh toán: chỉ hiện một thông báo duy nhất và không cho in.
-        if (!isHoaDonDaThanhToan()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Hóa đơn " + hd.getMaHD() + " chưa được thanh toán nên không thể in.",
-                    "Chưa thanh toán",
-                    JOptionPane.WARNING_MESSAGE
-            );
-
             return;
-
         }
 
         PrinterJob job = PrinterJob.getPrinterJob();
-
         job.setJobName("Hoa don " + hd.getMaHD());
-
         job.setPrintable((g, pf, trang) -> {
-
             if (trang > 0) {
-
                 return Printable.NO_SUCH_PAGE;
-
             }
 
-            Graphics2D g2 = (Graphics2D) g;
+            Dimension kichThuoc = noiDung.getSize();
+            if (kichThuoc.width <= 0 || kichThuoc.height <= 0) {
+                kichThuoc = noiDung.getPreferredSize();
+            }
+            if (kichThuoc.width <= 0 || kichThuoc.height <= 0) {
+                throw new PrinterException("Không xác định được kích thước nội dung hóa đơn.");
+            }
 
-            g2.translate(pf.getImageableX(), pf.getImageableY());
-
-            double w = noiDung.getWidth();
-
-            double h = noiDung.getHeight();
-
-            double tiLe = Math.min(
-
-                    pf.getImageableWidth() / w,
-
-                    pf.getImageableHeight() / h);
-
-            g2.scale(tiLe, tiLe);
-
-            noiDung.printAll(g2);
-
-            return Printable.PAGE_EXISTS;
-
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                double tiLe = Math.min(
+                        pf.getImageableWidth() / kichThuoc.width,
+                        pf.getImageableHeight() / kichThuoc.height);
+                g2.translate(pf.getImageableX(), pf.getImageableY());
+                g2.scale(tiLe, tiLe);
+                noiDung.setSize(kichThuoc);
+                noiDung.doLayout();
+                noiDung.printAll(g2);
+                return Printable.PAGE_EXISTS;
+            } finally {
+                g2.dispose();
+            }
         });
 
         if (!job.printDialog()) {
-
             return;
-
         }
-
-        // Ẩn các nút khi in cho gọn
-
-        btnIn.setVisible(false);
 
         try {
-
             job.print();
-
         } catch (PrinterException ex) {
-
             JOptionPane.showMessageDialog(
-
                     this,
-
                     "Không thể in hóa đơn: " + ex.getMessage(),
-
                     "Lỗi",
-
                     JOptionPane.ERROR_MESSAGE
-
             );
-
-        } finally {
-            btnIn.setVisible(true);
-        	}
         }
-
     }
 
 

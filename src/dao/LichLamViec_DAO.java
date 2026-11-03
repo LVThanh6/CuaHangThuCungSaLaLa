@@ -18,6 +18,8 @@ import java.util.Map;
 
 public class LichLamViec_DAO {
 
+    private static volatile boolean daKiemTraCauTrucBang = false;
+
     private static final String SQL_LICH =
             "SELECT * FROM ("
                     + "SELECT l.maLLV, l.maNhanVien AS maNhanSu, nv.hoTen AS ten, "
@@ -266,11 +268,37 @@ public class LichLamViec_DAO {
         throw new SQLException("Không thể tạo mã lịch làm việc.");
     }
 
+    /**
+     * Tự động kiểm tra và đảm bảo bảng LichLamViec có đầy đủ cột maBacSi và ràng buộc cần thiết.
+     * Tự động vá (Self-healing) để ứng dụng không bao giờ bị lỗi Invalid column name 'maBacSi'.
+     */
+    private static synchronized void damBaoCauTrucBang(Connection con) {
+        if (daKiemTraCauTrucBang || con == null) return;
+        try {
+            java.sql.DatabaseMetaData meta = con.getMetaData();
+            try (ResultSet rs = meta.getColumns(null, null, "LichLamViec", "maBacSi")) {
+                if (!rs.next()) {
+                    try (java.sql.Statement st = con.createStatement()) {
+                        st.executeUpdate("ALTER TABLE LichLamViec ALTER COLUMN maNhanVien VARCHAR(20) NULL");
+                        st.executeUpdate("ALTER TABLE LichLamViec ADD maBacSi VARCHAR(20) NULL");
+                        try {
+                            st.executeUpdate("ALTER TABLE LichLamViec ADD CONSTRAINT FK_LichLamViec_BacSi FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi)");
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+            daKiemTraCauTrucBang = true;
+        } catch (Exception e) {
+            System.err.println("Cảnh báo kiểm tra cấu trúc bảng LichLamViec: " + e.getMessage());
+        }
+    }
+
     private static Connection moKetNoi() throws SQLException {
         Connection con = ConnectDB.getCon();
         if (con == null) {
             throw new SQLException("Không thể kết nối cơ sở dữ liệu SALALA.");
         }
+        damBaoCauTrucBang(con);
         return con;
     }
 

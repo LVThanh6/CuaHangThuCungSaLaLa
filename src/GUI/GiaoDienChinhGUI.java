@@ -1,8 +1,10 @@
 package GUI;
 
+
 import java.awt.*;
 import java.sql.SQLException;
 import javax.swing.*;
+
 
 import GUI.BacSi.BacSiGUI;
 import GUI.Chung.HeaderGUI;
@@ -21,18 +23,26 @@ import GUI.LichHen.XemLichGUI;
 import GUI.LichHen.LichLamViecGUI; 
 
 import GUI.NhanVien.NhanVienGUI;
+import GUI.TaiKhoan.DangNhapGUI;
 import GUI.ThongKe.ThongKeGUI;
 import GUI.ThuCung.DonThuocGUI;
 import GUI.ThuCung.HoSoThuCungGUI;
 import GUI.ThuCung.LichSuKhamGUI;
+
 import GUI.TaiKhoan.DangNhapGUI;
+import GUI.TaiKhoan.QuanLyTaiKhoanGUI;
 import dao.DangNhap_DAO;
 
 // Các GUI thuộc tab Vật tư
 import GUI.VatTu.VatTuGUI;
+
 import GUI.VatTu.NhaCungCapGUI;
 import GUI.VatTu.PhieuNhapKhoGUI;
 import GUI.VatTu.PhieuXuatKhoGUI;
+import GUI.VatTu.VatTuGUI;
+import java.awt.*;
+import java.sql.SQLException;
+import javax.swing.*;
 
 public class GiaoDienChinhGUI extends JPanel {
 
@@ -174,6 +184,18 @@ public class GiaoDienChinhGUI extends JPanel {
     // ==========================================
     private void xuLyChonTab(String tenTab) {
         this.tabHienTai = tenTab;
+
+        // Tự động mở menu con đầu tiên mà user được phân quyền trong tab này
+        String[] menuCons = (headerGUI != null) ? headerGUI.getMenuConCuaTab(tenTab) : null;
+        if (menuCons != null && menuCons.length > 0) {
+            try {
+                xuLyChonMenuCon(tenTab, menuCons[0]);
+                return;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
         hienThiNoiDungMacDinh("Đang xem tab: " + tenTab);
 
         switch (tenTab) {
@@ -186,6 +208,7 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Lịch": hienThiTabLich(); break; 
             case "Dịch vụ": hienThiTabDichVu(); break;
             case "Thống kê": hienThiThongKe(); break;
+            case "Quản lý tài khoản": hienThiQuanLyTaiKhoan(); break;
         }
     }
 
@@ -197,6 +220,7 @@ public class GiaoDienChinhGUI extends JPanel {
             case "Danh sách nhân viên": hienThiDanhSachNhanVien(); break;
             case "Danh sách bác sĩ": hienThiDanhSachBacSi(); break;
             case "Thống kê": hienThiThongKe(); break;
+            case "Quản lý tài khoản": hienThiQuanLyTaiKhoan(); break;
             case "Hồ sơ thú cưng": hienThiHoSoThuCung(); break;
             case "Đơn Thuốc": hienThiDonThuoc(); break;
             case "Lịch sử khám": hienThiLichSuKham(); break;
@@ -235,6 +259,7 @@ public class GiaoDienChinhGUI extends JPanel {
     public void hienThiDanhSachNhanVien() { setNoiDung(new NhanVienGUI()); }
     public void hienThiDanhSachBacSi() { setNoiDung(new BacSiGUI()); }
     public void hienThiThongKe() { setNoiDung(new ThongKeGUI()); }
+    public void hienThiQuanLyTaiKhoan() { setNoiDung(new QuanLyTaiKhoanGUI()); }
     public void hienThiHoSoThuCung() { setNoiDung(new HoSoThuCungGUI()); }
     public void hienThiDonThuoc() { setNoiDung(new DonThuocGUI()); }
     public void hienThiLichSuKham() { setNoiDung(new LichSuKhamGUI()); }
