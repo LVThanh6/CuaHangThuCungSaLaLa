@@ -8,7 +8,10 @@ import javax.swing.*;
 
 import GUI.BacSi.BacSiGUI;
 import GUI.Chung.HeaderGUI;
+import GUI.Chung.LamMoNen;
+import GUI.Chung.NenAnhPanel;
 import GUI.Chung.RangBuocGiaoDien;
+import GUI.Chung.TamNenNoiDung;
 import GUI.DichVu.DichVuGUI;
 import GUI.DichVu.KhuyenMaiGUI;
 import GUI.DichVu.ThueGUI;
@@ -44,7 +47,7 @@ import java.awt.*;
 import java.sql.SQLException;
 import javax.swing.*;
 
-public class GiaoDienChinhGUI extends JPanel {
+public class GiaoDienChinhGUI extends NenAnhPanel {
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
     private HeaderGUI headerGUI; 
@@ -101,11 +104,21 @@ public class GiaoDienChinhGUI extends JPanel {
 
         // 1. NHÚNG PHẦN HEADER VÀO NORTH
         headerGUI = new HeaderGUI(tenNguoiDung, chucVu);
+        if (coAnhNen()) {
+            // Header trong suốt, phía sau là ảnh nền đã làm mờ (kính mờ)
+            LamMoNen.apDungChoHeader(headerGUI);
+            setThanhMo(headerGUI);
+        }
         add(headerGUI, BorderLayout.NORTH);
 
         // 2. NHÚNG PHẦN MAIN (NỘI DUNG) VÀO CENTER
-        panelNoiDung = new JPanel(new BorderLayout());
-        panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        if (coAnhNen()) {
+            // Tấm nền kem bán trong suốt + lề để ảnh nền hiện quanh mép
+            panelNoiDung = new TamNenNoiDung(new BorderLayout());
+        } else {
+            panelNoiDung = new JPanel(new BorderLayout());
+            panelNoiDung.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        }
         panelNoiDung.setMinimumSize(RangBuocGiaoDien.KICH_THUOC_TAB_TOI_THIEU);
         panelNoiDung.setPreferredSize(new Dimension(RangBuocGiaoDien.MAN_HINH_RONG_MAC_DINH, RangBuocGiaoDien.MAN_HINH_CAO_MAC_DINH - 100));
         add(panelNoiDung, BorderLayout.CENTER);
@@ -143,6 +156,11 @@ public class GiaoDienChinhGUI extends JPanel {
                 JScrollPane scrollPane = new JScrollPane(comp);
                 scrollPane.setBorder(null);
                 scrollPane.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+                if (coAnhNen()) {
+                    scrollPane.setOpaque(false);
+                    scrollPane.getViewport().setOpaque(false);
+                    scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+                }
                 scrollPane.getVerticalScrollBar().setUnitIncrement(16);
                 scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
                 panelNoiDung.add(scrollPane, BorderLayout.CENTER);
@@ -152,10 +170,19 @@ public class GiaoDienChinhGUI extends JPanel {
         } else {
             hienThiNoiDungMacDinh("Đang xem tab: " + tabHienTai);
         }
+        // Làm mờ nền các màn hình con để ảnh nền hiện lên
+        if (comp != null && coAnhNen()) {
+            LamMoNen.apDung(comp);
+        }
         panelNoiDung.revalidate();
         panelNoiDung.repaint();
     }
     
+    /** Đã nạp được ảnh nền cho vùng nội dung hay chưa. */
+    private boolean coAnhNen() {
+        return coAnh();
+    }
+
     public void setNoiDung(Component comp) { setNoiDung(comp, false); }
     public void setNoiDung(Object view) { if (view instanceof Component) setNoiDung((Component) view); }
 
@@ -171,6 +198,7 @@ public class GiaoDienChinhGUI extends JPanel {
 
         JPanel vungMacDinh = new JPanel(new GridBagLayout());
         vungMacDinh.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        vungMacDinh.setOpaque(!coAnhNen());
         vungMacDinh.add(nhanNoiDung);
 
         panelNoiDung.removeAll();

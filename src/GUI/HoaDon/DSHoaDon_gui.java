@@ -163,7 +163,7 @@ public class DSHoaDon_gui extends JPanel {
 
     private JPanel taoTheThongKe(String tieuDe, JLabel giaTri) {
         JPanel the = new JPanel(new BorderLayout());
-        the.setBackground(new Color(240, 253, 250));
+        the.setBackground(new Color(240, 253, 250)); // thẻ mint: LamMoNen sẽ làm bán trong suốt
         the.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(204, 251, 241), 1, true),
                 new EmptyBorder(12, 12, 12, 12)));

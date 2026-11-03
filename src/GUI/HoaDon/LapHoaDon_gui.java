@@ -98,7 +98,7 @@ public class LapHoaDon_gui extends JPanel {
             new Color(45, 55, 72);
 
     private static final Color MAU_NEN =
-            new Color(247, 249, 252);
+            new Color(248, 250, 252);
 
     private static final Color MAU_XANH =
             new Color(37, 99, 235);

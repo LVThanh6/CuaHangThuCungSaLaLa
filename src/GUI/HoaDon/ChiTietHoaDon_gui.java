@@ -1,5 +1,11 @@
 package GUI.HoaDon;
 
+import GUI.Chung.LamMoNen;
+
+import GUI.Chung.NenAnhPanel;
+
+import GUI.Chung.TamNenNoiDung;
+
 import dao.ChiTietHoaDon_DAO;
 
 import dao.HoaDon_Dao;
@@ -179,7 +185,19 @@ public class ChiTietHoaDon_gui extends JPanel {
 
                 Dialog.ModalityType.APPLICATION_MODAL);
 
-        dlg.setContentPane(new ChiTietHoaDon_gui(hd, dong, thuCung, dsHoaDon));
+        ChiTietHoaDon_gui chiTiet = new ChiTietHoaDon_gui(hd, dong, thuCung, dsHoaDon);
+
+        // Cửa sổ chi tiết cũng dùng ảnh nền + tấm nền kem mờ giống màn hình chính
+        NenAnhPanel nen = new NenAnhPanel();
+        if (nen.coAnh()) {
+            TamNenNoiDung tam = new TamNenNoiDung(new BorderLayout());
+            tam.add(chiTiet, BorderLayout.CENTER);
+            nen.add(tam, BorderLayout.CENTER);
+            LamMoNen.apDung(chiTiet);
+            dlg.setContentPane(nen);
+        } else {
+            dlg.setContentPane(chiTiet);
+        }
 
         // Nhấn ESC để đóng
 
