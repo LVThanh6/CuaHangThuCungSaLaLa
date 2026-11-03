@@ -192,6 +192,52 @@ public class VatTu_DAO {
         return null;
     }
 
+    /**
+     * Sinh mã vật tư mới theo cấu trúc VT + số thứ tự 3 chữ số (VT001, VT002, ...).
+     * Lấy số lớn nhất hiện có rồi cộng thêm 1.
+     */
+    public String taoMaVatTuMoi() {
+        int max = 0;
+        Connection con = ConnectDB.getCon();
+        if (con != null) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT maVT FROM VatTu");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String ma = rs.getString(1);
+                    if (ma != null && ma.trim().matches("(?i)VT\\d+")) {
+                        int so = Integer.parseInt(ma.trim().substring(2));
+                        if (so > max) max = so;
+                    }
+                }
+            } catch (SQLException | NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        return String.format("VT%03d", max + 1);
+    }
+
+    /**
+     * Lấy danh sách nhà cung cấp {maNCC, tenNCC} để đổ vào ComboBox ở form thêm/sửa vật tư.
+     */
+    public ArrayList<String[]> getDanhSachNCC() {
+        ArrayList<String[]> ds = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return ds;
+        }
+
+        String sql = "SELECT maNCC, tenNCC FROM NhaCungCap ORDER BY maNCC ASC";
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ds.add(new String[] { rs.getString("maNCC"), rs.getString("tenNCC") });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
     private VatTu_entity mapRowToEntity(ResultSet rs) throws SQLException {
         String maNCC = rs.getString("maNCC");
         NhaCungCap_entity ncc = null;
