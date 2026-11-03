@@ -281,9 +281,11 @@ public class DangNhapGUI extends JFrame {
         panelGoiYContainer.add(lblGoiY);
         panelGoiYContainer.add(Box.createVerticalStrut(6));
 
-        JPanel panelNutGoiY = new JPanel(new GridLayout(2, 3, 6, 6));
+        JPanel panelNutGoiY = new JPanel(new GridLayout(2, 3, 8, 8));
         panelNutGoiY.setOpaque(false);
-        panelNutGoiY.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        panelNutGoiY.setPreferredSize(new Dimension(300, 112));
+        panelNutGoiY.setMaximumSize(new Dimension(Integer.MAX_VALUE, 112));
+        panelNutGoiY.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         panelNutGoiY.add(taoNutChonNhanh("admin", "👑 Admin"));
         panelNutGoiY.add(taoNutChonNhanh("quanly01", "👔 Quản lý"));
@@ -300,13 +302,15 @@ public class DangNhapGUI extends JFrame {
     }
 
     private JButton taoNutChonNhanh(String username, String label) {
-        JButton b = new JButton("<html><center><b>" + label + "</b><br><span style='font-size:10px; color:#0f766e;'>" + username + "</span></center></html>");
+        JButton b = new JButton("<html><div style='text-align:center; white-space:nowrap;'><b>" + label + "</b><br><span style='font-size:10px; color:#0f766e;'>" + username + "</span></div></html>");
         b.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         b.setForeground(new Color(13, 148, 136));
         b.setBackground(new Color(240, 253, 250));
         b.setBorder(new CompoundBorder(
                 new LineBorder(new Color(204, 251, 241), 1, true),
-                new EmptyBorder(3, 4, 3, 4)));
+                new EmptyBorder(6, 4, 6, 4)));
+        b.setMargin(new Insets(0, 0, 0, 0));
+        b.setPreferredSize(new Dimension(90, 52));
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.addActionListener(e -> {
