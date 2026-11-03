@@ -2,6 +2,7 @@ package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
 import dao.VatTu_DAO;
+import entity.NhaCungCap_entity;
 import entity.VatTu_entity;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -56,6 +57,9 @@ public class VatTuGUI extends JPanel {
         String ma, ten, danhMuc, donVi, maThuoc;
         int tonKho;
         long giaNhap;
+        // Các trường lưu kèm để phục vụ thêm / sửa xuống CSDL
+        String maNCC, trangThaiDb;
+        double giaBan;
 
         public VatTuEntity(String ma, String ten, String danhMuc, int tonKho, String donVi, long giaNhap, String maThuoc) {
             this.ma = ma; this.ten = ten; this.danhMuc = danhMuc;
@@ -251,7 +255,35 @@ public class VatTuGUI extends JPanel {
         bar.add(Box.createHorizontalStrut(12));
         bar.add(btnLamMoi);
         bar.add(Box.createHorizontalGlue());
+
+        JButton btnThem = taoNut("+ Thêm vật tư", MAU_XANH_LA, Color.BLACK, MAU_XANH_LA, 130);
+        JButton btnSua = taoNut("Sửa", Color.BLACK, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 80);
+        JButton btnXoa = taoNut("Xóa", Color.BLACK, MAU_DO, MAU_DO, 80);
+        btnThem.addActionListener(e -> themVatTu());
+        btnSua.addActionListener(e -> suaVatTu());
+        btnXoa.addActionListener(e -> xoaVatTu());
+
+        bar.add(btnThem);
+        bar.add(Box.createHorizontalStrut(8));
+        bar.add(btnSua);
+        bar.add(Box.createHorizontalStrut(8));
+        bar.add(btnXoa);
         return bar;
+    }
+
+    private JButton taoNut(String chu, Color nen, Color mauChu, Color vien, int rong) {
+        JButton b = new JButton(chu);
+        b.setFont(RangBuocGiaoDien.fontDam(13));
+        b.setBackground(nen);
+        b.setForeground(mauChu);
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
+        b.setFocusPainted(false);
+        b.setBorder(new LineBorder(vien, 1, true));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setPreferredSize(new Dimension(rong, 38));
+        b.setMaximumSize(new Dimension(rong, 38));
+        return b;
     }
 
     private JComponent taoBang() {
@@ -280,6 +312,24 @@ public class VatTuGUI extends JPanel {
         bang.getColumnModel().getColumn(4).setCellRenderer(new ChuRenderer(4)); // ĐƠN VỊ
         bang.getColumnModel().getColumn(5).setCellRenderer(new ChuRenderer(5)); // GIÁ NHẬP
         bang.getColumnModel().getColumn(6).setCellRenderer(new TrangThaiRenderer());
+
+        bang.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        bang.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && bang.rowAtPoint(e.getPoint()) >= 0) {
+                    suaVatTu();
+                }
+            }
+        });
+        bang.getInputMap(JComponent.WHEN_FOCUSED)
+            .put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0), "xoaVatTu");
+        bang.getActionMap().put("xoaVatTu", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                xoaVatTu();
+            }
+        });
 
         JTableHeader header = bang.getTableHeader();
         header.setReorderingAllowed(false);
@@ -390,18 +440,236 @@ public class VatTuGUI extends JPanel {
             boolean laThuoc = vatTu.getMaThuoc() != null && !vatTu.getMaThuoc().isBlank();
             String danhMuc = laThuoc ? "Thuốc điều trị" : "Vật tư thông thường";
             String donVi = laThuoc ? "Viên" : "Gói / Hộp";
-            tatCa.add(new VatTuEntity(
+            VatTuEntity vt = new VatTuEntity(
                     vatTu.getMaVT(),
                     vatTu.getTenVT(),
                     danhMuc,
                     vatTu.getSoLuongTon(),
                     donVi,
                     Math.round(vatTu.getGiaNhap()),
-                    vatTu.getMaThuoc()));
+                    vatTu.getMaThuoc());
+            vt.maNCC = vatTu.getMaNCC() != null ? vatTu.getMaNCC().getMaNCC() : null;
+            vt.giaBan = vatTu.getGiaBanCoBan();
+            vt.trangThaiDb = vatTu.getTrangThai();
+            tatCa.add(vt);
         }
         lamMoi();
     }
     
+    // ===================== THÊM / SỬA / XÓA =====================
+
+    private void themVatTu() {
+        VatTuEntity moi = hienFormVatTu(null);
+        if (moi == null) return;
+
+        if (vatTuDAO.createVatTu(chuyenSangEntityDB(moi))) {
+            taiDuLieuMau();
+            chonDong(moi.getMa());
+            JOptionPane.showMessageDialog(this, "Đã thêm vật tư " + moi.getMa() + ".");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể thêm vật tư. Kiểm tra lại mã nhà cung cấp, mã thuốc hoặc kết nối CSDL.",
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void suaVatTu() {
+        int r = bang.getSelectedRow();
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một vật tư để sửa.");
+            return;
+        }
+        VatTuEntity cu = model.tai(r);
+        VatTuEntity moi = hienFormVatTu(cu);
+        if (moi == null) return;
+
+        if (vatTuDAO.updateVatTu(chuyenSangEntityDB(moi))) {
+            taiDuLieuMau();
+            chonDong(moi.getMa());
+            JOptionPane.showMessageDialog(this, "Đã cập nhật vật tư " + moi.getMa() + ".");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể cập nhật vật tư. Kiểm tra lại mã nhà cung cấp, mã thuốc hoặc kết nối CSDL.",
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void xoaVatTu() {
+        int r = bang.getSelectedRow();
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một vật tư để xóa.");
+            return;
+        }
+        VatTuEntity vt = model.tai(r);
+        int chon = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc muốn xóa vật tư \"" + vt.getTen() + "\" (" + vt.getMa() + ")?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (chon != JOptionPane.YES_OPTION) return;
+
+        if (vatTuDAO.deleteVatTu(vt.getMa())) {
+            taiDuLieuMau();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể xóa vật tư này. Có thể vật tư đã được dùng trong phiếu nhập / xuất.",
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Chọn lại dòng có mã tương ứng sau khi nạp lại bảng (nếu dòng đó đang hiển thị). */
+    private void chonDong(String ma) {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (model.tai(i).getMa().equals(ma)) {
+                bang.setRowSelectionInterval(i, i);
+                bang.scrollRectToVisible(bang.getCellRect(i, 0, true));
+                return;
+            }
+        }
+    }
+
+    private VatTu_entity chuyenSangEntityDB(VatTuEntity v) {
+        NhaCungCap_entity ncc = new NhaCungCap_entity(v.maNCC, null, null, null, null);
+        return new VatTu_entity(v.getMa(), ncc, v.getTen(), v.getTonKho(),
+                v.trangThaiDb, v.giaBan, v.getGiaNhap(), v.getMaThuoc());
+    }
+
+    private static Long docTien(String s) {
+        String so = s == null ? "" : s.replaceAll("[^0-9]", "");
+        if (so.isEmpty()) return null;
+        try {
+            return Long.parseLong(so);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Hiện form thêm (cu == null) hoặc sửa (cu != null).
+     * Trả về entity mới nếu người dùng bấm Lưu và dữ liệu hợp lệ, ngược lại trả về null.
+     */
+    private VatTuEntity hienFormVatTu(VatTuEntity cu) {
+        final boolean sua = cu != null;
+
+        ArrayList<String[]> dsNCC = vatTuDAO.getDanhSachNCC();
+        if (dsNCC.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Chưa có nhà cung cấp nào trong CSDL nên không thể thêm / sửa vật tư.",
+                    "Thiếu dữ liệu", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+
+        Window cha = SwingUtilities.getWindowAncestor(this);
+        JDialog dlg = new JDialog(cha, sua ? "Sửa vật tư" : "Thêm vật tư", Dialog.ModalityType.APPLICATION_MODAL);
+
+        JTextField txtMa = new JTextField(sua ? cu.getMa() : vatTuDAO.taoMaVatTuMoi(), 22);
+        txtMa.setEditable(false); // mã tự phát sinh (VT + STT), không cho nhập tay
+        txtMa.setBackground(NEN_HEADER);
+        JTextField txtTen = new JTextField(sua ? cu.getTen() : "", 22);
+
+        JComboBox<String> cbNcc = new JComboBox<>();
+        int viTriNcc = 0;
+        for (int i = 0; i < dsNCC.size(); i++) {
+            String[] n = dsNCC.get(i);
+            cbNcc.addItem(n[0] + " - " + (n[1] == null ? "" : n[1]));
+            if (sua && n[0] != null && n[0].equals(cu.maNCC)) viTriNcc = i;
+        }
+        cbNcc.setSelectedIndex(viTriNcc);
+
+        JComboBox<String> cbDm = new JComboBox<>(DANH_MUC);
+        JTextField txtMaThuoc = new JTextField(sua && cu.getMaThuoc() != null ? cu.getMaThuoc() : "", 22);
+        if (sua) cbDm.setSelectedItem(cu.getDanhMuc());
+        Runnable capNhatMaThuoc = () -> {
+            boolean laThuoc = DANH_MUC[1].equals(cbDm.getSelectedItem());
+            txtMaThuoc.setEnabled(laThuoc);
+            if (!laThuoc) txtMaThuoc.setText("");
+        };
+        cbDm.addActionListener(e -> capNhatMaThuoc.run());
+        capNhatMaThuoc.run();
+
+        JSpinner spTon = new JSpinner(new SpinnerNumberModel(sua ? cu.getTonKho() : 0, 0, 10_000_000, 1));
+        spTon.setEnabled(!sua); // tồn kho chỉ nhập ban đầu; sau đó thay đổi qua phiếu nhập / xuất
+
+        JTextField txtGiaNhap = new JTextField(sua ? String.valueOf(cu.getGiaNhap()) : "", 22);
+        JTextField txtGiaBan = new JTextField(sua ? String.valueOf(Math.round(cu.giaBan)) : "", 22);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBorder(new EmptyBorder(16, 20, 8, 20));
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.insets = new Insets(6, 4, 6, 4);
+        gc.anchor = GridBagConstraints.WEST;
+
+        String[] nhan = { "Mã vật tư (tự động)", "Tên vật tư *", "Nhà cung cấp *", "Danh mục", "Mã thuốc (nếu là thuốc)",
+                "Tồn kho", "Giá nhập (₫) *", "Giá bán cơ bản (₫) *" };
+        JComponent[] oNhap = { txtMa, txtTen, cbNcc, cbDm, txtMaThuoc, spTon, txtGiaNhap, txtGiaBan };
+        for (int i = 0; i < nhan.length; i++) {
+            JLabel l = new JLabel(nhan[i]);
+            l.setFont(RangBuocGiaoDien.fontThuong(13));
+            oNhap[i].setFont(RangBuocGiaoDien.fontThuong(13));
+            gc.gridx = 0; gc.gridy = i; gc.fill = GridBagConstraints.NONE; gc.weightx = 0;
+            form.add(l, gc);
+            gc.gridx = 1; gc.fill = GridBagConstraints.HORIZONTAL; gc.weightx = 1;
+            form.add(oNhap[i], gc);
+        }
+
+        JButton btnLuu = taoNut("Lưu", MAU_XANH_LA, Color.BLACK, MAU_XANH_LA, 90);
+        JButton btnHuy = taoNut("Hủy", Color.BLACK, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 90);
+        JPanel chan = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        chan.setBorder(new EmptyBorder(0, 12, 8, 12));
+        chan.add(btnHuy);
+        chan.add(btnLuu);
+
+        final VatTuEntity[] ketQua = new VatTuEntity[1];
+
+        btnHuy.addActionListener(e -> dlg.dispose());
+        btnLuu.addActionListener(e -> {
+            String ma = txtMa.getText().trim();
+            String ten = txtTen.getText().trim();
+            String maThuoc = txtMaThuoc.getText().trim();
+            boolean laThuoc = DANH_MUC[1].equals(cbDm.getSelectedItem());
+
+            if (ma.isEmpty()) { canhBao(dlg, "Vui lòng nhập mã vật tư.", txtMa); return; }
+            if (!sua && vatTuDAO.getVatTuTheoMa(ma) != null) {
+                canhBao(dlg, "Mã vật tư \"" + ma + "\" đã tồn tại.", txtMa);
+                return;
+            }
+            if (ten.isEmpty()) { canhBao(dlg, "Vui lòng nhập tên vật tư.", txtTen); return; }
+            if (laThuoc && maThuoc.isEmpty()) {
+                canhBao(dlg, "Danh mục \"Thuốc điều trị\" cần nhập mã thuốc.", txtMaThuoc);
+                return;
+            }
+            Long giaNhap = docTien(txtGiaNhap.getText());
+            if (giaNhap == null) { canhBao(dlg, "Giá nhập không hợp lệ.", txtGiaNhap); return; }
+            Long giaBan = docTien(txtGiaBan.getText());
+            if (giaBan == null) { canhBao(dlg, "Giá bán cơ bản không hợp lệ.", txtGiaBan); return; }
+
+            int ton = (Integer) spTon.getValue();
+            String donVi = laThuoc ? "Viên" : "Gói / Hộp";
+            VatTuEntity moi = new VatTuEntity(ma, ten, (String) cbDm.getSelectedItem(),
+                    ton, donVi, giaNhap, laThuoc ? maThuoc : null);
+            moi.maNCC = dsNCC.get(cbNcc.getSelectedIndex())[0];
+            moi.giaBan = giaBan;
+            moi.trangThaiDb = (sua && cu.trangThaiDb != null)
+                    ? cu.trangThaiDb
+                    : TrangThai.tuSoLuong(ton).nhan;
+            ketQua[0] = moi;
+            dlg.dispose();
+        });
+
+        dlg.getRootPane().setDefaultButton(btnLuu);
+        dlg.getContentPane().setLayout(new BorderLayout());
+        dlg.getContentPane().add(form, BorderLayout.CENTER);
+        dlg.getContentPane().add(chan, BorderLayout.SOUTH);
+        dlg.pack();
+        dlg.setResizable(false);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true); // chặn cho tới khi đóng form
+        return ketQua[0];
+    }
+
+    private static void canhBao(Component cha, String noiDung, JComponent focus) {
+        JOptionPane.showMessageDialog(cha, noiDung, "Thông báo", JOptionPane.WARNING_MESSAGE);
+        if (focus != null) focus.requestFocusInWindow();
+    }
+
     // --- Các hàm phục vụ phiếu nhập / xuất ---
     
     public int getTonKho(String ma) {
