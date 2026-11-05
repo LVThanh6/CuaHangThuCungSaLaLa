@@ -29,18 +29,24 @@ public class PhieuXuatKho_entity {
 
     // ===== Chi tiết phiếu (1 dòng vật tư) =====
     public static class ChiTiet {
-        private String maVT, tenVT, donVi;
+        private VatTu_entity maVT;
+        private String tenVT, donVi;
         private int soLuong;
         private long donGia; // giá nhập
 
         public ChiTiet() {}
-        public ChiTiet(String maVT, String tenVT, String donVi, int soLuong, long donGia) {
+        public ChiTiet(VatTu_entity maVT, String tenVT, String donVi, int soLuong, long donGia) {
             this.maVT = maVT; this.tenVT = tenVT; this.donVi = donVi;
             this.soLuong = soLuong; this.donGia = donGia;
         }
+        public ChiTiet(String maVT, String tenVT, String donVi, int soLuong, long donGia) {
+            this(maVT != null ? new VatTu_entity(maVT) : null, tenVT, donVi, soLuong, donGia);
+        }
 
-        public String getMaVT() { return maVT; }
-        public void setMaVT(String maVT) { this.maVT = maVT; }
+        public VatTu_entity getMaVT() { return maVT; }
+        public void setMaVT(VatTu_entity maVT) { this.maVT = maVT; }
+        public void setMaVT(String maVT) { this.maVT = maVT != null ? new VatTu_entity(maVT) : null; }
+
         public String getTenVT() { return tenVT; }
         public void setTenVT(String tenVT) { this.tenVT = tenVT; }
         public String getDonVi() { return donVi; }
@@ -56,7 +62,7 @@ public class PhieuXuatKho_entity {
     // ===== Thuộc tính =====
     private String maPhieu;          // PX0001
     private LocalDate ngayXuat;
-    private String nhanVien;
+    private NhanVien_entity nhanVien;
     private String lyDo;
     private String ghiChu = "";
     private TrangThai trangThai = TrangThai.NHAP;
@@ -66,24 +72,40 @@ public class PhieuXuatKho_entity {
 
     public PhieuXuatKho_entity(String maPhieu) { this.maPhieu = maPhieu; }
 
-    public PhieuXuatKho_entity(String maPhieu, LocalDate ngayXuat, String nhanVien,
+    public PhieuXuatKho_entity(String maPhieu, LocalDate ngayXuat, NhanVien_entity nhanVien,
                                String lyDo, String ghiChu, TrangThai trangThai) {
         this.maPhieu = maPhieu; this.ngayXuat = ngayXuat; this.nhanVien = nhanVien;
         this.lyDo = lyDo; this.ghiChu = ghiChu; this.trangThai = trangThai;
     }
 
+    public PhieuXuatKho_entity(String maPhieu, LocalDate ngayXuat, String nhanVien,
+                               String lyDo, String ghiChu, TrangThai trangThai) {
+        this(maPhieu, ngayXuat,
+             nhanVien != null ? new NhanVien_entity(nhanVien) : null,
+             lyDo, ghiChu, trangThai);
+    }
+
     public String getMaPhieu() { return maPhieu; }
     public void setMaPhieu(String maPhieu) { this.maPhieu = maPhieu; }
+
     public LocalDate getNgayXuat() { return ngayXuat; }
     public void setNgayXuat(LocalDate ngayXuat) { this.ngayXuat = ngayXuat; }
-    public String getNhanVien() { return nhanVien; }
-    public void setNhanVien(String nhanVien) { this.nhanVien = nhanVien; }
+
+    public NhanVien_entity getNhanVien() { return nhanVien; }
+    public void setNhanVien(NhanVien_entity nhanVien) { this.nhanVien = nhanVien; }
+    public void setNhanVien(String nhanVien) {
+        this.nhanVien = nhanVien != null ? new NhanVien_entity(nhanVien) : null;
+    }
+
     public String getLyDo() { return lyDo; }
     public void setLyDo(String lyDo) { this.lyDo = lyDo; }
+
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+
     public TrangThai getTrangThai() { return trangThai; }
     public void setTrangThai(TrangThai trangThai) { this.trangThai = trangThai; }
+
     public List<ChiTiet> getChiTiet() { return chiTiet; }
     public void setChiTiet(List<ChiTiet> chiTiet) { this.chiTiet = chiTiet; }
 
@@ -105,5 +127,5 @@ public class PhieuXuatKho_entity {
     }
     @Override public int hashCode() { return Objects.hash(maPhieu); }
 
-    @Override public String toString() { return maPhieu + "  ·  " + trangThai.getText(); }
+    @Override public String toString() { return maPhieu + "  ·  " + (trangThai != null ? trangThai.getText() : ""); }
 }

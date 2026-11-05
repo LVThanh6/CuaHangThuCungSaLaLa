@@ -14,18 +14,26 @@ public class TaiKhoan implements Serializable {
     private String matKhau;
     private String vaiTro;
     private boolean trangThai;
-    private String maQuanLy;
+    private QuanLyCuaHang maQuanLy;
 
     public TaiKhoan() {
     }
 
-    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, String maQuanLy) {
+    public TaiKhoan(String maTK) {
+        this.maTK = maTK;
+    }
+
+    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, QuanLyCuaHang maQuanLy) {
         this.maTK = maTK;
         this.tenDangNhap = tenDangNhap;
         this.matKhau = matKhau;
         this.vaiTro = vaiTro;
         this.trangThai = trangThai;
         this.maQuanLy = maQuanLy;
+    }
+
+    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, String maQuanLy) {
+        this(maTK, tenDangNhap, matKhau, vaiTro, trangThai, maQuanLy != null ? new QuanLyCuaHang(maQuanLy) : null);
     }
 
     public String getMaTK() {
@@ -68,12 +76,16 @@ public class TaiKhoan implements Serializable {
         this.trangThai = trangThai;
     }
 
-    public String getMaQuanLy() {
+    public QuanLyCuaHang getMaQuanLy() {
         return maQuanLy;
     }
 
-    public void setMaQuanLy(String maQuanLy) {
+    public void setMaQuanLy(QuanLyCuaHang maQuanLy) {
         this.maQuanLy = maQuanLy;
+    }
+
+    public void setMaQuanLy(String maQuanLy) {
+        this.maQuanLy = maQuanLy != null ? new QuanLyCuaHang(maQuanLy) : null;
     }
 
     @Override

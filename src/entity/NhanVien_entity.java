@@ -1,10 +1,11 @@
 package entity;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class NhanVien_entity {
 	private String maNhanVien;
-	private String maTK;
+	private TaiKhoan maTK;
 	private String hoTen;
 	private String chucVu;
 	private String sdt;
@@ -18,24 +19,18 @@ public class NhanVien_entity {
 		super();
 	}
 
-	// Constructor 9 tham số (dùng cho các trường hợp thêm/sửa không can thiệp trạng thái tk)
-	public NhanVien_entity(String maNhanVien, String maTK, String hoTen, String chucVu, String sdt, String diaChi,
-			LocalDate ngaySinh, String gioiTinh, double luongCoBan) {
-		super();
+	public NhanVien_entity(String maNhanVien) {
 		this.maNhanVien = maNhanVien;
-		this.maTK = maTK;
-		this.hoTen = hoTen;
-		this.chucVu = chucVu;
-		this.sdt = sdt;
-		this.diaChi = diaChi;
-		this.ngaySinh = ngaySinh;
-		this.gioiTinh = gioiTinh;
-		this.luongCoBan = luongCoBan;
 	}
 
-	// Constructor 10 tham số (dùng trong DAO để lấy trọn vẹn dữ liệu từ CSDL)
-	// Lương cơ bản do chức vụ quyết định (bảng LuongChucVu), Quản lý = 0 (chưa tính lương)
-	public NhanVien_entity(String maNhanVien, String maTK, String hoTen, String chucVu, String sdt, String diaChi,
+	// Constructor 9 tham số
+	public NhanVien_entity(String maNhanVien, TaiKhoan maTK, String hoTen, String chucVu, String sdt, String diaChi,
+			LocalDate ngaySinh, String gioiTinh, double luongCoBan) {
+		this(maNhanVien, maTK, hoTen, chucVu, sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, null);
+	}
+
+	// Constructor 10 tham số
+	public NhanVien_entity(String maNhanVien, TaiKhoan maTK, String hoTen, String chucVu, String sdt, String diaChi,
 			LocalDate ngaySinh, String gioiTinh, double luongCoBan, Boolean trangThaiTK) {
 		super();
 		this.maNhanVien = maNhanVien;
@@ -53,12 +48,19 @@ public class NhanVien_entity {
 	public String getMaNhanVien() {
 		return maNhanVien;
 	}
+
+	public void setMaNhanVien(String maNhanVien) {
+		this.maNhanVien = maNhanVien;
+	}
 	
-	public String getMaTK() {
+	public TaiKhoan getMaTK() {
 		return maTK;
 	}
-	public void setMaTK(String maTK) {
+	public void setMaTK(TaiKhoan maTK) {
 		this.maTK = maTK;
+	}
+	public void setMaTK(String maTK) {
+		this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
 	}
 	public String getHoTen() {
 		return hoTen;
@@ -107,5 +109,23 @@ public class NhanVien_entity {
 	}
 	public void setTrangThaiTK(Boolean trangThaiTK) {
 		this.trangThaiTK = trangThaiTK;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		NhanVien_entity that = (NhanVien_entity) o;
+		return Objects.equals(maNhanVien, that.maNhanVien);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(maNhanVien);
+	}
+
+	@Override
+	public String toString() {
+		return hoTen != null ? hoTen + " (" + maNhanVien + ")" : (maNhanVien != null ? maNhanVien : "");
 	}
 }

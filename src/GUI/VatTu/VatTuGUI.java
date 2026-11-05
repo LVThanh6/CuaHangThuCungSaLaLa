@@ -437,7 +437,7 @@ public class VatTuGUI extends JPanel {
     private void taiDuLieuMau() {
         tatCa.clear();
         for (VatTu_entity vatTu : vatTuDAO.getAllVatTu()) {
-            boolean laThuoc = vatTu.getMaThuoc() != null && !vatTu.getMaThuoc().isBlank();
+            boolean laThuoc = vatTu.getMaThuoc() != null && vatTu.getMaThuoc().getMaThuoc() != null && !vatTu.getMaThuoc().getMaThuoc().isBlank();
             String danhMuc = laThuoc ? "Thuốc điều trị" : "Vật tư thông thường";
             String donVi = laThuoc ? "Viên" : "Gói / Hộp";
             VatTuEntity vt = new VatTuEntity(
@@ -447,7 +447,7 @@ public class VatTuGUI extends JPanel {
                     vatTu.getSoLuongTon(),
                     donVi,
                     Math.round(vatTu.getGiaNhap()),
-                    vatTu.getMaThuoc());
+                    (vatTu.getMaThuoc() != null ? vatTu.getMaThuoc().getMaThuoc() : null));
             vt.maNCC = vatTu.getMaNCC() != null ? vatTu.getMaNCC().getMaNCC() : null;
             vt.giaBan = vatTu.getGiaBanCoBan();
             vt.trangThaiDb = vatTu.getTrangThai();

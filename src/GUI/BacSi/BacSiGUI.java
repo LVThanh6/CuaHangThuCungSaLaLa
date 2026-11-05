@@ -499,7 +499,7 @@ public class BacSiGUI extends JPanel {
 
         daLoc.clear();
         for (BacSi_entity bs : tatCa) {
-            if (cn > 0 && tenCnChon != null && !tenCnChon.equals(bs.getChuyenNganh()))
+            if (cn > 0 && tenCnChon != null && !tenCnChon.equals(bs.getChuyenNganh() != null ? bs.getChuyenNganh().getTenChuyenNganh() : null))
                 continue;
             if (tt > 0 && TrangThai.tuEntity(bs) != TrangThai.values()[tt - 1])
                 continue;
@@ -681,7 +681,7 @@ public class BacSiGUI extends JPanel {
         // Nạp dữ liệu
         if (goc != null) {
             if (goc.getGioiTinh() != null) cbGT.setSelectedItem(goc.getGioiTinh());
-            if (goc.getChuyenNganh() != null) cbCN.setSelectedItem(goc.getChuyenNganh());
+            if (goc.getChuyenNganh() != null) cbCN.setSelectedItem(goc.getChuyenNganh() != null ? goc.getChuyenNganh().getTenChuyenNganh() : null);
             if (coTK) cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
 
@@ -997,7 +997,7 @@ public class BacSiGUI extends JPanel {
         lamMoi();
     }
 
-    private static String nz(String s) {
+    private static String nz(Object s) {
         return s == null ? "" : s;
     }
 

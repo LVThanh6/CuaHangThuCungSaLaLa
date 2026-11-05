@@ -11,7 +11,7 @@ public class QuanLyCuaHang implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String maQuanLy;
-    private String maTK;
+    private TaiKhoan maTK;
     private String hoTenQuanLy;
     private String sdt;
     private String diaChi;
@@ -22,7 +22,11 @@ public class QuanLyCuaHang implements Serializable {
     public QuanLyCuaHang() {
     }
 
-    public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
+    public QuanLyCuaHang(String maQuanLy) {
+        this.maQuanLy = maQuanLy;
+    }
+
+    public QuanLyCuaHang(String maQuanLy, TaiKhoan maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
             String gioiTinh, double luongCoBan) {
         this.maQuanLy = maQuanLy;
         this.maTK = maTK;
@@ -34,6 +38,11 @@ public class QuanLyCuaHang implements Serializable {
         this.luongCoBan = luongCoBan;
     }
 
+    public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
+            String gioiTinh, double luongCoBan) {
+        this(maQuanLy, maTK != null ? new TaiKhoan(maTK) : null, hoTenQuanLy, sdt, diaChi, ngaySinh, gioiTinh, luongCoBan);
+    }
+
     public String getMaQuanLy() {
         return maQuanLy;
     }
@@ -42,12 +51,16 @@ public class QuanLyCuaHang implements Serializable {
         this.maQuanLy = maQuanLy;
     }
 
-    public String getMaTK() {
+    public TaiKhoan getMaTK() {
         return maTK;
     }
 
-    public void setMaTK(String maTK) {
+    public void setMaTK(TaiKhoan maTK) {
         this.maTK = maTK;
+    }
+
+    public void setMaTK(String maTK) {
+        this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
     }
 
     public String getHoTenQuanLy() {

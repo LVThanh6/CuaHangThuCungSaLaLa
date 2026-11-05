@@ -101,7 +101,7 @@ public class ChiTietHoaDon_DAO {
             }
 
             if (ct.getMaCTDT() != null) {
-                ps.setString(5, ct.getMaCTDT());
+                ps.setString(5, ct.getMaCTDT().getMaCTDT());
             } else {
                 ps.setNull(5, java.sql.Types.VARCHAR);
             }
@@ -176,7 +176,7 @@ public class ChiTietHoaDon_DAO {
             }
 
             if (ct.getMaCTDT() != null) {
-                ps.setString(4, ct.getMaCTDT());
+                ps.setString(4, ct.getMaCTDT().getMaCTDT());
             } else {
                 ps.setNull(4, java.sql.Types.VARCHAR);
             }

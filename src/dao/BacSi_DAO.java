@@ -151,18 +151,20 @@ public class BacSi_DAO {
         if (con == null) return false;
 
         ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
-        String maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
-        if (maCN == null && bs.getChuyenNganh() != null && !bs.getChuyenNganh().isBlank()) {
-            cnDao.them(bs.getChuyenNganh());
-            maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
+        String tenCN = bs.getChuyenNganh() != null ? bs.getChuyenNganh().getTenChuyenNganh() : null;
+        String maCN = cnDao.getMaTheoTen(tenCN);
+        if (maCN == null && tenCN != null && !tenCN.isBlank()) {
+            cnDao.them(tenCN);
+            maCN = cnDao.getMaTheoTen(tenCN);
         }
 
         String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, maChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, bs.getMaBacSi());
-            if (bs.getMaTK() != null && !bs.getMaTK().isBlank()) {
-                ps.setString(2, bs.getMaTK());
+            String maTK = bs.getMaTK() != null ? bs.getMaTK().getMaTK() : null;
+            if (maTK != null && !maTK.isBlank()) {
+                ps.setString(2, maTK);
             } else {
                 ps.setNull(2, Types.VARCHAR);
             }
@@ -195,10 +197,11 @@ public class BacSi_DAO {
         if (con == null) return false;
 
         ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
-        String maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
-        if (maCN == null && bs.getChuyenNganh() != null && !bs.getChuyenNganh().isBlank()) {
-            cnDao.them(bs.getChuyenNganh());
-            maCN = cnDao.getMaTheoTen(bs.getChuyenNganh());
+        String tenCN = bs.getChuyenNganh() != null ? bs.getChuyenNganh().getTenChuyenNganh() : null;
+        String maCN = cnDao.getMaTheoTen(tenCN);
+        if (maCN == null && tenCN != null && !tenCN.isBlank()) {
+            cnDao.them(tenCN);
+            maCN = cnDao.getMaTheoTen(tenCN);
         }
 
         String sql = "UPDATE BacSyThuY SET maChuyenNganh = ?, hoTen = ?, gioiTinh = ?, " +

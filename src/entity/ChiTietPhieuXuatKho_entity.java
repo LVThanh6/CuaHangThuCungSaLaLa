@@ -10,8 +10,8 @@ import java.util.Objects;
  */
 public class ChiTietPhieuXuatKho_entity {
 
-    private String maPhieu;
-    private String maVT;
+    private PhieuXuatKho_entity maPhieu;
+    private VatTu_entity maVT;
     private String tenVT = "";   // chỉ để hiển thị (JOIN VatTu)
     private String donVi = "";   // chỉ để hiển thị (JOIN VatTu)
     private int soLuong;
@@ -19,26 +19,55 @@ public class ChiTietPhieuXuatKho_entity {
 
     public ChiTietPhieuXuatKho_entity() {}
 
-    public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT, int soLuong, long donGia) {
+    public ChiTietPhieuXuatKho_entity(PhieuXuatKho_entity maPhieu, VatTu_entity maVT) {
+        this.maPhieu = maPhieu;
+        this.maVT = maVT;
+    }
+
+    public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT) {
+        this(maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null,
+             maVT != null ? new VatTu_entity(maVT) : null);
+    }
+
+    public ChiTietPhieuXuatKho_entity(PhieuXuatKho_entity maPhieu, VatTu_entity maVT, int soLuong, long donGia) {
         this.maPhieu = maPhieu;
         this.maVT = maVT;
         this.soLuong = soLuong;
         this.donGia = donGia;
     }
 
-    public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT, String tenVT, String donVi,
+    public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT, int soLuong, long donGia) {
+        this(maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null,
+             maVT != null ? new VatTu_entity(maVT) : null,
+             soLuong, donGia);
+    }
+
+    public ChiTietPhieuXuatKho_entity(PhieuXuatKho_entity maPhieu, VatTu_entity maVT, String tenVT, String donVi,
                                       int soLuong, long donGia) {
         this(maPhieu, maVT, soLuong, donGia);
         this.tenVT = tenVT;
         this.donVi = donVi;
     }
 
-    // ===== Getter / Setter =====
-    public String getMaPhieu() { return maPhieu; }
-    public void setMaPhieu(String maPhieu) { this.maPhieu = maPhieu; }
+    public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT, String tenVT, String donVi,
+                                      int soLuong, long donGia) {
+        this(maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null,
+             maVT != null ? new VatTu_entity(maVT) : null,
+             tenVT, donVi, soLuong, donGia);
+    }
 
-    public String getMaVT() { return maVT; }
-    public void setMaVT(String maVT) { this.maVT = maVT; }
+    // ===== Getter / Setter =====
+    public PhieuXuatKho_entity getMaPhieu() { return maPhieu; }
+    public void setMaPhieu(PhieuXuatKho_entity maPhieu) { this.maPhieu = maPhieu; }
+    public void setMaPhieu(String maPhieu) {
+        this.maPhieu = maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null;
+    }
+
+    public VatTu_entity getMaVT() { return maVT; }
+    public void setMaVT(VatTu_entity maVT) { this.maVT = maVT; }
+    public void setMaVT(String maVT) {
+        this.maVT = maVT != null ? new VatTu_entity(maVT) : null;
+    }
 
     public String getTenVT() { return tenVT; }
     public void setTenVT(String tenVT) { this.tenVT = tenVT; }
@@ -61,8 +90,14 @@ public class ChiTietPhieuXuatKho_entity {
     }
 
     public static ChiTietPhieuXuatKho_entity fromChiTiet(String maPhieu, PhieuXuatKho_entity.ChiTiet d) {
-        return new ChiTietPhieuXuatKho_entity(maPhieu, d.getMaVT(), d.getTenVT(), d.getDonVi(),
-                d.getSoLuong(), d.getDonGia());
+        ChiTietPhieuXuatKho_entity x = new ChiTietPhieuXuatKho_entity();
+        x.setMaPhieu(maPhieu);
+        x.maVT = d.getMaVT();
+        x.tenVT = d.getTenVT();
+        x.donVi = d.getDonVi();
+        x.soLuong = d.getSoLuong();
+        x.donGia = d.getDonGia();
+        return x;
     }
 
     @Override public boolean equals(Object o) {
@@ -75,6 +110,7 @@ public class ChiTietPhieuXuatKho_entity {
     @Override public int hashCode() { return Objects.hash(maPhieu, maVT); }
 
     @Override public String toString() {
-        return maPhieu + " - " + maVT + " x" + soLuong;
+        return (maPhieu != null ? maPhieu.getMaPhieu() : "") + " - "
+                + (maVT != null ? maVT.getMaVT() : "") + " x" + soLuong;
     }
 }

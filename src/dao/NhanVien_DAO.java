@@ -88,7 +88,7 @@ public class NhanVien_DAO {
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, nv.getMaNhanVien());
-            ps.setString(2, nv.getMaTK());
+            ps.setString(2, nv.getMaTK() != null ? nv.getMaTK().getMaTK() : null);
             ps.setString(3, nv.getHoTen());
             ps.setString(4, nv.getChucVu());
             ps.setString(5, nv.getSdt());
@@ -129,7 +129,7 @@ public class NhanVien_DAO {
         if (con == null) return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, nv.getMaTK());
+            ps.setString(1, nv.getMaTK() != null ? nv.getMaTK().getMaTK() : null);
             ps.setString(2, nv.getHoTen());
             ps.setString(3, nv.getChucVu());
             ps.setString(4, nv.getSdt());

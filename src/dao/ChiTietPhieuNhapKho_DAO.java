@@ -124,11 +124,11 @@ public class ChiTietPhieuNhapKho_DAO {
         String sql = "INSERT INTO ChiTietPhieuNhap(soPhieu, maVT, soLuong, donGia) "
                 + "SELECT ?, ?, ?, ? WHERE " + PHIEU_CHO_XAC_NHAN;
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
-            ps.setString(1, ct.getSoPhieu());
-            ps.setString(2, ct.getMaVT());
+            ps.setString(1, ct.getSoPhieu() != null ? ct.getSoPhieu().getSoPhieu() : null);
+            ps.setString(2, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
             ps.setInt(3, ct.getSoLuong());
             ps.setLong(4, ct.getDonGia());
-            ps.setString(5, ct.getSoPhieu());
+            ps.setString(5, ct.getSoPhieu() != null ? ct.getSoPhieu().getSoPhieu() : null);
             ps.setString(6, TrangThai.CHO_XAC_NHAN.getText());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -152,7 +152,7 @@ public class ChiTietPhieuNhapKho_DAO {
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 for (ChiTietPhieuNhapKho_entity d : ds) {
                     ps.setString(1, soPhieu);
-                    ps.setString(2, d.getMaVT());
+                    ps.setString(2, d.getMaVT() != null ? d.getMaVT().getMaVT() : null);
                     ps.setInt(3, d.getSoLuong());
                     ps.setLong(4, d.getDonGia());
                     ps.addBatch();
@@ -177,9 +177,9 @@ public class ChiTietPhieuNhapKho_DAO {
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, ct.getSoLuong());
             ps.setLong(2, ct.getDonGia());
-            ps.setString(3, ct.getSoPhieu());
-            ps.setString(4, ct.getMaVT());
-            ps.setString(5, ct.getSoPhieu());
+            ps.setString(3, ct.getSoPhieu() != null ? ct.getSoPhieu().getSoPhieu() : null);
+            ps.setString(4, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
+            ps.setString(5, ct.getSoPhieu() != null ? ct.getSoPhieu().getSoPhieu() : null);
             ps.setString(6, TrangThai.CHO_XAC_NHAN.getText());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

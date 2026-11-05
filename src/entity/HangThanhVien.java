@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 public class HangThanhVien {
     private String maHang;            // VARCHAR(20) PK
-    private String maKH;              // VARCHAR(20) FK -> KhachHang(maKH)
+    private KhachHang maKH;           // FK -> KhachHang(maKH)
     private String tenHang;           // NVARCHAR(50) (Đồng, Bạc, Vàng, Kim cương)
     private double chiTieuToiThieu;   // DECIMAL(18,2)
     private Double chiTieuToiDa;      // DECIMAL(18,2) NULLABLE
@@ -37,10 +37,15 @@ public class HangThanhVien {
         this.danhSachQuyenLoi = new ArrayList<>();
     }
 
+    public HangThanhVien(String maHang) {
+        this();
+        this.maHang = maHang;
+    }
+
     /**
-     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien
+     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien (dùng KhachHang)
      */
-    public HangThanhVien(String maHang, String maKH, String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
+    public HangThanhVien(String maHang, KhachHang maKH, String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
                         double mucGiamGia, double diemTichLuy1Van, String quyenLoi, double tongChiTieu,
                         int diemTichLuy, Timestamp ngayCapNhatHang, String trangThai) {
         this.maHang = maHang;
@@ -55,6 +60,16 @@ public class HangThanhVien {
         this.diemTichLuy = diemTichLuy;
         this.ngayCapNhatHang = ngayCapNhatHang != null ? ngayCapNhatHang : new Timestamp(System.currentTimeMillis());
         this.trangThai = trangThai != null ? trangThai : "Đang áp dụng";
+    }
+
+    /**
+     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien (dùng String maKH tương thích)
+     */
+    public HangThanhVien(String maHang, String maKH, String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
+                        double mucGiamGia, double diemTichLuy1Van, String quyenLoi, double tongChiTieu,
+                        int diemTichLuy, Timestamp ngayCapNhatHang, String trangThai) {
+        this(maHang, maKH != null ? new KhachHang(maKH) : null, tenHang, chiTieuToiThieu, chiTieuToiDa,
+             mucGiamGia, diemTichLuy1Van, quyenLoi, tongChiTieu, diemTichLuy, ngayCapNhatHang, trangThai);
     }
 
     /**
@@ -82,12 +97,16 @@ public class HangThanhVien {
         this.maHang = maHang;
     }
 
-    public String getMaKH() {
+    public KhachHang getMaKH() {
         return maKH;
     }
 
-    public void setMaKH(String maKH) {
+    public void setMaKH(KhachHang maKH) {
         this.maKH = maKH;
+    }
+
+    public void setMaKH(String maKH) {
+        this.maKH = maKH != null ? new KhachHang(maKH) : null;
     }
 
     public String getTenHang() {
@@ -263,7 +282,7 @@ public class HangThanhVien {
     public String toString() {
         return "HangThanhVien{" +
                 "maHang='" + maHang + '\'' +
-                ", maKH='" + maKH + '\'' +
+                ", maKH=" + (maKH != null ? maKH.getMaKH() : null) +
                 ", tenHang='" + tenHang + '\'' +
                 ", mucGiamGia=" + mucGiamGia +
                 ", tongChiTieu=" + tongChiTieu +

@@ -1,14 +1,15 @@
 package entity;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class BacSi_entity {
     private String maBacSi;
-    private String maTK;
+    private TaiKhoan maTK;
     private String hoTen;
     private String gioiTinh;
     private String sdt;
-    private String chuyenNganh;
+    private ChuyenNganh_entity chuyenNganh;
     private String email;
     private LocalDate ngaySinh;
     private double luongThang;
@@ -19,26 +20,30 @@ public class BacSi_entity {
         super();
     }
 
-    public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
-                        String chuyenNganh, String email, LocalDate ngaySinh) {
-        this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
+    public BacSi_entity(String maBacSi) {
+        this.maBacSi = maBacSi;
     }
 
-    public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
-                        String chuyenNganh, String email, LocalDate ngaySinh, int soCaKham, Boolean trangThaiTK) {
+    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+                        ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh) {
+        this(maBacSi, maTK.getMaQuanLy(), hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
+    }
+
+    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+                        ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, int soCaKham, Boolean trangThaiTK) {
         this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, soCaKham, trangThaiTK);
     }
 
-    public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
-                        String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
+    public BacSi_entity(String maBacSi, String string, String hoTen, String gioiTinh, String sdt,
+                        String string2, String email, LocalDate ngaySinh, double luongThang,
                         int soCaKham, Boolean trangThaiTK) {
         super();
         this.maBacSi = maBacSi;
-        this.maTK = maTK;
+        this.maTK = string;
         this.hoTen = hoTen;
         this.gioiTinh = gioiTinh;
         this.sdt = sdt;
-        this.chuyenNganh = chuyenNganh;
+        this.chuyenNganh = string2;
         this.email = email;
         this.ngaySinh = ngaySinh;
         this.luongThang = luongThang;
@@ -46,11 +51,20 @@ public class BacSi_entity {
         this.trangThaiTK = trangThaiTK;
     }
 
+    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+                        String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
+                        int soCaKham, Boolean trangThaiTK) {
+        this(maBacSi, maTK, hoTen, gioiTinh, sdt,
+             chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null,
+             email, ngaySinh, luongThang, soCaKham, trangThaiTK);
+    }
+
     public String getMaBacSi() { return maBacSi; }
     public void setMaBacSi(String maBacSi) { this.maBacSi = maBacSi; }
 
-    public String getMaTK() { return maTK; }
-    public void setMaTK(String maTK) { this.maTK = maTK; }
+    public TaiKhoan getMaTK() { return maTK; }
+    public void setMaTK(TaiKhoan maTK) { this.maTK = maTK; }
+    public void setMaTK(String maTK) { this.maTK = maTK != null ? new TaiKhoan(maTK) : null; }
 
     public String getHoTen() { return hoTen; }
     public void setHoTen(String hoTen) { this.hoTen = hoTen; }
@@ -61,8 +75,11 @@ public class BacSi_entity {
     public String getSdt() { return sdt; }
     public void setSdt(String sdt) { this.sdt = sdt; }
 
-    public String getChuyenNganh() { return chuyenNganh; }
-    public void setChuyenNganh(String chuyenNganh) { this.chuyenNganh = chuyenNganh; }
+    public ChuyenNganh_entity getChuyenNganh() { return chuyenNganh; }
+    public void setChuyenNganh(ChuyenNganh_entity chuyenNganh) { this.chuyenNganh = chuyenNganh; }
+    public void setChuyenNganh(String chuyenNganh) {
+        this.chuyenNganh = chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null;
+    }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -78,4 +95,22 @@ public class BacSi_entity {
 
     public Boolean getTrangThaiTK() { return trangThaiTK; }
     public void setTrangThaiTK(Boolean trangThaiTK) { this.trangThaiTK = trangThaiTK; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BacSi_entity that = (BacSi_entity) o;
+        return Objects.equals(maBacSi, that.maBacSi);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maBacSi);
+    }
+
+    @Override
+    public String toString() {
+        return hoTen != null ? hoTen + " (" + maBacSi + ")" : (maBacSi != null ? maBacSi : "");
+    }
 }

@@ -11,8 +11,8 @@ import java.util.Objects;
  */
 public class ChiTietPhieuNhapKho_entity {
 
-    private String soPhieu;
-    private String maVT;
+    private PhieuNhapKho_entity soPhieu;
+    private VatTu_entity maVT;
     private String tenVT;   // từ VatTu (chỉ để hiển thị)
     private String donVi;   // từ VatTu (chỉ để hiển thị)
     private int soLuong;
@@ -20,31 +20,55 @@ public class ChiTietPhieuNhapKho_entity {
 
     public ChiTietPhieuNhapKho_entity() {}
 
-    public ChiTietPhieuNhapKho_entity(String soPhieu, String maVT) {
+    public ChiTietPhieuNhapKho_entity(PhieuNhapKho_entity soPhieu, VatTu_entity maVT) {
         this.soPhieu = soPhieu;
         this.maVT = maVT;
     }
 
-    public ChiTietPhieuNhapKho_entity(String soPhieu, String maVT, int soLuong, long donGia) {
+    public ChiTietPhieuNhapKho_entity(String soPhieu, String maVT) {
+        this(soPhieu != null ? new PhieuNhapKho_entity(soPhieu) : null,
+             maVT != null ? new VatTu_entity(maVT) : null);
+    }
+
+    public ChiTietPhieuNhapKho_entity(PhieuNhapKho_entity soPhieu, VatTu_entity maVT, int soLuong, long donGia) {
         this.soPhieu = soPhieu;
         this.maVT = maVT;
         setSoLuong(soLuong);
         setDonGia(donGia);
     }
 
-    public ChiTietPhieuNhapKho_entity(String soPhieu, String maVT, String tenVT, String donVi,
+    public ChiTietPhieuNhapKho_entity(String soPhieu, String maVT, int soLuong, long donGia) {
+        this(soPhieu != null ? new PhieuNhapKho_entity(soPhieu) : null,
+             maVT != null ? new VatTu_entity(maVT) : null,
+             soLuong, donGia);
+    }
+
+    public ChiTietPhieuNhapKho_entity(PhieuNhapKho_entity soPhieu, VatTu_entity maVT, String tenVT, String donVi,
                                    int soLuong, long donGia) {
         this(soPhieu, maVT, soLuong, donGia);
         this.tenVT = tenVT;
         this.donVi = donVi;
     }
 
-    // ===== Getter / Setter =====
-    public String getSoPhieu() { return soPhieu; }
-    public void setSoPhieu(String soPhieu) { this.soPhieu = soPhieu; }
+    public ChiTietPhieuNhapKho_entity(String soPhieu, String maVT, String tenVT, String donVi,
+                                   int soLuong, long donGia) {
+        this(soPhieu != null ? new PhieuNhapKho_entity(soPhieu) : null,
+             maVT != null ? new VatTu_entity(maVT) : null,
+             tenVT, donVi, soLuong, donGia);
+    }
 
-    public String getMaVT() { return maVT; }
-    public void setMaVT(String maVT) { this.maVT = maVT; }
+    // ===== Getter / Setter =====
+    public PhieuNhapKho_entity getSoPhieu() { return soPhieu; }
+    public void setSoPhieu(PhieuNhapKho_entity soPhieu) { this.soPhieu = soPhieu; }
+    public void setSoPhieu(String soPhieu) {
+        this.soPhieu = soPhieu != null ? new PhieuNhapKho_entity(soPhieu) : null;
+    }
+
+    public VatTu_entity getMaVT() { return maVT; }
+    public void setMaVT(VatTu_entity maVT) { this.maVT = maVT; }
+    public void setMaVT(String maVT) {
+        this.maVT = maVT != null ? new VatTu_entity(maVT) : null;
+    }
 
     public String getTenVT() { return tenVT; }
     public void setTenVT(String tenVT) { this.tenVT = tenVT; }
@@ -74,7 +98,7 @@ public class ChiTietPhieuNhapKho_entity {
 
     public static ChiTietPhieuNhapKho_entity fromChiTiet(String soPhieu, PhieuNhapKho_entity.ChiTiet d) {
         ChiTietPhieuNhapKho_entity e = new ChiTietPhieuNhapKho_entity();
-        e.soPhieu = soPhieu;
+        e.setSoPhieu(soPhieu);
         e.maVT = d.getMaVT();
         e.tenVT = d.getTenVT();
         e.donVi = d.getDonVi();
@@ -94,7 +118,8 @@ public class ChiTietPhieuNhapKho_entity {
     @Override public int hashCode() { return Objects.hash(soPhieu, maVT); }
 
     @Override public String toString() {
-        return soPhieu + " | " + maVT + " | " + (tenVT == null ? "" : tenVT)
+        return (soPhieu != null ? soPhieu.getSoPhieu() : "") + " | " + (maVT != null ? maVT.getMaVT() : "")
+                + " | " + (tenVT == null ? "" : tenVT)
                 + " | SL: " + soLuong + " | Đơn giá: " + donGia;
     }
 }

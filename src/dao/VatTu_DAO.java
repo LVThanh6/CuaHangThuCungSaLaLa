@@ -71,7 +71,7 @@ public class VatTu_DAO {
             ps.setString(5, vt.getTrangThai());
             ps.setDouble(6, vt.getGiaBanCoBan());
             ps.setDouble(7, vt.getGiaNhap());
-            ps.setString(8, vt.getMaThuoc());
+            ps.setString(8, vt.getMaThuoc() != null ? vt.getMaThuoc().getMaThuoc() : null);
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -128,7 +128,7 @@ public class VatTu_DAO {
             ps.setString(4, vt.getTrangThai());
             ps.setDouble(5, vt.getGiaBanCoBan());
             ps.setDouble(6, vt.getGiaNhap());
-            ps.setString(7, vt.getMaThuoc());
+            ps.setString(7, vt.getMaThuoc() != null ? vt.getMaThuoc().getMaThuoc() : null);
             ps.setString(8, vt.getMaVT());
 
             return ps.executeUpdate() > 0;
