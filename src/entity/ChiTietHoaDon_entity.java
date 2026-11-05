@@ -1,7 +1,7 @@
 package entity;
 
 public class ChiTietHoaDon_entity {
-	private String maCTHD;
+	private String maCTHD;// loại bỏ
 	private HoaDon_entity maHD;
 	private DichVu_entity maDV;
 	private VatTu_entity maVT;
