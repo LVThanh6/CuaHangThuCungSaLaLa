@@ -1,36 +1,50 @@
 package GUI.VatTu;
 
+import connectDB.ConnectDB;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Ellipse2D;
 import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.Map;
 
 /**
  * Giao diện "Quản lý xuất kho" - SALALA Pet Shop.
+ * Dữ liệu được đọc / ghi trực tiếp từ CSDL SALALA (qua ConnectDB):
+ *   PhieuXuatKho, ChiTietPhieuXuatKho, VatTu, Thuoc, NhanVien.
+ *
  * Chức năng: danh sách phiếu xuất (tìm kiếm, lọc ngày, lọc trạng thái),
  *            lập phiếu xuất, xem / sửa phiếu, xác nhận & trừ tồn kho, hủy phiếu,
  *            xuất / in phiếu, xuất danh sách ra CSV.
  * Quy tắc: chỉ phiếu "Đã xuất" mới trừ tồn kho; không được xuất quá số lượng tồn hiện tại.
+ *
+ * Ghi chú về ánh xạ CSDL (không đổi cấu trúc DB):
+ *  - Bảng PhieuXuatKho không có cột "lý do xuất" -> lý do được lưu chung trong cột ghiChu
+ *    theo dạng "Lý do | Ghi chú" và được tách ra khi đọc.
+ *  - Trạng thái lưu: "Nháp", "Đã xuất", "Đã hủy". Phiếu có trạng thái khác (vd. "Hoàn thành"
+ *    trong dữ liệu có sẵn) được hiển thị là "Đã xuất".
+ *  - VatTu không có đơn vị tính: lấy từ Thuoc.donViTinh nếu là thuốc, ngược lại hiển thị "Cái".
+ *  - Giá nhập lấy từ VatTu.giaNhap hiện tại.
  * (Lưu file với encoding UTF-8 để hiển thị đúng tiếng Việt.)
  */
 public class PhieuXuatKhoGUI extends JPanel {
@@ -66,15 +80,12 @@ public class PhieuXuatKhoGUI extends JPanel {
             "Sử dụng cho điều trị", "Bán hàng cho khách", "Chăm sóc thú cưng", "Vật tư hư hỏng"
     };
 
-    // Thông tin vật tư dùng cho dữ liệu mẫu: {mã, tên, đơn vị, giá nhập}
-    private static final Object[][] VT_MAU = {
-            {"VT-001", "Amoxicillin 250mg", "Ống", 45000L},
-            {"VT-002", "Rabisin Vắc-xin Dại", "Lọ", 320000L},
-            {"VT-003", "Prednisolone 5mg", "Viên", 8500L},
-            {"VT-004", "Fronil Spot-on Dog", "Tuýp", 78000L},
-            {"VT-005", "Bông y tế vô trùng", "Gói", 12000L},
-            {"VT-006", "Kim tiêm 5ml", "Hộp", 35000L}
-    };
+    // ===== Hằng số CSDL =====
+    private static final String DB_NHAP   = "Nháp";
+    private static final String DB_DA_XUAT = "Đã xuất";
+    private static final String DB_DA_HUY = "Đã hủy";
+    private static final String GHICHU_SEP = " | ";
+    private static final int GHICHU_MAX = 500;
 
     // =====================================================================
     // Mô hình dữ liệu
@@ -96,7 +107,7 @@ public class PhieuXuatKhoGUI extends JPanel {
     }
 
     static class Phieu {
-        String so, nhanVien, lyDo, ghiChu = "";
+        String so, maNV, nhanVien, lyDo, ghiChu = "";
         LocalDate ngay;
         TrangThai tt = TrangThai.NHAP;
         java.util.List<Dong> dong = new ArrayList<>();
@@ -105,18 +116,13 @@ public class PhieuXuatKhoGUI extends JPanel {
         long tongTien() { long t = 0; for (Dong d : dong) t += d.thanhTien(); return t; }
     }
 
-    // ===== Phụ thuộc bên ngoài =====
-    private final Supplier<java.util.List<Object[]>> catalogSupplier; // {ma, ten, donVi, giaNhap}
-    private final BiConsumer<String, Integer> stockUpdater;           // (maVT, soLuongThayDoi) - truyền số âm để trừ
-    private final Function<String, Integer> tonKho;                   // tồn hiện tại theo mã vật tư
-
     // ===== Dữ liệu & trạng thái màn hình =====
-    private final java.util.List<Phieu> all = new ArrayList<>();      // mới nhất ở đầu
+    private final java.util.List<Phieu> all = new ArrayList<>();      // mới nhất ở đầu (đọc từ CSDL)
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
     private LocalDate tuNgay, denNgay;
-    private int seq = 12;
-    private String nhanVien = "Lê Minh";
+    private String maNhanVien = null;   // mã nhân viên lập phiếu (khóa ngoại PhieuXuatKho.maNhanVien)
+    private String nhanVien = "";       // tên nhân viên lập phiếu
 
     // ===== Thành phần =====
     private JLabel lblTongPhieu, lblDaXuat, lblNhap, lblGiaTri, lblShowing;
@@ -127,18 +133,7 @@ public class PhieuXuatKhoGUI extends JPanel {
     private DefaultTableModel model;
     private boolean loading = false;
 
-    /**
-     * @param catalogSupplier danh sách vật tư hiện có: mỗi phần tử {ma, ten, donVi, giaNhap}
-     * @param stockUpdater    được gọi khi xác nhận phiếu: (mã vật tư, -số lượng xuất)
-     * @param tonKho          trả về tồn kho hiện tại của một mã vật tư
-     */
-    public PhieuXuatKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
-                        BiConsumer<String, Integer> stockUpdater,
-                        Function<String, Integer> tonKho) {
-        this.catalogSupplier = catalogSupplier;
-        this.stockUpdater = stockUpdater;
-        this.tonKho = tonKho;
-
+    public PhieuXuatKhoGUI() {
         setLayout(new BorderLayout(0, 14));
         setBackground(BG);
         setOpaque(true);
@@ -151,11 +146,312 @@ public class PhieuXuatKhoGUI extends JPanel {
         add(top, BorderLayout.NORTH);
         add(createListCard(), BorderLayout.CENTER);
 
-        loadSampleData();
+        loadDefaultNhanVien();
+        refreshData();
         reload(true);
     }
 
-    public void setNhanVien(String ten) { this.nhanVien = ten; }
+    /** Đặt nhân viên lập phiếu theo họ tên (tra mã trong bảng NhanVien). Không tìm thấy thì giữ nguyên. */
+    public void setNhanVien(String ten) {
+        if (ten == null || ten.trim().isEmpty()) return;
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT TOP 1 maNhanVien FROM NhanVien WHERE hoTen = ?")) {
+            ps.setString(1, ten.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    this.maNhanVien = rs.getString(1);
+                    this.nhanVien = ten.trim();
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Không tra được nhân viên: " + ex.getMessage());
+        }
+    }
+
+    /** Đặt nhân viên lập phiếu theo mã và tên. */
+    public void setNhanVien(String maNV, String ten) {
+        this.maNhanVien = maNV;
+        this.nhanVien = ten;
+    }
+
+    /** Nhân viên mặc định: nhân viên quản lý kho đầu tiên trong CSDL. */
+    private void loadDefaultNhanVien() {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT TOP 1 maNhanVien, hoTen FROM NhanVien " +
+                "WHERE chucVu = N'Nhân viên quản lý kho' ORDER BY maNhanVien");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                maNhanVien = rs.getString(1);
+                nhanVien = rs.getString(2);
+            }
+        } catch (SQLException ex) {
+            System.err.println("Không tải được nhân viên mặc định: " + ex.getMessage());
+        }
+    }
+
+    // =====================================================================
+    // Truy cập CSDL
+    // =====================================================================
+    private static Connection conn() throws SQLException {
+        Connection c = ConnectDB.getCon();
+        if (c == null) {
+            throw new SQLException("Không kết nối được CSDL SALALA. Hãy kiểm tra SQL Server.");
+        }
+        return c;
+    }
+
+    private void showDbError(String msg, SQLException ex) {
+        JOptionPane.showMessageDialog(this, msg + ":\n" + ex.getMessage(),
+                "Lỗi cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static void rollbackQuiet(Connection c) {
+        try { c.rollback(); } catch (SQLException ignored) { }
+    }
+
+    private static TrangThai parseTrangThai(String s) {
+        if (s == null) return TrangThai.DA_XUAT;
+        String t = s.trim();
+        if (DB_NHAP.equalsIgnoreCase(t)) return TrangThai.NHAP;
+        if (DB_DA_HUY.equalsIgnoreCase(t) || "Hủy".equalsIgnoreCase(t)) return TrangThai.DA_HUY;
+        return TrangThai.DA_XUAT; // "Đã xuất", "Hoàn thành", ...
+    }
+
+    private static String encodeGhiChu(String lyDo, String ghiChu) {
+        String ly = lyDo.replace("|", "/").trim();
+        String gc = ghiChu == null ? "" : ghiChu.trim();
+        return gc.isEmpty() ? ly : ly + GHICHU_SEP + gc;
+    }
+
+    /** Tách cột ghiChu thành {lý do, ghi chú}. */
+    private static String[] decodeGhiChu(String s) {
+        if (s == null) return new String[]{"", ""};
+        int i = s.indexOf(GHICHU_SEP);
+        if (i < 0) return new String[]{s.trim(), ""};
+        return new String[]{s.substring(0, i).trim(), s.substring(i + GHICHU_SEP.length()).trim()};
+    }
+
+    /** Nạp lại toàn bộ phiếu xuất kho và chi tiết từ CSDL vào danh sách `all`. */
+    private void refreshData() {
+        try {
+            Connection c = conn();
+            Map<String, Phieu> map = new LinkedHashMap<>();
+
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT p.maPXK, p.ngayXuat, p.ghiChu, p.trangThai, p.maNhanVien, nv.hoTen " +
+                    "FROM PhieuXuatKho p JOIN NhanVien nv ON nv.maNhanVien = p.maNhanVien " +
+                    "ORDER BY p.ngayXuat DESC, p.maPXK DESC");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Phieu p = new Phieu();
+                    p.so = rs.getString(1);
+                    Timestamp ts = rs.getTimestamp(2);
+                    p.ngay = ts == null ? LocalDate.now() : ts.toLocalDateTime().toLocalDate();
+                    String[] gc = decodeGhiChu(rs.getString(3));
+                    p.lyDo = gc[0];
+                    p.ghiChu = gc[1];
+                    p.tt = parseTrangThai(rs.getString(4));
+                    p.maNV = rs.getString(5);
+                    p.nhanVien = rs.getString(6);
+                    map.put(p.so, p);
+                }
+            }
+
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT d.maPXK, d.maVT, vt.tenVT, ISNULL(th.donViTinh, N'Cái'), d.soLuong, vt.giaNhap " +
+                    "FROM ChiTietPhieuXuatKho d " +
+                    "JOIN VatTu vt ON vt.maVT = d.maVT " +
+                    "LEFT JOIN Thuoc th ON th.maThuoc = vt.maThuoc " +
+                    "ORDER BY d.maCTPXK");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Phieu p = map.get(rs.getString(1));
+                    if (p == null) continue;
+                    p.dong.add(new Dong(rs.getString(2), rs.getString(3), rs.getString(4),
+                            rs.getBigDecimal(5).intValue(), rs.getBigDecimal(6).longValue()));
+                }
+            }
+
+            all.clear();
+            all.addAll(map.values());
+        } catch (SQLException ex) {
+            showDbError("Không tải được danh sách phiếu xuất kho", ex);
+        }
+    }
+
+    /** Danh sách vật tư hiện có: {mã, tên, đơn vị, giá nhập, tồn kho}. */
+    private java.util.List<Object[]> loadCatalog() throws SQLException {
+        java.util.List<Object[]> list = new ArrayList<>();
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT vt.maVT, vt.tenVT, ISNULL(th.donViTinh, N'Cái'), vt.giaNhap, vt.soLuongTon " +
+                "FROM VatTu vt LEFT JOIN Thuoc th ON th.maThuoc = vt.maThuoc " +
+                "ORDER BY vt.maVT");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new Object[]{rs.getString(1), rs.getString(2), rs.getString(3),
+                        rs.getBigDecimal(4).longValue(), rs.getBigDecimal(5).intValue()});
+            }
+        }
+        return list;
+    }
+
+    /** Tồn kho hiện tại của một vật tư (đọc trực tiếp từ CSDL). */
+    private int tonKho(String maVT) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT soLuongTon FROM VatTu WHERE maVT = ?")) {
+            ps.setString(1, maVT);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal(1).intValue();
+            }
+        } catch (SQLException ex) {
+            System.err.println("Không đọc được tồn kho " + maVT + ": " + ex.getMessage());
+        }
+        return 0;
+    }
+
+    /** Số thứ tự lớn nhất hiện có của mã dạng prefix + số (0 nếu chưa có). */
+    private static int maxCode(Connection c, String table, String col, String prefix) throws SQLException {
+        String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(" + col + ", ?, 20) AS INT)), 0) " +
+                     "FROM " + table + " WHERE " + col + " LIKE ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, prefix.length() + 1);
+            ps.setString(2, prefix + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    private String previewMaPhieu() {
+        try {
+            return "PXK" + String.format("%03d", maxCode(conn(), "PhieuXuatKho", "maPXK", "PXK") + 1);
+        } catch (SQLException ex) {
+            return "(tự động)";
+        }
+    }
+
+    private static void insertChiTiet(Connection c, String maPXK, java.util.List<Dong> ds) throws SQLException {
+        int n = maxCode(c, "ChiTietPhieuXuatKho", "maCTPXK", "CTPXK");
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO ChiTietPhieuXuatKho (maCTPXK, maPXK, maVT, soLuong) VALUES (?, ?, ?, ?)")) {
+            for (Dong d : ds) {
+                n++;
+                ps.setString(1, "CTPXK" + String.format("%02d", n));
+                ps.setString(2, maPXK);
+                ps.setString(3, d.ma);
+                ps.setBigDecimal(4, java.math.BigDecimal.valueOf(d.sl));
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    /** Thêm phiếu nháp mới (kèm chi tiết). Trả về mã phiếu được sinh. */
+    private String insertPhieu(Phieu p) throws SQLException {
+        Connection c = conn();
+        c.setAutoCommit(false);
+        try {
+            String ma = "PXK" + String.format("%03d", maxCode(c, "PhieuXuatKho", "maPXK", "PXK") + 1);
+            try (PreparedStatement ps = c.prepareStatement(
+                    "INSERT INTO PhieuXuatKho (maPXK, ngayXuat, ghiChu, trangThai, maNhanVien) VALUES (?, ?, ?, ?, ?)")) {
+                ps.setString(1, ma);
+                ps.setTimestamp(2, Timestamp.valueOf(p.ngay.atStartOfDay()));
+                ps.setString(3, encodeGhiChu(p.lyDo, p.ghiChu));
+                ps.setString(4, DB_NHAP);
+                ps.setString(5, p.maNV);
+                ps.executeUpdate();
+            }
+            insertChiTiet(c, ma, p.dong);
+            c.commit();
+            return ma;
+        } catch (SQLException | RuntimeException ex) {
+            rollbackQuiet(c);
+            throw ex;
+        } finally {
+            c.setAutoCommit(true);
+        }
+    }
+
+    /** Cập nhật phiếu nháp: ngày, lý do/ghi chú và toàn bộ chi tiết. */
+    private void updatePhieu(String ma, Phieu np) throws SQLException {
+        Connection c = conn();
+        c.setAutoCommit(false);
+        try {
+            int rows;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "UPDATE PhieuXuatKho SET ngayXuat = ?, ghiChu = ? WHERE maPXK = ? AND trangThai = ?")) {
+                ps.setTimestamp(1, Timestamp.valueOf(np.ngay.atStartOfDay()));
+                ps.setString(2, encodeGhiChu(np.lyDo, np.ghiChu));
+                ps.setString(3, ma);
+                ps.setString(4, DB_NHAP);
+                rows = ps.executeUpdate();
+            }
+            if (rows == 0) throw new SQLException("Phiếu " + ma + " không còn ở trạng thái Nháp.");
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM ChiTietPhieuXuatKho WHERE maPXK = ?")) {
+                ps.setString(1, ma);
+                ps.executeUpdate();
+            }
+            insertChiTiet(c, ma, np.dong);
+            c.commit();
+        } catch (SQLException | RuntimeException ex) {
+            rollbackQuiet(c);
+            throw ex;
+        } finally {
+            c.setAutoCommit(true);
+        }
+    }
+
+    /** Xác nhận xuất kho: trừ tồn từng vật tư và chuyển phiếu sang "Đã xuất" trong một giao dịch. */
+    private void confirmPhieu(Phieu p) throws SQLException {
+        Connection c = conn();
+        c.setAutoCommit(false);
+        try {
+            int rows;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "UPDATE PhieuXuatKho SET trangThai = ? WHERE maPXK = ? AND trangThai = ?")) {
+                ps.setString(1, DB_DA_XUAT);
+                ps.setString(2, p.so);
+                ps.setString(3, DB_NHAP);
+                rows = ps.executeUpdate();
+            }
+            if (rows == 0) throw new SQLException("Phiếu " + p.so + " không còn ở trạng thái Nháp.");
+
+            try (PreparedStatement ps = c.prepareStatement(
+                    "UPDATE VatTu SET soLuongTon = soLuongTon - ?, " +
+                    "trangThai = CASE WHEN soLuongTon - ? <= 0 THEN N'Hết tồn' " +
+                    "                 WHEN soLuongTon - ? <= 30 THEN N'Sắp hết' " +
+                    "                 ELSE N'Còn hàng' END " +
+                    "WHERE maVT = ? AND soLuongTon >= ?")) {
+                for (Dong d : p.dong) {
+                    java.math.BigDecimal sl = java.math.BigDecimal.valueOf(d.sl);
+                    ps.setBigDecimal(1, sl);
+                    ps.setBigDecimal(2, sl);
+                    ps.setBigDecimal(3, sl);
+                    ps.setString(4, d.ma);
+                    ps.setBigDecimal(5, sl);
+                    if (ps.executeUpdate() == 0) {
+                        throw new SQLException("Vật tư " + d.ten + " không đủ tồn kho để xuất " + d.sl + ".");
+                    }
+                }
+            }
+            c.commit();
+        } catch (SQLException | RuntimeException ex) {
+            rollbackQuiet(c);
+            throw ex;
+        } finally {
+            c.setAutoCommit(true);
+        }
+    }
+
+    private void cancelPhieu(Phieu p) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE PhieuXuatKho SET trangThai = ? WHERE maPXK = ? AND trangThai = ?")) {
+            ps.setString(1, DB_DA_HUY);
+            ps.setString(2, p.so);
+            ps.setString(3, DB_NHAP);
+            if (ps.executeUpdate() == 0) {
+                throw new SQLException("Phiếu " + p.so + " không còn ở trạng thái Nháp.");
+            }
+        }
+    }
 
     // =====================================================================
     // Header
@@ -423,51 +719,7 @@ public class PhieuXuatKhoGUI extends JPanel {
     }
 
     // =====================================================================
-    // Dữ liệu mẫu
-    // =====================================================================
-    private static Dong dong(String ma, int sl) {
-        for (Object[] v : VT_MAU) {
-            if (v[0].equals(ma)) return new Dong(ma, (String) v[1], (String) v[2], sl, (Long) v[3]);
-        }
-        throw new IllegalArgumentException(ma);
-    }
-
-    private static Phieu mau(String so, LocalDate ngay, String nv, String lyDo, TrangThai tt, Dong... ds) {
-        Phieu p = new Phieu();
-        p.so = so; p.ngay = ngay; p.nhanVien = nv; p.lyDo = lyDo; p.tt = tt;
-        for (Dong d : ds) p.dong.add(d);
-        return p;
-    }
-
-    private void loadSampleData() {
-        all.add(mau("PX0012", LocalDate.of(2026, 10, 5), "Lê Minh", "Sử dụng cho điều trị", TrangThai.NHAP,
-                dong("VT-001", 4), dong("VT-004", 1), dong("VT-006", 4)));
-        all.add(mau("PX0011", LocalDate.of(2026, 10, 5), "Võ Hoàng Nam", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-001", 6), dong("VT-005", 5)));
-        all.add(mau("PX0010", LocalDate.of(2026, 10, 4), "Phạm Ngọc Mai", "Chăm sóc thú cưng", TrangThai.DA_XUAT,
-                dong("VT-001", 2), dong("VT-003", 8)));
-        all.add(mau("PX0009", LocalDate.of(2026, 10, 4), "Lê Minh", "Sử dụng cho điều trị", TrangThai.DA_XUAT,
-                dong("VT-001", 5), dong("VT-002", 1), dong("VT-003", 2), dong("VT-004", 1)));
-        all.add(mau("PX0008", LocalDate.of(2026, 10, 3), "Trần Quốc Huy", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-001", 1), dong("VT-002", 1), dong("VT-005", 5)));
-        all.add(mau("PX0007", LocalDate.of(2026, 10, 3), "Võ Hoàng Nam", "Vật tư hư hỏng", TrangThai.DA_HUY,
-                new Dong("VT-005", "Bông y tế vô trùng", "Gói", 5, 13000)));
-        all.add(mau("PX0006", LocalDate.of(2026, 10, 2), "Đặng Thanh Trúc", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-001", 1), dong("VT-006", 5)));
-        all.add(mau("PX0005", LocalDate.of(2026, 10, 2), "Lê Minh", "Sử dụng cho điều trị", TrangThai.DA_XUAT,
-                dong("VT-001", 4), dong("VT-003", 4), dong("VT-005", 7)));
-        all.add(mau("PX0004", LocalDate.of(2026, 10, 1), "Phạm Ngọc Mai", "Chăm sóc thú cưng", TrangThai.DA_XUAT,
-                dong("VT-004", 2)));
-        all.add(mau("PX0003", LocalDate.of(2026, 10, 1), "Trần Quốc Huy", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-006", 3)));
-        all.add(mau("PX0002", LocalDate.of(2026, 9, 30), "Lê Minh", "Sử dụng cho điều trị", TrangThai.NHAP,
-                dong("VT-002", 2)));
-        all.add(mau("PX0001", LocalDate.of(2026, 9, 30), "Đặng Thanh Trúc", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-005", 10)));
-    }
-
-    // =====================================================================
-    // Lọc, phân trang, nạp bảng
+    // Lọc và nạp bảng
     // =====================================================================
     private void applyFilter() {
         String kw = txtSearch.getText().trim().toLowerCase();
@@ -483,7 +735,7 @@ public class PhieuXuatKhoGUI extends JPanel {
         }
     }
 
-    /** Tính lại bộ lọc, thống kê và hiển thị trang hiện tại. */
+    /** Tính lại bộ lọc, thống kê và hiển thị bảng (từ dữ liệu `all` đã nạp). */
     private void reload(boolean resetPage) {
         if (model == null) return;
         loading = true;
@@ -494,7 +746,7 @@ public class PhieuXuatKhoGUI extends JPanel {
             Phieu p = filtered.get(i);
             pageRows.add(p);
             model.addRow(new Object[]{p.so, p.ngay.format(DF), p.nhanVien, p.lyDo,
-                    p.dong.size(), p.tongTien(), p.tt.text, ""});
+                    p.dong.size(), p.tongTien(), p.tt.text});
         }
         lblShowing.setText(filtered.isEmpty()
                 ? "Không có phiếu xuất kho nào"
@@ -544,11 +796,22 @@ public class PhieuXuatKhoGUI extends JPanel {
     // Chức năng chính
     // =====================================================================
     private void lapPhieu() {
-        Phieu p = openEditor(null);
-        if (p != null) {
-            all.add(0, p);
-            reload(true);
+        if (maNhanVien == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Chưa xác định được nhân viên lập phiếu (không có nhân viên quản lý kho trong CSDL).",
+                    "Không thể lập phiếu", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+        Phieu p = openEditor(null);
+        if (p == null) return;
+        try {
+            insertPhieu(p);
+        } catch (SQLException ex) {
+            showDbError("Không lưu được phiếu xuất kho", ex);
+            return;
+        }
+        refreshData();
+        reload(true);
     }
 
     private void xemPhieu(Phieu p) {
@@ -562,20 +825,24 @@ public class PhieuXuatKhoGUI extends JPanel {
             return;
         }
         Phieu np = openEditor(p);
-        if (np != null) {
-            p.ngay = np.ngay;
-            p.lyDo = np.lyDo;
-            p.ghiChu = np.ghiChu;
-            p.dong = np.dong;
+        if (np == null) return;
+        try {
+            updatePhieu(p.so, np);
+        } catch (SQLException ex) {
+            showDbError("Không cập nhật được phiếu xuất kho", ex);
+            refreshData();
             reload(false);
+            return;
         }
+        refreshData();
+        reload(false);
     }
 
     /** Danh sách dòng vượt quá tồn kho hiện tại (rỗng = hợp lệ). */
     private java.util.List<String> kiemTraTon(Phieu p) {
         java.util.List<String> loi = new ArrayList<>();
         for (Dong d : p.dong) {
-            int ton = tonKho.apply(d.ma);
+            int ton = tonKho(d.ma);
             if (d.sl > ton) loi.add("• " + d.ten + ": cần xuất " + d.sl + ", tồn hiện tại " + ton);
         }
         return loi;
@@ -601,8 +868,16 @@ public class PhieuXuatKhoGUI extends JPanel {
                 "Xác nhận xuất kho", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (ok != JOptionPane.YES_OPTION) return false;
 
-        for (Dong d : p.dong) stockUpdater.accept(d.ma, -d.sl);
-        p.tt = TrangThai.DA_XUAT;
+        try {
+            confirmPhieu(p);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(parent, "Không xác nhận được phiếu xuất:\n" + ex.getMessage(),
+                    "Lỗi cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
+            refreshData();
+            reload(false);
+            return false;
+        }
+        refreshData();
         reload(false);
         JOptionPane.showMessageDialog(parent, "Đã xuất kho và cập nhật tồn kho.", "Thành công",
                 JOptionPane.INFORMATION_MESSAGE);
@@ -615,7 +890,16 @@ public class PhieuXuatKhoGUI extends JPanel {
                 "Hủy phiếu xuất " + p.so + "? Thao tác này không thể hoàn tác.",
                 "Hủy phiếu xuất", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (ok != JOptionPane.YES_OPTION) return false;
-        p.tt = TrangThai.DA_HUY;
+        try {
+            cancelPhieu(p);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(parent, "Không hủy được phiếu xuất:\n" + ex.getMessage(),
+                    "Lỗi cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
+            refreshData();
+            reload(false);
+            return false;
+        }
+        refreshData();
         reload(false);
         return true;
     }
@@ -874,9 +1158,20 @@ public class PhieuXuatKhoGUI extends JPanel {
     // =====================================================================
     // Hộp thoại lập / sửa phiếu xuất
     // =====================================================================
-    /** @param src null = lập mới; khác null = sửa. Trả về phiếu đã nhập, hoặc null nếu hủy. */
+    /** @param src null = lập mới; khác null = sửa. Trả về phiếu đã nhập (chưa lưu CSDL), hoặc null nếu hủy. */
     private Phieu openEditor(Phieu src) {
-        final java.util.List<Object[]> catalog = catalogSupplier.get();
+        final java.util.List<Object[]> catalog;
+        try {
+            catalog = loadCatalog();
+        } catch (SQLException ex) {
+            showDbError("Không tải được danh sách vật tư", ex);
+            return null;
+        }
+        if (catalog.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Kho chưa có vật tư nào để xuất.", "Không có vật tư",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return null;
+        }
         final Phieu[] result = {null};
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
@@ -884,7 +1179,7 @@ public class PhieuXuatKhoGUI extends JPanel {
                 Dialog.ModalityType.APPLICATION_MODAL);
 
         // ---- thông tin chung ----
-        JTextField txtMa = new JTextField(src == null ? String.format("PX%04d", seq + 1) : src.so);
+        JTextField txtMa = new JTextField(src == null ? previewMaPhieu() : src.so);
         txtMa.setEditable(false);
         JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.ngay).format(DF));
         JTextField txtNV = new JTextField(src == null ? nhanVien : src.nhanVien);
@@ -943,7 +1238,7 @@ public class PhieuXuatKhoGUI extends JPanel {
                     try {
                         int sl = ((Number) m.getValueAt(r, 3)).intValue();
                         long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                        int ton = tonKho.apply((String) m.getValueAt(r, 0));
+                        int ton = tonKho((String) m.getValueAt(r, 0));
                         if (sl > ton) {
                             JOptionPane.showMessageDialog(d,
                                     "Không được xuất quá tồn kho. Tồn hiện tại: " + ton, "Vượt tồn kho",
@@ -971,7 +1266,7 @@ public class PhieuXuatKhoGUI extends JPanel {
         // ---- thanh thêm vật tư ----
         JComboBox<String> cboVT = new JComboBox<>();
         for (Object[] r : catalog) {
-            cboVT.addItem(r[0] + " - " + r[1] + "  (tồn: " + tonKho.apply((String) r[0]) + ")");
+            cboVT.addItem(r[0] + " - " + r[1] + "  (tồn: " + r[4] + ")");
         }
         JSpinner spSL = new JSpinner(new SpinnerNumberModel(1, 1, 999999, 1));
         JButton btnThem = new JButton("Thêm vào phiếu");
@@ -981,7 +1276,7 @@ public class PhieuXuatKhoGUI extends JPanel {
             if (i < 0) return;
             Object[] vt = catalog.get(i);
             String ma = (String) vt[0];
-            int ton = tonKho.apply(ma);
+            int ton = tonKho(ma);
             int sl = (Integer) spSL.getValue();
             int daCo = 0, rowFound = -1;
             for (int r = 0; r < m.getRowCount(); r++) {
@@ -1043,6 +1338,13 @@ public class PhieuXuatKhoGUI extends JPanel {
                 JOptionPane.showMessageDialog(d, "Vui lòng nhập lý do xuất.", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            String ghiChu = txtGhiChu.getText().trim();
+            if (encodeGhiChu(lyDo, ghiChu).length() > GHICHU_MAX) {
+                JOptionPane.showMessageDialog(d,
+                        "Lý do và ghi chú quá dài (tối đa " + GHICHU_MAX + " ký tự gộp chung).", "Lỗi",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             if (m.getRowCount() == 0) {
                 JOptionPane.showMessageDialog(d, "Phiếu cần có ít nhất một vật tư.", "Lỗi",
                         JOptionPane.WARNING_MESSAGE);
@@ -1054,7 +1356,7 @@ public class PhieuXuatKhoGUI extends JPanel {
                 String ma = (String) m.getValueAt(r, 0);
                 int sl = ((Number) m.getValueAt(r, 3)).intValue();
                 long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                int ton = tonKho.apply(ma);
+                int ton = tonKho(ma);
                 if (sl <= 0) {
                     JOptionPane.showMessageDialog(d, "Số lượng phải > 0 (dòng " + (r + 1) + ").", "Lỗi",
                             JOptionPane.WARNING_MESSAGE);
@@ -1068,18 +1370,19 @@ public class PhieuXuatKhoGUI extends JPanel {
                 p.dong.add(new Dong(ma, (String) m.getValueAt(r, 1), (String) m.getValueAt(r, 2), sl, gia));
             }
             if (src == null) {
-                seq++;
-                p.so = String.format("PX%04d", seq);
+                p.so = null; // mã phiếu do CSDL sinh khi lưu
+                p.maNV = maNhanVien;
                 p.nhanVien = nhanVien;
                 p.tt = TrangThai.NHAP;
             } else {
                 p.so = src.so;
+                p.maNV = src.maNV;
                 p.nhanVien = src.nhanVien;
                 p.tt = src.tt;
             }
             p.ngay = ngay;
             p.lyDo = lyDo;
-            p.ghiChu = txtGhiChu.getText().trim();
+            p.ghiChu = ghiChu;
             result[0] = p;
             d.dispose();
         });
@@ -1183,8 +1486,6 @@ public class PhieuXuatKhoGUI extends JPanel {
             return panel;
         }
     }
-
-
 
     private static class Badge extends JLabel {
         private Color bg = GRAY_BG;
