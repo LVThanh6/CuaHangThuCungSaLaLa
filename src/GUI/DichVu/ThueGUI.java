@@ -185,7 +185,8 @@ public class ThueGUI extends JPanel {
                 boolean ok;
                 if (goc == null) {
                     ok = dao.createThue(thue);
-                } else {
+                } 
+                else {
                     ok = dao.updateThue(thue);
                 }
 
@@ -193,10 +194,12 @@ public class ThueGUI extends JPanel {
                     JOptionPane.showMessageDialog(dlg, "Lưu thành công!");
                     dlg.dispose();
                     taiLai(); // Load lại dữ liệu mới ngay lập tức
-                } else {
+                } 
+                else {
                     JOptionPane.showMessageDialog(dlg, "Không thể lưu thuế vào CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (NumberFormatException ex) {
+            } 
+            catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dlg, "Mức thuế phải là số hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
