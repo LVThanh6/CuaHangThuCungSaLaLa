@@ -10,13 +10,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.text.Collator;
 import java.sql.SQLException;
 import java.text.NumberFormat;
-import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,8 +30,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import dao.NhanVien_DAO;
-import entity.NhanVien_entity;
+import controller.NhanVienController;
+import entity.NhanVien.NhanVien_entity;
 
 public class NhanVienGUI extends JPanel {
 
@@ -74,7 +71,7 @@ public class NhanVienGUI extends JPanel {
     private final List<NhanVien_entity> tatCa = new ArrayList<>();
     private final List<NhanVien_entity> daLoc = new ArrayList<>();
     private final Set<String> daChon = new HashSet<>();
-    private final NhanVien_DAO dao = new NhanVien_DAO();
+    private final NhanVienController controller = new NhanVienController();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -424,57 +421,21 @@ public class NhanVienGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        int dang = 0, ngung = 0, chuaTk = 0;
-        for (NhanVien_entity nv : tatCa) {
-            switch (TrangThai.tuEntity(nv)) {
-                case DANG_LAM:
-                    dang++;
-                    break;
-                case NGUNG:
-                    ngung++;
-                    break;
-                default:
-                    chuaTk++;
-            }
-        }
-        lblSoLieu[0].setText(String.valueOf(tatCa.size()));
-        lblSoLieu[1].setText(String.valueOf(dang));
-        lblSoLieu[2].setText(String.valueOf(ngung));
-        lblSoLieu[3].setText(String.valueOf(chuaTk));
+        NhanVienController.ThongKe thongKe = controller.thongKe(tatCa);
+        lblSoLieu[0].setText(String.valueOf(thongKe.tongSo));
+        lblSoLieu[1].setText(String.valueOf(thongKe.dangLam));
+        lblSoLieu[2].setText(String.valueOf(thongKe.ngung));
+        lblSoLieu[3].setText(String.valueOf(thongKe.chuaTaiKhoan));
     }
 
     private void apDungLoc() {
-        String tu = boDau(txtTim.getText().trim());
-        String tuSo = tu.replace(" ", "");
         int vt = cbVaiTro.getSelectedIndex();
         int tt = cbTrangThai.getSelectedIndex();
-
+        String role = vt == 0 ? null : CHUC_VU[vt - 1];
+        String status = tt == 0 ? null : TrangThai.values()[tt - 1].name();
         daLoc.clear();
-        for (NhanVien_entity nv : tatCa) {
-            if (vt > 0 && !CHUC_VU[vt - 1].equals(nv.getChucVu()))
-                continue;
-            if (tt > 0 && TrangThai.tuEntity(nv) != TrangThai.values()[tt - 1])
-                continue;
-            if (!tu.isEmpty()
-                    && !boDau(nv.getHoTen()).contains(tu)
-                    && !boDau(nv.getMaNhanVien()).contains(tu)
-                    && !boDau(nz(nv.getDiaChi())).contains(tu)
-                    && !nz(nv.getSdt()).replace(" ", "").contains(tuSo))
-                continue;
-            daLoc.add(nv);
-        }
-
-        if (sapXepTang != null) {
-            Collator cl = Collator.getInstance(VN);
-            boolean tang = sapXepTang;
-            daLoc.sort((a, b) -> {
-                int kq = cl.compare(tenGoi(a.getHoTen()), tenGoi(b.getHoTen()));
-                if (kq == 0)
-                    kq = cl.compare(a.getHoTen(), b.getHoTen());
-                return tang ? kq : -kq;
-            });
-        }
-
+        daLoc.addAll(controller.locDanhSach(tatCa, txtTim.getText(), role, status,
+                sapXepTang != null, Boolean.TRUE.equals(sapXepTang)));
         capNhatBang();
     }
 
@@ -507,16 +468,6 @@ public class NhanVienGUI extends JPanel {
         }
         model.fireTableDataChanged();
         bang.getTableHeader().repaint();
-    }
-
-    private static String boDau(String s) {
-        String t = Normalizer.normalize(s.toLowerCase(VN), Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return t.replace('đ', 'd');
-    }
-
-    private static String tenGoi(String ten) {
-        int i = ten.lastIndexOf(' ');
-        return i < 0 ? ten : ten.substring(i + 1);
     }
 
     private void baoLoi(String tieuDe, SQLException ex) {
@@ -561,7 +512,7 @@ public class NhanVienGUI extends JPanel {
         if (nv.getMaTK() == null)
             return;
         try {
-            dao.doiTrangThaiTaiKhoan(nv.getMaNhanVien(), trangThai == TrangThai.DANG_LAM);
+            controller.doiTrangThai(nv.getMaNhanVien(), trangThai == TrangThai.DANG_LAM);
             taiLai();
         } catch (SQLException ex) {
             baoLoi("Không thể đổi trạng thái", ex);
@@ -576,18 +527,22 @@ public class NhanVienGUI extends JPanel {
         if (kq != JOptionPane.YES_OPTION)
             return;
         try {
-            dao.xoa(nv.getMaNhanVien());
-            daChon.remove(nv.getMaNhanVien());
-            taiLai();
-        } catch (SQLException ex) {
-            if (ex.getErrorCode() == 547) {
+            NhanVienController.KetQuaXoa result = controller.xoa(nv.getMaNhanVien());
+            if (result.coDuLieuLienQuan) {
                 JOptionPane.showMessageDialog(this,
                         "Nhân viên này đã có dữ liệu liên quan (lịch làm việc, lịch hẹn, hóa đơn, phiếu kho...)\n"
                                 + "nên không thể xóa. Hãy chuyển sang \"Ngừng hoạt động\" thay vì xóa.",
                         "Không thể xóa", JOptionPane.WARNING_MESSAGE);
-            } else {
-                baoLoi("Không thể xóa nhân viên", ex);
+                return;
             }
+            if (!result.thanhCong) {
+                JOptionPane.showMessageDialog(this, "Không thể xóa nhân viên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            daChon.remove(nv.getMaNhanVien());
+            taiLai();
+        } catch (SQLException ex) {
+            baoLoi("Không thể xóa nhân viên", ex);
         }
     }
 
@@ -603,7 +558,7 @@ public class NhanVienGUI extends JPanel {
     private void moForm(NhanVien_entity goc, boolean chiXem) {
         String maHienThi;
         if (goc == null) {
-            try { maHienThi = dao.getMaTiepTheo(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
+            try { maHienThi = controller.taoMaMoi(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
         } else {
             maHienThi = goc.getMaNhanVien();
         }
@@ -636,7 +591,14 @@ public class NhanVienGUI extends JPanel {
             if (coTK) cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
         
-        txtTongLuong.setText(tinhTongLuongThang(goc));
+        try {
+            double totalSalary = controller.tinhTongLuongThang(goc, LocalDate.now());
+            txtTongLuong.setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : dinhDangTien(totalSalary));
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Không thể tính tổng lương tháng: " + ex.getMessage(),
+                    "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            txtTongLuong.setText("Không thể tính");
+        }
         txtMa.setEditable(false);
         txtTongLuong.setEditable(false);
         cbTT.setEnabled(coTK && !chiXem);
@@ -711,38 +673,13 @@ public class NhanVienGUI extends JPanel {
         JButton btnLuu = new JButton("Lưu thay đổi");
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
-            String ten = txtTen.getText().trim();
-            String sdt = txtSdt.getText().replaceAll("\\s", "");
-            String ngayStr = txtNgay.getText().trim();
-            String loi = null;
-            LocalDate ngay = null;
-
-            if (ten.isEmpty()) loi = "Vui lòng nhập họ và tên.";
-            else if (!sdt.matches("0\\d{9}")) loi = "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.";
-            else if (!ngayStr.isEmpty()) {
-                try {
-                    ngay = LocalDate.parse(ngayStr, DINH_DANG_NGAY);
-                    if (ngay.isAfter(LocalDate.now())) loi = "Ngày sinh không được ở tương lai.";
-                } catch (DateTimeParseException ex) { loi = "Ngày sinh không hợp lệ (dd/MM/yyyy)."; }
-            }
-            
-            if (loi != null) { lblLoi.setText(loi); return; }
-
-            double luong = 0;
             try {
-                luong = Double.parseDouble(txtLuong.getText().replaceAll("[.,\\s]", ""));
-                if (luong < 0) { lblLoi.setText("Lương cơ bản không được âm."); return; }
-            } catch (NumberFormatException ex) { lblLoi.setText("Lương cơ bản không hợp lệ."); return; }
-
-            try {
-                if (goc == null) {
-                    dao.them(new NhanVien_entity(txtMa.getText(), null, ten, (String) cbChucVu.getSelectedItem(), sdt, txtDiaChi.getText().trim(), ngay, (String) cbGT.getSelectedItem(), luong, null));
-                } else {
-                    dao.capNhat(new NhanVien_entity(goc.getMaNhanVien(), goc.getMaTK(), ten, (String) cbChucVu.getSelectedItem(), sdt, txtDiaChi.getText().trim(), ngay, (String) cbGT.getSelectedItem(), luong, goc.getTrangThaiTK()));
-                    if (coTK && cbTT.getSelectedIndex() == 0 != Boolean.TRUE.equals(goc.getTrangThaiTK())) {
-                        dao.doiTrangThaiTaiKhoan(goc.getMaNhanVien(), cbTT.getSelectedIndex() == 0);
-                    }
-                }
+                boolean capNhatTrangThai = coTK && (cbTT.getSelectedIndex() == 0) != Boolean.TRUE.equals(goc.getTrangThaiTK());
+                NhanVienController.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
+                        txtTen.getText(), txtSdt.getText(), txtDiaChi.getText(), txtNgay.getText(),
+                        (String) cbGT.getSelectedItem(), (String) cbChucVu.getSelectedItem(),
+                        txtLuong.getText(), capNhatTrangThai, cbTT.getSelectedIndex() == 0);
+                if (!result.isThanhCong()) { lblLoi.setText(result.getThongBaoLoi()); return; }
             } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
             dlg.dispose(); taiLai();
         });
@@ -778,60 +715,15 @@ public class NhanVienGUI extends JPanel {
      * lương chức vụ phân bổ theo số ngày đã qua trong tháng + hoa hồng 5% dịch vụ
      * (nhân viên dịch vụ). Quản lý chưa tính lương.
      */
-    private String tinhTongLuongThang(NhanVien_entity nv) {
-        if (nv == null) {
-            return "Chưa áp dụng";
-        }
-        LocalDate homNay = LocalDate.now();
-        LocalDate dauThang = homNay.withDayOfMonth(1);
-        String chucVu = nz(nv.getChucVu());
-        double luongCoBanGoc = nv.getLuongCoBan();
-        double luongCoBan = 0;
-
-        if ("Nhân viên bán hàng".equals(chucVu) || "Nhân viên dịch vụ".equals(chucVu)) {
-            double soGio = 0;
-            try {
-                soGio = dao.getSoGioLamViecCuaNhanVien(nv.getMaNhanVien(), dauThang, homNay);
-            } catch (SQLException ex) {
-                soGio = 0;
-            }
-            luongCoBan = soGio * luongCoBanGoc;
-        } else {
-            luongCoBan = luongCoBanGoc * homNay.getDayOfMonth() / homNay.lengthOfMonth();
-        }
-
-        double hoaHong = 0;
-        if ("Nhân viên dịch vụ".equals(chucVu)) {
-            try {
-                hoaHong = dao.getDoanhThuDichVuCuaNhanVien(nv.getMaNhanVien(), dauThang, homNay) * 0.05;
-            } catch (SQLException ex) {
-                hoaHong = 0;
-            }
-        }
-        return dinhDangTien(luongCoBan + hoaHong);
-    }
-
     private void xuatCsv() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new File("danh_sach_nhan_vien.csv"));
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
 
-        StringBuilder sb = new StringBuilder("\uFEFF");
-        sb.append(
-                "Mã nhân viên,Họ và tên,Chức vụ,Số điện thoại,Địa chỉ,Ngày sinh,Giới tính,Trạng thái tài khoản\n");
-        for (NhanVien_entity nv : daLoc) {
-            sb.append(csv(nv.getMaNhanVien())).append(',')
-                    .append(csv(nz(nv.getHoTen()))).append(',')
-                    .append(csv(nz(nv.getChucVu()))).append(',')
-                    .append(csv("'" + nz(nv.getSdt()).replace(" ", ""))).append(',')
-                    .append(csv(nz(nv.getDiaChi()))).append(',')
-                    .append(csv(nv.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(nv.getNgaySinh()))).append(',')
-                    .append(csv(nz(nv.getGioiTinh()))).append(',')
-                    .append(csv(TrangThai.tuEntity(nv).nhan)).append('\n');
-        }
+        String csv = controller.taoNoiDungCsv(daLoc);
         try {
-            Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), csv.getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + daLoc.size() + " nhân viên.",
                     "Xuất danh sách", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -840,13 +732,9 @@ public class NhanVienGUI extends JPanel {
         }
     }
 
-    private static String csv(String s) {
-        return "\"" + s.replace("\"", "\"\"") + "\"";
-    }
-
     private void taiLai() {
         try {
-            List<NhanVien_entity> ds = dao.getAll();
+            List<NhanVien_entity> ds = controller.taiDanhSach();
             tatCa.clear();
             tatCa.addAll(ds);
             Set<String> maHienCo = new HashSet<>();

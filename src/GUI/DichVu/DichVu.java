@@ -1,26 +1,24 @@
 package GUI.DichVu;
 
-import dao.DichVu_DAO;
-import entity.DichVu_entity;
+import controller.DichVuController;
+import controller.DichVuController.DichVuData;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
 /**
- * Giao diện "Danh sách dịch vụ" kết nối CSDL SALALA thật qua DichVu_DAO.
+ * Giao diện "Danh sách dịch vụ" hiển thị danh mục SALALA thông qua controller.
  */
 public class DichVu extends JPanel {
 
@@ -33,30 +31,12 @@ public class DichVu extends JPanel {
         return new Font("Segoe UI", dam ? Font.BOLD : Font.PLAIN, size);
     }
 
-    // ===== DAO =====
-    private final DichVu_DAO dvDAO = new DichVu_DAO();
+    private final DichVuController controller = new DichVuController();
 
     // ===== Dữ liệu hiển thị =====
-    public static class DV {
-        public String ma, ten, nhom, moTa;
-        public int phut;
-        public long gia;
-        public boolean bat;
-
-        public DV(String ma, String ten, String nhom, String moTa, int phut, long gia, boolean bat) {
-            this.ma = ma;
-            this.ten = ten;
-            this.nhom = nhom;
-            this.moTa = moTa;
-            this.phut = phut;
-            this.gia = gia;
-            this.bat = bat;
-        }
-    }
-
-    private final List<DV> tatCa = new ArrayList<>();   // toàn bộ dịch vụ lấy từ DB
-    private List<DV> loc = new ArrayList<>();           // sau khi tìm kiếm/lọc
-    private List<DV> hienTai = new ArrayList<>();
+    private final List<DichVuData> tatCa = new ArrayList<>();
+    private List<DichVuData> loc = new ArrayList<>();
+    private List<DichVuData> hienTai = new ArrayList<>();
     private boolean dangNap = false;
 
     // ===== Thành phần giao diện =====
@@ -90,35 +70,9 @@ public class DichVu extends JPanel {
     // ==========================================
     public void napDuLieuTuDatabase() {
         tatCa.clear();
-        ArrayList<DichVu_entity> ds = dvDAO.getAllDichVu();
-        for (DichVu_entity e : ds) {
-            int phut = 30;
-            if (e.getThoiGian() != null) {
-                phut = e.getThoiGian().getHour() * 60 + e.getThoiGian().getMinute();
-                if (phut <= 0) phut = 30;
-            }
-            long gia = Math.round(e.getGiaDV());
-            boolean bat = e.getTrangThai() != null && 
-                    (e.getTrangThai().equalsIgnoreCase("Đang áp dụng") || 
-                     e.getTrangThai().equalsIgnoreCase("Đang cung cấp"));
-
-            String nhom = xacDinhNhom(e.getTenDV());
-            tatCa.add(new DV(e.getMaDV(), e.getTenDV(), nhom, e.getMoTa() == null ? "" : e.getMoTa(), phut, gia, bat));
-        }
-
+        tatCa.addAll(controller.load());
         napNhom();
         napLai(false);
-    }
-
-    private String xacDinhNhom(String tenDV) {
-        if (tenDV == null) return "Dịch vụ chung";
-        String lower = tenDV.toLowerCase();
-        if (lower.contains("tắm")) return "Tắm & Vệ sinh";
-        if (lower.contains("cắt") || lower.contains("tỉa") || lower.contains("lông")) return "Cắt tỉa & Tạo kiểu";
-        if (lower.contains("tiêm") || lower.contains("phòng") || lower.contains("dại")) return "Tiêm phòng";
-        if (lower.contains("khám") || lower.contains("chẩn đoán")) return "Khám bệnh";
-        if (lower.contains("răng") || lower.contains("tai") || lower.contains("móng")) return "Chăm sóc sức khỏe";
-        return "Dịch vụ chung";
     }
 
     // ==========================================
@@ -136,19 +90,9 @@ public class DichVu extends JPanel {
         JButton btnThem = nut("+  Thêm dịch vụ", true);
         btnThem.setPreferredSize(new Dimension(142, 40));
         btnThem.addActionListener(e -> {
-            String maTiepTheo = dvDAO.getMaTiepTheo();
-            DV moi = new DV(maTiepTheo, "", "Dịch vụ chung", "", 30, 0, true);
+            DichVuData moi = new DichVuData(controller.nextCode(), "", "Dịch vụ chung", "", 30, 0, true);
             if (hopThoai(moi, "Thêm dịch vụ mới", true)) {
-                LocalTime thoiGian = LocalTime.of(moi.phut / 60, moi.phut % 60);
-                DichVu_entity dvMoi = new DichVu_entity(
-                        moi.ma,
-                        moi.ten,
-                        moi.moTa,
-                        moi.gia,
-                        thoiGian,
-                        moi.bat ? "Đang áp dụng" : "Tạm ẩn"
-                );
-                if (dvDAO.createDichVu(dvMoi)) {
+                if (controller.create(moi)) {
                     JOptionPane.showMessageDialog(this, "Đã thêm dịch vụ " + moi.ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                     napDuLieuTuDatabase();
                 } else {
@@ -188,16 +132,14 @@ public class DichVu extends JPanel {
     }
 
     private void capNhatThongKe() {
-        long dang = tatCa.stream().filter(d -> d.bat).count();
-        long tong = tatCa.size();
-        long tb = tong == 0 ? 0 : Math.round(tatCa.stream().mapToLong(d -> d.gia).average().orElse(0));
-        giaTri[0].setText("" + tong);
-        phu[0].setText(tatCa.stream().map(d -> d.nhom).distinct().count() + " nhóm dịch vụ");
-        giaTri[1].setText("" + dang);
-        phu[1].setText(String.format("%.1f%% danh mục", tong == 0 ? 0 : dang * 100.0 / tong).replace('.', ','));
-        giaTri[2].setText("" + (tong - dang));
+        DichVuController.Statistics stats = controller.statistics(tatCa);
+        giaTri[0].setText("" + stats.total);
+        phu[0].setText(stats.categoryCount + " nhóm dịch vụ");
+        giaTri[1].setText("" + stats.active);
+        phu[1].setText(String.format("%.1f%% danh mục", stats.total == 0 ? 0 : stats.active * 100.0 / stats.total).replace('.', ','));
+        giaTri[2].setText("" + stats.inactive);
         phu[2].setText("Không nhận lịch mới");
-        giaTri[3].setText(dinhDangGia(tb));
+        giaTri[3].setText(dinhDangGia(stats.averagePrice));
         phu[3].setText("Theo bảng giá hiện tại");
     }
 
@@ -234,18 +176,9 @@ public class DichVu extends JPanel {
         btnChinhSua.setPreferredSize(new Dimension(100, 38));
         btnChinhSua.setEnabled(false);
         btnChinhSua.addActionListener(e -> {
-            DV d = dichVuDaChon();
+            DichVuData d = dichVuDaChon();
             if (d != null && hopThoai(d, "Sửa thông tin dịch vụ", false)) {
-                LocalTime thoiGian = LocalTime.of(d.phut / 60, d.phut % 60);
-                DichVu_entity dvCapNhat = new DichVu_entity(
-                        d.ma,
-                        d.ten,
-                        d.moTa,
-                        d.gia,
-                        thoiGian,
-                        d.bat ? "Đang áp dụng" : "Tạm ẩn"
-                );
-                if (dvDAO.updateDichVu(dvCapNhat)) {
+                if (controller.update(d)) {
                     JOptionPane.showMessageDialog(this, "Đã cập nhật dịch vụ " + d.ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                     napDuLieuTuDatabase();
                 } else {
@@ -258,7 +191,7 @@ public class DichVu extends JPanel {
         btnThietLapGia.setPreferredSize(new Dimension(120, 38));
         btnThietLapGia.setEnabled(false);
         btnThietLapGia.addActionListener(e -> {
-            DV d = dichVuDaChon();
+            DichVuData d = dichVuDaChon();
             if (d != null) datGia(d);
         });
 
@@ -267,7 +200,7 @@ public class DichVu extends JPanel {
         btnXoa.setForeground(DO);
         btnXoa.setEnabled(false);
         btnXoa.addActionListener(e -> {
-            DV d = dichVuDaChon();
+            DichVuData d = dichVuDaChon();
             if (d != null) xoa(d);
         });
 
@@ -335,11 +268,10 @@ public class DichVu extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 int r = table.rowAtPoint(e.getPoint()), c = table.columnAtPoint(e.getPoint());
                 if (r < 0 || r >= hienTai.size()) return;
-                DV d = hienTai.get(r);
+                DichVuData d = hienTai.get(r);
                 if (c == 6) {
                     boolean batMoi = !d.bat;
-                    String ttMoi = batMoi ? "Đang áp dụng" : "Tạm ẩn";
-                    if (dvDAO.updateTrangThai(d.ma, ttMoi)) {
+                    if (controller.updateStatus(d.ma, batMoi)) {
                         d.bat = batMoi;
                         napLai(true);
                     } else {
@@ -378,17 +310,13 @@ public class DichVu extends JPanel {
         String nhom = (String) cboNhom.getSelectedItem();
         int tt = cboTrangThai.getSelectedIndex(); // 0: tất cả, 1: đang cung cấp, 2: tạm ẩn
 
-        loc = tatCa.stream()
-                .filter(d -> (d.ma + " " + d.ten + " " + d.moTa).toLowerCase().contains(tu))
-                .filter(d -> nhom == null || nhom.equals("Tất cả") || nhom.equals(d.nhom))
-                .filter(d -> tt == 0 || (tt == 1 && d.bat) || (tt == 2 && !d.bat))
-                .collect(Collectors.toList());
+        loc = controller.filter(tatCa, tu, nhom, tt);
 
         hienTai = loc;
 
         table.clearSelection();
         model.setRowCount(0);
-        for (DV d : hienTai)
+        for (DichVuData d : hienTai)
             model.addRow(new Object[] { d.ma, d, d.moTa, d.phut + " phút", dinhDangGia(d.gia), d, d });
 
         lblThongTin.setText(loc.isEmpty() ? "Không có dịch vụ phù hợp"
@@ -397,7 +325,7 @@ public class DichVu extends JPanel {
         capNhatNutThaoTac();
     }
 
-    private DV dichVuDaChon() {
+    private DichVuData dichVuDaChon() {
         if (table == null || table.getSelectedRowCount() != 1) return null;
         int r = table.getSelectedRow();
         return r >= 0 && r < hienTai.size() ? hienTai.get(r) : null;
@@ -415,7 +343,7 @@ public class DichVu extends JPanel {
         Object chon = cboNhom.getSelectedItem();
         cboNhom.removeAllItems();
         cboNhom.addItem("Tất cả");
-        new LinkedHashSet<>(tatCa.stream().map(d -> d.nhom).collect(Collectors.toList())).forEach(cboNhom::addItem);
+        controller.categories(tatCa).forEach(cboNhom::addItem);
         cboNhom.setSelectedItem(chon != null ? chon : "Tất cả");
         if (cboNhom.getSelectedItem() == null) cboNhom.setSelectedIndex(0);
         dangNap = false;
@@ -424,7 +352,7 @@ public class DichVu extends JPanel {
     // ==========================================
     // CÁC THAO TÁC: THÊM / SỬA / ĐẶT GIÁ / XÓA / XUẤT CSV
     // ==========================================
-    private boolean hopThoai(DV d, String tieuDe, boolean laThemMoi) {
+    private boolean hopThoai(DichVuData d, String tieuDe, boolean laThemMoi) {
         JTextField txtMa = new JTextField(d.ma);
         txtMa.setEditable(false);
         JTextField ten = new JTextField(d.ten);
@@ -445,66 +373,48 @@ public class DichVu extends JPanel {
 
         while (JOptionPane.showConfirmDialog(this, form, tieuDe, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             try {
-                int p = Integer.parseInt(phut.getText().trim());
-                long g = Long.parseLong(gia.getText().trim().replaceAll("[^0-9]", ""));
-                if (ten.getText().isBlank()) {
-                    JOptionPane.showMessageDialog(this, "Tên dịch vụ không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    continue;
-                }
-                if (p <= 0 || g < 0) {
-                    JOptionPane.showMessageDialog(this, "Thời gian thực hiện phải > 0 và giá dịch vụ phải >= 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    continue;
-                }
-                d.ma = txtMa.getText().trim();
-                d.ten = ten.getText().trim();
-                d.moTa = mo.getText().trim();
-                d.phut = p;
-                d.gia = g;
-                d.bat = "Đang áp dụng".equals(cboTrangThaiDialog.getSelectedItem());
+                DichVuData parsed = controller.parseForm(txtMa.getText(), ten.getText(), mo.getText(),
+                        phut.getText(), gia.getText(), "Đang áp dụng".equals(cboTrangThaiDialog.getSelectedItem()));
+                d.ma = parsed.ma;
+                d.ten = parsed.ten;
+                d.nhom = parsed.nhom;
+                d.moTa = parsed.moTa;
+                d.phut = parsed.phut;
+                d.gia = parsed.gia;
+                d.bat = parsed.bat;
                 return true;
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Thời gian hoặc giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
         return false;
     }
 
-    private void datGia(DV d) {
+    private void datGia(DichVuData d) {
         String s = JOptionPane.showInputDialog(this, "Giá mới cho \"" + d.ten + "\" (VNĐ):", d.gia);
         if (s == null) return;
         try {
-            long giaMoi = Long.parseLong(s.replaceAll("[^0-9]", ""));
-            if (giaMoi < 0) throw new NumberFormatException();
-            
-            LocalTime thoiGian = LocalTime.of(d.phut / 60, d.phut % 60);
-            DichVu_entity dvCapNhat = new DichVu_entity(
-                    d.ma,
-                    d.ten,
-                    d.moTa,
-                    giaMoi,
-                    thoiGian,
-                    d.bat ? "Đang áp dụng" : "Tạm ẩn"
-            );
-            if (dvDAO.updateDichVu(dvCapNhat)) {
+            long giaMoi = controller.parsePrice(s);
+            if (controller.updatePrice(d, giaMoi)) {
                 d.gia = giaMoi;
                 JOptionPane.showMessageDialog(this, "Đã cập nhật giá dịch vụ thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 napDuLieuTuDatabase();
             } else {
                 JOptionPane.showMessageDialog(this, "Không thể cập nhật giá trong cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void xoa(DV d) {
+    private void xoa(DichVuData d) {
         int xacNhan = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc muốn xóa dịch vụ \"" + d.ten + "\" (" + d.ma + ") khỏi cơ sở dữ liệu?",
                 "Xác nhận xóa",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
         if (xacNhan == JOptionPane.YES_OPTION) {
-            if (dvDAO.deleteDichVu(d.ma)) {
+            if (controller.delete(d.ma)) {
                 JOptionPane.showMessageDialog(this, "Đã xóa dịch vụ " + d.ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 napDuLieuTuDatabase();
             } else {
@@ -520,14 +430,10 @@ public class DichVu extends JPanel {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new File("danh_sach_dich_vu.csv"));
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        StringBuilder sb = new StringBuilder("\uFEFFMã,Tên,Nhóm,Mô tả,Phút,Giá,Trạng thái\n");
-        for (DV d : loc)
-            sb.append(String.format("%s,\"%s\",\"%s\",\"%s\",%d,%d,%s\n", d.ma, d.ten, d.nhom, d.moTa, d.phut, d.gia,
-                    d.bat ? "Đang áp dụng" : "Tạm ẩn"));
         try {
-            Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), controller.toCsv(loc).getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Xuất file CSV thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Không ghi được file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -547,8 +453,8 @@ public class DichVu extends JPanel {
                 l.setBorder(new EmptyBorder(0, 10, 0, 14));
                 return o(l, nen);
             }
-            if (!(v instanceof DV)) return o(nhan(String.valueOf(v), 13, false, CHU), nen);
-            DV d = (DV) v;
+            if (!(v instanceof DichVuData)) return o(nhan(String.valueOf(v), 13, false, CHU), nen);
+            DichVuData d = (DichVuData) v;
             JPanel p = new JPanel(new GridBagLayout());
             p.setBackground(nen);
             GridBagConstraints g = new GridBagConstraints();

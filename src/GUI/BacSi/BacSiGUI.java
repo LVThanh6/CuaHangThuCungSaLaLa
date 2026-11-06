@@ -10,18 +10,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.text.Collator;
-import java.text.Normalizer;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.time.temporal.TemporalAdjusters;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -33,12 +29,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import dao.BacSi_DAO;
-import dao.ChuyenNganh_DAO;
-import dao.LichLamViec_DAO;
-import entity.ChuyenNganh_entity;
-import entity.BacSi_entity;
-import entity.LichLamViec_entity;
+import controller.BacSiController;
+import entity.BacSi.ChuyenNganh_entity;
+import entity.BacSi.BacSi_entity;
+import entity.LichHen.LichLamViec_entity;
 
 /**
  * Class BacSiGUI: Màn hình "Danh sách bác sĩ" kết nối CSDL SALALA.
@@ -78,11 +72,10 @@ public class BacSiGUI extends JPanel {
 
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu")
             .withResolverStyle(ResolverStyle.STRICT);
-    private static final Locale VN = Locale.forLanguageTag("vi-VN");
 
     private final List<BacSi_entity> tatCa = new ArrayList<>();
     private final List<BacSi_entity> daLoc = new ArrayList<>();
-    private final BacSi_DAO dao = new BacSi_DAO();
+    private final BacSiController controller = new BacSiController();
     private int cotSapXep = -1;
     private boolean sapXepTang = true;
     private int tongNhanVien = 0;
@@ -473,61 +466,23 @@ public class BacSiGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        int dang = 0, tam = 0, soCa = 0;
-        for (BacSi_entity bs : tatCa) {
-            TrangThai tt = TrangThai.tuEntity(bs);
-            if (tt == TrangThai.DANG_LAM)
-                dang++;
-            else if (tt == TrangThai.TAM_NGHI)
-                tam++;
-            soCa += bs.getSoCaKham();
-        }
-        lblSo[0].setText(String.valueOf(tatCa.size()));
-        lblSo[1].setText(String.valueOf(dang));
-        lblSo[2].setText(String.valueOf(tam));
-        lblSo[3].setText(String.valueOf(soCa));
+        BacSiController.ThongKe thongKe = controller.thongKe(tatCa);
+        lblSo[0].setText(String.valueOf(thongKe.tongSo));
+        lblSo[1].setText(String.valueOf(thongKe.dangLam));
+        lblSo[2].setText(String.valueOf(thongKe.tamNghi));
+        lblSo[3].setText(String.valueOf(thongKe.soCa));
         lblMo[0].setText("Thuộc " + tongNhanVien + " nhân viên");
         lblMo[3].setText("Tháng " + DateTimeFormatter.ofPattern("MM/yyyy").format(LocalDate.now()));
     }
 
     private void apDungLoc() {
-        String tu = boDau(txtTim.getText().trim());
-        String tuSo = tu.replace(" ", "");
         int cn = cbChuyenNganh.getSelectedIndex();
         int tt = cbTrangThai.getSelectedIndex();
         String tenCnChon = cn > 0 ? (String) cbChuyenNganh.getSelectedItem() : null;
-
+        String trangThai = tt == 0 ? null : TrangThai.values()[tt - 1].name();
         daLoc.clear();
-        for (BacSi_entity bs : tatCa) {
-            if (cn > 0 && tenCnChon != null && !tenCnChon.equals(bs.getChuyenNganh() != null ? bs.getChuyenNganh().getTenChuyenNganh() : null))
-                continue;
-            if (tt > 0 && TrangThai.tuEntity(bs) != TrangThai.values()[tt - 1])
-                continue;
-            if (!tu.isEmpty()
-                    && !boDau(nz(bs.getHoTen())).contains(tu)
-                    && !boDau(nz(bs.getMaBacSi())).contains(tu)
-                    && !nz(bs.getSdt()).replace(" ", "").contains(tuSo))
-                continue;
-            daLoc.add(bs);
-        }
-
-        if (cotSapXep >= 0) {
-            Collator cl = Collator.getInstance(VN);
-            boolean tang = sapXepTang;
-            int cot = cotSapXep;
-            daLoc.sort((a, b) -> {
-                int kq;
-                if (cot == COT_SO_CA) {
-                    kq = Integer.compare(a.getSoCaKham(), b.getSoCaKham());
-                } else {
-                    kq = cl.compare(tenGoi(a.getHoTen()), tenGoi(b.getHoTen()));
-                    if (kq == 0)
-                        kq = cl.compare(a.getHoTen(), b.getHoTen());
-                }
-                return tang ? kq : -kq;
-            });
-        }
-
+        daLoc.addAll(controller.locDanhSach(tatCa, txtTim.getText(), tenCnChon, trangThai,
+                cotSapXep, sapXepTang));
         capNhatBang();
     }
 
@@ -538,16 +493,6 @@ public class BacSiGUI extends JPanel {
                 ? "Không có bác sĩ phù hợp"
                 : "Hiển thị tất cả " + tong + " bác sĩ");
         bang.getTableHeader().repaint();
-    }
-
-    private static String boDau(String s) {
-        String t = Normalizer.normalize(s.toLowerCase(VN), Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return t.replace('đ', 'd');
-    }
-
-    private static String tenGoi(String ten) {
-        int i = ten.lastIndexOf(' ');
-        return i < 0 ? ten : ten.substring(i + 1);
     }
 
     private void baoLoi(String tieuDe, SQLException ex) {
@@ -610,7 +555,7 @@ public class BacSiGUI extends JPanel {
 
     private void doiTrangThai(BacSi_entity bs, TrangThai t) {
         try {
-            dao.doiTrangThaiTaiKhoan(bs.getMaBacSi(), t == TrangThai.DANG_LAM);
+            controller.doiTrangThai(bs.getMaBacSi(), t == TrangThai.DANG_LAM);
             taiLai();
         } catch (SQLException ex) {
             baoLoi("Không thể đổi trạng thái", ex);
@@ -624,17 +569,21 @@ public class BacSiGUI extends JPanel {
         if (kq != JOptionPane.YES_OPTION)
             return;
         try {
-            dao.xoa(bs.getMaBacSi());
-            taiLai();
-        } catch (SQLException ex) {
-            if (ex.getErrorCode() == 547) {
+            BacSiController.KetQuaXoa result = controller.xoa(bs.getMaBacSi());
+            if (result.coDuLieuLienQuan) {
                 JOptionPane.showMessageDialog(this,
                         "Bác sĩ này đã có hồ sơ khám hoặc đơn thuốc liên quan\n"
                                 + "nên không thể xóa. Hãy chuyển sang \"Tạm nghỉ\" thay vì xóa.",
                         "Không thể xóa", JOptionPane.WARNING_MESSAGE);
-            } else {
-                baoLoi("Không thể xóa bác sĩ", ex);
+                return;
             }
+            if (!result.thanhCong) {
+                JOptionPane.showMessageDialog(this, "Không thể xóa bác sĩ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            taiLai();
+        } catch (SQLException ex) {
+            baoLoi("Không thể xóa bác sĩ", ex);
         }
     }
 
@@ -650,7 +599,7 @@ public class BacSiGUI extends JPanel {
     private void moForm(BacSi_entity goc, boolean chiXem) {
         String maHienThi;
         if (goc == null) {
-            try { maHienThi = dao.getMaTiepTheo(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
+            try { maHienThi = controller.taoMaMoi(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
         } else {
             maHienThi = goc.getMaBacSi();
         }
@@ -696,7 +645,7 @@ public class BacSiGUI extends JPanel {
                 String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành", JOptionPane.QUESTION_MESSAGE);
                 if (tenMoi != null && !tenMoi.isBlank()) {
                     try {
-                        new ChuyenNganh_DAO().them(tenMoi.trim());
+                        controller.themChuyenNganh(tenMoi);
                         taiDanhSachChuyenNganh(cbCN, false);
                         cbCN.setSelectedItem(tenMoi.trim());
                     } catch (SQLException ex) {
@@ -764,50 +713,13 @@ public class BacSiGUI extends JPanel {
         JButton btnLuu = new JButton("Lưu thay đổi");
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
-            String ten = txtTen.getText().trim();
-            String sdt = txtSdt.getText().replaceAll("\\s", "");
-            String email = txtEmail.getText().trim();
-            String ngayStr = txtNgay.getText().trim();
-            String loi = null;
-            LocalDate ngay = null;
-            double luongThang = 0;
-
-            if (ten.isEmpty()) loi = "Vui lòng nhập họ và tên.";
-            else if (!sdt.matches("0\\d{9}")) loi = "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.";
-            else if (!email.isEmpty() && !email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) loi = "Email không hợp lệ.";
-            else if (!ngayStr.isEmpty()) {
-                try {
-                    ngay = LocalDate.parse(ngayStr, DINH_DANG_NGAY);
-                    if (ngay.isAfter(LocalDate.now())) loi = "Ngày sinh không được ở tương lai.";
-                } catch (DateTimeParseException ex) { loi = "Ngày sinh không hợp lệ (dd/MM/yyyy)."; }
-            }
-            
-            if (loi == null) {
-                try {
-                    luongThang = Double.parseDouble(txtLuongThang.getText().replaceAll("[.,\\s]", ""));
-                    if (luongThang < 0) loi = "Lương tháng không được âm.";
-                } catch (NumberFormatException ex) { loi = "Lương tháng không hợp lệ (nhập số)."; }
-            }
-            
-            if (loi != null) { lblLoi.setText(loi); return; }
-
             try {
-                if (goc == null) {
-                    String tenChuyenNganh = (String) cbCN.getSelectedItem();
-                    dao.them(new BacSi_entity(txtMa.getText(), (entity.TaiKhoan) null, ten,
-                            (String) cbGT.getSelectedItem(), sdt,
-                            tenChuyenNganh != null ? new entity.ChuyenNganh_entity(null, tenChuyenNganh) : null,
-                            email, ngay, luongThang, 0, null));
-                } else {
-                    String tenChuyenNganh = (String) cbCN.getSelectedItem();
-                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten,
-                            (String) cbGT.getSelectedItem(), sdt,
-                            tenChuyenNganh != null ? new entity.ChuyenNganh_entity(null, tenChuyenNganh) : null,
-                            email, ngay, luongThang, goc.getSoCaKham(), goc.getTrangThaiTK()));
-                    if (coTK && cbTT.getSelectedIndex() == 0 != Boolean.TRUE.equals(goc.getTrangThaiTK())) {
-                        dao.doiTrangThaiTaiKhoan(goc.getMaBacSi(), cbTT.getSelectedIndex() == 0);
-                    }
-                }
+                boolean capNhatTrangThai = coTK && (cbTT.getSelectedIndex() == 0) != Boolean.TRUE.equals(goc.getTrangThaiTK());
+                BacSiController.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
+                        txtTen.getText(), txtSdt.getText(), txtEmail.getText(), txtNgay.getText(),
+                        (String) cbGT.getSelectedItem(), (String) cbCN.getSelectedItem(),
+                        txtLuongThang.getText(), capNhatTrangThai, cbTT.getSelectedIndex() == 0);
+                if (!result.isThanhCong()) { lblLoi.setText(result.getThongBaoLoi()); return; }
             } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
             
             dlg.dispose(); taiLai();
@@ -856,13 +768,11 @@ public class BacSiGUI extends JPanel {
 
         try {
             List<LichLamViec_entity> lichTrongTuan =
-                    new LichLamViec_DAO().getLichTrongKhoang(dauTuan, cuoiTuan);
+                    controller.taiLichBacSi(bs.getMaBacSi(), dauTuan, cuoiTuan);
             for (LocalDate ngay = dauTuan; ngay.isBefore(cuoiTuan); ngay = ngay.plusDays(1)) {
                 boolean coLich = false;
                 for (LichLamViec_entity lich : lichTrongTuan) {
-                    if (lich.getLoaiNhanSu() == LichLamViec_entity.LoaiNhanSu.BAC_SI
-                            && bs.getMaBacSi().equals(lich.getMaNhanSu())
-                            && ngay.equals(lich.getNgay())) {
+                    if (ngay.equals(lich.getNgay())) {
                         coLich = true;
                         m.addRow(new Object[]{
                                 ngay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
@@ -949,20 +859,9 @@ public class BacSiGUI extends JPanel {
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
 
-        StringBuilder sb = new StringBuilder("\uFEFF");
-        sb.append("Mã bác sĩ,Họ tên,Giới tính,Số điện thoại,Chuyên ngành,Email,Số ca khám,Trạng thái\n");
-        for (BacSi_entity bs : daLoc) {
-            sb.append(csv(bs.getMaBacSi())).append(',')
-                    .append(csv(nz(bs.getHoTen()))).append(',')
-                    .append(csv(nz(bs.getGioiTinh()))).append(',')
-                    .append(csv("'" + nz(bs.getSdt()).replace(" ", ""))).append(',')
-                    .append(csv(nz(bs.getChuyenNganh()))).append(',')
-                    .append(csv(nz(bs.getEmail()))).append(',')
-                    .append(bs.getSoCaKham()).append(',')
-                    .append(csv(TrangThai.tuEntity(bs).nhan)).append('\n');
-        }
+        String csv = controller.taoNoiDungCsv(daLoc);
         try {
-            Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), csv.getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + daLoc.size() + " bác sĩ.",
                     "Xuất danh sách", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -971,22 +870,19 @@ public class BacSiGUI extends JPanel {
         }
     }
 
-    private static String csv(String s) {
-        return "\"" + s.replace("\"", "\"\"") + "\"";
-    }
-
     private void taiDanhSachChuyenNganh(JComboBox<String> cb, boolean coTatCa) {
         cb.removeAllItems();
         if (coTatCa) {
             cb.addItem("Chuyên ngành: Tất cả");
         }
         try {
-            List<ChuyenNganh_entity> ds = new ChuyenNganh_DAO().getAll();
+            List<ChuyenNganh_entity> ds = controller.taiChuyenNganh();
             for (ChuyenNganh_entity cn : ds) {
                 cb.addItem(cn.getTenChuyenNganh());
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không thể tải danh sách chuyên ngành: " + ex.getMessage(),
+                    "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
         }
         if (!coTatCa) {
             cb.addItem("+ Thêm chuyên ngành mới...");
@@ -995,10 +891,10 @@ public class BacSiGUI extends JPanel {
 
     private void taiLai() {
         try {
-            List<BacSi_entity> ds = dao.getAll();
+            BacSiController.DuLieuDanhSach data = controller.taiDanhSach();
             tatCa.clear();
-            tatCa.addAll(ds);
-            tongNhanVien = dao.getTongNhanVien();
+            tatCa.addAll(data.getBacSi());
+            tongNhanVien = data.getTongNhanVien();
         } catch (SQLException ex) {
             baoLoi("Không thể tải danh sách bác sĩ", ex);
         }

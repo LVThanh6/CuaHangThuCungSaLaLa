@@ -1,66 +1,35 @@
 package GUI.HoaDon;
 
-import dao.KhachHang_DAO;
-import dao.ThuCung_DAO;
-import dao.DichVu_DAO;
-import dao.VatTu_DAO;
-import dao.HoaDon_Dao;
-import dao.ChiTietHoaDon_DAO;
-import dao.KhuyenMai_DAO;
-import dao.Thue_DAO;
-import dao.BacSi_DAO;
-import dao.NhanVien_DAO;
-import dao.DangNhap_DAO;
-import dao.DonThuoc_DAO;
-import dao.ChiTietDonThuoc_DAO;
-import connectDB.ConnectDB;
-import entity.TaiKhoan;
-
-import entity.KhachHang;
-import entity.ChiTietDonThuoc_entity;
-import entity.DonThuoc_entity;
-import entity.ThuCung_entity;
-import entity.DichVu_entity;
-import entity.VatTu_entity;
-import entity.HoaDon_entity;
-import entity.NhanVien_entity;
-import entity.BacSi_entity;
-import entity.ChiTietHoaDon_entity;
-import entity.KhuyenMai_Entity;
-import entity.Thue_entity;
+import entity.KhachHang.KhachHang;
+import entity.ThuCung.ChiTietDonThuoc_entity;
+import entity.ThuCung.ThuCung_entity;
+import entity.DichVu.DichVu_entity;
+import entity.VatTu.VatTu_entity;
+import entity.NhanVien.NhanVien_entity;
+import entity.BacSi.BacSi_entity;
+import entity.DichVu.KhuyenMai_Entity;
+import entity.DichVu.Thue_entity;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.math.BigDecimal;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import controller.LapHoaDonController;
+import controller.LapHoaDonController.InvoiceInput;
+import controller.LapHoaDonController.InvoiceLine;
+import controller.LapHoaDonController.InvoiceTotals;
+import controller.LapHoaDonController.LoaiMatHang;
+import controller.LapHoaDonController.PrescriptionOption;
+import controller.LapHoaDonController.ValidationError;
 
 public class LapHoaDon_gui extends JPanel {
 
-    // ==================== DAO ====================
-
-    private final KhachHang_DAO khDAO = new KhachHang_DAO();
-    private final ThuCung_DAO tcDAO = new ThuCung_DAO();
-    private final DichVu_DAO dvDAO = new DichVu_DAO();
-    private final VatTu_DAO vtDAO = new VatTu_DAO();
-    private final HoaDon_Dao hdDAO = new HoaDon_Dao();
-    private final ChiTietHoaDon_DAO ctDAO = new ChiTietHoaDon_DAO();
-    private final KhuyenMai_DAO kmDAO = new KhuyenMai_DAO();
-    private final Thue_DAO thueDAO = new Thue_DAO();
-    private final NhanVien_DAO nvDAO = new NhanVien_DAO();
-    private final BacSi_DAO bacSiDAO = new BacSi_DAO();
-    private final DonThuoc_DAO donThuocDAO = new DonThuoc_DAO();
-    private final ChiTietDonThuoc_DAO chiTietDonThuocDAO = new ChiTietDonThuoc_DAO();
+    private final LapHoaDonController controller = new LapHoaDonController();
 
     // Nhân viên đang đăng nhập
     private NhanVien_entity nhanVienDangNhap;
@@ -84,8 +53,7 @@ public class LapHoaDon_gui extends JPanel {
 
     private JTable tblChiTiet;
     private DefaultTableModel model;
-    private final Map<Integer, Object> nguoiThucHienTheoDong = new HashMap<>();
-    private final Map<Integer, String> chiTietDonThuocTheoDong = new HashMap<>();
+    private final ArrayList<InvoiceLine> chiTietHoaDon = new ArrayList<>();
 
     private JLabel lblTamTinh;
     private JLabel lblTienGiam;
@@ -135,32 +103,13 @@ public class LapHoaDon_gui extends JPanel {
      */
     public static NhanVien_entity layNhanVienDangNhapHienTai() {
         try {
-            NhanVien_DAO nvDAO = new NhanVien_DAO();
-            String maDT = DangNhap_DAO.getMaDoiTuong();
-            if (maDT != null && !maDT.isBlank()) {
-                NhanVien_entity nv = nvDAO.getNhanVienTheoMa(maDT);
-                if (nv != null) {
-                    return nv;
-                }
-            }
-            TaiKhoan tk = DangNhap_DAO.getTaiKhoanHienTai();
-            if (tk != null && tk.getMaTK() != null) {
-                ArrayList<NhanVien_entity> ds = nvDAO.getAll();
-                for (NhanVien_entity nv : ds) {
-                    if (tk.getMaTK().equals(nv.getMaTK())) {
-                        return nv;
-                    }
-                }
-            }
-            // Fallback khi đăng nhập bằng tài khoản quản lý hoặc tài khoản chưa liên kết trực tiếp
-            ArrayList<NhanVien_entity> dsAll = nvDAO.getAll();
-            if (!dsAll.isEmpty()) {
-                return dsAll.get(0);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            return new LapHoaDonController().layNhanVienDangNhapHienTai();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Không thể tải thông tin nhân viên đăng nhập: " + e.getMessage(),
+                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            return null;
         }
-        return null;
     }
 
     // ==================== KHỞI TẠO GIAO DIỆN ====================
@@ -655,8 +604,7 @@ public class LapHoaDon_gui extends JPanel {
 
         cboKhachHang.removeAllItems();
 
-        ArrayList<KhachHang> ds =
-                khDAO.getAlltbKhachHang();
+        ArrayList<KhachHang> ds = controller.taiKhachHang();
 
         for (KhachHang kh : ds) {
             cboKhachHang.addItem(kh);
@@ -679,8 +627,7 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-        ArrayList<ThuCung_entity> ds =
-                tcDAO.getThuCungTheoMaKH(kh.getMaKH());
+        ArrayList<ThuCung_entity> ds = controller.taiThuCung(kh.getMaKH());
 
         for (ThuCung_entity tc : ds) {
             cboThuCung.addItem(tc);
@@ -697,23 +644,21 @@ public class LapHoaDon_gui extends JPanel {
         cboNguoiThucHien.removeAllItems();
         cboNguoiThucHien.addItem(null);
 
-        try {
-            String loai = (String) cboLoai.getSelectedItem();
-            if ("Dịch vụ".equals(loai)) {
-                for (NhanVien_entity nv : nvDAO.getAll()) {
-                    if ("Nhân viên dịch vụ".equals(nv.getChucVu())) {
-                        cboNguoiThucHien.addItem(nv);
-                    }
+        String loai = (String) cboLoai.getSelectedItem();
+        if ("Dịch vụ".equals(loai)) {
+            try {
+                for (NhanVien_entity nv : controller.taiNhanVienDichVuThucHien()) {
+                    cboNguoiThucHien.addItem(nv);
                 }
-                for (BacSi_entity bs : bacSiDAO.getAll()) {
+                for (BacSi_entity bs : controller.taiBacSiThucHien()) {
                     cboNguoiThucHien.addItem(bs);
                 }
-            } else {
-                cboNguoiThucHien.addItem("Không có người thực hiện");
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Không thể tải danh sách người thực hiện: " + ex.getMessage(),
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (java.sql.SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Không thể tải danh sách người thực hiện: " + ex.getMessage(),
-                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+        } else {
+            cboNguoiThucHien.addItem("Không có người thực hiện");
         }
 
         cboNguoiThucHien.setRenderer(new DefaultListCellRenderer() {
@@ -751,13 +696,13 @@ public class LapHoaDon_gui extends JPanel {
 
         if ("Dịch vụ".equals(loai)) {
 
-            for (DichVu_entity dv : dvDAO.getAllDichVu()) {
+            for (DichVu_entity dv : controller.taiDichVu()) {
                 cboMatHang.addItem(dv);
             }
 
         } else {
 
-            for (VatTu_entity vt : vtDAO.getAllVatTu()) {
+            for (VatTu_entity vt : controller.taiVatTu()) {
                 cboMatHang.addItem(vt);
             }
         }
@@ -803,28 +748,18 @@ public class LapHoaDon_gui extends JPanel {
 
     private ChiTietDonThuoc_entity chonChiTietDonThuoc(VatTu_entity vatTu) {
         ThuCung_entity thuCung = (ThuCung_entity) cboThuCung.getSelectedItem();
-        List<ChiTietDonThuoc_entity> chiTietKhaDung = new ArrayList<>();
+        List<PrescriptionOption> chiTietKhaDung;
         List<String> luaChon = new ArrayList<>();
 
         try {
-            for (DonThuoc_entity donThuoc : donThuocDAO.getDonThuocTheoMaTC(thuCung.getMaTC())) {
-                for (ChiTietDonThuoc_entity chiTiet : chiTietDonThuocDAO
-                        .getChiTietTheoMaDon(donThuoc.getMaDonThuoc())) {
-                    if (!vatTu.getMaThuoc().equals(chiTiet.getMaThuoc())) {
-                        continue;
-                    }
-
-                    BigDecimal daCap = ctDAO.getSoLuongThuocDaCap(chiTiet.getMaCTDT());
-                    if (chiTiet.getSoLuong().compareTo(daCap) <= 0) {
-                        continue;
-                    }
-
-                    chiTietKhaDung.add(chiTiet);
-                    luaChon.add(donThuoc.getMaDonThuoc() + " / " + chiTiet.getMaCTDT()
+            chiTietKhaDung = controller.taiChiTietDonThuocKhaDung(
+                    thuCung.getMaTC(), vatTu.getMaThuoc().getMaThuoc());
+            for (PrescriptionOption option : chiTietKhaDung) {
+                    ChiTietDonThuoc_entity chiTiet = option.getChiTiet();
+                    luaChon.add(chiTiet.getMaDonThuoc() + " / " + chiTiet.getMaCTDT()
                             + " - " + chiTiet.getTenThuoc() + " (còn "
-                            + chiTiet.getSoLuong().subtract(daCap).stripTrailingZeros().toPlainString()
+                            + option.getSoLuongConLai().stripTrailingZeros().toPlainString()
                             + ")");
-                }
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
@@ -849,18 +784,8 @@ public class LapHoaDon_gui extends JPanel {
         if (chon == null) {
             return null;
         }
-        return chiTietKhaDung.get(luaChon.indexOf(chon.toString()));
-    }
-
-    private BigDecimal soLuongThuocTrongHoaDon(String maCTDT) {
-        BigDecimal soLuong = BigDecimal.ZERO;
-        for (int i = 0; i < model.getRowCount(); i++) {
-            if (maCTDT.equals(chiTietDonThuocTheoDong.get(i))) {
-                soLuong = soLuong.add(BigDecimal.valueOf(
-                        Integer.parseInt(model.getValueAt(i, 4).toString())));
-            }
-        }
-        return soLuong;
+        int selectedIndex = luaChon.indexOf(chon.toString());
+        return selectedIndex < 0 ? null : chiTietKhaDung.get(selectedIndex).getChiTiet();
     }
 
     // ==================== TẢI KHUYẾN MÃI ====================
@@ -872,26 +797,8 @@ public class LapHoaDon_gui extends JPanel {
 
         LocalDate homNay = LocalDate.now();
 
-        ArrayList<KhuyenMai_Entity> ds =
-                kmDAO.getAllKhuyenMai();
-
-        System.out.println("Số khuyến mãi lấy từ DB: " + ds.size());
-        System.out.println("Ngày hiện tại: " + homNay);
-
-        for (KhuyenMai_Entity km : ds) {
-
-            boolean dungNgay =
-                    (km.getNgayBatDau() == null
-                    || !homNay.isBefore(km.getNgayBatDau()))
-                    &&
-                    (km.getNgayKetThuc() == null
-                    || !homNay.isAfter(km.getNgayKetThuc()));
-
-            
-
-            if (dungNgay) {
-                cboKhuyenMai.addItem(km);
-            }
+        for (KhuyenMai_Entity km : controller.taiKhuyenMaiHieuLuc(homNay)) {
+            cboKhuyenMai.addItem(km);
         }
     }
 
@@ -901,10 +808,7 @@ public class LapHoaDon_gui extends JPanel {
 
         cboThue.removeAllItems();
 
-        ArrayList<Thue_entity> ds =
-                thueDAO.getAllThue();
-
-        for (Thue_entity thue : ds) {
+        for (Thue_entity thue : controller.taiThue()) {
             cboThue.addItem(thue);
         }
     }
@@ -912,169 +816,107 @@ public class LapHoaDon_gui extends JPanel {
     // ==================== THÊM MẶT HÀNG ====================
 
     private void themMatHang() {
-
         Object item = cboMatHang.getSelectedItem();
-
         if (item == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Vui lòng chọn dịch vụ hoặc vật tư."
-            );
+            JOptionPane.showMessageDialog(this, ValidationError.CHUA_CHON_MAT_HANG.getMessage());
             return;
         }
 
         int soLuong;
-
         try {
-
-            soLuong = Integer.parseInt(
-                    txtSoLuong.getText().trim()
-            );
-
-            if (soLuong <= 0) {
-                throw new NumberFormatException();
-            }
-
+            soLuong = Integer.parseInt(txtSoLuong.getText().trim());
         } catch (NumberFormatException e) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Số lượng phải là số nguyên dương."
-            );
-
+            JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương.");
+            txtSoLuong.requestFocus();
+            return;
+        }
+        if (!controller.laSoLuongHopLe(soLuong)) {
+            JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương.");
             txtSoLuong.requestFocus();
             return;
         }
 
-        String ma;
-        String ten;
-        String loai;
-        double donGia;
-        String maCTDT = null;
-
+        InvoiceLine line;
         if (item instanceof DichVu_entity dv) {
-
-            if (cboThuCung.getSelectedItem() == null) {
-                JOptionPane.showMessageDialog(this,
-                        "Vui lòng chọn thú cưng trước khi thêm dịch vụ.");
-                cboThuCung.requestFocusInWindow();
-                return;
-            }
-            ma = dv.getMaDV();
-            ten = dv.getTenDV();
-            loai = "Dịch vụ";
-            donGia = dv.getGiaDV();
-
+            line = controller.taoDongDichVu(dv, soLuong);
         } else if (item instanceof VatTu_entity vt) {
-
-            ma = vt.getMaVT();
-            ten = vt.getTenVT();
-            donGia = vt.getGiaBanCoBan();
-
-            if (vt.getSoLuongTon() < soLuong) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Số lượng tồn kho không đủ."
-                );
+            ValidationError stockValidation = controller.kiemTraTonKho(vt, soLuong);
+            if (stockValidation != ValidationError.NONE) {
+                JOptionPane.showMessageDialog(this, stockValidation.getMessage());
                 return;
             }
-
-            if (vt.getMaThuoc() != null) {
-                if (cboThuCung.getSelectedItem() == null) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng chọn thú cưng trước khi thêm thuốc.");
+            ChiTietDonThuoc_entity chiTietDon = null;
+            if (controller.laThuocKeDon(vt)) {
+                ValidationError petValidation = controller.kiemTraThuCungBatBuoc(
+                        LoaiMatHang.THUOC, cboThuCung.getSelectedItem() != null);
+                if (petValidation != ValidationError.NONE) {
+                    JOptionPane.showMessageDialog(this, petValidation.getMessage());
                     return;
                 }
-                ChiTietDonThuoc_entity chiTietDon = chonChiTietDonThuoc(vt);
+                chiTietDon = chonChiTietDonThuoc(vt);
                 if (chiTietDon == null) {
                     return;
                 }
-                maCTDT = chiTietDon.getMaCTDT();
-                loai = "Thuốc";
-
-                try {
-                    BigDecimal daCap = ctDAO.getSoLuongThuocDaCap(maCTDT)
-                            .add(soLuongThuocTrongHoaDon(maCTDT));
-                    BigDecimal conLai = chiTietDon.getSoLuong().subtract(daCap);
-                    if (BigDecimal.valueOf(soLuong).compareTo(conLai) > 0) {
-                        JOptionPane.showMessageDialog(this, "Số lượng bán vượt quá số thuốc còn lại trong đơn kê.");
-                        return;
-                    }
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Không thể kiểm tra số lượng thuốc đã cấp: " + ex.getMessage(),
-                            "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            } else {
-                loai = "Vật tư";
             }
-
+            line = controller.taoDongVatTu(vt, chiTietDon, soLuong);
         } else {
             return;
         }
 
         Object nguoiThucHien = cboNguoiThucHien.getSelectedItem();
-        if ("Dịch vụ".equals(loai)
-                && !(nguoiThucHien instanceof NhanVien_entity)
-                && !(nguoiThucHien instanceof BacSi_entity)) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn người thực hiện dịch vụ.");
+        NhanVien_entity nhanVienThucHien = nguoiThucHien instanceof NhanVien_entity
+                ? (NhanVien_entity) nguoiThucHien : null;
+        BacSi_entity bacSiThucHien = nguoiThucHien instanceof BacSi_entity
+                ? (BacSi_entity) nguoiThucHien : null;
+        line = controller.ganNguoiThucHien(line, nhanVienThucHien, bacSiThucHien);
+
+        ValidationError validation;
+        try {
+            validation = controller.kiemTraThemMatHang(line, cboThuCung.getSelectedItem() != null, chiTietHoaDon);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể kiểm tra số lượng thuốc đã cấp: " + ex.getMessage(),
+                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (validation != ValidationError.NONE) {
+            JOptionPane.showMessageDialog(this, validation.getMessage());
             return;
         }
 
-        // Kiểm tra mặt hàng đã có trong bảng chưa
-        for (int i = 0; i < model.getRowCount(); i++) {
-
-            if (ma.equals(model.getValueAt(i, 0))
-                    && loai.equals(model.getValueAt(i, 2))
-                    && Objects.equals(chiTietDonThuocTheoDong.get(i), maCTDT)
-                    && Objects.equals(nguoiThucHienTheoDong.get(i), nguoiThucHien)) {
-
-                int slCu = Integer.parseInt(
-                        model.getValueAt(i, 4).toString()
-                );
-
-                int slMoi = slCu + soLuong;
-
-                if (item instanceof VatTu_entity vt
-                        && vt.getSoLuongTon() < slMoi) {
-
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Số lượng tồn kho không đủ."
-                    );
-
-                    return;
-                }
-
-                model.setValueAt(slMoi, i, 4);
-                if (maCTDT != null) {
-                    chiTietDonThuocTheoDong.put(i, maCTDT);
-                }
-
-                model.setValueAt(
-                        dinhDangTien(donGia * slMoi),
-                        i, 5
-                );
-                nguoiThucHienTheoDong.put(i, nguoiThucHien);
-
-                capNhatTongTien();
+        int matchingLine = controller.timDongGopMatHang(chiTietHoaDon, line);
+        if (matchingLine >= 0) {
+            int i = matchingLine;
+            InvoiceLine existing = chiTietHoaDon.get(i);
+            InvoiceLine updated = existing.voiSoLuong(existing.getSoLuong() + soLuong);
+            ArrayList<InvoiceLine> otherLines = new ArrayList<>(chiTietHoaDon);
+            otherLines.remove(i);
+            try {
+                validation = controller.kiemTraThemMatHang(updated,
+                        cboThuCung.getSelectedItem() != null, otherLines);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Không thể kiểm tra số lượng thuốc đã cấp: " + ex.getMessage(),
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            if (validation != ValidationError.NONE) {
+                JOptionPane.showMessageDialog(this, validation.getMessage());
+                return;
+            }
+            chiTietHoaDon.set(i, updated);
+            model.setValueAt(updated.getSoLuong(), i, 4);
+            model.setValueAt(dinhDangTien(controller.tinhThanhTienDong(updated)), i, 5);
+            capNhatTongTien();
+            return;
         }
 
-        model.addRow(new Object[]{
-                ma,
-                ten,
-                loai,
-                donGia,
-                soLuong,
-                dinhDangTien(donGia * soLuong)
+        chiTietHoaDon.add(line);
+        model.addRow(new Object[] {
+                line.getMaHang(), line.getTenHang(), tenLoai(line.getLoai()),
+                line.getDonGia(), line.getSoLuong(),
+                dinhDangTien(controller.tinhThanhTienDong(line))
         });
-        nguoiThucHienTheoDong.put(model.getRowCount() - 1, nguoiThucHien);
-        if (maCTDT != null) {
-            chiTietDonThuocTheoDong.put(model.getRowCount() - 1, maCTDT);
-        }
-
         capNhatTongTien();
     }
 
@@ -1095,105 +937,11 @@ public class LapHoaDon_gui extends JPanel {
         int modelRow = tblChiTiet.convertRowIndexToModel(row);
 
         model.removeRow(modelRow);
-        Map<Integer, Object> daCapNhat = new HashMap<>();
-        for (Map.Entry<Integer, Object> entry : nguoiThucHienTheoDong.entrySet()) {
-            if (entry.getKey() < modelRow) {
-                daCapNhat.put(entry.getKey(), entry.getValue());
-            } else if (entry.getKey() > modelRow) {
-                daCapNhat.put(entry.getKey() - 1, entry.getValue());
-            }
-        }
-        nguoiThucHienTheoDong.clear();
-        nguoiThucHienTheoDong.putAll(daCapNhat);
-        Map<Integer, String> donThuocDaCapNhat = new HashMap<>();
-        for (Map.Entry<Integer, String> entry : chiTietDonThuocTheoDong.entrySet()) {
-            if (entry.getKey() < modelRow) {
-                donThuocDaCapNhat.put(entry.getKey(), entry.getValue());
-            } else if (entry.getKey() > modelRow) {
-                donThuocDaCapNhat.put(entry.getKey() - 1, entry.getValue());
-            }
-        }
-        chiTietDonThuocTheoDong.clear();
-        chiTietDonThuocTheoDong.putAll(donThuocDaCapNhat);
-
+        chiTietHoaDon.remove(modelRow);
         capNhatTongTien();
     }
 
-    // ==================== TÍNH TẠM TÍNH ====================
-
-    private double tinhTamTinh() {
-
-        double tong = 0;
-
-        for (int i = 0; i < model.getRowCount(); i++) {
-
-            double donGia = Double.parseDouble(
-                    model.getValueAt(i, 3).toString()
-            );
-
-            int soLuong = Integer.parseInt(
-                    model.getValueAt(i, 4).toString()
-            );
-
-            tong += donGia * soLuong;
-        }
-
-        return tong;
-    }
-
-    // ==================== TÍNH TIỀN GIẢM ====================
-
-    private double tinhTienGiam(double tienHang) {
-
-        KhuyenMai_Entity km =
-                (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem();
-
-        if (km == null) {
-            return 0;
-        }
-
-        // Giả định mucKM lưu theo phần trăm.
-        double tienGiam = tienHang * km.getMucKM() / 100.0;
-
-        // Tiền giảm không vượt quá tiền hàng.
-        return Math.max(0, Math.min(tienGiam, tienHang));
-    }
-
-    // ==================== TÍNH TIỀN THUẾ ====================
-
-    private double tinhTienThue(double tienSauGiam) {
-
-        Thue_entity thue =
-                (Thue_entity) cboThue.getSelectedItem();
-
-        if (thue == null) {
-            return 0;
-        }
-
-        // Giả định mucThue lưu theo phần trăm.
-        return Math.max(
-                0,
-                tienSauGiam * thue.getMucThue() / 100.0
-        );
-    }
-
-    // ==================== TÍNH TỔNG THANH TOÁN ====================
-
-    private double tinhTongThanhToan() {
-
-        double tienHang = tinhTamTinh();
-
-        double tienGiam = tinhTienGiam(tienHang);
-
-        double tienSauGiam = tienHang - tienGiam;
-
-        double tienThue = tinhTienThue(tienSauGiam);
-
-        return tienSauGiam + tienThue;
-    }
-
     private void capNhatTongTien() {
-
         if (lblTamTinh == null
                 || lblTienGiam == null
                 || lblTienThue == null
@@ -1201,31 +949,25 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-        double tienHang = tinhTamTinh();
+        InvoiceTotals totals = tinhTongTienHienTai();
+        lblTamTinh.setText(dinhDangTien(totals.getTienHang()));
+        lblTienGiam.setText(dinhDangTien(totals.getTienGiam()));
+        lblTienThue.setText(dinhDangTien(totals.getTienThue()));
+        lblTongTien.setText(dinhDangTien(totals.getTongThanhToan()));
+    }
 
-        double tienGiam = tinhTienGiam(tienHang);
+    private InvoiceTotals tinhTongTienHienTai() {
+        return controller.tinhTongTien(chiTietHoaDon,
+                (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem(),
+                (Thue_entity) cboThue.getSelectedItem());
+    }
 
-        double tienSauGiam = tienHang - tienGiam;
-
-        double tienThue = tinhTienThue(tienSauGiam);
-
-        double tongThanhToan = tienSauGiam + tienThue;
-
-        lblTamTinh.setText(
-                dinhDangTien(tienHang)
-        );
-
-        lblTienGiam.setText(
-                dinhDangTien(tienGiam)
-        );
-
-        lblTienThue.setText(
-                dinhDangTien(tienThue)
-        );
-
-        lblTongTien.setText(
-                dinhDangTien(tongThanhToan)
-        );
+    private String tenLoai(LoaiMatHang loai) {
+        return switch (loai) {
+            case DICH_VU -> "Dịch vụ";
+            case VAT_TU -> "Vật tư";
+            case THUOC -> "Thuốc";
+        };
     }
 
     // ==================== LƯU HÓA ĐƠN ====================
@@ -1239,41 +981,22 @@ public class LapHoaDon_gui extends JPanel {
                 (ThuCung_entity) cboThuCung.getSelectedItem();
 
         if (nhanVienDangNhap == null) {
-            nhanVienDangNhap = layNhanVienDangNhapHienTai();
-            capNhatHienThiNhanVien();
+            try {
+                nhanVienDangNhap = controller.layNhanVienDangNhapHienTai();
+                capNhatHienThiNhanVien();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
 
-        if (nhanVienDangNhap == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Chưa có thông tin nhân viên đăng nhập để lập hóa đơn.\nVui lòng kiểm tra lại tài khoản hoặc CSDL.",
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        if (kh == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Vui lòng chọn khách hàng."
-            );
-            return;
-        }
-
-        if (model.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Hóa đơn phải có ít nhất một dòng chi tiết."
-            );
-            return;
-        }
-
-        if (tc == null && hoaDonCanThuCung()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Hóa đơn có dịch vụ hoặc thuốc kê đơn phải gắn với thú cưng."
-            );
+        ValidationError validation = controller.kiemTraHoaDon(
+                kh, nhanVienDangNhap, chiTietHoaDon, tc != null);
+        if (validation != ValidationError.NONE) {
+            JOptionPane.showMessageDialog(this, validation.getMessage(),
+                    validation == ValidationError.CHUA_CO_NHAN_VIEN ? "Lỗi" : "Thông báo",
+                    validation == ValidationError.CHUA_CO_NHAN_VIEN
+                            ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -1288,120 +1011,31 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-        String maHD = txtMaHD.getText().trim();
-
         KhuyenMai_Entity km =
                 (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem();
 
         Thue_entity thue =
                 (Thue_entity) cboThue.getSelectedItem();
 
-        HoaDon_entity hd = new HoaDon_entity(
-                maHD,
-                LocalDate.now(),
-                "Chờ thanh toán",
-                kh,
-                nhanVienDangNhap,
-                km,
-                thue,
-                null // Chưa tạo đối tượng thanh toán
-        );
-        hd.setMaTC(tc == null ? null : tc.getMaTC());
-
-        Connection con = ConnectDB.getCon();
-        if (con == null) {
+        String maHD = txtMaHD.getText().trim();
+        InvoiceTotals totals;
+        try {
+            totals = controller.luuHoaDon(new InvoiceInput(maHD, LocalDate.now(), kh, tc,
+                    nhanVienDangNhap, km, thue, chiTietHoaDon));
+        } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Không thể kết nối cơ sở dữ liệu SALALA.",
+                    "Không thể lưu hóa đơn; mọi thay đổi đã được hoàn tác.\nChi tiết: " + ex.getMessage(),
                     "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        boolean thanhCong = false;
-        boolean autoCommitCu = true;
-        String loiLuu = null;
-        try {
-            autoCommitCu = con.getAutoCommit();
-            con.setAutoCommit(false);
-            if (!hdDAO.themHD(con, hd)) {
-                throw new SQLException("Không thể lưu thông tin hóa đơn.");
-            }
-
-            ArrayList<DichVu_entity> dsDV = dvDAO.getAllDichVu();
-            for (int i = 0; i < model.getRowCount(); i++) {
-                String ma = model.getValueAt(i, 0).toString();
-                String loai = model.getValueAt(i, 2).toString();
-                double donGia = Double.parseDouble(model.getValueAt(i, 3).toString());
-                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
-
-                DichVu_entity dv = null;
-                VatTu_entity vt = null;
-                NhanVien_entity nvThucHien = null;
-                BacSi_entity bsThucHien = null;
-                Object nguoiThucHien = nguoiThucHienTheoDong.get(i);
-                if (nguoiThucHien instanceof NhanVien_entity) {
-                    nvThucHien = (NhanVien_entity) nguoiThucHien;
-                } else if (nguoiThucHien instanceof BacSi_entity) {
-                    bsThucHien = (BacSi_entity) nguoiThucHien;
-                }
-
-                if ("Dịch vụ".equals(loai)) {
-                    for (DichVu_entity x : dsDV) {
-                        if (ma.equals(x.getMaDV())) {
-                            dv = x;
-                            break;
-                        }
-                    }
-                } else {
-                    vt = vtDAO.getVatTuTheoMa(ma);
-                }
-
-                if (dv == null && vt == null) {
-                    throw new SQLException("Không tìm thấy mặt hàng " + ma + " trong cơ sở dữ liệu.");
-                }
-
-                String maCTHD = "CT" + maHD + String.format("%02d", i + 1);
-                ChiTietHoaDon_entity ct = new ChiTietHoaDon_entity(
-                        maCTHD, hd, dv, vt, nvThucHien, bsThucHien, soLuong, donGia);
-                ct.setMaCTDT(chiTietDonThuocTheoDong.get(i));
-
-                if (!ctDAO.createChiTietHoaDon(con, ct)) {
-                    throw new SQLException("Không thể lưu chi tiết hóa đơn " + maCTHD + ".");
-                }
-            }
-            con.commit();
-            thanhCong = true;
-        } catch (SQLException e) {
-            loiLuu = e.getMessage();
-            e.printStackTrace();
-            try {
-                con.rollback();
-            } catch (SQLException rollbackError) {
-                rollbackError.printStackTrace();
-            }
-        } finally {
-            try {
-                con.setAutoCommit(autoCommitCu);
-                con.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (thanhCong) {
-
-            double tienHang = tinhTamTinh();
-            double tienGiam = tinhTienGiam(tienHang);
-            double tienSauGiam = tienHang - tienGiam;
-            double tienThue = tinhTienThue(tienSauGiam);
-            double tongThanhToan = tienSauGiam + tienThue;
-
             int luaChon = JOptionPane.showConfirmDialog(
                     this,
                     "Đã lưu hóa đơn " + maHD + " thành công!"
-                    + "\nTạm tính: " + dinhDangTien(tienHang)
-                    + "\nTiền giảm: " + dinhDangTien(tienGiam)
-                    + "\nTiền thuế: " + dinhDangTien(tienThue)
-                    + "\nTổng thanh toán: " + dinhDangTien(tongThanhToan)
+                    + "\nTạm tính: " + dinhDangTien(totals.getTienHang())
+                    + "\nTiền giảm: " + dinhDangTien(totals.getTienGiam())
+                    + "\nTiền thuế: " + dinhDangTien(totals.getTienThue())
+                    + "\nTổng thanh toán: " + dinhDangTien(totals.getTongThanhToan())
                     + "\n\nBạn có muốn mở xem / in hóa đơn ngay không?",
                     "Lập hóa đơn thành công",
                     JOptionPane.YES_NO_OPTION,
@@ -1413,27 +1047,6 @@ public class LapHoaDon_gui extends JPanel {
             if (luaChon == JOptionPane.YES_OPTION) {
                 ChiTietHoaDon_gui.hienThi(this, maHD,null);
             }
-
-        } else {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Không thể lưu hóa đơn; mọi thay đổi đã được hoàn tác.\n"
-                    + "Chi tiết: " + (loiLuu == null ? "Lỗi dữ liệu không xác định." : loiLuu),
-                    "Lỗi dữ liệu",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
-
-    private boolean hoaDonCanThuCung() {
-        for (int i = 0; i < model.getRowCount(); i++) {
-            String loai = model.getValueAt(i, 2).toString();
-            if ("Dịch vụ".equals(loai) || "Thuốc".equals(loai)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // ==================== LÀM MỚI ====================
@@ -1441,8 +1054,7 @@ public class LapHoaDon_gui extends JPanel {
     private void lamMoi() {
 
         model.setRowCount(0);
-        nguoiThucHienTheoDong.clear();
-        chiTietDonThuocTheoDong.clear();
+        chiTietHoaDon.clear();
 
         txtMaHD.setText(phatSinhMaHD());
 
@@ -1478,7 +1090,8 @@ public class LapHoaDon_gui extends JPanel {
     }
     // ==================== MÃ HÓA ĐƠN ====================
     private String phatSinhMaHD() {
-        int soThuTu = hdDAO.laySoHoaDonLonNhat() + 1;
+
+        int soThuTu = controller.laySoHoaDonTiepTheo();
         return String.format("HD%03d", soThuTu);
     }
     // ==================== ĐỊNH DẠNG TIỀN ====================

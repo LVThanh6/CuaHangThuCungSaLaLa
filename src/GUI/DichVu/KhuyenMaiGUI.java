@@ -1,7 +1,8 @@
 package GUI.DichVu;
 
-import dao.KhuyenMai_DAO;
-import entity.KhuyenMai_Entity;
+import controller.KhuyenMaiController;
+import controller.KhuyenMaiController.Status;
+import entity.DichVu.KhuyenMai_Entity;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -15,15 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -59,33 +56,17 @@ public class KhuyenMaiGUI extends JPanel {
 
     private static final String FONT = "Segoe UI";
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DecimalFormat MONEY;
-    static {
-        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.US);
-        s.setGroupingSeparator('.');
-        MONEY = new DecimalFormat("#,##0", s);
-    }
-
     private static final int COT_TRANG_THAI = 7;
-
-    /** Mã các khuyến mãi đang tạm dừng (chỉ lưu trong bộ nhớ). */
-    private static final Set<String> TAM_DUNG = new HashSet<>();
 
     /** Dùng ở màn hình lập hóa đơn để bỏ qua khuyến mãi đang tạm dừng. */
     public static boolean isTamDung(String maKM) {
-        return TAM_DUNG.contains(maKM);
-    }
-
-    private enum TT {
-        DANG_AP_DUNG("Đang áp dụng"), SAP_DIEN_RA("Sắp diễn ra"), TAM_DUNG("Tạm dừng"), HET_HAN("Hết hạn");
-        final String text;
-        TT(String text) { this.text = text; }
+        return KhuyenMaiController.isPausedPromotion(maKM);
     }
 
     private enum CheDo { THEM, SUA, NHAN_BAN }
 
     // ===== Dữ liệu =====
-    private final KhuyenMai_DAO dao = new KhuyenMai_DAO();
+    private final KhuyenMaiController controller = new KhuyenMaiController();
     private List<KhuyenMai_Entity> tatCa = new ArrayList<>();
     private List<KhuyenMai_Entity> locRa = new ArrayList<>();
     private final List<KhuyenMai_Entity> dongHienTai = new ArrayList<>();
@@ -218,22 +199,11 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        LocalDate now = LocalDate.now();
-        int dang = 0, sap = 0, tam = 0, het = 0;
-        for (KhuyenMai_Entity km : tatCa) {
-            switch (trangThai(km)) {
-                case DANG_AP_DUNG: dang++; break;
-                case SAP_DIEN_RA:
-                    if (km.getNgayBatDau() == null || !km.getNgayBatDau().isAfter(now.plusDays(30))) sap++;
-                    break;
-                case TAM_DUNG: tam++; break;
-                default: het++; break;
-            }
-        }
-        lblTong.setText(String.valueOf(tatCa.size()));
-        lblDang.setText(String.valueOf(dang));
-        lblSap.setText(String.valueOf(sap));
-        lblTamHet.setText(tam + " / " + het);
+        KhuyenMaiController.Summary summary = controller.summarize(tatCa);
+        lblTong.setText(String.valueOf(summary.total));
+        lblDang.setText(String.valueOf(summary.active));
+        lblSap.setText(String.valueOf(summary.upcoming));
+        lblTamHet.setText(summary.paused + " / " + summary.expired);
     }
 
     // =====================================================================
@@ -396,46 +366,25 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
     /** Đọc lại dữ liệu từ CSDL rồi hiển thị. */
     private void taiLai() {
-        List<KhuyenMai_Entity> ds = dao.getAllKhuyenMai();
-        tatCa = ds == null ? new ArrayList<>() : new ArrayList<>(ds);
+        List<KhuyenMai_Entity> ds = controller.load();
+        tatCa = new ArrayList<>(ds);
         hienThi(false);
     }
 
-    private TT trangThai(KhuyenMai_Entity km) {
-        LocalDate now = LocalDate.now();
-        if (km.getNgayKetThuc() != null && km.getNgayKetThuc().isBefore(now)) return TT.HET_HAN;
-        if (TAM_DUNG.contains(km.getMaKM())) return TT.TAM_DUNG;
-        if (km.getNgayBatDau() != null && km.getNgayBatDau().isAfter(now)) return TT.SAP_DIEN_RA;
-        return TT.DANG_AP_DUNG;
-    }
-
-    private static boolean laPhanTram(KhuyenMai_Entity km) {
-        return km.getMucKM() <= 100;
+    private boolean laPhanTram(KhuyenMai_Entity km) {
+        return controller.isPercentage(km);
     }
 
     private static String soThuong(double v) {
-        return v == Math.rint(v) ? String.valueOf((long) v) : String.valueOf(v);
+        return KhuyenMaiController.formatNumber(v);
     }
 
-    private static String hienMuc(KhuyenMai_Entity km) {
-        double m = km.getMucKM();
-        return m <= 100 ? soThuong(m) + "%" : MONEY.format((long) m) + " ₫";
+    private String hienMuc(KhuyenMai_Entity km) {
+        return controller.formatAmount(km);
     }
 
     private void apDungLoc() {
-        String kw = txtTim.getText().trim().toLowerCase();
-        int idx = cboTrangThai.getSelectedIndex(); // 0 tất cả, 1 đang áp dụng, 2 sắp diễn ra, 3 tạm dừng, 4 hết hạn
-        TT[] map = {null, TT.DANG_AP_DUNG, TT.SAP_DIEN_RA, TT.TAM_DUNG, TT.HET_HAN};
-        locRa = new ArrayList<>();
-        for (KhuyenMai_Entity km : tatCa) {
-            if (!kw.isEmpty()
-                    && !nz(km.getMaKM()).toLowerCase().contains(kw)
-                    && !nz(km.getTenKM()).toLowerCase().contains(kw)) continue;
-            if (idx > 0 && trangThai(km) != map[idx]) continue;
-            if (tuNgay != null && km.getNgayKetThuc() != null && km.getNgayKetThuc().isBefore(tuNgay)) continue;
-            if (denNgay != null && km.getNgayBatDau() != null && km.getNgayBatDau().isAfter(denNgay)) continue;
-            locRa.add(km);
-        }
+        locRa = controller.filter(tatCa, txtTim.getText(), cboTrangThai.getSelectedIndex(), tuNgay, denNgay);
     }
 
     /** Lọc lại, cập nhật thống kê và hiển thị toàn bộ kết quả. */
@@ -456,7 +405,7 @@ public class KhuyenMaiGUI extends JPanel {
                     km.getNgayBatDau() != null ? DF.format(km.getNgayBatDau()) : "",
                     km.getNgayKetThuc() != null ? DF.format(km.getNgayKetThuc()) : "",
                     nz(km.getDieuKien()),
-                    trangThai(km).text,
+                    controller.status(km).label,
                     ""
             });
         }
@@ -481,18 +430,11 @@ public class KhuyenMaiGUI extends JPanel {
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (ok != JOptionPane.OK_OPTION) return;
         try {
-            LocalDate f = tu.getText().trim().isEmpty() ? null : LocalDate.parse(tu.getText().trim(), DF);
-            LocalDate t = den.getText().trim().isEmpty() ? null : LocalDate.parse(den.getText().trim(), DF);
-            if (f != null && t != null && f.isAfter(t)) {
-                JOptionPane.showMessageDialog(this, "Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            tuNgay = f;
-            denNgay = t;
-        } catch (DateTimeParseException ex) {
-            JOptionPane.showMessageDialog(this, "Ngày không hợp lệ (định dạng dd/MM/yyyy).", "Lỗi",
-                    JOptionPane.WARNING_MESSAGE);
+            KhuyenMaiController.DateRange range = controller.parseDateRange(tu.getText(), den.getText());
+            tuNgay = range.from;
+            denNgay = range.to;
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.WARNING_MESSAGE);
             return;
         }
         String text;
@@ -510,17 +452,17 @@ public class KhuyenMaiGUI extends JPanel {
 
 
     private void doiTamDung(KhuyenMai_Entity km) {
-        TT tt = trangThai(km);
-        if (tt == TT.HET_HAN) return;
-        if (tt == TT.TAM_DUNG) {
-            TAM_DUNG.remove(km.getMaKM());
+        Status status = controller.status(km);
+        if (status == Status.EXPIRED) return;
+        if (status == Status.PAUSED) {
+            controller.resume(km.getMaKM());
         } else {
             int kq = JOptionPane.showConfirmDialog(this,
                     "Tạm dừng khuyến mãi " + km.getTenKM() + " (" + km.getMaKM() + ")?\n"
                             + "Chương trình sẽ không được áp dụng cho đến khi kích hoạt lại.",
                     "Tạm dừng khuyến mãi", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (kq != JOptionPane.YES_OPTION) return;
-            TAM_DUNG.add(km.getMaKM());
+            controller.pause(km.getMaKM());
         }
         hienThi(false);
     }
@@ -533,30 +475,14 @@ public class KhuyenMaiGUI extends JPanel {
         fc.setSelectedFile(new File("danh-sach-khuyen-mai.csv"));
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
-        StringBuilder sb = new StringBuilder("\uFEFF");
-        sb.append("Mã khuyến mãi,Tên khuyến mãi,Mức giảm,Loại giảm,Ngày bắt đầu,Ngày kết thúc,Điều kiện,Trạng thái\r\n");
-        for (KhuyenMai_Entity km : locRa) {
-            sb.append(csv(km.getMaKM())).append(',')
-              .append(csv(km.getTenKM())).append(',')
-              .append(csv(hienMuc(km))).append(',')
-              .append(csv(laPhanTram(km) ? "Phần trăm" : "Số tiền")).append(',')
-              .append(csv(km.getNgayBatDau() != null ? DF.format(km.getNgayBatDau()) : "")).append(',')
-              .append(csv(km.getNgayKetThuc() != null ? DF.format(km.getNgayKetThuc()) : "")).append(',')
-              .append(csv(nz(km.getDieuKien()))).append(',')
-              .append(csv(trangThai(km).text)).append("\r\n");
-        }
         try {
-            Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), controller.toCsv(locRa).getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + locRa.size() + " khuyến mãi ra file.", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Không lưu được file: " + ex.getMessage(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private static String csv(String s) {
-        return "\"" + (s == null ? "" : s.replace("\"", "\"\"")) + "\"";
     }
 
     // =====================================================================
@@ -608,48 +534,9 @@ public class KhuyenMaiGUI extends JPanel {
         btnHuy.addActionListener(e -> dlg.dispose());
         btnLuu.addActionListener(e -> {
             try {
-                String ma = txtMa.getText().trim();
-                String ten = txtTen.getText().trim();
                 boolean phanTram = cboLoai.getSelectedIndex() == 0;
-                String mucStr = txtMuc.getText().trim();
-                double muc = phanTram
-                        ? Double.parseDouble(mucStr.replace(",", "."))
-                        : Double.parseDouble(mucStr.replace(".", "").replace(",", ""));
-                LocalDate bd = LocalDate.parse(txtBatDau.getText().trim(), DF);
-                LocalDate kt = LocalDate.parse(txtKetThuc.getText().trim(), DF);
-                String dk = txtDieuKien.getText().trim();
-
-                if (ma.isEmpty()) {
-                    JOptionPane.showMessageDialog(dlg, "Mã khuyến mãi không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (ten.isEmpty()) {
-                    JOptionPane.showMessageDialog(dlg, "Tên khuyến mãi không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (phanTram && (muc <= 0 || muc > 100)) {
-                    JOptionPane.showMessageDialog(dlg, "Mức giảm theo phần trăm phải trong khoảng (0, 100].", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (!phanTram && muc <= 100) {
-                    JOptionPane.showMessageDialog(dlg, "Mức giảm theo số tiền phải lớn hơn 100 ₫.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (kt.isBefore(bd)) {
-                    JOptionPane.showMessageDialog(dlg, "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (!sua) {
-                    for (KhuyenMai_Entity k : tatCa) {
-                        if (ma.equalsIgnoreCase(k.getMaKM())) {
-                            JOptionPane.showMessageDialog(dlg, "Mã khuyến mãi đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
-                    }
-                }
-
-                KhuyenMai_Entity km = new KhuyenMai_Entity(ma, ten, muc, bd, kt, dk);
-                boolean ok = sua ? dao.updateKhuyenMai(km) : dao.createKhuyenMai(km);
+                boolean ok = controller.save(txtMa.getText(), txtTen.getText(), phanTram, txtMuc.getText(),
+                        txtBatDau.getText(), txtKetThuc.getText(), txtDieuKien.getText(), tatCa, sua);
                 if (ok) {
                     JOptionPane.showMessageDialog(dlg, "Lưu thành công!");
                     dlg.dispose();
@@ -657,8 +544,8 @@ public class KhuyenMaiGUI extends JPanel {
                 } else {
                     JOptionPane.showMessageDialog(dlg, "Không thể lưu khuyến mãi vào CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (NumberFormatException | DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(dlg, "Dữ liệu nhập không hợp lệ (kiểm tra định dạng số và ngày dd/MM/yyyy).", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -679,8 +566,8 @@ public class KhuyenMaiGUI extends JPanel {
                         "Xóa khuyến mãi " + mau.getTenKM() + " (" + mau.getMaKM() + ")?",
                         "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
                 if (kq != JOptionPane.YES_OPTION) return;
-                if (dao.deleteKhuyenMai(mau.getMaKM())) {
-                    TAM_DUNG.remove(mau.getMaKM());
+                if (controller.delete(mau.getMaKM())) {
+                    controller.resume(mau.getMaKM());
                     JOptionPane.showMessageDialog(dlg, "Xóa thành công!");
                     dlg.dispose();
                     taiLai();
@@ -758,9 +645,9 @@ public class KhuyenMaiGUI extends JPanel {
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String s = v == null ? "" : v.toString();
             badge.setText("● " + s);
-            if (TT.DANG_AP_DUNG.text.equals(s)) badge.setColors(LUC_BG, LUC);
-            else if (TT.SAP_DIEN_RA.text.equals(s)) badge.setColors(LAM_BG, LAM);
-            else if (TT.TAM_DUNG.text.equals(s)) badge.setColors(TIM_BG, TIM);
+            if (Status.ACTIVE.label.equals(s)) badge.setColors(LUC_BG, LUC);
+            else if (Status.UPCOMING.label.equals(s)) badge.setColors(LAM_BG, LAM);
+            else if (Status.PAUSED.label.equals(s)) badge.setColors(TIM_BG, TIM);
             else badge.setColors(XAM_BG, XAM_DAM);
             panel.setOpaque(true);
             panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());

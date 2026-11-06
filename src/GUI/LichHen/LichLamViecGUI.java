@@ -2,9 +2,9 @@ package GUI.LichHen;
 
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
-import dao.LichLamViec_DAO;
-import entity.LichLamViec_entity;
-import entity.NhanSuLichLamViec_entity;
+import controller.LichLamViecController;
+import entity.LichHen.LichLamViec_entity;
+import entity.LichHen.NhanSuLichLamViec_entity;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,15 +13,12 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.sql.SQLException;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -66,7 +63,7 @@ public class LichLamViecGUI extends JPanel {
     private static final DateTimeFormatter DINH_DANG_THU =
             DateTimeFormatter.ofPattern("EEEE", Locale.forLanguageTag("vi-VN"));
 
-    private final LichLamViec_DAO dao = new LichLamViec_DAO();
+    private final LichLamViecController controller = new LichLamViecController();
     private final List<LichLamViec_entity> danhSachLich = new ArrayList<>();
     private final Map<LocalDate, Integer> soLichTheoNgay = new HashMap<>();
     private final Timer timerChotNgay = new Timer(0, e -> xuLyChotNgay());
@@ -309,14 +306,15 @@ public class LichLamViecGUI extends JPanel {
     }
 
     private boolean taiDuLieu() {
-        KhoangNgay khoang = layKhoangXem();
+        LichLamViecController.KhoangNgay khoang =
+                controller.khoangXem(ngayDangChon, cheDoXem.name());
         try {
+            LichLamViecController.DuLieuLich duLieu = controller.taiDuLieu(
+                    khoang.tuNgay, khoang.denNgayExclusive, YearMonth.from(ngayDangChon));
             danhSachLich.clear();
-            danhSachLich.addAll(dao.getLichTrongKhoang(khoang.tuNgay, khoang.denNgayExclusive));
-
-            YearMonth thang = YearMonth.from(ngayDangChon);
             soLichTheoNgay.clear();
-            soLichTheoNgay.putAll(dao.getSoLichTheoNgay(thang.atDay(1), thang.plusMonths(1).atDay(1)));
+            danhSachLich.addAll(duLieu.danhSach);
+            soLichTheoNgay.putAll(duLieu.soLichTheoNgay);
 
             veLichThang();
             veBangLich();
@@ -416,7 +414,8 @@ public class LichLamViecGUI extends JPanel {
             });
         }
 
-        KhoangNgay khoang = layKhoangXem();
+        LichLamViecController.KhoangNgay khoang =
+                controller.khoangXem(ngayDangChon, cheDoXem.name());
         lblTieuDeLich.setText(tieuDeKhoang(khoang));
         int soCa = danhSachLich.size();
         int soHoanThanh = 0;
@@ -432,7 +431,7 @@ public class LichLamViecGUI extends JPanel {
         capNhatTrangThaiNut();
     }
 
-    private String tieuDeKhoang(KhoangNgay khoang) {
+    private String tieuDeKhoang(LichLamViecController.KhoangNgay khoang) {
         switch (cheDoXem) {
             case NGAY:
                 return ngayDangChon.format(DINH_DANG_THU) + ", " + ngayDangChon.format(DINH_DANG_NGAY);
@@ -449,21 +448,6 @@ public class LichLamViecGUI extends JPanel {
 
     private String dinhDangGio(LocalTime gio) {
         return gio == null ? "" : gio.format(DINH_DANG_GIO);
-    }
-
-    private KhoangNgay layKhoangXem() {
-        switch (cheDoXem) {
-            case NGAY:
-                return new KhoangNgay(ngayDangChon, ngayDangChon.plusDays(1));
-            case TUAN:
-                LocalDate dauTuan = ngayDangChon.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-                return new KhoangNgay(dauTuan, dauTuan.plusWeeks(1));
-            case THANG:
-                YearMonth thang = YearMonth.from(ngayDangChon);
-                return new KhoangNgay(thang.atDay(1), thang.plusMonths(1).atDay(1));
-            default:
-                throw new IllegalStateException("Chế độ xem lịch không hợp lệ.");
-        }
     }
 
     private void doiThang(int soThang) {
@@ -495,12 +479,12 @@ public class LichLamViecGUI extends JPanel {
         }
 
         LocalDateTime bayGio = LocalDateTime.now();
-        btnThem.setEnabled(!ngayDangChon.isBefore(bayGio.toLocalDate()));
+        btnThem.setEnabled(controller.coTheThem(ngayDangChon, bayGio.toLocalDate()));
         boolean coLich = lich != null;
-        boolean coTheSua = coLich && lich.coTheSuaLichTai(bayGio);
+        boolean coTheSua = controller.coTheSua(lich, bayGio);
         btnSua.setEnabled(coTheSua);
         btnXoa.setEnabled(coTheSua);
-        btnTrangThai.setEnabled(coLich && lich.coTheCapNhatTrangThaiTrongNgay(LocalDate.now()));
+        btnTrangThai.setEnabled(controller.coTheCapNhatTrangThai(lich, LocalDate.now()));
     }
 
     private LichLamViec_entity layLichDangChon(boolean thongBaoNeuTrong) {
@@ -515,7 +499,7 @@ public class LichLamViecGUI extends JPanel {
     }
 
     private void themLich() {
-        if (ngayDangChon.isBefore(LocalDate.now())) {
+        if (!controller.coTheThem(ngayDangChon, LocalDate.now())) {
             hienThiThongBao("Không thể thêm lịch vào ngày đã qua.", true);
             return;
         }
@@ -527,7 +511,7 @@ public class LichLamViecGUI extends JPanel {
         if (lich == null) {
             return;
         }
-        if (!lich.coTheSuaLichTai(LocalDateTime.now())) {
+        if (!controller.coTheSua(lich, LocalDateTime.now())) {
             hienThiThongBao("Chỉ được sửa hoặc xóa lịch trước giờ bắt đầu.", true);
             capNhatTrangThaiNut();
             return;
@@ -540,7 +524,7 @@ public class LichLamViecGUI extends JPanel {
         if (lich == null) {
             return;
         }
-        if (!lich.coTheSuaLichTai(LocalDateTime.now())) {
+        if (!controller.coTheSua(lich, LocalDateTime.now())) {
             hienThiThongBao("Chỉ được xóa lịch trước giờ bắt đầu.", true);
             capNhatTrangThaiNut();
             return;
@@ -559,7 +543,7 @@ public class LichLamViecGUI extends JPanel {
         }
 
         try {
-            dao.xoaLich(lich.getMaLLV());
+            controller.xoa(lich.getMaLLV());
             if (taiDuLieu()) {
                 hienThiThongBao("Đã xóa lịch làm việc.", false);
             }
@@ -573,7 +557,7 @@ public class LichLamViecGUI extends JPanel {
         if (lich == null) {
             return;
         }
-        if (!lich.coTheCapNhatTrangThaiTrongNgay(LocalDate.now())) {
+        if (!controller.coTheCapNhatTrangThai(lich, LocalDate.now())) {
             hienThiThongBao("Chỉ có thể cập nhật trạng thái trong ngày diễn ra lịch.", true);
             return;
         }
@@ -592,7 +576,7 @@ public class LichLamViecGUI extends JPanel {
         }
 
         try {
-            dao.capNhatTrangThai(lich.getMaLLV(), (String) cbTrangThai.getSelectedItem());
+            controller.capNhatTrangThai(lich.getMaLLV(), (String) cbTrangThai.getSelectedItem());
             if (taiDuLieu()) {
                 hienThiThongBao("Đã cập nhật trạng thái lịch.", false);
             }
@@ -604,7 +588,7 @@ public class LichLamViecGUI extends JPanel {
     private void hienThiFormLich(LichLamViec_entity lichHienTai) {
         List<NhanSuLichLamViec_entity> nhanSu;
         try {
-            nhanSu = dao.getDanhSachNhanSu();
+            nhanSu = controller.taiDanhSachNhanSu();
         } catch (SQLException e) {
             hienThiThongBao("Không tải được danh sách nhân sự: " + e.getMessage(), true);
             return;
@@ -696,43 +680,14 @@ public class LichLamViecGUI extends JPanel {
 
             try {
                 LocalDate ngay = doiSangLocalDate((Date) spNgay.getValue());
-                LocalTime gioBatDau = LocalTime.parse(txtGioBatDau.getText().trim(), DINH_DANG_GIO);
-                LocalTime gioKetThuc = LocalTime.parse(txtGioKetThuc.getText().trim(), DINH_DANG_GIO);
-                if (!gioKetThuc.isAfter(gioBatDau)) {
-                    hienThiLoiForm(dialog, "Giờ kết thúc phải sau giờ bắt đầu.");
-                    return;
-                }
-
-                String maLich = themMoi ? dao.phatSinhMaLLV() : lichHienTai.getMaLLV();
-                LichLamViec_entity lich = new LichLamViec_entity(
-                        maLich,
-                        nhanSuChon.getMaNhanSu(),
-                        nhanSuChon.getTenNhanSu(),
-                        nhanSuChon.getVaiTro(),
-                        ngay,
-                        gioBatDau,
-                        gioKetThuc,
-                        themMoi ? LichLamViec_entity.TRANG_THAI_CHUA_LAM : lichHienTai.getTrangThai(),
-                        nhanSuChon.getLoaiNhanSu()
-                );
-
-                if (themMoi) {
-                    if (!dao.themLich(lich)) {
-                        throw new IllegalStateException("Không thể tạo lịch làm việc.");
-                    }
-                } else {
-                    if (!dao.capNhatLich(lich)) {
-                        throw new IllegalStateException("Không thể cập nhật lịch làm việc.");
-                    }
-                }
+                controller.luu(nhanSuChon, ngay, txtGioBatDau.getText(),
+                        txtGioKetThuc.getText(), lichHienTai);
 
                 dialog.dispose();
                 ngayDangChon = ngay;
                 if (taiDuLieu()) {
                     hienThiThongBao(themMoi ? "Đã tạo ca làm việc." : "Đã lưu thay đổi lịch.", false);
                 }
-            } catch (DateTimeParseException ex) {
-                hienThiLoiForm(dialog, "Giờ phải đúng định dạng 24 giờ, ví dụ 08:30 hoặc 14:00.");
             } catch (SQLException | IllegalArgumentException | IllegalStateException ex) {
                 hienThiLoiForm(dialog, ex.getMessage());
             }
@@ -797,7 +752,7 @@ public class LichLamViecGUI extends JPanel {
             return;
         }
         try {
-            dao.capNhatTrangThaiTuDongQuaNgay();
+            controller.capNhatTrangThaiTuDongQuaNgay();
             taiDuLieu();
         } catch (SQLException e) {
             hienThiThongBao("Không thể tự động chốt trạng thái lịch: " + e.getMessage(), true);
@@ -826,16 +781,6 @@ public class LichLamViecGUI extends JPanel {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
         return btn;
-    }
-
-    private static class KhoangNgay {
-        private final LocalDate tuNgay;
-        private final LocalDate denNgayExclusive;
-
-        private KhoangNgay(LocalDate tuNgay, LocalDate denNgayExclusive) {
-            this.tuNgay = tuNgay;
-            this.denNgayExclusive = denNgayExclusive;
-        }
     }
 
     private static class RendererNhanSu extends DefaultListCellRenderer {

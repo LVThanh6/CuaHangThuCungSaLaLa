@@ -6,29 +6,19 @@ import GUI.Chung.NenAnhPanel;
 
 import GUI.Chung.TamNenNoiDung;
 
-import dao.ChiTietHoaDon_DAO;
+import controller.ChiTietHoaDonController;
 
-import dao.HoaDon_Dao;
+import entity.HoaDon.ChiTietHoaDon_entity;
 
-import dao.KhachHang_DAO;
+import entity.HoaDon.HoaDon_entity;
 
-import dao.ThuCung_DAO;
+import entity.KhachHang.KhachHang;
 
-import entity.ChiTietHoaDon_entity;
+import entity.NhanVien.NhanVien_entity;
 
-import entity.HoaDon_entity;
+import entity.HoaDon.ThanhToan_entity;
 
-import entity.KhachHang;
-
-import entity.KhuyenMai_Entity;
-
-import entity.NhanVien_entity;
-
-import entity.ThanhToan_entity;
-
-import entity.ThuCung_entity;
-
-import entity.Thue_entity;
+import entity.ThuCung.ThuCung_entity;
 
 import javax.swing.*;
 
@@ -63,17 +53,12 @@ import java.util.ArrayList;
 /**
  * 
  * Màn hình chi tiết hóa đơn.
- * 
- * Dùng các DAO có sẵn: HoaDon_Dao, ChiTietHoaDon_DAO, ThuCung_DAO,
- * KhachHang_DAO.
- *
- * 
- * 
  * Mở bằng: ChiTietHoaDon_gui.hienThi(this, maHD);
  * 
  */
 
 public class ChiTietHoaDon_gui extends JPanel {
+    private final ChiTietHoaDonController controller;
 
     private static final Color XANH = Color.decode("#0F766E");
 
@@ -146,7 +131,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     public static void hienThi(Component cha, String maHD, DSHoaDon_gui dsHoaDon) {
 
-        HoaDon_entity hd = new HoaDon_Dao().getHDTheoMa(maHD);
+        ChiTietHoaDonController controller = new ChiTietHoaDonController();
+        ChiTietHoaDonController.DuLieuChiTiet duLieu = controller.taiDuLieu(maHD);
+        HoaDon_entity hd = duLieu == null ? null : duLieu.getHoaDon();
 
         if (hd == null) {
 
@@ -166,20 +153,6 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         }
 
-        ArrayList<ChiTietHoaDon_entity> dong =
-
-                new ChiTietHoaDon_DAO().getChiTietHoaDonTheoMaHD(maHD);
-
-        KhachHang kh = hd.getMaKH();
-
-        ArrayList<ThuCung_entity> thuCung = new ArrayList<>();
-        if (hd.getMaTC() != null) {
-            ThuCung_entity tc = new ThuCung_DAO().getThuCungTheoMa(hd.getMaTC().getMaTC());
-            if (tc != null) {
-                thuCung.add(tc);
-            }
-        }
-
         Window chu = cha == null
 
                 ? null
@@ -191,7 +164,7 @@ public class ChiTietHoaDon_gui extends JPanel {
 
                 Dialog.ModalityType.APPLICATION_MODAL);
 
-        ChiTietHoaDon_gui chiTiet = new ChiTietHoaDon_gui(hd, dong, thuCung, dsHoaDon);
+        ChiTietHoaDon_gui chiTiet = new ChiTietHoaDon_gui(controller, duLieu, dsHoaDon);
 
         // Cửa sổ chi tiết cũng dùng ảnh nền + tấm nền kem mờ giống màn hình chính
         NenAnhPanel nen = new NenAnhPanel();
@@ -229,21 +202,22 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== KHỞI TẠO ====================
 
-    public ChiTietHoaDon_gui(HoaDon_entity hd,
-            ArrayList<ChiTietHoaDon_entity> dong,
-            ArrayList<ThuCung_entity> thuCung,
+    public ChiTietHoaDon_gui(ChiTietHoaDonController controller,
+            ChiTietHoaDonController.DuLieuChiTiet duLieu,
             DSHoaDon_gui dsHoaDon) {
 
-        this.hd = hd;
+        this.controller = controller;
 
-        this.dong = dong == null ? new ArrayList<>() : dong;
+        this.hd = duLieu.getHoaDon();
 
-        this.thuCung = thuCung == null ? new ArrayList<>() : thuCung;
+        this.dong = duLieu.getCacDong();
+
+        this.thuCung = duLieu.getThuCung();
         this.dsHoaDon = dsHoaDon;
 
-        this.hangThanhVien = layHang(hd.getMaKH());
+        this.hangThanhVien = duLieu.getHangThanhVien();
 
-        tinhTien();
+        apDungTongTien(controller.tinhTongTien(hd, this.dong));
 
         setLayout(new BorderLayout());
 
@@ -295,75 +269,15 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== TÍNH TIỀN ====================
 
-    private void tinhTien() {
-
-        KhuyenMai_Entity km = hd.getMaKM();
-
-        Thue_entity thue = hd.getMaThue();
-
-        mucKM = km == null ? 0 : km.getMucKM();
-
-        mucThue = thue == null ? 0 : thue.getMucThue();
-
-        tongTien = 0;
-
-        for (ChiTietHoaDon_entity c : dong) {
-
-            tongTien += c.getSoLuong() * c.getDonGia();
-
-        }
-
-        tienKM = tongTien * mucKM / 100.0;
-
-        double sauKM = tongTien - tienKM;
-
-        tienThue = sauKM * mucThue / 100.0;
-
-        thanhTien = sauKM + tienThue;
-
-        ThanhToan_entity tt = hd.getMaThanhToan();
-
-        daThanhToan = tt != null && laDaThanhToan(tt.getTrangThai())
-
-                ? tt.getSoTien()
-                : 0;
-
-        conPhaiThu = Math.max(0, thanhTien - daThanhToan);
-
-        if (conPhaiThu < 0.5) {
-
-            conPhaiThu = 0;
-
-        }
-
-    }
-
-    /** Hạng thành viên được tính trong KhachHang_DAO (dựa trên tổng chi tiêu). */
-
-    private static String layHang(KhachHang kh) {
-
-        if (kh == null || kh.getMaKH() == null) {
-
-            return null;
-
-        }
-
-        try {
-
-            if (kh.getHangThanhVien() != null)
-                return kh.getHangThanhVien();
-            entity.HangThanhVien htv = new dao.HangThanhVien_DAO().getHangThanhVienTheoMaKH(kh.getMaKH());
-            if (htv != null && htv.getTenHang() != null)
-                return htv.getTenHang();
-
-        } catch (Exception ignored) {
-
-            // Không lấy được hạng thì bỏ qua dòng này
-
-        }
-
-        return null;
-
+    private void apDungTongTien(ChiTietHoaDonController.TongTien tong) {
+        mucKM = tong.getMucKhuyenMai();
+        mucThue = tong.getMucThue();
+        tongTien = tong.getTongTien();
+        tienKM = tong.getTienKhuyenMai();
+        tienThue = tong.getTienThue();
+        thanhTien = tong.getThanhTien();
+        daThanhToan = tong.getDaThanhToan();
+        conPhaiThu = tong.getConPhaiThu();
     }
 
     // ==================== TIÊU ĐỀ ====================
@@ -830,7 +744,7 @@ public class ChiTietHoaDon_gui extends JPanel {
                 ? tt.getTrangThai()
                 : hd.getTrangThai();
 
-        boolean daTT = laDaThanhToan(trangThai);
+        boolean daTT = ChiTietHoaDonController.laDaThanhToan(trangThai);
 
         Chip chip = daTT
 
@@ -1113,17 +1027,7 @@ public class ChiTietHoaDon_gui extends JPanel {
     // ==================== IN / XUẤT HÓA ĐƠN ====================
 
     private boolean isHoaDonDaThanhToan() {
-
-        if (hd == null)
-            return false;
-
-        if (laDaThanhToan(hd.getTrangThai()))
-            return true;
-
-        ThanhToan_entity tt = hd.getMaThanhToan();
-
-        return tt != null && laDaThanhToan(tt.getTrangThai());
-
+        return controller.laHoaDonDaThanhToan(hd);
     }
 
     private void inHoaDon() {
@@ -1162,7 +1066,7 @@ public class ChiTietHoaDon_gui extends JPanel {
             @Override
             protected Boolean doInBackground() {
                 return phuongThucThanhToan == null
-                        || new HoaDon_Dao().xacNhanThanhToan(hd.getMaHD(), phuongThucThanhToan, thanhTien);
+                        || controller.xacNhanThanhToan(hd, phuongThucThanhToan, thanhTien);
             }
 
             @Override
@@ -1177,7 +1081,7 @@ public class ChiTietHoaDon_gui extends JPanel {
                         return;
                     }
                     if (phuongThucThanhToan != null) {
-                        capNhatTrangThaiThanhToan(phuongThucThanhToan);
+                        capNhatHienThiSauThanhToan();
                     }
                     daKhoiDongIn = hienHopThoaiIn();
                 } catch (InterruptedException ex) {
@@ -1297,23 +1201,8 @@ public class ChiTietHoaDon_gui extends JPanel {
         setCursor(Cursor.getDefaultCursor());
     }
 
-    private void capNhatTrangThaiThanhToan(String phuongThuc) {
-        hd.setTrangThai("Đã thanh toán");
-        ThanhToan_entity tt = hd.getMaThanhToan();
-        if (tt == null) {
-            tt = new ThanhToan_entity(
-                    "TT" + System.currentTimeMillis(), thanhTien,
-                    java.time.LocalDate.now(), phuongThuc, "Đã thanh toán");
-            hd.setMaThanhToan(tt);
-        } else {
-            tt.setTrangThai("Đã thanh toán");
-            tt.setSoTien(thanhTien);
-            tt.setPhuongThuc(phuongThuc);
-            tt.setThoiGian(java.time.LocalDate.now());
-        }
-
-        daThanhToan = thanhTien;
-        conPhaiThu = 0;
+    private void capNhatHienThiSauThanhToan() {
+        apDungTongTien(controller.tinhTongTien(hd, dong));
         napTheThanhToanVaTongTien();
         noiDung.validate();
         if (dsHoaDon != null) {
@@ -1322,20 +1211,6 @@ public class ChiTietHoaDon_gui extends JPanel {
     }
 
     // ==================== HÀM TIỆN ÍCH ====================
-
-    private static boolean laDaThanhToan(String trangThai) {
-
-        if (trangThai == null) {
-
-            return false;
-
-        }
-
-        return trangThai.equalsIgnoreCase("Đã thanh toán")
-
-                || trangThai.equalsIgnoreCase("Paid");
-
-    }
 
     private static String tien(double v) {
 

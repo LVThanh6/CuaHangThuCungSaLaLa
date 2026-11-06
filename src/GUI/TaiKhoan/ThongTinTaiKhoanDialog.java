@@ -1,8 +1,9 @@
 package GUI.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
+import controller.ThongTinTaiKhoanController;
 
-import entity.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -18,6 +19,8 @@ public class ThongTinTaiKhoanDialog extends JDialog {
 
     public ThongTinTaiKhoanDialog(Frame parent, TaiKhoan tk, String tenHienThi) {
         super(parent, "Thông tin tài khoản", true);
+        ThongTinTaiKhoanController.ThongTinHoSo thongTin =
+                new ThongTinTaiKhoanController().taoThongTin(tenHienThi);
         setSize(440, 480);
         setLocationRelativeTo(parent);
         setResizable(false);
@@ -33,16 +36,7 @@ public class ThongTinTaiKhoanDialog extends JDialog {
         JPanel pAvatar = new JPanel(new FlowLayout(FlowLayout.CENTER));
         pAvatar.setOpaque(false);
 
-        String initials = "SL";
-        if (tenHienThi != null && !tenHienThi.trim().isEmpty()) {
-            String[] parts = tenHienThi.trim().split("\\s+");
-            if (parts.length >= 2) {
-                initials = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
-            } else {
-                initials = parts[0].substring(0, 1).toUpperCase();
-            }
-        }
-        final String avatarText = initials;
+        final String avatarText = thongTin.chuCaiDau;
 
         JComponent avatarComp = new JComponent() {
             @Override
@@ -69,7 +63,7 @@ public class ThongTinTaiKhoanDialog extends JDialog {
         p.add(pAvatar);
 
         // Tên & Vai trò
-        JLabel lblTen = new JLabel(tenHienThi != null ? tenHienThi : "Người dùng");
+        JLabel lblTen = new JLabel(thongTin.tenHienThi);
         lblTen.setFont(RangBuocGiaoDien.fontDam(18));
         lblTen.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         lblTen.setAlignmentX(Component.CENTER_ALIGNMENT);

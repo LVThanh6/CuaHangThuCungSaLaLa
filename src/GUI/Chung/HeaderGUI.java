@@ -4,16 +4,14 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import dao.DangNhap_DAO;
+import controller.NavigationController;
 import GUI.GiaoDienChinhGUI;
 import GUI.TaiKhoan.ThongTinTaiKhoanDialog;
 
@@ -23,32 +21,14 @@ public class HeaderGUI extends JPanel {
         void onTabSelected(String tenTab, String menuCon);
     }
 
-    public enum VaiTroHeThong {
-        ADMIN("Admin (Toàn quyền)"),
-        QUAN_LY("Quản lý"),
-        BAC_SI("Bác sĩ thú y"),
-        NHAN_VIEN_BAN_HANG("Nhân viên bán hàng"),
-        NHAN_VIEN_DICH_VU("Nhân viên dịch vụ"),
-        NHAN_VIEN_KHO("Nhân viên quản lý kho");
-
-        private final String tenHienThi;
-
-        VaiTroHeThong(String tenHienThi) {
-            this.tenHienThi = tenHienThi;
-        }
-
-        public String getTenHienThi() {
-            return tenHienThi;
-        }
-    }
-
     private String tenNguoiDung;
     private String chucVu;
     private String chuCaiAvatar;
-    private VaiTroHeThong vaiTroHeThong;
+    private NavigationController.VaiTroHeThong vaiTroHeThong;
 
     private String[] danhSachTabs;
-    private Map<String, String[]> menuConMap;
+    private NavigationController.MenuQuyen menuQuyen;
+    private final NavigationController controller = new NavigationController();
     private String tabHienTai;
 
     private List<JButton> danhSachNutTab;
@@ -57,8 +37,9 @@ public class HeaderGUI extends JPanel {
     private Consumer<String> onTabChanged;
 
     public HeaderGUI() {
-        this(DangNhap_DAO.isDaDangNhap() ? DangNhap_DAO.getTenNguoiDung() : "Người dùng",
-             DangNhap_DAO.isDaDangNhap() ? DangNhap_DAO.getVaiTro() : "Quản lý");
+        this(
+                new NavigationController().getTenNguoiDungHienTai(),
+                new NavigationController().getVaiTroNguoiDungHienTai());
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu) {
@@ -75,109 +56,12 @@ public class HeaderGUI extends JPanel {
         this.tabSelectionListener = listener;
     }
 
-    /**
-     * Nhận diện và chuẩn hóa vai trò thành 1 trong 6 vai trò người dùng trong hệ thống
-     */
-    public static VaiTroHeThong xacDinhVaiTro(String vaiTro) {
-        if (DangNhap_DAO.isDaDangNhap()) {
-            String username = DangNhap_DAO.getTaiKhoanHienTai() != null ? DangNhap_DAO.getTaiKhoanHienTai().getTenDangNhap() : "";
-            if ("admin".equalsIgnoreCase(username)) {
-                return VaiTroHeThong.ADMIN;
-            }
-        }
-        if (vaiTro == null || vaiTro.trim().isEmpty()) {
-            return VaiTroHeThong.QUAN_LY;
-        }
-        String vt = vaiTro.trim().toLowerCase();
-        if (vt.contains("admin") || vt.contains("quản trị") || vt.contains("quantri")) {
-            return VaiTroHeThong.ADMIN;
-        }
-        if (vt.contains("bác sĩ") || vt.contains("bác sỹ") || vt.contains("bac si") || vt.contains("bacsi")) {
-            return VaiTroHeThong.BAC_SI;
-        }
-        if (vt.contains("bán hàng") || vt.contains("ban hang") || vt.contains("thu ngân") || vt.contains("thungan") || vt.contains("banhang")) {
-            return VaiTroHeThong.NHAN_VIEN_BAN_HANG;
-        }
-        if (vt.contains("dịch vụ") || vt.contains("dich vu") || vt.contains("dichvu")) {
-            return VaiTroHeThong.NHAN_VIEN_DICH_VU;
-        }
-        if (vt.contains("kho")) {
-            return VaiTroHeThong.NHAN_VIEN_KHO;
-        }
-        if (vt.contains("quản lý") || vt.contains("quan ly") || vt.contains("quanly") || vt.contains("ql")) {
-            return VaiTroHeThong.QUAN_LY;
-        }
-        return VaiTroHeThong.QUAN_LY;
-    }
-
-    /**
-     * Phân quyền Tabs và Menu con cho 6 vai trò người dùng
-     */
     public void thietLapTheoVaiTro(String vaiTro) {
         this.chucVu = vaiTro;
         capNhatChuCaiAvatar();
-        this.vaiTroHeThong = xacDinhVaiTro(vaiTro);
-        menuConMap = new HashMap<>();
-
-        switch (this.vaiTroHeThong) {
-            case ADMIN:
-                // 1. ADMIN: Toàn quyền tất cả chức năng hệ thống
-                this.danhSachTabs = new String[] { "Nhân viên", "Bác sĩ", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch", "Dịch vụ" };
-                menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Thống kê", "Quản lý tài khoản" });
-                menuConMap.put("Bác sĩ", new String[] { "Danh sách bác sĩ" });
-                menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
-                menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
-                menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
-                menuConMap.put("Vật tư", new String[] { "Vật tư", "Nhà cung cấp", "Phiếu nhập kho", "Phiếu xuất kho" });
-                menuConMap.put("Lịch", new String[] { "Lịch hẹn (Khám)", "Đặt lịch mới", "Lịch làm việc" });
-                menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Khuyến mãi", "Thuế" });
-                break;
-
-            case QUAN_LY:
-                // 2. QUẢN LÝ: Các chức năng liên quan đến quản lý điều hành, nhân sự, dịch vụ, khách hàng, lịch làm việc, thống kê
-                this.danhSachTabs = new String[] { "Nhân viên", "Bác sĩ", "Khách hàng", "Lịch", "Dịch vụ", "Hóa đơn", "Vật tư" };
-                menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Thống kê" });
-                menuConMap.put("Bác sĩ", new String[] { "Danh sách bác sĩ" });
-                menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
-                menuConMap.put("Lịch", new String[] { "Lịch làm việc", "Lịch hẹn (Khám)" });
-                menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Khuyến mãi", "Thuế" });
-                menuConMap.put("Hóa đơn", new String[] { "Danh sách hóa đơn" });
-                menuConMap.put("Vật tư", new String[] { "Vật tư", "Nhà cung cấp" });
-                break;
-
-            case BAC_SI:
-                // 3. BÁC SĨ: Các chức năng liên quan đến khám chữa bệnh và kê thuốc
-                this.danhSachTabs = new String[] { "Thú cưng", "Lịch", "Khách hàng" };
-                menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
-                menuConMap.put("Lịch", new String[] { "Lịch hẹn (Khám)", "Lịch làm việc" });
-                menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng" });
-                break;
-
-            case NHAN_VIEN_BAN_HANG:
-                // 4. NHÂN VIÊN BÁN HÀNG: Liên quan đến vật tư, đơn thuốc, hóa đơn cùng dịch vụ
-                this.danhSachTabs = new String[] { "Hóa đơn", "Thú cưng", "Vật tư", "Dịch vụ", "Khách hàng" };
-                menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
-                menuConMap.put("Thú cưng", new String[] { "Đơn Thuốc" });
-                menuConMap.put("Vật tư", new String[] { "Vật tư" });
-                menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Khuyến mãi", "Thuế" });
-                menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
-                break;
-
-            case NHAN_VIEN_DICH_VU:
-                // 5. NHÂN VIÊN DỊCH VỤ: Liên quan đến lịch hẹn của dịch vụ và chức năng các gói dịch vụ
-                this.danhSachTabs = new String[] { "Lịch", "Dịch vụ", "Thú cưng", "Khách hàng" };
-                menuConMap.put("Lịch", new String[] { "Đặt lịch mới", "Lịch hẹn (Khám)", "Lịch làm việc" });
-                menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Khuyến mãi" });
-                menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng" });
-                menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng" });
-                break;
-
-            case NHAN_VIEN_KHO:
-                // 6. NHÂN VIÊN KHO: Phụ trách quản lý kho và vật tư
-                this.danhSachTabs = new String[] { "Vật tư" };
-                menuConMap.put("Vật tư", new String[] { "Vật tư", "Nhà cung cấp", "Phiếu nhập kho", "Phiếu xuất kho" });
-                break;
-        }
+        menuQuyen = controller.layMenuQuyen(vaiTro);
+        vaiTroHeThong = menuQuyen.getVaiTro();
+        danhSachTabs = menuQuyen.getDanhSachTabs();
 
         if (danhSachTabs.length > 0) {
             this.tabHienTai = danhSachTabs[0];
@@ -185,15 +69,14 @@ public class HeaderGUI extends JPanel {
     }
 
     public String[] getMenuConCuaTab(String tenTab) {
-        if (menuConMap == null) return null;
-        return menuConMap.get(tenTab);
+        return menuQuyen == null ? null : menuQuyen.getMenuCon(tenTab);
     }
 
     public String[] getDanhSachTabs() {
         return danhSachTabs;
     }
 
-    public VaiTroHeThong getVaiTroHeThong() {
+    public NavigationController.VaiTroHeThong getVaiTroHeThong() {
         return vaiTroHeThong;
     }
 
@@ -304,7 +187,8 @@ public class HeaderGUI extends JPanel {
         itemThongTin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         itemThongTin.addActionListener(e -> {
             Frame frame = (Frame) SwingUtilities.getWindowAncestor(this);
-            ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanDialog(frame, DangNhap_DAO.getTaiKhoanHienTai(), DangNhap_DAO.getTenNguoiDung());
+            ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanDialog(
+                    frame, controller.getTaiKhoanHienTai(), controller.getTenNguoiDungHienTai());
             dlg.setVisible(true);
         });
         
@@ -400,7 +284,7 @@ public class HeaderGUI extends JPanel {
     }
 
     private JPopupMenu taoPopupMenu(String tenTab) {
-        String[] cacCon = menuConMap.get(tenTab);
+        String[] cacCon = getMenuConCuaTab(tenTab);
         if (cacCon == null || cacCon.length == 0) return null;
 
         JPopupMenu menu = new JPopupMenu();
