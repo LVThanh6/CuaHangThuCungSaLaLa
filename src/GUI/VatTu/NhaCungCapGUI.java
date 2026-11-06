@@ -9,11 +9,12 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
-import java.text.Normalizer;
 import java.util.ArrayList;
 
-import dao.NhaCungCap_DAO;
-import entity.NhaCungCap_entity;
+import controller.NhaCungCapController;
+import controller.NhaCungCapController.OperationResult;
+import controller.NhaCungCapController.Supplier;
+import controller.NhaCungCapController.SupplierInput;
 
 /**
  * Giao dien "Quan ly Nha cung cap" - SALALA Pet Shop.
@@ -43,7 +44,7 @@ public class NhaCungCapGUI extends JPanel {
     private TableRowSorter<TableModel> sorter;
     private JLabel lblTongNCC;
 
-    private NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
+    private final NhaCungCapController controller = new NhaCungCapController();
 
     public NhaCungCapGUI() {
         setLayout(new BorderLayout());
@@ -204,54 +205,28 @@ public class NhaCungCapGUI extends JPanel {
     // =====================================================================
     public void loadData() {
         model.setRowCount(0);
-        try {
-            ArrayList<NhaCungCap_entity> dsNCC = nccDAO.getAllNhaCungCap();
-            for (NhaCungCap_entity ncc : dsNCC) {
-                model.addRow(new Object[]{
-                    ncc.getMaNCC(),
-                    ncc.getTenNCC(),
-                    ncc.getDiaChi(),
-                    ncc.getSdt(),
-                    ncc.getEmail(),
-                    ""
-                });
-            }
-            lblTongNCC.setText(dsNCC.size() + " nha cung cap");
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Load du lieu mau neu khong co ket noi CSDL
-            loadSampleData();
+        ArrayList<Supplier> suppliers = new ArrayList<>(controller.taiDanhSach());
+        for (Supplier supplier : suppliers) {
+            model.addRow(new Object[]{
+                supplier.getCode(), supplier.getName(), supplier.getAddress(),
+                supplier.getPhone(), supplier.getEmail(), ""
+            });
         }
-    }
-
-    private void loadSampleData() {
-        model.setRowCount(0);
-        model.addRow(new Object[]{"NCC001", "Cong ty Duoc Thu Y VetGroup", "123 Nguyen Van Linh, Q.7, TP.HCM", "0901234567", "vetgroup@email.com", ""});
-        model.addRow(new Object[]{"NCC002", "Cong ty TNHH Thu Y A Chau", "456 Le Van Viet, Q.9, TP.HCM", "0912345678", "achau@email.com", ""});
-        model.addRow(new Object[]{"NCC003", "Pharma Pet Viet Nam", "789 Pham Van Dong, Thu Duc, TP.HCM", "0923456789", "pharmapet@email.com", ""});
-        lblTongNCC.setText(model.getRowCount() + " nha cung cap");
+        lblTongNCC.setText(suppliers.size() + " nha cung cap");
     }
 
     // =====================================================================
     // CRUD
     // =====================================================================
     private void themNhaCungCap() {
-        NhaCungCap_entity ncc = openEditor(null);
+        SupplierInput ncc = openEditor(null);
         if (ncc != null) {
-            boolean ok = false;
-            try {
-                ok = nccDAO.createNhaCungCap(ncc);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (ok) {
+            OperationResult result = controller.tao(ncc);
+            if (result.isSuccessful()) {
                 JOptionPane.showMessageDialog(this, "Them nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
                 loadData();
             } else {
-                // Them vao bang tam thoi neu khong co CSDL
-                model.addRow(new Object[]{ncc.getMaNCC(), ncc.getTenNCC(), ncc.getDiaChi(), ncc.getSdt(), ncc.getEmail(), ""});
-                lblTongNCC.setText(model.getRowCount() + " nha cung cap");
-                JOptionPane.showMessageDialog(this, "Da them nha cung cap vao bang (chua luu CSDL).", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -263,25 +238,15 @@ public class NhaCungCapGUI extends JPanel {
         String sdt = (String) model.getValueAt(modelRow, 3);
         String email = (String) model.getValueAt(modelRow, 4);
 
-        NhaCungCap_entity old = new NhaCungCap_entity(maNCC, tenNCC, diaChi, sdt, email);
-        NhaCungCap_entity updated = openEditor(old);
+        SupplierInput old = new SupplierInput(maNCC, tenNCC, diaChi, sdt, email);
+        SupplierInput updated = openEditor(old);
         if (updated != null) {
-            boolean ok = false;
-            try {
-                ok = nccDAO.updateNhaCungCap(updated);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (ok) {
+            OperationResult result = controller.capNhat(updated);
+            if (result.isSuccessful()) {
                 JOptionPane.showMessageDialog(this, "Cap nhat nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
                 loadData();
             } else {
-                // Cap nhat bang tam thoi
-                model.setValueAt(updated.getTenNCC(), modelRow, 1);
-                model.setValueAt(updated.getDiaChi(), modelRow, 2);
-                model.setValueAt(updated.getSdt(), modelRow, 3);
-                model.setValueAt(updated.getEmail(), modelRow, 4);
-                JOptionPane.showMessageDialog(this, "Da cap nhat nha cung cap (chua luu CSDL).", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -293,36 +258,28 @@ public class NhaCungCapGUI extends JPanel {
                 "Xac nhan xoa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (ok != JOptionPane.YES_OPTION) return;
 
-        boolean deleted = false;
-        try {
-            deleted = nccDAO.deleteNhaCungCap(maNCC);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (deleted) {
+        OperationResult result = controller.xoa(maNCC);
+        if (result.isSuccessful()) {
             JOptionPane.showMessageDialog(this, "Da xoa nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
             loadData();
         } else {
-            // Xoa khoi bang tam thoi
-            model.removeRow(modelRow);
-            lblTongNCC.setText(model.getRowCount() + " nha cung cap");
-            JOptionPane.showMessageDialog(this, "Da xoa nha cung cap khoi bang (chua luu CSDL).", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     // =====================================================================
     // Hop thoai them / sua
     // =====================================================================
-    private NhaCungCap_entity openEditor(NhaCungCap_entity src) {
-        final NhaCungCap_entity[] result = {null};
+    private SupplierInput openEditor(SupplierInput src) {
+        final SupplierInput[] result = {null};
         boolean isNew = (src == null);
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
                 isNew ? "Them nha cung cap moi" : "Sua nha cung cap", Dialog.ModalityType.APPLICATION_MODAL);
 
-        JTextField txtMa = new JTextField(isNew ? taoMaMoi() : src.getMaNCC());
+        JTextField txtMa = new JTextField(isNew ? controller.taoMaMoi(suppliersFromModel()) : src.getMa());
         txtMa.setEditable(isNew);
-        JTextField txtTen = new JTextField(isNew ? "" : src.getTenNCC());
+        JTextField txtTen = new JTextField(isNew ? "" : src.getTen());
         JTextField txtDiaChi = new JTextField(isNew ? "" : src.getDiaChi());
         JTextField txtSDT = new JTextField(isNew ? "" : src.getSdt());
         JTextField txtEmail = new JTextField(isNew ? "" : src.getEmail());
@@ -355,16 +312,14 @@ public class NhaCungCapGUI extends JPanel {
             String sdt = txtSDT.getText().trim();
             String email = txtEmail.getText().trim();
 
-            if (ma.isEmpty()) {
-                JOptionPane.showMessageDialog(d, "Ma NCC khong duoc de trong.", "Loi", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(d, "Ten nha cung cap khong duoc de trong.", "Loi", JOptionPane.WARNING_MESSAGE);
+            String validationError = NhaCungCapController.validate(
+                    new SupplierInput(ma, ten, diaChi, sdt, email));
+            if (validationError != null) {
+                JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            result[0] = new NhaCungCap_entity(ma, ten, diaChi, sdt, email);
+            result[0] = new SupplierInput(ma, ten, diaChi, sdt, email);
             d.dispose();
         });
 
@@ -382,18 +337,14 @@ public class NhaCungCapGUI extends JPanel {
         return result[0];
     }
 
-    private String taoMaMoi() {
-        int max = 0;
+    private ArrayList<Supplier> suppliersFromModel() {
+        ArrayList<Supplier> suppliers = new ArrayList<>();
         for (int i = 0; i < model.getRowCount(); i++) {
-            String ma = (String) model.getValueAt(i, 0);
-            if (ma != null && ma.startsWith("NCC")) {
-                try {
-                    int num = Integer.parseInt(ma.substring(3));
-                    if (num > max) max = num;
-                } catch (NumberFormatException ignored) {}
-            }
+            suppliers.add(new Supplier((String) model.getValueAt(i, 0),
+                    (String) model.getValueAt(i, 1), (String) model.getValueAt(i, 2),
+                    (String) model.getValueAt(i, 3), (String) model.getValueAt(i, 4)));
         }
-        return String.format("NCC%03d", max + 1);
+        return suppliers;
     }
 
     private static void addFormRow(JPanel form, int row, String label, JComponent comp) {
@@ -417,22 +368,15 @@ public class NhaCungCapGUI extends JPanel {
     // =====================================================================
     // Loc
     // =====================================================================
-    private static String normalize(String s) {
-        String n = Normalizer.normalize(s == null ? "" : s, Normalizer.Form.NFD);
-        return n.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .replace('\u0111', 'd').replace('\u0110', 'D').toLowerCase().trim();
-    }
-
     private void applyFilter() {
-        final String kw = normalize(txtSearch.getText());
+        final String keyword = txtSearch.getText();
         sorter.setRowFilter(new RowFilter<TableModel, Integer>() {
             @Override
             public boolean include(Entry<? extends TableModel, ? extends Integer> e) {
-                if (kw.isEmpty()) return true;
-                for (int i = 0; i < 5; i++) {
-                    if (normalize(e.getStringValue(i)).contains(kw)) return true;
-                }
-                return false;
+                Supplier supplier = new Supplier(
+                        e.getStringValue(0), e.getStringValue(1), e.getStringValue(2),
+                        e.getStringValue(3), e.getStringValue(4));
+                return controller.phuHopTimKiem(supplier, keyword);
             }
         });
     }

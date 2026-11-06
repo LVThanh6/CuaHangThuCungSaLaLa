@@ -3,25 +3,18 @@ package GUI.ThuCung;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 import GUI.GiaoDienChinhGUI;
-import dao.KhachHang_DAO;
-import dao.ThuCung_DAO;
-import entity.KhachHang;
-import entity.ThuCung_entity;
+import controller.HoSoThuCungController;
+import entity.KhachHang.KhachHang;
+import entity.ThuCung.ThuCung_entity;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -41,8 +34,7 @@ public class HoSoThuCungGUI extends JPanel {
     private final String[] tieuDeCot = { "Mã thú cưng", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh",
             "Chủ nuôi", "SĐT chủ", "Đặc điểm nhận diện" };
     private final String[] dsLoaiLoc = { "Loài: Tất cả", "Chó", "Mèo", "Thỏ", "Hamster" };
-    private final ThuCung_DAO thuCungDAO = new ThuCung_DAO();
-    private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private final HoSoThuCungController controller = new HoSoThuCungController();
     
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<ThuCung_entity> danhSachThuCung = new ArrayList<>();
@@ -241,8 +233,7 @@ public class HoSoThuCungGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            ArrayList<ThuCung_entity> ketQua = thuCungDAO.getAllThuCung();
-            danhSachThuCung = ketQua != null ? ketQua : new ArrayList<>();
+            danhSachThuCung = controller.taiDanhSach();
             locDuLieu();
             capNhatThongKe();
         } catch (RuntimeException e) {
@@ -252,23 +243,7 @@ public class HoSoThuCungGUI extends JPanel {
 
     private void locDuLieu() {
         if (bangThuCung == null) return;
-        String tuKhoa = txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
-        String loaiChon = String.valueOf(cboLoai.getSelectedItem());
-        
-        daLoc.clear();
-        for (ThuCung_entity tc : danhSachThuCung) {
-            if (tc == null) continue;
-            String ma = giaTri(tc.getMaTC());
-            String ten = giaTri(tc.getTenTC());
-            String loai = giaTri(tc.getLoai());
-            String chuHo = giaTri(tc.getChuHo());
-            String sdt = tc.getMaKH() == null ? "" : giaTri(tc.getMaKH().getSdt());
-
-            boolean khopTuKhoa = tuKhoa.isEmpty() || ma.toLowerCase(Locale.ROOT).contains(tuKhoa) || loai.toLowerCase(Locale.ROOT).contains(tuKhoa) || ten.toLowerCase(Locale.ROOT).contains(tuKhoa) || chuHo.toLowerCase(Locale.ROOT).contains(tuKhoa) || sdt.toLowerCase(Locale.ROOT).contains(tuKhoa);
-            boolean khopLoai = loaiChon == null || loaiChon.startsWith("Loài:") || loai.equalsIgnoreCase(loaiChon);
-            
-            if (khopTuKhoa && khopLoai) daLoc.add(tc);
-        }
+        daLoc = controller.loc(danhSachThuCung, txtTimKiem.getText(), String.valueOf(cboLoai.getSelectedItem()));
         capNhatBang();
     }
 
@@ -289,15 +264,11 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        int cho = 0, meo = 0;
-        for (ThuCung_entity tc : danhSachThuCung) {
-            if (tc != null && "Chó".equalsIgnoreCase(tc.getLoai())) cho++;
-            else if (tc != null && "Mèo".equalsIgnoreCase(tc.getLoai())) meo++;
-        }
-        nhanSoTongThuCung.setText(String.valueOf(danhSachThuCung.size()));
-        nhanSoCho.setText(String.valueOf(cho));
-        nhanSoMeo.setText(String.valueOf(meo));
-        nhanSoLoaiKhac.setText(String.valueOf(danhSachThuCung.size() - cho - meo));
+        HoSoThuCungController.ThongKe thongKe = controller.thongKe(danhSachThuCung);
+        nhanSoTongThuCung.setText(String.valueOf(thongKe.tong));
+        nhanSoCho.setText(String.valueOf(thongKe.cho));
+        nhanSoMeo.setText(String.valueOf(thongKe.meo));
+        nhanSoLoaiKhac.setText(String.valueOf(thongKe.tong - thongKe.cho - thongKe.meo));
     }
 
     private String giaTri(String value) { return value == null ? "" : value; }
@@ -324,7 +295,7 @@ public class HoSoThuCungGUI extends JPanel {
         String maThuCung = layMaThuCungDaChon();
         if (maThuCung == null) return;
         try {
-            ThuCung_entity tc = thuCungDAO.getThuCungTheoMa(maThuCung);
+            ThuCung_entity tc = controller.timTheoMa(maThuCung);
             if (tc == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy thú cưng.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -339,7 +310,7 @@ public class HoSoThuCungGUI extends JPanel {
         String maThuCung = layMaThuCungDaChon();
         if (maThuCung == null) return;
         try {
-            ThuCung_entity tc = thuCungDAO.getThuCungTheoMa(maThuCung);
+            ThuCung_entity tc = controller.timTheoMa(maThuCung);
             if (tc == null) return;
             hienThiFormThuCung(tc, false, true);
         } catch (RuntimeException e) {
@@ -354,7 +325,7 @@ public class HoSoThuCungGUI extends JPanel {
         String tenThuCung = String.valueOf(bangThuCung.getModel().getValueAt(dong, 1));
         if (JOptionPane.showConfirmDialog(this, "Xóa hồ sơ thú cưng \"" + tenThuCung + "\"?\nKhông thể hoàn tác.", "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             try {
-                if (thuCungDAO.deleteThuCung(maThuCung)) {
+                if (controller.xoa(maThuCung)) {
                     JOptionPane.showMessageDialog(this, "Đã xóa thành công.");
                     loadDataToTable();
                 } else {
@@ -370,13 +341,14 @@ public class HoSoThuCungGUI extends JPanel {
 
     private void hienThiFormThuCung(ThuCung_entity thuCung, boolean chiDoc, boolean luuDuoc) {
         try {
-            ArrayList<KhachHang> dsKhach = khachHangDAO.getAlltbKhachHang();
+            List<KhachHang> dsKhach = controller.taiKhachHang();
             if (dsKhach == null || dsKhach.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Cần có khách hàng trước.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            JTextField txtMa = new JTextField(thuCung == null ? phatSinhMaThuCung() : giaTri(thuCung.getMaTC()));
+            JTextField txtMa = new JTextField(thuCung == null
+                    ? controller.phatSinhMa(danhSachThuCung) : giaTri(thuCung.getMaTC()));
             txtMa.setEditable(false);
             JTextField txtTen = new JTextField(thuCung == null ? "" : giaTri(thuCung.getTenTC()));
             JComboBox<String> cboLoaiNhap = new JComboBox<>(new String[] { "Chó", "Mèo", "Thỏ", "Hamster", "Khác" });
@@ -429,38 +401,19 @@ public class HoSoThuCungGUI extends JPanel {
             String loai = String.valueOf(cboLoaiNhap.getSelectedItem()).trim();
             String chuHo = txtChuHo.getText().trim();
             KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
-            if (ten.isEmpty() || loai.isEmpty() || chuHo.isEmpty() || kh == null) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ tên, loài, chủ nuôi.", "Cảnh báo", JOptionPane.WARNING_MESSAGE); return;
-            }
-
-            LocalDate ngaySinh = null;
-            if (!txtNgaySinh.getText().trim().isEmpty()) {
-                try {
-                    ngaySinh = LocalDate.parse(txtNgaySinh.getText().trim(), DINH_DANG_NGAY);
-                } catch (DateTimeParseException e) {
-                    JOptionPane.showMessageDialog(this, "Ngày sinh phải dạng dd/MM/yyyy.", "Lỗi", JOptionPane.WARNING_MESSAGE); return;
-                }
-            }
-
-            ThuCung_entity duLieu = new ThuCung_entity(txtMa.getText(), kh, ten, loai, String.valueOf(cboGioiTinh.getSelectedItem()), ngaySinh, chuHo, txtDacDiem.getText().trim());
-            if (thuCung == null ? thuCungDAO.createThuCung(duLieu) : thuCungDAO.updateThuCung(duLieu)) {
+            if (controller.luu(new HoSoThuCungController.ThongTinThuCung(
+                    txtMa.getText(), thuCung == null, kh, ten, loai,
+                    String.valueOf(cboGioiTinh.getSelectedItem()), txtNgaySinh.getText(),
+                    chuHo, txtDacDiem.getText()))) {
                 JOptionPane.showMessageDialog(this, "Lưu thành công."); loadDataToTable();
             } else {
                 JOptionPane.showMessageDialog(this, "Lưu thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
         } catch (RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private String phatSinhMaThuCung() {
-        int maLonNhat = 0;
-        Pattern pattern = Pattern.compile("^TC(\\d+)$", Pattern.CASE_INSENSITIVE);
-        for (ThuCung_entity tc : danhSachThuCung) {
-            Matcher m = pattern.matcher(giaTri(tc.getMaTC()));
-            if (m.matches()) maLonNhat = Math.max(maLonNhat, Integer.parseInt(m.group(1)));
-        }
-        return String.format(Locale.ROOT, "TC%03d", maLonNhat + 1);
     }
 
     private void xuatDanhSach() {
@@ -469,21 +422,8 @@ public class HoSoThuCungGUI extends JPanel {
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
         java.io.File file = chooser.getSelectedFile();
         if (!file.getName().toLowerCase(Locale.ROOT).endsWith(".csv")) file = new java.io.File(file.getParentFile(), file.getName() + ".csv");
-        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-            writer.write('\ufeff');
-            for (int cot = 0; cot < bangThuCung.getColumnCount(); cot++) {
-                if (cot > 0) writer.write(',');
-                writer.write("\"" + bangThuCung.getColumnName(cot) + "\"");
-            }
-            writer.newLine();
-            DefaultTableModel model = (DefaultTableModel) bangThuCung.getModel();
-            for (int dong = 0; dong < model.getRowCount(); dong++) {
-                for (int cot = 0; cot < model.getColumnCount(); cot++) {
-                    if (cot > 0) writer.write(',');
-                    writer.write("\"" + String.valueOf(model.getValueAt(dong, cot)).replace("\"", "\"\"") + "\"");
-                }
-                writer.newLine();
-            }
+        try {
+            controller.xuatDanhSach(file, daLoc);
             JOptionPane.showMessageDialog(this, "Xuất thành công.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Lỗi xuất file.", "Lỗi", JOptionPane.ERROR_MESSAGE);

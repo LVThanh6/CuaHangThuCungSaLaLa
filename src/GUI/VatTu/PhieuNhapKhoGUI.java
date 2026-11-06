@@ -1,6 +1,12 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
+import controller.PhieuNhapKhoController;
+import controller.PhieuNhapKhoController.Dong;
+import controller.PhieuNhapKhoController.CatalogItem;
+import controller.PhieuNhapKhoController.Filter;
+import controller.PhieuNhapKhoController.Phieu;
+import controller.PhieuNhapKhoController.TrangThai;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -55,52 +61,19 @@ public class PhieuNhapKhoGUI extends JPanel {
         MONEY = new DecimalFormat("#,##0", s);
     }
 
-    private static final String[] NHA_CUNG_CAP = {
-            "Công ty Dược Thú Y VetGroup",
-            "Công ty TNHH Thú Y Á Châu",
-            "Pharma Pet Việt Nam"
-    };
-
     // =====================================================================
     // Mô hình dữ liệu
     // =====================================================================
-    enum TrangThai {
-        CHO_XAC_NHAN("Chờ xác nhận"), DA_XAC_NHAN("Đã xác nhận"), DA_HUY("Đã hủy");
-        final String text;
-        TrangThai(String text) { this.text = text; }
-    }
-
-    static class Dong {
-        String ma, ten, donVi;
-        int sl;
-        long donGia;
-        Dong(String ma, String ten, String donVi, int sl, long donGia) {
-            this.ma = ma; this.ten = ten; this.donVi = donVi; this.sl = sl; this.donGia = donGia;
-        }
-        long thanhTien() { return (long) sl * donGia; }
-    }
-
-    static class Phieu {
-        String so, nhanVien, nhaCungCap, ghiChu = "";
-        LocalDate ngay;
-        TrangThai tt = TrangThai.CHO_XAC_NHAN;
-        java.util.List<Dong> dong = new ArrayList<>();
-
-        int tongSL() { int t = 0; for (Dong d : dong) t += d.sl; return t; }
-        long tongTien() { long t = 0; for (Dong d : dong) t += d.thanhTien(); return t; }
-    }
-
     // ===== Thành phần =====
     private final Supplier<java.util.List<Object[]>> catalogSupplier;
     private final BiConsumer<String, Integer> stockUpdater;
     private final Runnable onLapPhieuXuat;
+    private final PhieuNhapKhoController controller = new PhieuNhapKhoController();
 
-    private final java.util.List<Phieu> all = new ArrayList<>();
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
 
     private LocalDate tuNgay, denNgay;
-    private int seq = 42;
     private String nhanVien = "Lê Minh";
 
     private JTextField txtSearch;
@@ -124,7 +97,6 @@ public class PhieuNhapKhoGUI extends JPanel {
         add(createHeader(), BorderLayout.NORTH);
         add(createTablePanel(), BorderLayout.CENTER);
 
-        loadSampleData();
         reload(true);
     }
 
@@ -311,46 +283,10 @@ public class PhieuNhapKhoGUI extends JPanel {
     // =====================================================================
     // Dữ liệu & Lọc
     // =====================================================================
-    private void loadSampleData() {
-        Phieu p42 = new Phieu();
-        p42.so = "PN-2025-0042";
-        p42.ngay = LocalDate.of(2025, 7, 5);
-        p42.nhanVien = "Lê Minh";
-        p42.nhaCungCap = "Công ty Dược Thú Y VetGroup";
-        p42.ghiChu = "Nhập bổ sung vắc-xin và kháng sinh tháng 7/2025";
-        p42.dong.add(new Dong("VT-001", "Amoxicillin 250mg", "Ống", 100, 45000));
-        p42.dong.add(new Dong("VT-002", "Rabisin Vắc-xin Dại", "Lọ", 30, 320000));
-        p42.dong.add(new Dong("VT-006", "Kim tiêm 5ml", "Hộp", 10, 35000));
-
-        Phieu p41 = new Phieu();
-        p41.so = "PN-2025-0041";
-        p41.ngay = LocalDate.of(2025, 6, 20);
-        p41.nhanVien = "Lê Minh";
-        p41.nhaCungCap = "Công ty TNHH Thú Y Á Châu";
-        p41.ghiChu = "Bổ sung thuốc giảm đau";
-        p41.dong.add(new Dong("VT-003", "Prednisolone 5mg", "Viên", 200, 8500));
-        p41.tt = TrangThai.DA_XAC_NHAN;
-
-        all.add(p42);
-        all.add(p41);
-    }
-
     private void reload(boolean resetPage) {
-        String kw = txtSearch.getText().trim().toLowerCase();
         int stIdx = cboTrangThai.getSelectedIndex();
         TrangThai[] stMap = {null, TrangThai.CHO_XAC_NHAN, TrangThai.DA_XAC_NHAN, TrangThai.DA_HUY};
-
-        filtered = new ArrayList<>();
-        for (Phieu p : all) {
-            if (!kw.isEmpty()
-                    && !p.so.toLowerCase().contains(kw)
-                    && !p.nhanVien.toLowerCase().contains(kw)
-                    && !p.nhaCungCap.toLowerCase().contains(kw)) continue;
-            if (stIdx > 0 && p.tt != stMap[stIdx]) continue;
-            if (tuNgay != null && p.ngay.isBefore(tuNgay)) continue;
-            if (denNgay != null && p.ngay.isAfter(denNgay)) continue;
-            filtered.add(p);
-        }
+        filtered = controller.loc(new Filter(txtSearch.getText(), stMap[stIdx], tuNgay, denNgay));
 
         model.setRowCount(0);
         pageRows.clear();
@@ -363,7 +299,7 @@ public class PhieuNhapKhoGUI extends JPanel {
                     p.nhanVien,
                     p.nhaCungCap,
                     p.dong.size(),
-                    p.tongTien(),
+                    PhieuNhapKhoController.tongTien(p),
                     p.tt.text
             });
         }
@@ -387,11 +323,11 @@ public class PhieuNhapKhoGUI extends JPanel {
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (ok != JOptionPane.OK_OPTION) return;
         try {
-            LocalDate f = from.getText().trim().isEmpty() ? null : LocalDate.parse(from.getText().trim(), DF);
-            LocalDate t = to.getText().trim().isEmpty() ? null : LocalDate.parse(to.getText().trim(), DF);
-            if (f != null && t != null && f.isAfter(t)) {
-                JOptionPane.showMessageDialog(this, "Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
+            LocalDate f = PhieuNhapKhoController.parseDate(from.getText(), DF);
+            LocalDate t = PhieuNhapKhoController.parseDate(to.getText(), DF);
+            String rangeError = PhieuNhapKhoController.validateDateRange(f, t);
+            if (rangeError != null) {
+                JOptionPane.showMessageDialog(this, rangeError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             tuNgay = f;
@@ -416,7 +352,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     private void lapPhieu() {
         Phieu p = openEditor(null);
         if (p != null) {
-            all.add(0, p);
+            controller.add(p);
             reload(true);
         }
     }
@@ -433,10 +369,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         }
         Phieu np = openEditor(p);
         if (np != null) {
-            p.ngay = np.ngay;
-            p.nhaCungCap = np.nhaCungCap;
-            p.ghiChu = np.ghiChu;
-            p.dong = np.dong;
+            controller.update(p, np);
             reload(false);
         }
     }
@@ -463,7 +396,8 @@ public class PhieuNhapKhoGUI extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         for (Dong dItem : p.dong) {
-            m.addRow(new Object[]{dItem.ten, dItem.donVi, dItem.sl, MONEY.format(dItem.donGia) + " đ", MONEY.format(dItem.thanhTien()) + " đ"});
+            m.addRow(new Object[]{dItem.ten, dItem.donVi, dItem.sl, MONEY.format(dItem.donGia) + " đ",
+                    MONEY.format(PhieuNhapKhoController.thanhTien(dItem)) + " đ"});
         }
         JTable tbl = new JTable(m);
         tbl.setRowHeight(32);
@@ -471,7 +405,8 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
-        JLabel lblSum = new JLabel("Tổng số lượng: " + p.tongSL() + "    Tổng giá trị: " + MONEY.format(p.tongTien()) + " đ");
+        JLabel lblSum = new JLabel("Tổng số lượng: " + PhieuNhapKhoController.tongSoLuong(p)
+                + "    Tổng giá trị: " + MONEY.format(PhieuNhapKhoController.tongTien(p)) + " đ");
         lblSum.setFont(new Font(FONT, Font.BOLD, 13));
         lblSum.setForeground(PRIMARY);
         bottom.add(lblSum, BorderLayout.WEST);
@@ -494,14 +429,12 @@ public class PhieuNhapKhoGUI extends JPanel {
                 return;
             }
             int ok = JOptionPane.showConfirmDialog(d,
-                    "Xác nhận phiếu nhập " + p.so + " và cộng " + p.tongSL() + " đơn vị vào tồn kho?",
+                    "Xác nhận phiếu nhập " + p.so + " và cộng "
+                            + PhieuNhapKhoController.tongSoLuong(p) + " đơn vị vào tồn kho?",
                     "Xác nhận nhập kho", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (ok != JOptionPane.YES_OPTION) return;
 
-            for (Dong dItem : p.dong) {
-                stockUpdater.accept(dItem.ma, dItem.sl);
-            }
-            p.tt = TrangThai.DA_XAC_NHAN;
+            if (!controller.confirm(p, stockUpdater)) return;
             reload(false);
             JOptionPane.showMessageDialog(d, "Đã xác nhận phiếu nhập và cập nhật tồn kho thành công.", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -513,7 +446,7 @@ public class PhieuNhapKhoGUI extends JPanel {
                     "Hủy phiếu nhập " + p.so + "? Thao tác này không thể hoàn tác.",
                     "Hủy phiếu nhập", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (ok != JOptionPane.YES_OPTION) return;
-            p.tt = TrangThai.DA_HUY;
+            controller.cancel(p);
             reload(false);
             d.dispose();
         });
@@ -553,7 +486,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     private Phieu openEditor(Phieu src) {
-        final java.util.List<Object[]> catalog = catalogSupplier.get();
+        final java.util.List<CatalogItem> catalog = catalogFromLegacy(catalogSupplier.get());
         final Phieu[] result = {null};
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
@@ -562,12 +495,12 @@ public class PhieuNhapKhoGUI extends JPanel {
         d.setLocationRelativeTo(this);
 
         JTextField txtSo = new JTextField(src == null
-                ? String.format("PN-%d-%04d", LocalDate.now().getYear(), ++seq) : src.so);
+                ? String.format("PN-%d-%04d", LocalDate.now().getYear(), controller.nextSequence()) : src.so);
         txtSo.setEditable(false);
         JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.ngay).format(DF));
         JTextField txtNV = new JTextField(src == null ? nhanVien : src.nhanVien);
         txtNV.setEditable(false);
-        JComboBox<String> cboNCC = new JComboBox<>(NHA_CUNG_CAP);
+        JComboBox<String> cboNCC = new JComboBox<>(controller.getSupplierSuggestions().toArray(new String[0]));
         cboNCC.setEditable(true);
         if (src != null) cboNCC.setSelectedItem(src.nhaCungCap);
         JTextField txtGhiChu = new JTextField(src == null ? "" : src.ghiChu);
@@ -598,24 +531,25 @@ public class PhieuNhapKhoGUI extends JPanel {
                 if (r >= 0 && r < m.getRowCount()) {
                     int sl = ((Number) m.getValueAt(r, 3)).intValue();
                     long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                    m.setValueAt((long) sl * gia, r, 5);
+                    m.setValueAt(PhieuNhapKhoController.thanhTien(new Dong("", "", "", sl, gia)), r, 5);
                 }
             }
         });
 
         if (src != null) {
             for (Dong dg : src.dong) {
-                m.addRow(new Object[]{dg.ma, dg.ten, dg.donVi, dg.sl, dg.donGia, dg.thanhTien()});
+                m.addRow(new Object[]{dg.ma, dg.ten, dg.donVi, dg.sl, dg.donGia,
+                        PhieuNhapKhoController.thanhTien(dg)});
             }
         }
 
         JComboBox<String> cboVT = new JComboBox<>();
-        for (Object[] r : catalog) cboVT.addItem(r[0] + " - " + r[1]);
+        for (CatalogItem item : catalog) cboVT.addItem(item.getMa() + " - " + item.getTen());
         JSpinner spSL = new JSpinner(new SpinnerNumberModel(1, 1, 999999, 1));
         JTextField txtGia = new JTextField(9);
         Runnable fillGia = () -> {
             int i = cboVT.getSelectedIndex();
-            if (i >= 0 && i < catalog.size()) txtGia.setText(String.valueOf(catalog.get(i)[3]));
+            if (i >= 0 && i < catalog.size()) txtGia.setText(String.valueOf(catalog.get(i).getGiaNhap()));
         };
         cboVT.addActionListener(e -> fillGia.run());
         if (catalog.size() > 0) fillGia.run();
@@ -625,26 +559,16 @@ public class PhieuNhapKhoGUI extends JPanel {
         btnThem.addActionListener(e -> {
             int i = cboVT.getSelectedIndex();
             if (i < 0 || i >= catalog.size()) return;
-            long gia;
-            try {
-                gia = Long.parseLong(txtGia.getText().trim().replace(".", "").replace(",", ""));
-                if (gia < 0) throw new NumberFormatException();
-            } catch (NumberFormatException ex) {
+            Long parsedPrice = PhieuNhapKhoController.parsePrice(txtGia.getText());
+            if (parsedPrice == null) {
                 JOptionPane.showMessageDialog(d, "Đơn giá không hợp lệ.", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            long gia = parsedPrice;
             int sl = (Integer) spSL.getValue();
-            Object[] vt = catalog.get(i);
-            for (int r = 0; r < m.getRowCount(); r++) {
-                if (vt[0].equals(m.getValueAt(r, 0))) {
-                    int slMoi = ((Number) m.getValueAt(r, 3)).intValue() + sl;
-                    m.setValueAt(slMoi, r, 3);
-                    m.setValueAt(gia, r, 4);
-                    m.setValueAt((long) slMoi * gia, r, 5);
-                    return;
-                }
-            }
-            m.addRow(new Object[]{vt[0], vt[1], vt[2], sl, gia, (long) sl * gia});
+            java.util.List<Dong> lines = linesFromModel(m);
+            controller.mergeLine(lines, controller.taoDong(catalog.get(i), sl, gia));
+            replaceModelRows(m, lines);
         });
         btnXoa.addActionListener(e -> {
             if (t.isEditing()) t.getCellEditor().stopCellEditing();
@@ -675,7 +599,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             if (t.isEditing()) t.getCellEditor().stopCellEditing();
             LocalDate ngay;
             try {
-                ngay = LocalDate.parse(txtNgay.getText().trim(), DF);
+                ngay = PhieuNhapKhoController.parseDate(txtNgay.getText(), DF);
             } catch (DateTimeParseException ex) {
                 JOptionPane.showMessageDialog(d, "Ngày lập không hợp lệ (định dạng dd/MM/yyyy).", "Lỗi",
                         JOptionPane.WARNING_MESSAGE);
@@ -683,30 +607,19 @@ public class PhieuNhapKhoGUI extends JPanel {
             }
             Object nccObj = cboNCC.getEditor().getItem();
             String ncc = nccObj == null ? "" : nccObj.toString().trim();
-            if (ncc.isEmpty()) {
-                JOptionPane.showMessageDialog(d, "Vui lòng nhập nhà cung cấp.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            java.util.List<Dong> lines = linesFromModel(m);
+            String validationError = controller.validate(new PhieuNhapKhoController.Draft(ngay, ncc, lines));
+            if (validationError != null) {
+                JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (m.getRowCount() == 0) {
-                JOptionPane.showMessageDialog(d, "Phiếu cần có ít nhất một vật tư.", "Lỗi", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
             Phieu p = src == null ? new Phieu() : src;
             p.so = txtSo.getText().trim();
             p.ngay = ngay;
             p.nhanVien = txtNV.getText().trim();
             p.nhaCungCap = ncc;
             p.ghiChu = txtGhiChu.getText().trim();
-            p.dong.clear();
-            for (int r = 0; r < m.getRowCount(); r++) {
-                String ma = (String) m.getValueAt(r, 0);
-                String ten = (String) m.getValueAt(r, 1);
-                String dv = (String) m.getValueAt(r, 2);
-                int sl = ((Number) m.getValueAt(r, 3)).intValue();
-                long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                p.dong.add(new Dong(ma, ten, dv, sl, gia));
-            }
+            p.dong = lines;
             result[0] = p;
             d.dispose();
         });
@@ -745,29 +658,15 @@ public class PhieuNhapKhoGUI extends JPanel {
         fc.setSelectedFile(new File("danh-sach-phieu-nhap-kho.csv"));
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
-        StringBuilder sb = new StringBuilder("\uFEFF");
-        sb.append("Mã phiếu nhập,Ngày lập,Nhân viên,Nhà cung cấp,Số lượng mặt hàng,Tổng giá trị,Trạng thái\r\n");
-        for (Phieu p : filtered) {
-            sb.append(csv(p.so)).append(',')
-              .append(csv(p.ngay.format(DF))).append(',')
-              .append(csv(p.nhanVien)).append(',')
-              .append(csv(p.nhaCungCap)).append(',')
-              .append(p.dong.size()).append(',')
-              .append(p.tongTien()).append(',')
-              .append(csv(p.tt.text)).append("\r\n");
-        }
+        String csv = PhieuNhapKhoController.toCsv(filtered);
         try {
-            Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), csv.getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + filtered.size() + " phiếu ra file.", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Không lưu được file: " + ex.getMessage(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private static String csv(String s) {
-        return "\"" + (s == null ? "" : s.replace("\"", "\"\"")) + "\"";
     }
 
     private void xuatIn(Phieu p, Window owner) {
@@ -817,28 +716,34 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     private String buildText(Phieu p) {
-        StringBuilder sb = new StringBuilder();
-        String line = "-".repeat(78) + "\n";
-        sb.append("SALALA PET SHOP\n");
-        sb.append("PHIẾU NHẬP KHO\n");
-        sb.append(line);
-        sb.append("Số phiếu     : ").append(p.so).append('\n');
-        sb.append("Ngày lập     : ").append(p.ngay.format(DF)).append('\n');
-        sb.append("Nhân viên lập: ").append(p.nhanVien).append('\n');
-        sb.append("Nhà cung cấp : ").append(p.nhaCungCap).append('\n');
-        sb.append("Ghi chú      : ").append(p.ghiChu == null ? "" : p.ghiChu).append('\n');
-        sb.append("Trạng thái   : ").append(p.tt.text).append('\n');
-        sb.append(line);
-        sb.append(String.format("%-28s %-7s %5s %14s %17s%n", "Tên vật tư", "ĐVT", "SL", "Đơn giá", "Thành tiền"));
-        sb.append(line);
-        for (Dong d : p.dong) {
-            sb.append(String.format("%-28s %-7s %5d %14s %17s%n", d.ten, d.donVi, d.sl,
-                    MONEY.format(d.donGia) + " đ", MONEY.format(d.thanhTien()) + " đ"));
+        return PhieuNhapKhoController.buildText(p, MONEY);
+    }
+
+    private static java.util.List<Dong> linesFromModel(DefaultTableModel model) {
+        java.util.List<Dong> lines = new ArrayList<>();
+        for (int row = 0; row < model.getRowCount(); row++) {
+            lines.add(new Dong((String) model.getValueAt(row, 0), (String) model.getValueAt(row, 1),
+                    (String) model.getValueAt(row, 2), ((Number) model.getValueAt(row, 3)).intValue(),
+                    ((Number) model.getValueAt(row, 4)).longValue()));
         }
-        sb.append(line);
-        sb.append(String.format("%-28s %-7s %5d %14s %17s%n", "TỔNG CỘNG", "", p.tongSL(), "",
-                MONEY.format(p.tongTien()) + " đ"));
-        return sb.toString();
+        return lines;
+    }
+
+    private static void replaceModelRows(DefaultTableModel model, java.util.List<Dong> lines) {
+        model.setRowCount(0);
+        for (Dong line : lines) {
+            model.addRow(new Object[]{line.ma, line.ten, line.donVi, line.sl,
+                    line.donGia, PhieuNhapKhoController.thanhTien(line)});
+        }
+    }
+
+    private static java.util.List<CatalogItem> catalogFromLegacy(java.util.List<Object[]> rows) {
+        java.util.List<CatalogItem> catalog = new ArrayList<>();
+        for (Object[] row : rows) {
+            catalog.add(new CatalogItem((String) row[0], (String) row[1],
+                    (String) row[2], ((Number) row[3]).longValue()));
+        }
+        return catalog;
     }
 
     // =====================================================================

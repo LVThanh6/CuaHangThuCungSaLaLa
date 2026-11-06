@@ -1,7 +1,7 @@
 package GUI.HoaDon;
 
-import dao.HoaDon_Dao;
-import entity.HoaDon_entity;
+import entity.HoaDon.HoaDon_entity;
+import controller.DSHoaDonController;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 public class DSHoaDon_gui extends JPanel {
 
-    private final HoaDon_Dao hoaDonDAO = new HoaDon_Dao();
+    private final DSHoaDonController controller = new DSHoaDonController();
 
     private final Color XANH = Color.decode("#0F766E");
     private final Color NEN = new Color(248, 250, 252);
@@ -303,7 +303,7 @@ public class DSHoaDon_gui extends JPanel {
                 label.setHorizontalAlignment(SwingConstants.CENTER);
                 String tt = value == null ? "" : value.toString();
 
-                if (laDaThanhToan(tt)) {
+                if (controller.daThanhToan(tt)) {
                     label.setForeground(new Color(21, 128, 61));
                     label.setBackground(new Color(220, 252, 231));
                 } else {
@@ -330,7 +330,7 @@ public class DSHoaDon_gui extends JPanel {
         SwingWorker<ArrayList<HoaDon_entity>, Void> worker = new SwingWorker<>() {
             @Override
             protected ArrayList<HoaDon_entity> doInBackground() {
-                return hoaDonDAO.getDSHD();
+                return controller.taiDanhSach();
             }
 
             @Override
@@ -340,8 +340,16 @@ public class DSHoaDon_gui extends JPanel {
                     if (danhSach == null) danhSach = new ArrayList<>();
                     capNhatThongKe(danhSach);
                     hienThiBang(danhSach);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    JOptionPane.showMessageDialog(DSHoaDon_gui.this,
+                            "Đã gián đoạn khi tải danh sách hóa đơn.",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    lblTong.setText("Lỗi");
+                } catch (java.util.concurrent.ExecutionException e) {
+                    JOptionPane.showMessageDialog(DSHoaDon_gui.this,
+                            "Không thể tải danh sách hóa đơn: " + e.getCause().getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
                     lblTong.setText("Lỗi");
                 }
             }
@@ -350,21 +358,10 @@ public class DSHoaDon_gui extends JPanel {
     }
 //==================CẬP NHẬT THỐNG KÊ==================
     private void capNhatThongKe(ArrayList<HoaDon_entity> ds) {
-        int daThanhToan = 0;
-        int chuaThanhToan = 0;
-        for (HoaDon_entity hd : ds) {
-            if (laDaThanhToan(hd.getTrangThai())) daThanhToan++;
-            else chuaThanhToan++;
-        }
-        lblTong.setText(String.valueOf(ds.size()));
-        lblDaThanhToan.setText(String.valueOf(daThanhToan));
-        lblChuaThanhToan.setText(String.valueOf(chuaThanhToan));
-    }
-
-    private boolean laDaThanhToan(String trangThai) {
-        if (trangThai == null) return false;
-        return trangThai.equalsIgnoreCase("Đã thanh toán")
-                || trangThai.equalsIgnoreCase("Paid");
+        DSHoaDonController.ThongKe thongKe = controller.thongKe(ds);
+        lblTong.setText(String.valueOf(thongKe.getTongSo()));
+        lblDaThanhToan.setText(String.valueOf(thongKe.getDaThanhToan()));
+        lblChuaThanhToan.setText(String.valueOf(thongKe.getChuaThanhToan()));
     }
 
     
@@ -395,13 +392,14 @@ public class DSHoaDon_gui extends JPanel {
 
     private String layMa(Object doiTuong) {
         if (doiTuong == null) return "NULL";
+        if (doiTuong instanceof String) return (String) doiTuong;
         String[] cacGetter = {"getMaKH", "getMaNhanVien", "getMaKM", "getMaThue",
                 "getMaThanhToan", "getMaNCC", "getMaDV", "getMaVT", "getMa"};
         for (String tenGetter : cacGetter) {
             try {
                 Method method = doiTuong.getClass().getMethod(tenGetter);
                 Object ketQua = method.invoke(doiTuong);
-                if (ketQua != null) return ketQua.toString();
+                if (ketQua != null && ketQua != doiTuong) return layMa(ketQua);
             } catch (ReflectiveOperationException ignored) {
             }
         }
@@ -418,17 +416,7 @@ public class DSHoaDon_gui extends JPanel {
         }
 
         String trangThaiChon = cboTrangThai.getSelectedItem().toString();
-        ArrayList<HoaDon_entity> ketQua = new ArrayList<>();
-
-        for (HoaDon_entity hd : danhSach) {
-            String maHD = hd.getMaHD() == null ? "" : hd.getMaHD().toLowerCase();
-            if (!maHD.contains(tuKhoa)) continue;
-
-            boolean daTT = laDaThanhToan(hd.getTrangThai());
-            if (trangThaiChon.equals("Đã thanh toán") && !daTT) continue;
-            if (trangThaiChon.equals("Chưa thanh toán") && daTT) continue;
-            ketQua.add(hd);
-        }
+        ArrayList<HoaDon_entity> ketQua = controller.locDanhSach(danhSach, tuKhoa, trangThaiChon);
         hienThiBang(ketQua);
     }
 //====================XEM HÓA ĐƠN=================
@@ -464,7 +452,7 @@ public class DSHoaDon_gui extends JPanel {
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (xacNhan != JOptionPane.YES_OPTION) return;
 
-        if (hoaDonDAO.xoaHD(maHD)) {
+        if (controller.xoaHoaDon(maHD)) {
             taiDuLieu();
             JOptionPane.showMessageDialog(this, "Đã xóa hóa đơn " + maHD + ".",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);

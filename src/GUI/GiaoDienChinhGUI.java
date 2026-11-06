@@ -34,7 +34,7 @@ import GUI.ThuCung.LichSuKhamGUI;
 
 import GUI.TaiKhoan.DangNhapGUI;
 import GUI.TaiKhoan.QuanLyTaiKhoanGUI;
-import dao.DangNhap_DAO;
+import controller.NavigationController;
 
 // Các GUI thuộc tab Vật tư
 import GUI.VatTu.VatTuGUI;
@@ -48,6 +48,7 @@ import java.sql.SQLException;
 import javax.swing.*;
 
 public class GiaoDienChinhGUI extends NenAnhPanel {
+    private static final NavigationController dieuHuongController = new NavigationController();
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
     private HeaderGUI headerGUI; 
@@ -64,8 +65,9 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     // CONSTRUCTORS
     // ==========================================
     public GiaoDienChinhGUI() {
-        this(dao.DangNhap_DAO.isDaDangNhap() ? dao.DangNhap_DAO.getTenNguoiDung() : "Lê Văn Thành", 
-             dao.DangNhap_DAO.isDaDangNhap() ? dao.DangNhap_DAO.getVaiTro() : "Quản lý");
+        this(
+                dieuHuongController.isDaDangNhap() ? dieuHuongController.getTenNguoiDungHienTai() : "Lê Văn Thành",
+                dieuHuongController.isDaDangNhap() ? dieuHuongController.getVaiTroNguoiDungHienTai() : "Quản lý");
     }
 
     public GiaoDienChinhGUI(String tenNguoiDung, String chucVu) {
@@ -126,11 +128,7 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
         // 3. LẮNG NGHE SỰ KIỆN CHUYỂN TAB TỪ HEADER
         headerGUI.setTabSelectionListener((tenTab, menuCon) -> {
             if (menuCon != null && !menuCon.isEmpty()) {
-                try {
-                    xuLyChonMenuCon(tenTab, menuCon);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                xuLyChonMenuCon(tenTab, menuCon);
             } else {
                 xuLyChonTab(tenTab);
             }
@@ -213,62 +211,55 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     private void xuLyChonTab(String tenTab) {
         this.tabHienTai = tenTab;
 
-        // Tự động mở menu con đầu tiên mà user được phân quyền trong tab này
         String[] menuCons = (headerGUI != null) ? headerGUI.getMenuConCuaTab(tenTab) : null;
         if (menuCons != null && menuCons.length > 0) {
-            try {
-                xuLyChonMenuCon(tenTab, menuCons[0]);
-                return;
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            xuLyChonMenuCon(tenTab, menuCons[0]);
+            return;
         }
 
         hienThiNoiDungMacDinh("Đang xem tab: " + tenTab);
-
-        switch (tenTab) {
-            case "Nhân viên": hienThiTabNhanVien(); break;
-            case "Bác sĩ": hienThiTabBacSi(); break;
-            case "Thú cưng": hienThiTabThuCung(); break;
-            case "Khách hàng": hienThiTabKhachHang(); break;
-            case "Hóa đơn": hienThiTabHoaDon(); break;
-            case "Vật tư": hienThiTabVatTu(); break;
-            case "Lịch": hienThiTabLich(); break; 
-            case "Dịch vụ": hienThiTabDichVu(); break;
-            case "Thống kê": hienThiThongKe(); break;
-            case "Quản lý tài khoản": hienThiQuanLyTaiKhoan(); break;
-        }
+        hienThiManHinh(dieuHuongController.layManHinhChoTab(tenTab));
     }
 
-    private void xuLyChonMenuCon(String tenTab, String tenMenuCon) throws SQLException {
+    private void xuLyChonMenuCon(String tenTab, String tenMenuCon) {
         this.tabHienTai = tenTab;
         hienThiNoiDungMacDinh("Đang xem: " + tenTab + " ➔ " + tenMenuCon);
 
-        switch (tenMenuCon) {
-            case "Danh sách nhân viên": hienThiDanhSachNhanVien(); break;
-            case "Danh sách bác sĩ": hienThiDanhSachBacSi(); break;
-            case "Thống kê": hienThiThongKe(); break;
-            case "Quản lý tài khoản": hienThiQuanLyTaiKhoan(); break;
-            case "Hồ sơ thú cưng": hienThiHoSoThuCung(); break;
-            case "Đơn Thuốc": hienThiDonThuoc(); break;
-            case "Lịch sử khám": hienThiLichSuKham(); break;
-            case "Danh sách khách hàng": hienThiDanhSachKhachHang(); break;
-            case "Quản lý hạng thành viên":
-            case "Thẻ thành viên": hienThiTheThanhVien(); break;
-            case "Tạo hóa đơn mới": hienThiTaoHoaDonMoi(); break;
-            case "Danh sách hóa đơn": hienThiDanhSachHoaDon(); break;
-            case "Vật tư": hienThiVatTu(); break;
-            case "Nhà cung cấp": hienThiNhaCungCap(); break;
-            case "Phiếu nhập kho": hienThiPhieuNhapKho(); break;
-            case "Phiếu xuất kho": hienThiPhieuXuatKho(); break;
-            case "Bảng giá dịch vụ": hienThiBangGiaDichVu(); break;
-            case "Khuyến mãi": hienThiKhuyenMai(); break;
-            case "Thuế": hienThiThue(); break;
-            
-            // Tab Lịch & Lịch làm việc
-            case "Lịch hẹn (Khám)": hienThiXemLich(); break; 
-            case "Đặt lịch mới": hienThiDatLichMoi(); break;
-            case "Lịch làm việc": hienThiLichLamViec(); break; 
+        hienThiManHinh(dieuHuongController.layManHinhChoMenuCon(tenMenuCon));
+    }
+
+    private void hienThiManHinh(NavigationController.ManHinh manHinh) {
+        switch (manHinh) {
+            case NHAN_VIEN: hienThiDanhSachNhanVien(); break;
+            case BAC_SI: hienThiDanhSachBacSi(); break;
+            case THONG_KE: hienThiThongKe(); break;
+            case QUAN_LY_TAI_KHOAN: hienThiQuanLyTaiKhoan(); break;
+            case HO_SO_THU_CUNG: hienThiHoSoThuCung(); break;
+            case DON_THUOC: hienThiDonThuoc(); break;
+            case LICH_SU_KHAM: hienThiLichSuKham(); break;
+            case KHACH_HANG: hienThiDanhSachKhachHang(); break;
+            case HANG_THANH_VIEN: hienThiTheThanhVien(); break;
+            case TAO_HOA_DON:
+                try {
+                    hienThiTaoHoaDonMoi();
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(
+                            this, "Không thể mở màn hình lập hóa đơn: " + e.getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+                break;
+            case DANH_SACH_HOA_DON: hienThiDanhSachHoaDon(); break;
+            case VAT_TU: hienThiVatTu(); break;
+            case NHA_CUNG_CAP: hienThiNhaCungCap(); break;
+            case PHIEU_NHAP_KHO: hienThiPhieuNhapKho(); break;
+            case PHIEU_XUAT_KHO: hienThiPhieuXuatKho(); break;
+            case DICH_VU: hienThiBangGiaDichVu(); break;
+            case KHUYEN_MAI: hienThiKhuyenMai(); break;
+            case THUE: hienThiThue(); break;
+            case LICH_HEN: hienThiXemLich(); break;
+            case DAT_LICH: hienThiDatLichMoi(); break;
+            case LICH_LAM_VIEC: hienThiLichLamViec(); break;
+            case MAC_DINH: default: break;
         }
     }
 
@@ -297,19 +288,23 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     public void hienThiPhieuXuatKho() { setNoiDung(phieuXuatGUI); }
     
     public void hienThiDanhSachKhachHang() {
-        try { setNoiDung(new DanhSachKhachHangGUI()); } 
-        catch (Throwable t) { hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage()); }
+        setNoiDung(new DanhSachKhachHangGUI());
     }
     public void hienThiTheThanhVien() { hienThiQuanLyHangThanhVien(); }
     public void hienThiQuanLyHangThanhVien() {
-        try { setNoiDung(new QuanLyHangThanhVienGUI()); } 
-        catch (Throwable t) { hienThiNoiDungMacDinh("Lỗi hiển thị Hạng thành viên: " + t.getMessage()); }
+        setNoiDung(new QuanLyHangThanhVienGUI());
     }
 
     public void hienThiTaoHoaDonMoi() throws SQLException { setNoiDung(new LapHoaDon_gui()); }
     public void hienThiDanhSachHoaDon() {
         setNoiDung(new DSHoaDon_gui(() -> {
-            try { hienThiTaoHoaDonMoi(); } catch (SQLException e) { e.printStackTrace(); }
+            try {
+                hienThiTaoHoaDonMoi();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(
+                        this, "Không thể mở màn hình lập hóa đơn: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }));
     }
     
@@ -325,7 +320,7 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     // TIỆN ÍCH ĐĂNG XUẤT
     // ==========================================
     public static void xuLyDangXuat(JFrame frameChinh) {
-        dao.DangNhap_DAO.dangXuat();
+        dieuHuongController.dangXuat();
         if (frameChinh != null) frameChinh.dispose();
         DangNhapGUI login = new DangNhapGUI();
         login.setVisible(true);
@@ -367,13 +362,22 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         SwingUtilities.invokeLater(() -> {
             // 1. Khởi tạo kết nối CSDL SALALA
             try {
                 connectDB.ConnectDB.getInstance().connect();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Không thể kết nối cơ sở dữ liệu SALALA: " + e.getMessage(),
+                        "Lỗi kết nối",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // 2. Chạy ứng dụng: Gọi giao diện Đăng Nhập đầu tiên
             DangNhapGUI login = new DangNhapGUI();

@@ -2,21 +2,15 @@ package GUI.LichHen;
 
 import GUI.Chung.TableMau;
 import GUI.Chung.RangBuocGiaoDien;
-import dao.DichVu_DAO;
-import dao.LichHen_DAO;
-import dao.NhanVien_DAO;
-import entity.DichVu_entity;
-import entity.LichHen_entity;
-import entity.NhanVien_entity;
+import controller.XemLichController;
+import entity.DichVu.DichVu_entity;
+import entity.LichHen.LichHen_entity;
+import entity.NhanVien.NhanVien_entity;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -100,9 +94,7 @@ public class XemLichGUI extends JPanel {
     };
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-    private final LichHen_DAO lichHenDAO = new LichHen_DAO();
-    private final NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-    private final DichVu_DAO dichVuDAO = new DichVu_DAO();
+    private final XemLichController controller = new XemLichController();
     private List<LichHen_entity> danhSachLichHen = new ArrayList<>();
     private List<LichHen_entity> danhSachDangHienThi = new ArrayList<>();
     private LocalDate tuNgay;
@@ -425,8 +417,9 @@ public class XemLichGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            danhSachLichHen = lichHenDAO.getAllLichHen();
-            List<NhanVien_entity> nhanVien = nhanVienDAO.getAll();
+            XemLichController.DuLieuManHinh duLieu = controller.taiDuLieu();
+            danhSachLichHen = duLieu.lichHen;
+            List<NhanVien_entity> nhanVien = duLieu.nhanVien;
             Object selected = cboBacSi.getSelectedItem();
             cboBacSi.removeAllItems();
             cboBacSi.addItem("Nhân viên: Tất cả");
@@ -440,7 +433,7 @@ public class XemLichGUI extends JPanel {
             }
             locDuLieu();
             capNhatThongKeTuDuLieu();
-        } catch (Exception e) {
+        } catch (SQLException | RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Không thể tải lịch hẹn: " + e.getMessage(),
                     "Lỗi tải dữ liệu", JOptionPane.ERROR_MESSAGE);
         }
@@ -450,34 +443,21 @@ public class XemLichGUI extends JPanel {
         if (bangLichKham == null) {
             return;
         }
-        String nhanVienChon = String.valueOf(cboBacSi.getSelectedItem());
-        String trangThaiChon = String.valueOf(cboTrangThai.getSelectedItem());
+        List<LichHen_entity> ketQua = controller.loc(danhSachLichHen,
+                String.valueOf(cboBacSi.getSelectedItem()),
+                String.valueOf(cboTrangThai.getSelectedItem()), tuNgay, denNgay);
         DefaultTableModel model = (DefaultTableModel) bangLichKham.getModel();
         model.setRowCount(0);
-        danhSachDangHienThi = new ArrayList<>();
-        for (LichHen_entity lich : danhSachLichHen) {
-            if (lich == null) {
-                continue;
-            }
-            String maNhanVien = lich.getNhanVien() == null ? "" : lich.getNhanVien().getMaNhanVien();
+        danhSachDangHienThi = ketQua;
+        for (LichHen_entity lich : danhSachDangHienThi) {
             String tenNhanVien = lich.getNhanVien() == null ? "" : lich.getNhanVien().getHoTen();
             String trangThai = lich.getTrangThai() == null ? "" : lich.getTrangThai();
-            LocalDate ngay = lich.getNgayGio() == null ? null : lich.getNgayGio().toLocalDate();
-            boolean locNhanVien = nhanVienChon == null || nhanVienChon.startsWith("Nhân viên:")
-                    || nhanVienChon.endsWith("(" + maNhanVien + ")");
-            boolean locTrangThai = trangThaiChon == null || trangThaiChon.startsWith("Trạng thái:")
-                    || trangThaiChon.equals(trangThai);
-            boolean locNgay = (tuNgay == null || (ngay != null && !ngay.isBefore(tuNgay)))
-                    && (denNgay == null || (ngay != null && !ngay.isAfter(denNgay)));
-            if (locNhanVien && locTrangThai && locNgay) {
-                danhSachDangHienThi.add(lich);
-                model.addRow(new Object[] {
-                        lich.getNgayGio() == null ? "" : DINH_DANG_NGAY_GIO.format(lich.getNgayGio()),
-                        lich.getThuCung() == null ? "" : lich.getThuCung().getTenTC(),
-                        lich.getKhachHang() == null ? "" : lich.getKhachHang().getHoTen(),
-                        tenNhanVien, lich.getLyDo(), trangThai
-                });
-            }
+            model.addRow(new Object[] {
+                    lich.getNgayGio() == null ? "" : DINH_DANG_NGAY_GIO.format(lich.getNgayGio()),
+                    lich.getThuCung() == null ? "" : lich.getThuCung().getTenTC(),
+                    lich.getKhachHang() == null ? "" : lich.getKhachHang().getHoTen(),
+                    tenNhanVien, lich.getLyDo(), trangThai
+            });
         }
         bangLichKham.clearSelection();
         capNhatNutThaoTac();
@@ -486,27 +466,9 @@ public class XemLichGUI extends JPanel {
 
     private void capNhatThongKeTuDuLieu() {
         LocalDate homNay = LocalDate.now();
-        int soHomNay = 0;
-        int choKham = 0;
-        int dangKham = 0;
-        int daKham = 0;
-        int daHuy = 0;
-        for (LichHen_entity lich : danhSachLichHen) {
-            if (lich.getNgayGio() == null || !lich.getNgayGio().toLocalDate().equals(homNay)) {
-                continue;
-            }
-            soHomNay++;
-            if ("Chờ khám".equalsIgnoreCase(lich.getTrangThai())) {
-                choKham++;
-            } else if ("Đang khám".equalsIgnoreCase(lich.getTrangThai())) {
-                dangKham++;
-            } else if ("Đã khám".equalsIgnoreCase(lich.getTrangThai())) {
-                daKham++;
-            } else if ("Đã hủy".equalsIgnoreCase(lich.getTrangThai())) {
-                daHuy++;
-            }
-        }
-        capNhatThongKe(DINH_DANG_NGAY.format(homNay), soHomNay, choKham, dangKham, daKham, daHuy);
+        XemLichController.ThongKe thongKe = controller.thongKeHomNay(danhSachLichHen, homNay);
+        capNhatThongKe(DINH_DANG_NGAY.format(homNay), thongKe.tong, thongKe.choKham,
+                thongKe.dangKham, thongKe.daKham, thongKe.daHuy);
     }
 
     private void chonKhoangNgay() {
@@ -522,16 +484,14 @@ public class XemLichGUI extends JPanel {
             return;
         }
         try {
-            tuNgay = tu.getText().trim().isEmpty() ? null : LocalDate.parse(tu.getText().trim(), DINH_DANG_NGAY);
-            denNgay = den.getText().trim().isEmpty() ? null : LocalDate.parse(den.getText().trim(), DINH_DANG_NGAY);
-            if (tuNgay != null && denNgay != null && tuNgay.isAfter(denNgay)) {
-                throw new IllegalArgumentException("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.");
-            }
+            XemLichController.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            tuNgay = khoang.tuNgay;
+            denNgay = khoang.denNgay;
             nhanNgayLoc.setText(tuNgay == null && denNgay == null ? "Ngày: Tất cả"
                     : "Ngày: " + (tuNgay == null ? "…" : DINH_DANG_NGAY.format(tuNgay))
                             + " – " + (denNgay == null ? "…" : DINH_DANG_NGAY.format(denNgay)));
             locDuLieu();
-        } catch (DateTimeParseException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this, "Khoảng ngày không hợp lệ: " + e.getMessage(),
                     "Sai định dạng ngày", JOptionPane.WARNING_MESSAGE);
         }
@@ -557,7 +517,7 @@ public class XemLichGUI extends JPanel {
             return;
         }
         try {
-            LichHen_entity chiTiet = lichHenDAO.getLichHenTheoMa(lich.getMaLichHen());
+            LichHen_entity chiTiet = controller.timTheoMa(lich.getMaLichHen());
             if (chiTiet == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn " + lich.getMaLichHen() + ".",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
@@ -586,14 +546,14 @@ public class XemLichGUI extends JPanel {
             return;
         }
         try {
-            lich = lichHenDAO.getLichHenTheoMa(lich.getMaLichHen());
+            lich = controller.timTheoMa(lich.getMaLichHen());
             if (lich == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn cần sửa.",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            List<NhanVien_entity> nhanVien = nhanVienDAO.getAll();
-            List<DichVu_entity> dichVu = dichVuDAO.getAllDichVu();
+            List<NhanVien_entity> nhanVien = controller.taiNhanVien();
+            List<DichVu_entity> dichVu = controller.taiDichVu();
             JTextField txtNgayGio = new JTextField(DINH_DANG_NGAY_GIO.format(lich.getNgayGio()));
             JTextField txtLyDo = new JTextField(lich.getLyDo());
             JTextField txtLoaiHen = new JTextField(lich.getLoaiHen());
@@ -642,21 +602,11 @@ public class XemLichGUI extends JPanel {
             form.add(new JLabel("Ghi chú:")); form.add(new JScrollPane(txtGhiChu));
             if (JOptionPane.showConfirmDialog(this, form, "Sửa lịch hẹn",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return;
-            LocalDateTime ngayGio = LocalDateTime.parse(txtNgayGio.getText().trim(), DINH_DANG_NGAY_GIO);
             NhanVien_entity nv = (NhanVien_entity) cboNhanVien.getSelectedItem();
-            String lyDo = txtLyDo.getText().trim();
-            String loaiHen = txtLoaiHen.getText().trim();
-            if (ngayGio.isBefore(LocalDateTime.now()) || nv == null || lyDo.isEmpty() || loaiHen.isEmpty()) {
-                throw new IllegalArgumentException("Thời gian phải ở tương lai; nhân viên, nội dung và loại hẹn là bắt buộc.");
-            }
-            lich.setNgayGio(ngayGio);
-            lich.setNhanVien(nv);
-            lich.setLyDo(lyDo);
-            lich.setLoaiHen(loaiHen);
-            lich.setDichVu((DichVu_entity) cboDichVu.getSelectedItem());
-            lich.setTrangThai(String.valueOf(cboTrangThai.getSelectedItem()));
-            lich.setGhiChu(txtGhiChu.getText().trim());
-            if (lichHenDAO.updateLichHen(lich)) {
+            if (controller.capNhat(lich, new XemLichController.ThongTinCapNhat(
+                    txtNgayGio.getText(), nv, txtLyDo.getText(), txtLoaiHen.getText(),
+                    (DichVu_entity) cboDichVu.getSelectedItem(),
+                    String.valueOf(cboTrangThai.getSelectedItem()), txtGhiChu.getText()))) {
                 JOptionPane.showMessageDialog(this, "Đã cập nhật lịch hẹn.",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 loadDataToTable();
@@ -664,10 +614,10 @@ public class XemLichGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Không cập nhật được lịch hẹn.",
                         "Thao tác thất bại", JOptionPane.WARNING_MESSAGE);
             }
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this, "Thời gian không hợp lệ (dd/MM/yyyy HH:mm).",
-                    "Sai định dạng", JOptionPane.WARNING_MESSAGE);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(),
+                    "Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
+        } catch (SQLException | RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Lỗi sửa lịch hẹn: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -687,19 +637,18 @@ public class XemLichGUI extends JPanel {
         }
 
         try {
-            LichHen_entity lich = lichHenDAO.getLichHenTheoMa(lichChon.getMaLichHen());
-            if (lich == null) {
+            XemLichController.KetQuaHuyLich ketQua = controller.huy(lichChon.getMaLichHen());
+            if (ketQua == XemLichController.KetQuaHuyLich.KHONG_TIM_THAY) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn để hủy.",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if ("Đã hủy".equalsIgnoreCase(lich.getTrangThai())) {
+            if (ketQua == XemLichController.KetQuaHuyLich.DA_HUY) {
                 JOptionPane.showMessageDialog(this, "Lịch hẹn này đã được hủy trước đó.",
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            lich.setTrangThai("Đã hủy");
-            if (lichHenDAO.updateLichHen(lich)) {
+            if (ketQua == XemLichController.KetQuaHuyLich.THANH_CONG) {
                 JOptionPane.showMessageDialog(this, "Đã hủy lịch hẹn.",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 loadDataToTable();
@@ -707,7 +656,7 @@ public class XemLichGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Không thể cập nhật trạng thái lịch hẹn.",
                         "Thao tác thất bại", JOptionPane.WARNING_MESSAGE);
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Lỗi hủy lịch hẹn: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -728,17 +677,8 @@ public class XemLichGUI extends JPanel {
         }
         if (file.exists() && JOptionPane.showConfirmDialog(this, "Tệp đã tồn tại, ghi đè?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
-        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-            writer.write('\ufeff');
-            DefaultTableModel model = (DefaultTableModel) bangLichKham.getModel();
-            for (int row = -1; row < model.getRowCount(); row++) {
-                for (int column = 0; column < model.getColumnCount(); column++) {
-                    if (column > 0) writer.write(',');
-                    String text = row < 0 ? TIEU_DE_BANG[column] : String.valueOf(model.getValueAt(row, column));
-                    writer.write("\"" + text.replace("\"", "\"\"") + "\"");
-                }
-                writer.newLine();
-            }
+        try {
+            controller.xuatDanhSach(file, danhSachDangHienThi);
             JOptionPane.showMessageDialog(this, "Đã xuất danh sách ra:\n" + file.getAbsolutePath(),
                     "Xuất thành công", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {
