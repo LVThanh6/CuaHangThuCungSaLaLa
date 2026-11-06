@@ -26,7 +26,7 @@ public class BacSi_entity {
 
     public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
                         ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh) {
-        this(maBacSi, maTK.getMaQuanLy(), hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
+        this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
     }
 
     public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
@@ -34,16 +34,16 @@ public class BacSi_entity {
         this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, soCaKham, trangThaiTK);
     }
 
-    public BacSi_entity(String maBacSi, String string, String hoTen, String gioiTinh, String sdt,
-                        String string2, String email, LocalDate ngaySinh, double luongThang,
+    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+                        ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
                         int soCaKham, Boolean trangThaiTK) {
         super();
         this.maBacSi = maBacSi;
-        this.maTK = string;
+        this.maTK = maTK;
         this.hoTen = hoTen;
         this.gioiTinh = gioiTinh;
         this.sdt = sdt;
-        this.chuyenNganh = string2;
+        this.chuyenNganh = chuyenNganh;
         this.email = email;
         this.ngaySinh = ngaySinh;
         this.luongThang = luongThang;
@@ -51,10 +51,10 @@ public class BacSi_entity {
         this.trangThaiTK = trangThaiTK;
     }
 
-    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+    public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
                         String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
                         int soCaKham, Boolean trangThaiTK) {
-        this(maBacSi, maTK, hoTen, gioiTinh, sdt,
+        this(maBacSi, maTK != null ? new TaiKhoan(maTK) : null, hoTen, gioiTinh, sdt,
              chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null,
              email, ngaySinh, luongThang, soCaKham, trangThaiTK);
     }

@@ -93,7 +93,8 @@ public class ThongTinTaiKhoanDialog extends JDialog {
         themDongThongTin(pThongTin, "Mã tài khoản:", tk != null ? tk.getMaTK() : "---");
         themDongThongTin(pThongTin, "Tên đăng nhập:", tk != null ? tk.getTenDangNhap() : "---");
         themDongThongTin(pThongTin, "Trạng thái:", (tk != null && tk.isTrangThai()) ? "Hoạt động" : "Đã khóa");
-        themDongThongTin(pThongTin, "Mã quản lý:", (tk != null && tk.getMaQuanLy() != null) ? tk.getMaQuanLy() : "Toàn quyền");
+        themDongThongTin(pThongTin, "Mã quản lý:",
+                tk != null && tk.getMaQuanLy() != null ? tk.getMaQuanLy().getMaQuanLy() : "Toàn quyền");
 
         p.add(pThongTin);
         p.add(Box.createVerticalStrut(20));

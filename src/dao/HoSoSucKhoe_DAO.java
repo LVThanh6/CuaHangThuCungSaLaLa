@@ -85,8 +85,8 @@ public class HoSoSucKhoe_DAO {
         String sql = "UPDATE HoSoSucKhoe SET maTC = ?, maBacSi = ?, ngayKham = ?, trieuChung = ?, "
                 + "chuanDoan = ?, canNang = ? WHERE maHSSK = ?";
         try (Connection con = ketNoi(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, hoSo.getMaTC());
-            ps.setString(2, hoSo.getMaBacSi());
+            ps.setString(1, hoSo.getMaTC() != null ? hoSo.getMaTC().getMaTC() : null);
+            ps.setString(2, hoSo.getMaBacSi() != null ? hoSo.getMaBacSi().getMaBacSi() : null);
             ps.setTimestamp(3, hoSo.getNgayKham() == null ? null : Timestamp.valueOf(hoSo.getNgayKham()));
             ps.setString(4, hoSo.getTrieuChung());
             ps.setString(5, hoSo.getChuanDoan());
@@ -111,8 +111,8 @@ public class HoSoSucKhoe_DAO {
 
     private void ganDuLieu(PreparedStatement ps, HoSoSucKhoe_entity hoSo) throws SQLException {
         ps.setString(1, hoSo.getMaHSSK());
-        ps.setString(2, hoSo.getMaTC());
-        ps.setString(3, hoSo.getMaBacSi());
+        ps.setString(2, hoSo.getMaTC() != null ? hoSo.getMaTC().getMaTC() : null);
+        ps.setString(3, hoSo.getMaBacSi() != null ? hoSo.getMaBacSi().getMaBacSi() : null);
         ps.setTimestamp(4, hoSo.getNgayKham() == null ? null : Timestamp.valueOf(hoSo.getNgayKham()));
         ps.setString(5, hoSo.getTrieuChung());
         ps.setString(6, hoSo.getChuanDoan());

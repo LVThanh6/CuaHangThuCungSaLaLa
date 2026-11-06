@@ -409,19 +409,19 @@ public class LichSuKhamGUI extends JPanel {
             LocalDate ngay = hs.getNgayKham() == null ? null : hs.getNgayKham().toLocalDate();
             boolean matchedKeyword = keyword.isEmpty()
                     || value(hs.getMaHSSK()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getMaTC()).toLowerCase(Locale.ROOT).contains(keyword)
+                    || value(hs.getMaTC() != null ? hs.getMaTC().getMaTC() : null).toLowerCase(Locale.ROOT).contains(keyword)
                     || value(hs.getTenThuCung()).toLowerCase(Locale.ROOT).contains(keyword)
                     || value(hs.getChuHo()).toLowerCase(Locale.ROOT).contains(keyword)
                     || value(hs.getTrieuChung()).toLowerCase(Locale.ROOT).contains(keyword)
                     || value(hs.getChuanDoan()).toLowerCase(Locale.ROOT).contains(keyword)
                     || value(hs.getTenBacSi()).toLowerCase(Locale.ROOT).contains(keyword);
             boolean matchedDoctor = doctor == null || doctor.startsWith("Bác sĩ:")
-                    || doctor.endsWith("(" + hs.getMaBacSi() + ")");
+                    || doctor.endsWith("(" + (hs.getMaBacSi() != null ? hs.getMaBacSi().getMaBacSi() : "") + ")");
             boolean matchedDate = (tu == null || (ngay != null && !ngay.isBefore(tu)))
                     && (den == null || (ngay != null && !ngay.isAfter(den)));
             if (matchedKeyword && matchedDoctor && matchedDate) {
                 model.addRow(new Object[] { hs.getMaHSSK(),
-                        value(hs.getTenThuCung()) + " (" + hs.getMaTC() + ")", value(hs.getChuHo()),
+                        value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")", value(hs.getChuHo()),
                         hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()),
                         value(hs.getTrieuChung()), value(hs.getChuanDoan()),
                         hs.getCanNang() == null ? "" : hs.getCanNang().toPlainString(), value(hs.getTenBacSi()) });
@@ -443,7 +443,7 @@ public class LichSuKhamGUI extends JPanel {
                 if (date.equals(today)) todayCount++;
                 if (date.getYear() == today.getYear() && date.getMonth() == today.getMonth()) monthCount++;
             }
-            doctors.add(hs.getMaBacSi());
+            if (hs.getMaBacSi() != null) doctors.add(hs.getMaBacSi().getMaBacSi());
         }
         nhanSoTongLuotKham.setText(String.valueOf(danhSachHoSo.size()));
         nhanSoKhamHomNay.setText(String.valueOf(todayCount));
@@ -522,10 +522,10 @@ public class LichSuKhamGUI extends JPanel {
             });
             if (hoSoHienTai != null) {
                 for (int i = 0; i < cboThuCung.getItemCount(); i++) {
-                    if (hoSoHienTai.getMaTC().equals(cboThuCung.getItemAt(i).getMaTC())) cboThuCung.setSelectedIndex(i);
+                    if (hoSoHienTai.getMaTC() != null && hoSoHienTai.getMaTC().equals(cboThuCung.getItemAt(i))) cboThuCung.setSelectedIndex(i);
                 }
                 for (int i = 0; i < cboBacSiForm.getItemCount(); i++) {
-                    if (hoSoHienTai.getMaBacSi().equals(cboBacSiForm.getItemAt(i).getMaBacSi())) cboBacSiForm.setSelectedIndex(i);
+                    if (hoSoHienTai.getMaBacSi() != null && hoSoHienTai.getMaBacSi().equals(cboBacSiForm.getItemAt(i))) cboBacSiForm.setSelectedIndex(i);
                 }
             }
             JTextField txtNgay = new JTextField(hoSoHienTai == null
@@ -612,9 +612,9 @@ public class LichSuKhamGUI extends JPanel {
                 return;
             }
             String chiTiet = "Mã hồ sơ: " + hs.getMaHSSK()
-                    + "\nThú cưng: " + value(hs.getTenThuCung()) + " (" + hs.getMaTC() + ")"
+                    + "\nThú cưng: " + value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")"
                     + "\nChủ nuôi: " + value(hs.getChuHo())
-                    + "\nBác sĩ: " + value(hs.getTenBacSi()) + " (" + hs.getMaBacSi() + ")"
+                    + "\nBác sĩ: " + value(hs.getTenBacSi()) + " (" + (hs.getMaBacSi() != null ? hs.getMaBacSi().getMaBacSi() : "") + ")"
                     + "\nNgày khám: " + (hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()))
                     + "\nTriệu chứng: " + value(hs.getTrieuChung())
                     + "\nChẩn đoán: " + value(hs.getChuanDoan())

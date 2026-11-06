@@ -257,7 +257,7 @@ public class LichHen_DAO {
             Date ngaySinhNV = rs.getDate("ngaySinhNV");
             nv = new NhanVien_entity(
                     maNV,
-                    rs.getString("maTKNV"),
+                    rs.getString("maTKNV") != null ? new entity.TaiKhoan(rs.getString("maTKNV")) : null,
                     rs.getString("hoTenNV"),
                     rs.getString("chucVuNV"),
                     rs.getString("sdtNV"),

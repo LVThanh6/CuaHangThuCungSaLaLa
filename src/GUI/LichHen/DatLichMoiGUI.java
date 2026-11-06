@@ -702,7 +702,7 @@ public class DatLichMoiGUI extends JPanel {
                         if (hoSo.getCanNang() == null || hoSo.getNgayKham() == null) {
                             continue;
                         }
-                        String maThuCung = hoSo.getMaTC();
+                        String maThuCung = hoSo.getMaTC() != null ? hoSo.getMaTC().getMaTC() : null;
                         LocalDateTime ngayGanNhat = ngayKhamGanNhat.get(maThuCung);
                         if (ngayGanNhat == null || hoSo.getNgayKham().isAfter(ngayGanNhat)) {
                             ngayKhamGanNhat.put(maThuCung, hoSo.getNgayKham());
@@ -716,7 +716,7 @@ public class DatLichMoiGUI extends JPanel {
                 if (hoSo.getCanNang() == null || hoSo.getNgayKham() == null) {
                     continue;
                 }
-                String maThuCung = hoSo.getMaTC();
+                String maThuCung = hoSo.getMaTC() != null ? hoSo.getMaTC().getMaTC() : null;
                 LocalDateTime ngayGanNhat = ngayKhamGanNhat.get(maThuCung);
                 if (ngayGanNhat == null || hoSo.getNgayKham().isAfter(ngayGanNhat)) {
                     ngayKhamGanNhat.put(maThuCung, hoSo.getNgayKham());

@@ -395,13 +395,14 @@ public class DSHoaDon_gui extends JPanel {
 
     private String layMa(Object doiTuong) {
         if (doiTuong == null) return "NULL";
+        if (doiTuong instanceof String) return (String) doiTuong;
         String[] cacGetter = {"getMaKH", "getMaNhanVien", "getMaKM", "getMaThue",
                 "getMaThanhToan", "getMaNCC", "getMaDV", "getMaVT", "getMa"};
         for (String tenGetter : cacGetter) {
             try {
                 Method method = doiTuong.getClass().getMethod(tenGetter);
                 Object ketQua = method.invoke(doiTuong);
-                if (ketQua != null) return ketQua.toString();
+                if (ketQua != null && ketQua != doiTuong) return layMa(ketQua);
             } catch (ReflectiveOperationException ignored) {
             }
         }

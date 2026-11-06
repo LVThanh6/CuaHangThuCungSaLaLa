@@ -108,9 +108,9 @@ public class DonThuoc_DAO {
             try {
                 int capNhat;
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setString(1, donThuoc.getMaTC());
-                    ps.setString(2, donThuoc.getMaBacSi());
-                    ps.setString(3, donThuoc.getMaHSSK());
+                    ps.setString(1, donThuoc.getMaTC() != null ? donThuoc.getMaTC().getMaTC() : null);
+                    ps.setString(2, donThuoc.getMaBacSi() != null ? donThuoc.getMaBacSi().getMaBacSi() : null);
+                    ps.setString(3, donThuoc.getMaHSSK() != null ? donThuoc.getMaHSSK().getMaHSSK() : null);
                     ps.setTimestamp(4, Timestamp.valueOf(donThuoc.getNgayKeDon()));
                     ps.setString(5, donThuoc.getGhiChu());
                     ps.setString(6, donThuoc.getTrangThai());
@@ -181,7 +181,7 @@ public class DonThuoc_DAO {
             for (ChiTietDonThuoc_entity item : chiTiet) {
                 ps.setString(1, String.format("CTDT%03d", nextId++));
                 ps.setString(2, maDonThuoc);
-                ps.setString(3, item.getMaThuoc());
+                ps.setString(3, item.getMaThuoc() != null ? item.getMaThuoc().getMaThuoc() : null);
                 ps.setBigDecimal(4, item.getSoLuong());
                 ps.setBigDecimal(5, item.getLieuLuong());
                 ps.addBatch();
@@ -192,9 +192,9 @@ public class DonThuoc_DAO {
 
     private void ganDuLieu(PreparedStatement ps, DonThuoc_entity donThuoc) throws SQLException {
         ps.setString(1, donThuoc.getMaDonThuoc());
-        ps.setString(2, donThuoc.getMaTC());
-        ps.setString(3, donThuoc.getMaBacSi());
-        ps.setString(4, donThuoc.getMaHSSK());
+        ps.setString(2, donThuoc.getMaTC() != null ? donThuoc.getMaTC().getMaTC() : null);
+        ps.setString(3, donThuoc.getMaBacSi() != null ? donThuoc.getMaBacSi().getMaBacSi() : null);
+        ps.setString(4, donThuoc.getMaHSSK() != null ? donThuoc.getMaHSSK().getMaHSSK() : null);
         ps.setTimestamp(5, Timestamp.valueOf(donThuoc.getNgayKeDon()));
         ps.setString(6, donThuoc.getGhiChu());
         ps.setString(7, donThuoc.getTrangThai());

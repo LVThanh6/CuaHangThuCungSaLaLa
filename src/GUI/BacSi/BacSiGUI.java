@@ -793,9 +793,17 @@ public class BacSiGUI extends JPanel {
 
             try {
                 if (goc == null) {
-                    dao.them(new BacSi_entity(txtMa.getText(), null, ten, (String) cbGT.getSelectedItem(), sdt, (String) cbCN.getSelectedItem(), email, ngay, luongThang, 0, null));
+                    String tenChuyenNganh = (String) cbCN.getSelectedItem();
+                    dao.them(new BacSi_entity(txtMa.getText(), (entity.TaiKhoan) null, ten,
+                            (String) cbGT.getSelectedItem(), sdt,
+                            tenChuyenNganh != null ? new entity.ChuyenNganh_entity(null, tenChuyenNganh) : null,
+                            email, ngay, luongThang, 0, null));
                 } else {
-                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten, (String) cbGT.getSelectedItem(), sdt, (String) cbCN.getSelectedItem(), email, ngay, luongThang, goc.getSoCaKham(), goc.getTrangThaiTK()));
+                    String tenChuyenNganh = (String) cbCN.getSelectedItem();
+                    dao.capNhat(new BacSi_entity(goc.getMaBacSi(), goc.getMaTK(), ten,
+                            (String) cbGT.getSelectedItem(), sdt,
+                            tenChuyenNganh != null ? new entity.ChuyenNganh_entity(null, tenChuyenNganh) : null,
+                            email, ngay, luongThang, goc.getSoCaKham(), goc.getTrangThaiTK()));
                     if (coTK && cbTT.getSelectedIndex() == 0 != Boolean.TRUE.equals(goc.getTrangThaiTK())) {
                         dao.doiTrangThaiTaiKhoan(goc.getMaBacSi(), cbTT.getSelectedIndex() == 0);
                     }
@@ -998,7 +1006,7 @@ public class BacSiGUI extends JPanel {
     }
 
     private static String nz(Object s) {
-        return s == null ? "" : s;
+        return s == null ? "" : String.valueOf(s);
     }
 
     private class BangModel extends AbstractTableModel {
@@ -1062,7 +1070,7 @@ public class BacSiGUI extends JPanel {
             case 3:
                 return dinhDangSdt(bs.getSdt());
             case 4:
-                return nz(bs.getChuyenNganh());
+                return bs.getChuyenNganh() == null ? "" : nz(bs.getChuyenNganh().getTenChuyenNganh());
             case 5:
                 return nz(bs.getEmail());
             case 6:

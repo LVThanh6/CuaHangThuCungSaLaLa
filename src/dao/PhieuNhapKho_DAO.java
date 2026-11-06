@@ -116,8 +116,8 @@ public class PhieuNhapKho_DAO {
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setString(1, p.getSoPhieu());
                 ps.setDate(2, Date.valueOf(p.getNgayLap()));
-                ps.setString(3, p.getNhanVien());
-                ps.setString(4, p.getNhaCungCap());
+                ps.setString(3, p.getNhanVien() != null ? p.getNhanVien().getMaNhanVien() : null);
+                ps.setString(4, p.getNhaCungCap() != null ? p.getNhaCungCap().getMaNCC() : null);
                 ps.setString(5, p.getGhiChu());
                 ps.setString(6, p.getTrangThai().getText());
                 ps.executeUpdate();
@@ -145,7 +145,7 @@ public class PhieuNhapKho_DAO {
             int n;
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setDate(1, Date.valueOf(p.getNgayLap()));
-                ps.setString(2, p.getNhaCungCap());
+                ps.setString(2, p.getNhaCungCap() != null ? p.getNhaCungCap().getMaNCC() : null);
                 ps.setString(3, p.getGhiChu());
                 ps.setString(4, p.getSoPhieu());
                 ps.setString(5, TrangThai.CHO_XAC_NHAN.getText());
@@ -233,7 +233,7 @@ public class PhieuNhapKho_DAO {
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             for (ChiTiet d : p.getChiTiet()) {
                 ps.setString(1, p.getSoPhieu());
-                ps.setString(2, d.getMaVT());
+                ps.setString(2, d.getMaVT() != null ? d.getMaVT().getMaVT() : null);
                 ps.setInt(3, d.getSoLuong());
                 ps.setLong(4, d.getDonGia());
                 ps.addBatch();

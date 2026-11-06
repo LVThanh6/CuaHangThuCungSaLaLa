@@ -128,8 +128,8 @@ public class ChiTietPhieuXuatKho_DAO {
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, ct.getSoLuong());
             ps.setLong(2, ct.getDonGia());
-            ps.setString(3, ct.getMaPhieu());
-            ps.setString(4, ct.getMaVT());
+            ps.setString(3, ct.getMaPhieu() != null ? ct.getMaPhieu().getMaPhieu() : null);
+            ps.setString(4, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -190,8 +190,8 @@ public class ChiTietPhieuXuatKho_DAO {
     public boolean insert(Connection c, ChiTietPhieuXuatKho_entity ct) throws SQLException {
         String sql = "INSERT INTO ChiTietPhieuXuat(maPhieu, maVT, soLuong, donGia) VALUES (?,?,?,?)";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, ct.getMaPhieu());
-            ps.setString(2, ct.getMaVT());
+            ps.setString(1, ct.getMaPhieu() != null ? ct.getMaPhieu().getMaPhieu() : null);
+            ps.setString(2, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
             ps.setInt(3, ct.getSoLuong());
             ps.setLong(4, ct.getDonGia());
             return ps.executeUpdate() > 0;
@@ -205,7 +205,7 @@ public class ChiTietPhieuXuatKho_DAO {
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             for (ChiTietPhieuXuatKho_entity ct : ds) {
                 ps.setString(1, maPhieu);
-                ps.setString(2, ct.getMaVT());
+                ps.setString(2, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
                 ps.setInt(3, ct.getSoLuong());
                 ps.setLong(4, ct.getDonGia());
                 ps.addBatch();

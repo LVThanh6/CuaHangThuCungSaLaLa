@@ -128,8 +128,9 @@ public class HoaDon_Dao {
             ps.setString(8, hd.getMaThanhToan() != null ? hd.getMaThanhToan().getMaThanhToan() : null);
 
             if (coCotMaTC) {
-                if (hd.getMaTC() != null && !hd.getMaTC().isBlank()) {
-                    ps.setString(9, hd.getMaTC());
+                if (hd.getMaTC() != null && hd.getMaTC().getMaTC() != null
+                        && !hd.getMaTC().getMaTC().isBlank()) {
+                    ps.setString(9, hd.getMaTC().getMaTC());
                 } else {
                     ps.setNull(9, java.sql.Types.VARCHAR);
                 }
@@ -314,7 +315,7 @@ public class HoaDon_Dao {
             Date ngaySinhNV = rs.getDate("ngaySinhNV");
             nv = new NhanVien_entity(
                     maNV,
-                    rs.getString("maTKNV"),
+                    rs.getString("maTKNV") != null ? new entity.TaiKhoan(rs.getString("maTKNV")) : null,
                     rs.getString("hoTenNV"),
                     rs.getString("chucVu"),
                     rs.getString("sdtNV"),

@@ -274,7 +274,7 @@ public class HangThanhVien_DAO {
 
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setString(1, htv.getMaHang());
-            pstmt.setString(2, htv.getMaKH());
+            pstmt.setString(2, htv.getMaKH() != null ? htv.getMaKH().getMaKH() : null);
             pstmt.setString(3, htv.getTenHang());
             pstmt.setDouble(4, htv.getChiTieuToiThieu());
             if (htv.getChiTieuToiDa() != null) {
@@ -327,7 +327,7 @@ public class HangThanhVien_DAO {
             pstmt.setTimestamp(9, htv.getNgayCapNhatHang() != null ? htv.getNgayCapNhatHang() : new Timestamp(System.currentTimeMillis()));
             pstmt.setString(10, htv.getTrangThai() != null ? htv.getTrangThai() : "Đang áp dụng");
             pstmt.setString(11, htv.getMaHang());
-            pstmt.setString(12, htv.getMaKH());
+            pstmt.setString(12, htv.getMaKH() != null ? htv.getMaKH().getMaKH() : null);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {

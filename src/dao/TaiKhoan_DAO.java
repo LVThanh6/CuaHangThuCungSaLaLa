@@ -275,8 +275,9 @@ public class TaiKhoan_DAO {
                 pstmt.setString(3, hashed);
                 pstmt.setString(4, tk.getVaiTro());
                 pstmt.setBoolean(5, tk.isTrangThai());
-                if (tk.getMaQuanLy() != null && !tk.getMaQuanLy().trim().isEmpty()) {
-                    pstmt.setString(6, tk.getMaQuanLy());
+                if (tk.getMaQuanLy() != null && tk.getMaQuanLy().getMaQuanLy() != null
+                        && !tk.getMaQuanLy().getMaQuanLy().trim().isEmpty()) {
+                    pstmt.setString(6, tk.getMaQuanLy().getMaQuanLy());
                 } else {
                     pstmt.setNull(6, Types.VARCHAR);
                 }
@@ -324,8 +325,9 @@ public class TaiKhoan_DAO {
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setString(1, tk.getVaiTro());
             pstmt.setBoolean(2, tk.isTrangThai());
-            if (tk.getMaQuanLy() != null && !tk.getMaQuanLy().trim().isEmpty()) {
-                pstmt.setString(3, tk.getMaQuanLy());
+            if (tk.getMaQuanLy() != null && tk.getMaQuanLy().getMaQuanLy() != null
+                    && !tk.getMaQuanLy().getMaQuanLy().trim().isEmpty()) {
+                pstmt.setString(3, tk.getMaQuanLy().getMaQuanLy());
             } else {
                 pstmt.setNull(3, Types.VARCHAR);
             }

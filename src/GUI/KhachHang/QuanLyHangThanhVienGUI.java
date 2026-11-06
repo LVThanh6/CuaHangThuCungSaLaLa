@@ -505,7 +505,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         for (int i = 0; i < dsThanhVien.size(); i++) {
             HangThanhVien h = dsThanhVien.get(i);
             duLieu[i][0] = h.getMaHang();
-            duLieu[i][1] = h.getMaKH();
+            duLieu[i][1] = h.getMaKH() != null ? h.getMaKH().getMaKH() : "";
             duLieu[i][2] = h.getHoTenKhachHang();
             duLieu[i][3] = h.getSdtKhachHang();
             duLieu[i][4] = h.getEmailKhachHang();
