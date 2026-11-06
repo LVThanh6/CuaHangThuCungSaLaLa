@@ -345,13 +345,13 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
         setNoiDung(new NhaCungCapGUI());
     }
 
-    public void hienThiPhieuNhapKho() {
-        setNoiDung(new PhieuNhapKhoGUI());
-    }
-
-    public void hienThiPhieuXuatKho() {
-        setNoiDung(new PhieuXuatKhoGUI());
-    }
+//    public void hienThiPhieuNhapKho() {
+//        setNoiDung(new PhieuNhapKhoGUI());
+//    }
+//
+//    public void hienThiPhieuXuatKho() {
+//        setNoiDung(new PhieuXuatKhoGUI());
+//    }
 
     public void hienThiDanhSachKhachHang() {
         setNoiDung(new DanhSachKhachHangGUI());
