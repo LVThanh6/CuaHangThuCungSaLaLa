@@ -247,51 +247,105 @@ public class GiaoDienChinhGUI extends JPanel {
     // =========================================================================
     // CÁC HÀM CHO TAB CHÍNH VÀ MENU CON
     // =========================================================================
-    public void hienThiTabNhanVien() { hienThiDanhSachNhanVien(); }
-    public void hienThiTabBacSi() { hienThiDanhSachBacSi(); }
-    public void hienThiTabThuCung() { hienThiHoSoThuCung(); }
-    public void hienThiTabKhachHang() { hienThiDanhSachKhachHang(); }
-    public void hienThiTabHoaDon() { hienThiDanhSachHoaDon(); }
-    public void hienThiTabVatTu() { hienThiVatTu(); }
-    public void hienThiTabLich() { hienThiXemLich(); } 
-    public void hienThiTabDichVu() { hienThiBangGiaDichVu(); }
-
-    public void hienThiDanhSachNhanVien() { setNoiDung(new NhanVienGUI()); }
-    public void hienThiDanhSachBacSi() { setNoiDung(new BacSiGUI()); }
-    public void hienThiThongKe() { setNoiDung(new ThongKeGUI()); }
-    public void hienThiQuanLyTaiKhoan() { setNoiDung(new QuanLyTaiKhoanGUI()); }
-    public void hienThiHoSoThuCung() { setNoiDung(new HoSoThuCungGUI()); }
-    public void hienThiDonThuoc() { setNoiDung(new DonThuocGUI()); }
-    public void hienThiLichSuKham() { setNoiDung(new LichSuKhamGUI()); }
-    public void hienThiVatTu() { setNoiDung(vatTuGUI); }
-    public void hienThiNhaCungCap() { setNoiDung(new NhaCungCapGUI()); }
-    public void hienThiPhieuNhapKho() { setNoiDung(phieuNhapGUI); }
-    public void hienThiPhieuXuatKho() { setNoiDung(phieuXuatGUI); }
+    public void hienThiTabNhanVien() { 
+    	hienThiDanhSachNhanVien(); 
+    }
+    public void hienThiTabBacSi() { 
+    	hienThiDanhSachBacSi(); 
+    	}
+    public void hienThiTabThuCung() { 
+    	hienThiHoSoThuCung(); 
+    }
+    public void hienThiTabKhachHang() { 
+    	hienThiDanhSachKhachHang(); 
+    }
+    public void hienThiTabHoaDon() { 
+    	hienThiDanhSachHoaDon(); 
+    }
+    public void hienThiTabVatTu() { 
+    	hienThiVatTu(); 
+    }
+    public void hienThiTabLich() { 
+    	hienThiXemLich(); 
+    } 
+    public void hienThiTabDichVu() { 
+    	hienThiBangGiaDichVu(); 
+    }
+    
+    public void hienThiDanhSachNhanVien() { 
+    	setNoiDung(new NhanVienGUI()); 
+    }
+    public void hienThiDanhSachBacSi() { 
+    	setNoiDung(new BacSiGUI()); 
+    }
+    public void hienThiThongKe() { 
+    	setNoiDung(new ThongKeGUI()); 
+    }
+    public void hienThiQuanLyTaiKhoan() { 
+    	setNoiDung(new QuanLyTaiKhoanGUI()); 
+    }
+    public void hienThiHoSoThuCung() { 
+    	setNoiDung(new HoSoThuCungGUI()); 
+    }
+    public void hienThiDonThuoc() { 
+    	setNoiDung(new DonThuocGUI()); 
+    }
+    public void hienThiLichSuKham() { 
+    	setNoiDung(new LichSuKhamGUI()); 
+    }
+    public void hienThiVatTu() { 
+    	setNoiDung(vatTuGUI); 
+    }
+    public void hienThiNhaCungCap() { 
+    	setNoiDung(new NhaCungCapGUI()); 
+    }
+    public void hienThiPhieuNhapKho() { 
+    	setNoiDung(phieuNhapGUI); 
+    }
+    public void hienThiPhieuXuatKho() { 
+    	setNoiDung(phieuXuatGUI);
+    }
     
     public void hienThiDanhSachKhachHang() {
         try { setNoiDung(new DanhSachKhachHangGUI()); } 
         catch (Throwable t) { hienThiNoiDungMacDinh("Lỗi hiển thị Khách hàng: " + t.getMessage()); }
     }
-    public void hienThiTheThanhVien() { hienThiQuanLyHangThanhVien(); }
+    public void hienThiTheThanhVien() { 
+    	hienThiQuanLyHangThanhVien(); 
+    }
     public void hienThiQuanLyHangThanhVien() {
         try { setNoiDung(new QuanLyHangThanhVienGUI()); } 
         catch (Throwable t) { hienThiNoiDungMacDinh("Lỗi hiển thị Hạng thành viên: " + t.getMessage()); }
     }
 
-    public void hienThiTaoHoaDonMoi() throws SQLException { setNoiDung(new LapHoaDon_gui()); }
+    public void hienThiTaoHoaDonMoi() throws SQLException { 
+    	setNoiDung(new LapHoaDon_gui()); 
+    }
     public void hienThiDanhSachHoaDon() {
         setNoiDung(new DSHoaDon_gui(() -> {
             try { hienThiTaoHoaDonMoi(); } catch (SQLException e) { e.printStackTrace(); }
         }));
     }
     
-    public void hienThiXemLich() { setNoiDung(new XemLichGUI()); }
-    public void hienThiDatLichMoi() { setNoiDung(new DatLichMoiGUI()); }
-    public void hienThiLichLamViec() { setNoiDung(new LichLamViecGUI()); }
+    public void hienThiXemLich() { 
+    	setNoiDung(new XemLichGUI()); 
+    }
+    public void hienThiDatLichMoi() { 
+    	setNoiDung(new DatLichMoiGUI()); 
+    }
+    public void hienThiLichLamViec() { 
+    	setNoiDung(new LichLamViecGUI()); 
+    }
     
-    public void hienThiBangGiaDichVu() { setNoiDung(new DichVuGUI()); }
-    public void hienThiKhuyenMai() { setNoiDung(new KhuyenMaiGUI()); }
-    public void hienThiThue() { setNoiDung(new ThueGUI()); }
+    public void hienThiBangGiaDichVu() { 
+    	setNoiDung(new DichVuGUI()); 
+    }
+    public void hienThiKhuyenMai() { 
+    	setNoiDung(new KhuyenMaiGUI()); 
+    }
+    public void hienThiThue() { 
+    	setNoiDung(new ThueGUI()); 
+    }
 
     // ==========================================
     // TIỆN ÍCH ĐĂNG XUẤT
@@ -317,13 +371,27 @@ public class GiaoDienChinhGUI extends JPanel {
     // ==========================================
     // GETTERS & SETTERS
     // ==========================================
-    public HeaderGUI getHeaderGUI() { return headerGUI; }
-    public void setHeaderGUI(HeaderGUI headerGUI) { this.headerGUI = headerGUI; }
-    public JPanel getPanelNoiDung() { return panelNoiDung; }
-    public void setPanelNoiDung(JPanel panelNoiDung) { this.panelNoiDung = panelNoiDung; }
-    public String getTabHienTai() { return tabHienTai; }
-    public JLabel getNhanNoiDung() { return nhanNoiDung; }
-    public void setNhanNoiDung(JLabel nhanNoiDung) { this.nhanNoiDung = nhanNoiDung; }
+    public HeaderGUI getHeaderGUI() { 
+    	return headerGUI; 
+    }
+    public void setHeaderGUI(HeaderGUI headerGUI) { 
+    	this.headerGUI = headerGUI; 
+    }
+    public JPanel getPanelNoiDung() { 
+    	return panelNoiDung; 
+    }
+    public void setPanelNoiDung(JPanel panelNoiDung) { 
+    	this.panelNoiDung = panelNoiDung; 
+    }
+    public String getTabHienTai() { 
+    	return tabHienTai; 
+    }
+    public JLabel getNhanNoiDung() { 
+    	return nhanNoiDung; 
+    }
+    public void setNhanNoiDung(JLabel nhanNoiDung) { 
+    	this.nhanNoiDung = nhanNoiDung; 
+    }
 
     public void setTabHienTai(String tenTab) {
         if (headerGUI != null) {
