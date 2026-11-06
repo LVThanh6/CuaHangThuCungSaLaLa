@@ -3,9 +3,8 @@ package GUI.TaiKhoan;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 
-import dao.TaiKhoan_DAO;
-import dao.TaiKhoan_DAO.TaiKhoanChiTiet;
-import entity.TaiKhoan;
+import controller.QuanLyTaiKhoanController;
+import entity.TaiKhoan.TaiKhoan;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -17,7 +16,6 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Giao diện Quản lý Tài khoản người dùng trong SALALA Pet Shop.
@@ -27,7 +25,7 @@ import java.util.Map;
 public class QuanLyTaiKhoanGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private final TaiKhoan_DAO taiKhoanDAO;
+    private final QuanLyTaiKhoanController controller = new QuanLyTaiKhoanController();
     private TableMau bangTaiKhoan;
     private DefaultTableModel modelBang;
     private TableRowSorter<DefaultTableModel> rowSorter;
@@ -45,10 +43,9 @@ public class QuanLyTaiKhoanGUI extends JPanel {
     private JLabel lblBiKhoa;
     private JLabel lblPhanBo;
 
-    private List<TaiKhoanChiTiet> danhSachHienTai;
+    private List<QuanLyTaiKhoanController.TaiKhoanItem> danhSachHienTai;
 
     public QuanLyTaiKhoanGUI() {
-        this.taiKhoanDAO = new TaiKhoan_DAO();
         khoiTaoGiaoDien();
         taiDuLieuLenBang();
     }
@@ -331,29 +328,10 @@ public class QuanLyTaiKhoanGUI extends JPanel {
     // ==========================================
     public void taiDuLieuLenBang() {
         modelBang.setRowCount(0);
-        danhSachHienTai = taiKhoanDAO.getAllTaiKhoanChiTiet();
+        QuanLyTaiKhoanController.DuLieuDanhSach data = controller.taiDanhSach();
+        danhSachHienTai = data.taiKhoan;
 
-        int tong = danhSachHienTai.size();
-        int hoatDong = 0;
-        int biKhoa = 0;
-        int ql = 0, nv = 0, bs = 0;
-
-        for (TaiKhoanChiTiet item : danhSachHienTai) {
-            if (item.isTrangThai()) {
-                hoatDong++;
-            } else {
-                biKhoa++;
-            }
-
-            String vt = item.getVaiTro();
-            if (vt != null && (vt.equalsIgnoreCase("Quản lý") || vt.equalsIgnoreCase("Admin"))) {
-                ql++;
-            } else if (vt != null && vt.toLowerCase().contains("bác sĩ")) {
-                bs++;
-            } else {
-                nv++;
-            }
-
+        for (QuanLyTaiKhoanController.TaiKhoanItem item : danhSachHienTai) {
             String trangThaiText = item.isTrangThai() ? "🟢 Hoạt động" : "🔴 Đã khóa";
             String qlText = (item.getTenQuanLy() != null) ? item.getTenQuanLy() + " (" + item.getMaQuanLy() + ")" : "Toàn quyền";
 
@@ -369,10 +347,10 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         }
 
         // Cập nhật số liệu thẻ KPI
-        lblTongTK.setText(String.valueOf(tong));
-        lblDangHoatDong.setText(String.valueOf(hoatDong));
-        lblBiKhoa.setText(String.valueOf(biKhoa));
-        lblPhanBo.setText(ql + " QL/Admin / " + nv + " NV / " + bs + " BS");
+        lblTongTK.setText(String.valueOf(danhSachHienTai.size()));
+        lblDangHoatDong.setText(String.valueOf(data.hoatDong));
+        lblBiKhoa.setText(String.valueOf(data.biKhoa));
+        lblPhanBo.setText(data.quanLy + " QL/Admin / " + data.nhanVien + " NV / " + data.bacSi + " BS");
 
         locDuLieu();
         capNhatNutThaoTac();
@@ -406,14 +384,14 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         }
     }
 
-    private TaiKhoanChiTiet getDongDuocChon() {
+    private QuanLyTaiKhoanController.TaiKhoanItem getDongDuocChon() {
         int viewRow = bangTaiKhoan.getSelectedRow();
         if (viewRow < 0) return null;
         int modelRow = bangTaiKhoan.convertRowIndexToModel(viewRow);
         String maTK = (String) modelBang.getValueAt(modelRow, 0);
 
         if (danhSachHienTai != null) {
-            for (TaiKhoanChiTiet item : danhSachHienTai) {
+            for (QuanLyTaiKhoanController.TaiKhoanItem item : danhSachHienTai) {
                 if (item.getMaTK().equals(maTK)) return item;
             }
         }
@@ -435,7 +413,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         p.setBackground(Color.WHITE);
         p.setBorder(new EmptyBorder(20, 24, 20, 24));
 
-        String maPhatSinh = taiKhoanDAO.phatSinhMaTK();
+        String maPhatSinh = controller.taoMaMoi();
 
         JTextField txtMa = taoInputText(maPhatSinh, false);
         JTextField txtUser = taoInputText("", true);
@@ -454,26 +432,28 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
         // Danh sách liên kết nhân viên / bác sĩ chưa có tài khoản
-        List<Map<String, String>> dsNVChuaCo = taiKhoanDAO.getNhanVienChuaCoTaiKhoan();
-        List<Map<String, String>> dsBSChuaCo = taiKhoanDAO.getBacSiChuaCoTaiKhoan();
+        QuanLyTaiKhoanController.DanhMucTaoTaiKhoan catalog = controller.taiDanhMucTaoTaiKhoan();
+        List<QuanLyTaiKhoanController.DoiTuongOption> doiTuongOptions = new ArrayList<>();
 
         DefaultComboBoxModel<String> modelLienKet = new DefaultComboBoxModel<>();
         modelLienKet.addElement("-- Không liên kết đối tượng cụ thể --");
-        for (Map<String, String> m : dsNVChuaCo) {
-            modelLienKet.addElement("[Nhân viên] " + m.get("ten") + " (" + m.get("ma") + " - " + m.get("vaiTro") + ")");
+        for (QuanLyTaiKhoanController.DoiTuongOption option : catalog.nhanVien) {
+            modelLienKet.addElement("[Nhân viên] " + option.ten + " (" + option.ma + " - " + option.vaiTro + ")");
+            doiTuongOptions.add(option);
         }
-        for (Map<String, String> m : dsBSChuaCo) {
-            modelLienKet.addElement("[Bác sĩ] " + m.get("ten") + " (" + m.get("ma") + " - " + m.get("vaiTro") + ")");
+        for (QuanLyTaiKhoanController.DoiTuongOption option : catalog.bacSi) {
+            modelLienKet.addElement("[Bác sĩ] " + option.ten + " (" + option.ma + " - " + option.vaiTro + ")");
+            doiTuongOptions.add(option);
         }
         JComboBox<String> cbLienKet = new JComboBox<>(modelLienKet);
         cbLienKet.setPreferredSize(new Dimension(300, 36));
 
         // Danh sách quản lý
-        List<Map<String, String>> dsQL = taiKhoanDAO.getDanhSachQuanLy();
+        List<QuanLyTaiKhoanController.QuanLyOption> dsQL = catalog.quanLy;
         DefaultComboBoxModel<String> modelQL = new DefaultComboBoxModel<>();
         modelQL.addElement("-- Không chỉ định (Toàn quyền) --");
-        for (Map<String, String> ql : dsQL) {
-            modelQL.addElement(ql.get("hoTen") + " (" + ql.get("maQuanLy") + ")");
+        for (QuanLyTaiKhoanController.QuanLyOption ql : dsQL) {
+            modelQL.addElement(ql.hoTen + " (" + ql.ma + ")");
         }
         JComboBox<String> cbQL = new JComboBox<>(modelQL);
         cbQL.setPreferredSize(new Dimension(300, 36));
@@ -485,14 +465,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         cbLienKet.addActionListener(e -> {
             int idx = cbLienKet.getSelectedIndex();
             if (idx > 0) {
-                int nvCount = dsNVChuaCo.size();
-                if (idx <= nvCount) {
-                    Map<String, String> nv = dsNVChuaCo.get(idx - 1);
-                    String chucVu = nv.get("vaiTro");
-                    if (chucVu != null) cbVaiTro.setSelectedItem(chucVu);
-                } else {
-                    cbVaiTro.setSelectedItem("Bác sĩ");
-                }
+                cbVaiTro.setSelectedItem(controller.vaiTroGoiY(doiTuongOptions.get(idx - 1)));
             }
         });
 
@@ -521,52 +494,23 @@ public class QuanLyTaiKhoanGUI extends JPanel {
 
         JButton btnLuu = taoNutChinh("Lưu tài khoản");
         btnLuu.addActionListener(e -> {
-            String u = txtUser.getText().trim();
-            String pWord = new String(txtPass.getPassword()).trim();
-            if (u.isEmpty()) {
-                JOptionPane.showMessageDialog(dlg, "Vui lòng nhập tên đăng nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (taiKhoanDAO.isTenDangNhapTonTai(u, null)) {
-                JOptionPane.showMessageDialog(dlg, "Tên đăng nhập '" + u + "' đã tồn tại! Vui lòng chọn tên khác.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (pWord.isEmpty()) {
-                pWord = "123456";
-            }
-
-            String vt = (String) cbVaiTro.getSelectedItem();
-            boolean tt = chkKichHoat.isSelected();
-
-            // Mã quản lý
             String maQLChon = null;
             int qlIdx = cbQL.getSelectedIndex();
-            if (qlIdx > 0) {
-                maQLChon = dsQL.get(qlIdx - 1).get("maQuanLy");
-            }
-
-            // Đối tượng liên kết
-            String loaiDT = null;
-            String maDT = null;
+            if (qlIdx > 0) maQLChon = dsQL.get(qlIdx - 1).ma;
+            QuanLyTaiKhoanController.DoiTuongOption doiTuong = null;
             int lkIdx = cbLienKet.getSelectedIndex();
-            if (lkIdx > 0) {
-                if (lkIdx <= dsNVChuaCo.size()) {
-                    loaiDT = "NhanVien";
-                    maDT = dsNVChuaCo.get(lkIdx - 1).get("ma");
-                } else {
-                    loaiDT = "BacSy";
-                    maDT = dsBSChuaCo.get(lkIdx - 1 - dsNVChuaCo.size()).get("ma");
-                }
-            }
-
-            TaiKhoan tk = new TaiKhoan(maPhatSinh, u, pWord, vt, tt, maQLChon);
-            boolean ok = taiKhoanDAO.themTaiKhoan(tk, loaiDT, maDT);
-            if (ok) {
+            if (lkIdx > 0) doiTuong = doiTuongOptions.get(lkIdx - 1);
+            QuanLyTaiKhoanController.KetQuaTaoTaiKhoan result = controller.taoTaiKhoan(
+                    new QuanLyTaiKhoanController.ThongTinTaiKhoanMoi(maPhatSinh,
+                            txtUser.getText(), new String(txtPass.getPassword()),
+                            (String) cbVaiTro.getSelectedItem(), chkKichHoat.isSelected(),
+                            maQLChon, doiTuong));
+            if (result.thanhCong) {
                 JOptionPane.showMessageDialog(dlg, "Tạo tài khoản thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 dlg.dispose();
                 taiDuLieuLenBang();
             } else {
-                JOptionPane.showMessageDialog(dlg, "Không thể lưu tài khoản vào CSDL!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dlg, result.thongBao, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
         pNut.add(btnLuu);
@@ -577,7 +521,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
     }
 
     private void xuLySuaTaiKhoan() {
-        TaiKhoanChiTiet chon = getDongDuocChon();
+        QuanLyTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để chỉnh sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
@@ -609,14 +553,14 @@ public class QuanLyTaiKhoanGUI extends JPanel {
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
         // Quản lý
-        List<Map<String, String>> dsQL = taiKhoanDAO.getDanhSachQuanLy();
+        List<QuanLyTaiKhoanController.QuanLyOption> dsQL = controller.taiDanhSachQuanLy();
         DefaultComboBoxModel<String> modelQL = new DefaultComboBoxModel<>();
         modelQL.addElement("-- Không chỉ định (Toàn quyền) --");
         int selectQLIdx = 0;
         for (int i = 0; i < dsQL.size(); i++) {
-            Map<String, String> ql = dsQL.get(i);
-            modelQL.addElement(ql.get("hoTen") + " (" + ql.get("maQuanLy") + ")");
-            if (ql.get("maQuanLy").equals(chon.getMaQuanLy())) {
+            QuanLyTaiKhoanController.QuanLyOption ql = dsQL.get(i);
+            modelQL.addElement(ql.hoTen + " (" + ql.ma + ")");
+            if (ql.ma.equals(chon.getMaQuanLy())) {
                 selectQLIdx = i + 1;
             }
         }
@@ -650,11 +594,10 @@ public class QuanLyTaiKhoanGUI extends JPanel {
             boolean ttMoi = chkKichHoat.isSelected();
             String maQLMoi = null;
             if (cbQL.getSelectedIndex() > 0) {
-                maQLMoi = dsQL.get(cbQL.getSelectedIndex() - 1).get("maQuanLy");
+                maQLMoi = dsQL.get(cbQL.getSelectedIndex() - 1).ma;
             }
 
-            TaiKhoan tk = new TaiKhoan(chon.getMaTK(), chon.getTenDangNhap(), null, vtMoi, ttMoi, maQLMoi);
-            boolean ok = taiKhoanDAO.capNhatTaiKhoan(tk);
+            boolean ok = controller.capNhatTaiKhoan(chon.getMaTK(), chon.getTenDangNhap(), vtMoi, ttMoi, maQLMoi);
             if (ok) {
                 JOptionPane.showMessageDialog(dlg, "Cập nhật tài khoản thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 dlg.dispose();
@@ -671,7 +614,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
     }
 
     private void xuLyKhoaMoKhoa() {
-        TaiKhoanChiTiet chon = getDongDuocChon();
+        QuanLyTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để thao tác!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
@@ -686,7 +629,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (opt == JOptionPane.YES_OPTION) {
-            boolean ok = taiKhoanDAO.datTrangThaiTaiKhoan(chon.getMaTK(), trangThaiMoi);
+            boolean ok = controller.datTrangThai(chon.getMaTK(), trangThaiMoi);
             if (ok) {
                 JOptionPane.showMessageDialog(this, "Đã " + hanhDong.toLowerCase() + " tài khoản thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuLenBang();
@@ -697,7 +640,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
     }
 
     private void xuLyResetMatKhau() {
-        TaiKhoanChiTiet chon = getDongDuocChon();
+        QuanLyTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để đặt lại mật khẩu!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
@@ -709,26 +652,17 @@ public class QuanLyTaiKhoanGUI extends JPanel {
 
         if (matKhauMoi != null) {
             matKhauMoi = matKhauMoi.trim();
-            if (matKhauMoi.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (matKhauMoi.length() < 6) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu phải từ 6 ký tự trở lên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            boolean ok = taiKhoanDAO.doiMatKhau(chon.getMaTK(), matKhauMoi);
-            if (ok) {
+            QuanLyTaiKhoanController.KetQuaMatKhau result = controller.datLaiMatKhau(chon.getMaTK(), matKhauMoi);
+            if (result.thanhCong) {
                 JOptionPane.showMessageDialog(this, "Đặt lại mật khẩu thành công!\nMật khẩu mới: " + matKhauMoi, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể cập nhật mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, result.thongBao, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     private void xuLyXoaTaiKhoan() {
-        TaiKhoanChiTiet chon = getDongDuocChon();
+        QuanLyTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
@@ -741,7 +675,7 @@ public class QuanLyTaiKhoanGUI extends JPanel {
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (opt == JOptionPane.YES_OPTION) {
-            boolean ok = taiKhoanDAO.xoaTaiKhoan(chon.getMaTK());
+            boolean ok = controller.xoaTaiKhoan(chon.getMaTK());
             if (ok) {
                 JOptionPane.showMessageDialog(this, "Xóa tài khoản thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuLenBang();

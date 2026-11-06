@@ -1,9 +1,16 @@
 package GUI.KhachHang;
 
-import dao.HangThanhVien_DAO;
-import dao.KhachHang_DAO;
-import entity.HangThanhVien;
-import entity.KhachHang;
+import controller.HangThanhVienController;
+import controller.HangThanhVienController.Dashboard;
+import controller.HangThanhVienController.PolicyField;
+import controller.HangThanhVienController.PolicyInputException;
+import controller.HangThanhVienController.PolicyResult;
+import controller.KhachHangController;
+import controller.KhachHangController.CustomerDetails;
+import controller.KhachHangController.InvoiceRow;
+import controller.KhachHangController.PetRow;
+import entity.KhachHang.HangThanhVien;
+import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 
 import javax.swing.*;
@@ -18,7 +25,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,9 +62,8 @@ public class QuanLyHangThanhVienGUI extends JPanel {
     private JPanel panelDanhSachHang;
     private JScrollPane scrollDanhSachHang;
 
-    // Đối tượng DAO xử lý dữ liệu từ database SALALA
-    private HangThanhVien_DAO hangThanhVienDAO;
-    private KhachHang_DAO khachHangDAO;
+    private final HangThanhVienController controller = new HangThanhVienController();
+    private final KhachHangController khachHangController = new KhachHangController();
 
     private SimpleDateFormat sdfNgay = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
@@ -66,8 +71,6 @@ public class QuanLyHangThanhVienGUI extends JPanel {
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
     // =========================================================================
     public QuanLyHangThanhVienGUI() {
-        hangThanhVienDAO = new HangThanhVien_DAO();
-        khachHangDAO = new KhachHang_DAO();
         khoiTaoGiaoDien();
         caiDatSuKien();
         capNhatThongKe();
@@ -211,10 +214,11 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      */
     public void capNhatThongKe() {
         // 1. Thống kê số liệu trên các thẻ đầu trang
-        int tongKH = hangThanhVienDAO.getTongSoThanhVien();
-        int soNangHang = hangThanhVienDAO.getSoLuongNangHangGanDay();
-        double tongChiTieu = hangThanhVienDAO.getTongChiTieuThanhVien();
-        double tongGiamGia = hangThanhVienDAO.getTongGiamGiaDaApDung();
+        Dashboard dashboard = controller.getDashboard();
+        int tongKH = dashboard.memberCount;
+        int soNangHang = dashboard.recentUpgrades;
+        double tongChiTieu = dashboard.totalSpending;
+        double tongGiamGia = dashboard.totalDiscount;
 
         String strChiTieu = tongChiTieu >= 1_000_000
                 ? String.format("%.1f tr", tongChiTieu / 1_000_000)
@@ -234,7 +238,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         // 2. Tải và vẽ 4 thẻ hạng thành viên
         panelDanhSachHang.removeAll();
-        List<HangThanhVien> dsHang = hangThanhVienDAO.getAllHangThanhVien();
+        List<HangThanhVien> dsHang = dashboard.tiers;
 
         Color[] mauTops = {
                 new Color(245, 158, 11), // Đồng: Amber
@@ -254,7 +258,8 @@ public class QuanLyHangThanhVienGUI extends JPanel {
             int soLuong = h.getSoLuongThanhVien();
             double tiLe = tongKH > 0 ? (soLuong * 100.0 / tongKH) : 0.0;
 
-            String dieuKien = formatDieuKienChiTieu(h.getChiTieuToiThieu(), h.getChiTieuToiDa());
+            String dieuKien = HangThanhVienController.formatSpendingRange(
+                    h.getChiTieuToiThieu(), h.getChiTieuToiDa());
             String strGiam = String.format("%.0f%%", h.getMucGiamGia());
             String strSoKhach = soLuong + " khách hàng";
             String strTiLe = String.format("%.1f%% tổng khách", tiLe);
@@ -271,17 +276,6 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         panelDanhSachHang.revalidate();
         panelDanhSachHang.repaint();
-    }
-
-    private String formatDieuKienChiTieu(double min, Double max) {
-        if (min <= 0 && max != null) {
-            return "Tổng chi tiêu dưới " + String.format("%,.0f ₫", max).replace(',', '.');
-        } else if (max == null) {
-            return "Tổng chi tiêu từ " + String.format("%,.0f ₫", min).replace(',', '.');
-        } else {
-            return "Từ " + String.format("%,.0f ₫", min).replace(',', '.') + " đến dưới "
-                    + String.format("%,.0f ₫", max).replace(',', '.');
-        }
     }
 
     private JPanel taoTheHang(
@@ -464,7 +458,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Vàng / Kim cương)
      */
     private void hienThiDialogDanhSachTheoHang(String tenHang) {
-        List<HangThanhVien> dsThanhVien = hangThanhVienDAO.getDanhSachThanhVienTheoHang(tenHang);
+        List<HangThanhVien> dsThanhVien = controller.getMembersByTier(tenHang);
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 "Danh Sách Thành Viên - Hạng " + tenHang + " (" + dsThanhVien.size() + " thành viên)", true);
@@ -505,7 +499,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         for (int i = 0; i < dsThanhVien.size(); i++) {
             HangThanhVien h = dsThanhVien.get(i);
             duLieu[i][0] = h.getMaHang();
-            duLieu[i][1] = h.getMaKH();
+            duLieu[i][1] = h.getMaKH() != null ? h.getMaKH().getMaKH() : "";
             duLieu[i][2] = h.getHoTenKhachHang();
             duLieu[i][3] = h.getSdtKhachHang();
             duLieu[i][4] = h.getEmailKhachHang();
@@ -643,49 +637,17 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         if (opt == JOptionPane.OK_OPTION) {
             String hangMoi = (String) cbo.getSelectedItem();
             if (hangMoi != null && !hangMoi.equals(hangHienTai)) {
-                // Lấy thông số tiêu chuẩn của hạng mới
-                List<HangThanhVien> dsHang = hangThanhVienDAO.getAllHangThanhVien();
-                HangThanhVien targetHang = null;
-                for (HangThanhVien h : dsHang) {
-                    if (h.getTenHang().equalsIgnoreCase(hangMoi)) {
-                        targetHang = h;
-                        break;
-                    }
-                }
-
-                if (targetHang != null) {
-                    // Cập nhật hạng trong QuanLyHangThanhVien
-                    HangThanhVien updateObj = new HangThanhVien();
-                    updateObj.setMaHang(maHang);
-                    updateObj.setMaKH(maKH);
-                    updateObj.setTenHang(hangMoi);
-                    updateObj.setChiTieuToiThieu(targetHang.getChiTieuToiThieu());
-                    updateObj.setChiTieuToiDa(targetHang.getChiTieuToiDa());
-                    updateObj.setMucGiamGia(targetHang.getMucGiamGia());
-                    updateObj.setDiemTichLuy1Van(targetHang.getDiemTichLuy1Van());
-                    updateObj.setQuyenLoi(targetHang.getQuyenLoi());
-
-                    // Giữ nguyên tổng chi tiêu và tính lại điểm
-                    HangThanhVien current = hangThanhVienDAO.getHangThanhVienTheoMaKH(maKH);
-                    double spending = current != null ? current.getTongChiTieu() : 0.0;
-                    int diem = (int) Math.floor(spending / 10000.0 * targetHang.getDiemTichLuy1Van());
-                    updateObj.setTongChiTieu(spending);
-                    updateObj.setDiemTichLuy(diem);
-                    updateObj.setNgayCapNhatHang(new java.sql.Timestamp(System.currentTimeMillis()));
-                    updateObj.setTrangThai("Đang áp dụng");
-
-                    boolean ok = hangThanhVienDAO.capNhatHangThanhVien(updateObj);
-                    if (ok) {
-                        JOptionPane.showMessageDialog(parent,
-                                "Chuyển khách hàng " + hoTen + " sang hạng " + hangMoi + " thành công!",
-                                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                        parent.dispose();
-                        capNhatThongKe();
-                    } else {
-                        JOptionPane.showMessageDialog(parent,
-                                "Không thể cập nhật hạng thành viên. Vui lòng kiểm tra kết nối!",
-                                "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    }
+                boolean updated = controller.assignTier(maHang, maKH, hangMoi);
+                if (updated) {
+                    JOptionPane.showMessageDialog(parent,
+                            "Chuyển khách hàng " + hoTen + " sang hạng " + hangMoi + " thành công!",
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    parent.dispose();
+                    capNhatThongKe();
+                } else {
+                    JOptionPane.showMessageDialog(parent,
+                            "Không thể cập nhật hạng thành viên. Vui lòng kiểm tra kết nối!",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -695,9 +657,10 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Hộp thoại xem chi tiết hồ sơ khách hàng ngay từ màn hình Hạng thành viên
      */
     private void hienThiDialogXemChiTietKhachHang(String maKH) {
-        KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
-        if (kh == null)
+        CustomerDetails details = khachHangController.getDetails(maKH);
+        if (details == null)
             return;
+        KhachHang kh = details.customer;
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 "Hồ Sơ Chi Tiết Khách Hàng - " + maKH, true);
@@ -724,11 +687,11 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelBody.add(panelInfo);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        List<Object[]> dsThuCung = khachHangDAO.getDanhSachThuCungCuaKhachHang(maKH);
         String[] cotThuCung = { "Mã TC", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh", "Đặc điểm" };
-        Object[][] dataTC = new Object[dsThuCung.size()][6];
-        for (int i = 0; i < dsThuCung.size(); i++) {
-            dataTC[i] = dsThuCung.get(i);
+        Object[][] dataTC = new Object[details.pets.size()][6];
+        for (int i = 0; i < details.pets.size(); i++) {
+            PetRow pet = details.pets.get(i);
+            dataTC[i] = new Object[] {pet.code, pet.name, pet.species, pet.gender, pet.birthDate, pet.traits};
         }
         JTable tableTC = new JTable(new DefaultTableModel(dataTC, cotThuCung) {
             @Override
@@ -741,21 +704,20 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         scrollTC.setPreferredSize(new Dimension(0, 110));
         scrollTC.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Thú cưng sở hữu (" + dsThuCung.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                " Thú cưng sở hữu (" + details.pets.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollTC);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        List<Object[]> dsHoaDon = khachHangDAO.getDanhSachHoaDonCuaKhachHang(maKH);
         String[] cotHoaDon = { "Mã HĐ", "Ngày lập", "Trạng thái", "Số tiền (₫)", "Hình thức" };
-        Object[][] dataHD = new Object[dsHoaDon.size()][5];
-        for (int i = 0; i < dsHoaDon.size(); i++) {
-            Object[] row = dsHoaDon.get(i);
-            dataHD[i][0] = row[0];
-            dataHD[i][1] = row[1];
-            dataHD[i][2] = row[2];
-            dataHD[i][3] = String.format("%,.0f ₫", (Double) row[3]).replace(',', '.');
-            dataHD[i][4] = row[4];
+        Object[][] dataHD = new Object[details.invoices.size()][5];
+        for (int i = 0; i < details.invoices.size(); i++) {
+            InvoiceRow invoice = details.invoices.get(i);
+            dataHD[i][0] = invoice.code;
+            dataHD[i][1] = invoice.date;
+            dataHD[i][2] = invoice.status;
+            dataHD[i][3] = String.format("%,.0f ₫", invoice.amount).replace(',', '.');
+            dataHD[i][4] = invoice.paymentMethod;
         }
         JTable tableHD = new JTable(new DefaultTableModel(dataHD, cotHoaDon) {
             @Override
@@ -768,7 +730,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         scrollHD.setPreferredSize(new Dimension(0, 120));
         scrollHD.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Lịch sử hóa đơn giao dịch (" + dsHoaDon.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                " Lịch sử hóa đơn giao dịch (" + details.invoices.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollHD);
 
@@ -823,7 +785,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         // Hàm nạp thông tin hạng vào form khi chọn ComboBox
         Runnable napThongTinHang = () -> {
             String selected = (String) cboTenHang.getSelectedItem();
-            List<HangThanhVien> dsHang = hangThanhVienDAO.getAllHangThanhVien();
+            List<HangThanhVien> dsHang = controller.getAllTiers();
             for (HangThanhVien h : dsHang) {
                 if (h.getTenHang().equalsIgnoreCase(selected)) {
                     txtChiTieuMin.setText(String.format("%.0f", h.getChiTieuToiThieu()));
@@ -867,7 +829,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         tabPhanHang.setBackground(Color.WHITE);
         tabPhanHang.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        ArrayList<KhachHang> dsKH = khachHangDAO.getAlltbKhachHang();
+        List<KhachHang> dsKH = controller.getCustomers();
         JComboBox<String> cboKhachHang = new JComboBox<>();
         cboKhachHang.setPreferredSize(new Dimension(0, 36));
         cboKhachHang.setFont(RangBuocGiaoDien.fontThuong(13));
@@ -925,74 +887,32 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                 String diemStr = txtDiemTichLuy1Van.getText().trim();
                 String ql = txtQuyenLoi.getText().trim();
 
-                double minSpend = 0;
                 try {
-                    minSpend = Double.parseDouble(minStr.replace(".", "").replace(",", ""));
-                    if (minSpend < 0)
-                        throw new NumberFormatException();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(dialog, "Chi tiêu tối thiểu phải là số >= 0!", "Lỗi định dạng",
-                            JOptionPane.WARNING_MESSAGE);
-                    txtChiTieuMin.requestFocus();
-                    return;
-                }
-
-                Double maxSpend = null;
-                if (!maxStr.isEmpty()) {
-                    try {
-                        maxSpend = Double.parseDouble(maxStr.replace(".", "").replace(",", ""));
-                        if (maxSpend <= minSpend) {
-                            JOptionPane.showMessageDialog(dialog, "Chi tiêu tối đa phải lớn hơn chi tiêu tối thiểu!",
-                                    "Lỗi định dạng", JOptionPane.WARNING_MESSAGE);
-                            txtChiTieuMax.requestFocus();
-                            return;
-                        }
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(dialog, "Chi tiêu tối đa phải là số hợp lệ!", "Lỗi định dạng",
-                                JOptionPane.WARNING_MESSAGE);
-                        txtChiTieuMax.requestFocus();
-                        return;
-                    }
-                }
-
-                double giamGia = 0;
-                try {
-                    giamGia = Double.parseDouble(giamStr);
-                    if (giamGia < 0 || giamGia > 100)
-                        throw new NumberFormatException();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(dialog, "Mức giảm giá phải từ 0% đến 100%!", "Lỗi định dạng",
-                            JOptionPane.WARNING_MESSAGE);
-                    txtGiamGia.requestFocus();
-                    return;
-                }
-
-                double diem1Van = 1.0;
-                try {
-                    diem1Van = Double.parseDouble(diemStr);
-                    if (diem1Van < 0)
-                        throw new NumberFormatException();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(dialog, "Điểm tích lũy trên 1 vạn phải là số >= 0!", "Lỗi định dạng",
-                            JOptionPane.WARNING_MESSAGE);
-                    txtDiemTichLuy1Van.requestFocus();
-                    return;
-                }
-
-                boolean ok = hangThanhVienDAO.capNhatChinhSachHang(ten, minSpend, maxSpend, giamGia, diem1Van, ql);
-                if (ok) {
+                    PolicyResult result = controller.updatePolicy(ten, minStr, maxStr, giamStr, diemStr, ql);
+                    if (result.saved) {
                     JOptionPane.showMessageDialog(this,
                             "Đã lưu chính sách hạng \"" + ten + "\" thành công vào database SALALA!\n" +
-                                    "- Chi tiêu: từ " + String.format("%,.0f ₫", minSpend)
-                                    + (maxSpend != null ? " đến " + String.format("%,.0f ₫", maxSpend) : " trở lên")
+                                    "- Chi tiêu: từ " + String.format("%,.0f ₫", result.minimumSpend)
+                                    + (result.maximumSpend != null ? " đến " + String.format("%,.0f ₫", result.maximumSpend) : " trở lên")
                                     + "\n" +
-                                    "- Giảm giá: " + giamGia + "% | Điểm/10.000₫: " + diem1Van,
+                                    "- Giảm giá: " + result.discount + "% | Điểm/10.000₫: " + result.pointsPerTenThousand,
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     capNhatThongKe();
                     dialog.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(dialog, "Không thể cập nhật chính sách hạng. Vui lòng thử lại!",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(dialog, "Không thể cập nhật chính sách hạng. Vui lòng thử lại!",
+                                "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (PolicyInputException ex) {
+                    JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Lỗi định dạng",
+                            JOptionPane.WARNING_MESSAGE);
+                    switch (ex.getField()) {
+                        case MINIMUM: txtChiTieuMin.requestFocus(); break;
+                        case MAXIMUM: txtChiTieuMax.requestFocus(); break;
+                        case DISCOUNT: txtGiamGia.requestFocus(); break;
+                        case POINTS: txtDiemTichLuy1Van.requestFocus(); break;
+                        default: throw new IllegalStateException("Unknown policy field", ex);
+                    }
                 }
 
             } else {
@@ -1006,50 +926,16 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                 String maKH = khSelected.split(" - ")[0].trim();
                 String tenHangMoi = (String) cboHangMoi.getSelectedItem();
 
-                List<HangThanhVien> dsHang = hangThanhVienDAO.getAllHangThanhVien();
-                HangThanhVien targetHang = null;
-                for (HangThanhVien h : dsHang) {
-                    if (h.getTenHang().equalsIgnoreCase(tenHangMoi)) {
-                        targetHang = h;
-                        break;
-                    }
-                }
-
-                if (targetHang != null) {
-                    HangThanhVien existing = hangThanhVienDAO.getHangThanhVienTheoMaKH(maKH);
-                    boolean ok;
-                    if (existing != null) {
-                        existing.setTenHang(tenHangMoi);
-                        existing.setChiTieuToiThieu(targetHang.getChiTieuToiThieu());
-                        existing.setChiTieuToiDa(targetHang.getChiTieuToiDa());
-                        existing.setMucGiamGia(targetHang.getMucGiamGia());
-                        existing.setDiemTichLuy1Van(targetHang.getDiemTichLuy1Van());
-                        existing.setQuyenLoi(targetHang.getQuyenLoi());
-                        existing.setDiemTichLuy((int) Math
-                                .floor(existing.getTongChiTieu() / 10000.0 * targetHang.getDiemTichLuy1Van()));
-                        existing.setNgayCapNhatHang(new java.sql.Timestamp(System.currentTimeMillis()));
-                        ok = hangThanhVienDAO.capNhatHangThanhVien(existing);
-                    } else {
-                        String newMaHang = hangThanhVienDAO.phatSinhMaHangMoi();
-                        HangThanhVien newHtv = new HangThanhVien(
-                                newMaHang, maKH, tenHangMoi,
-                                targetHang.getChiTieuToiThieu(), targetHang.getChiTieuToiDa(),
-                                targetHang.getMucGiamGia(), targetHang.getDiemTichLuy1Van(),
-                                targetHang.getQuyenLoi(), 0.0, 0,
-                                new java.sql.Timestamp(System.currentTimeMillis()), "Đang áp dụng");
-                        ok = hangThanhVienDAO.themHangThanhVien(newHtv);
-                    }
-
-                    if (ok) {
-                        JOptionPane.showMessageDialog(this,
-                                "Phân khách hàng " + khSelected + " sang hạng " + tenHangMoi + " thành công!",
-                                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                        capNhatThongKe();
-                        dialog.dispose();
-                    } else {
-                        JOptionPane.showMessageDialog(dialog, "Không thể lưu phân hạng. Vui lòng thử lại!", "Lỗi",
-                                JOptionPane.ERROR_MESSAGE);
-                    }
+                boolean ok = controller.assignOrCreateTier(maKH, tenHangMoi);
+                if (ok) {
+                    JOptionPane.showMessageDialog(this,
+                            "Phân khách hàng " + khSelected + " sang hạng " + tenHangMoi + " thành công!",
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    capNhatThongKe();
+                    dialog.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Không thể lưu phân hạng. Vui lòng thử lại!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -1079,7 +965,4 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         return p;
     }
 
-    public HangThanhVien_DAO getHangThanhVienDAO() {
-        return hangThanhVienDAO;
-    }
 }

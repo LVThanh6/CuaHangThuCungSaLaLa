@@ -1,7 +1,13 @@
 package GUI.KhachHang;
 
-import dao.KhachHang_DAO;
-import entity.KhachHang;
+import controller.KhachHangController;
+import controller.KhachHangController.CustomerDetails;
+import controller.KhachHangController.CustomerInputException;
+import controller.KhachHangController.CustomerStatistics;
+import controller.KhachHangController.DeleteResult;
+import controller.KhachHangController.InvoiceRow;
+import controller.KhachHangController.PetRow;
+import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.QuanLyTable;
 
@@ -10,7 +16,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,14 +59,12 @@ public class DanhSachKhachHangGUI extends JPanel {
     private Object[][] duLieuKhachHang;
     private String[] danhSachBoLoc;
 
-    // Đối tượng DAO xử lý dữ liệu từ database SALALA
-    private KhachHang_DAO khachHangDAO;
+    private final KhachHangController controller = new KhachHangController();
 
     // =========================================================================
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
     // =========================================================================
     public DanhSachKhachHangGUI() {
-        khachHangDAO = new KhachHang_DAO();
         khoiTaoGiaoDien();
         caiDatCacChucNang();
         taiDuLieuTuDatabase();
@@ -262,8 +265,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         capNhatTrangThaiNut(table);
 
         // Thiết lập renderer cho cột Hạng thành viên
-        try {
-            table.getColumnModel().getColumn(5).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+        table.getColumnModel().getColumn(5).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
                 @Override
                 public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
                         int r, int c) {
@@ -286,9 +288,6 @@ public class DanhSachKhachHangGUI extends JPanel {
                     return lbl;
                 }
             });
-
-        } catch (Exception ignored) {
-        }
     }
 
     private void capNhatTrangThaiNut(JTable table) {
@@ -318,46 +317,39 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Tải dữ liệu thực tế từ cơ sở dữ liệu SALALA qua KhachHang_DAO
      */
     public void taiDuLieuTuDatabase() {
-        try {
-            ArrayList<KhachHang> ds = khachHangDAO.getAllKhachHangDayDu();
-            if (ds != null && !ds.isEmpty()) {
-                duLieuKhachHang = new Object[ds.size()][6];
-                for (int i = 0; i < ds.size(); i++) {
-                    KhachHang kh = ds.get(i);
-                    duLieuKhachHang[i][0] = kh.getMaKH();
-                    duLieuKhachHang[i][1] = kh.getHoTen();
-                    duLieuKhachHang[i][2] = kh.getSdt();
-                    duLieuKhachHang[i][3] = kh.getEmail();
-                    duLieuKhachHang[i][4] = kh.getDiaChi() != null ? kh.getDiaChi() : "";
-                    duLieuKhachHang[i][5] = (kh.getHangThanhVien() != null ? kh.getHangThanhVien() : "Đồng");
-                }
-                if (panelQuanLyTable != null) {
-                    panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
-                }
-            }
-            capNhatThongKe();
-        } catch (Exception e) {
-            e.printStackTrace();
+        List<KhachHang> customers = controller.loadCustomers();
+        duLieuKhachHang = new Object[customers.size()][6];
+        for (int i = 0; i < customers.size(); i++) {
+            KhachHang khachHang = customers.get(i);
+            duLieuKhachHang[i][0] = khachHang.getMaKH();
+            duLieuKhachHang[i][1] = khachHang.getHoTen();
+            duLieuKhachHang[i][2] = khachHang.getSdt();
+            duLieuKhachHang[i][3] = khachHang.getEmail();
+            duLieuKhachHang[i][4] = khachHang.getDiaChi() == null ? "" : khachHang.getDiaChi();
+            duLieuKhachHang[i][5] = khachHang.getHangThanhVien() == null ? "Đồng" : khachHang.getHangThanhVien();
         }
+        if (panelQuanLyTable != null) {
+            panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
+        }
+        capNhatThongKe();
     }
 
     /**
      * Cập nhật các thẻ thống kê từ CSDL
      */
     public void capNhatThongKe() {
-        int tongKH = khachHangDAO.getTongSoKhachHang();
-        int tongTC = khachHangDAO.getTongSoThuCung();
-        int soVang = khachHangDAO.getSoLuongThanhVienVangTroLen();
-        int soMoi = khachHangDAO.getSoLuongKhachHangMoi();
+        CustomerStatistics statistics = controller.getStatistics();
+        int tongKH = statistics.customers;
+        int tongTC = statistics.pets;
 
         if (lblValTongKH != null)
             lblValTongKH.setText(String.valueOf(tongKH));
         if (lblValKhachMoi != null)
-            lblValKhachMoi.setText(String.valueOf(soMoi));
+            lblValKhachMoi.setText(String.valueOf(statistics.newCustomers));
         if (lblValTongTC != null)
             lblValTongTC.setText(String.valueOf(tongTC));
         if (lblValVang != null)
-            lblValVang.setText(String.valueOf(soVang));
+            lblValVang.setText(String.valueOf(statistics.goldOrHigherMembers));
         if (lblDescTC != null && tongKH > 0) {
             lblDescTC.setText(String.format("%.1f thú cưng / khách", (double) tongTC / tongKH));
         }
@@ -396,7 +388,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelContent.add(Box.createRigidArea(new Dimension(0, 16)));
 
         // Tự động phát sinh mã khách hàng
-        String maGoiY = khachHangDAO.phatSinhMaKHMoi();
+        String maGoiY = controller.suggestNewCode();
 
         JTextField txtMaKH = taoTextField(maGoiY);
         txtMaKH.setEditable(false);
@@ -444,48 +436,28 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnLuu.setPreferredSize(new Dimension(140, 38));
 
         btnLuu.addActionListener(e -> {
-            String ma = txtMaKH.getText().trim();
-            String ten = txtHoTen.getText().trim();
-            String sdt = txtSDT.getText().trim();
-            String email = txtEmail.getText().trim();
-            String diaChi = txtDiaChi.getText().trim();
-
-            if (ma.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập mã khách hàng!", "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
-                txtMaKH.requestFocus();
-                return;
-            }
-            if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập họ và tên khách hàng!", "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
-                txtHoTen.requestFocus();
-                return;
-            }
-            if (!sdt.matches("^0\\d{9}$")) {
-                JOptionPane.showMessageDialog(dialog, "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0!",
-                        "Lỗi định dạng", JOptionPane.WARNING_MESSAGE);
-                txtSDT.requestFocus();
-                return;
-            }
-            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                JOptionPane.showMessageDialog(dialog, "Email không đúng định dạng (ví dụ: ten@gmail.com)!",
-                        "Lỗi định dạng", JOptionPane.WARNING_MESSAGE);
-                txtEmail.requestFocus();
-                return;
-            }
-
-            KhachHang khMoi = new KhachHang(ma, ten, sdt, email, diaChi);
-            boolean thanhCong = khachHangDAO.createKhachHang(khMoi);
-            if (thanhCong) {
-                JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!", "Thành công",
-                        JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                taiDuLieuTuDatabase();
-            } else {
-                JOptionPane.showMessageDialog(dialog,
-                        "Thêm thất bại! Vui lòng kiểm tra xem Mã khách hàng đã tồn tại chưa.", "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean created = controller.create(txtMaKH.getText(), txtHoTen.getText(), txtSDT.getText(),
+                        txtEmail.getText(), txtDiaChi.getText());
+                if (created) {
+                    JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!", "Thành công",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    taiDuLieuTuDatabase();
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                            "Thêm thất bại! Vui lòng kiểm tra xem Mã khách hàng đã tồn tại chưa.", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (CustomerInputException ex) {
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Lỗi định dạng", JOptionPane.WARNING_MESSAGE);
+                switch (ex.getField()) {
+                    case CODE: txtMaKH.requestFocus(); break;
+                    case NAME: txtHoTen.requestFocus(); break;
+                    case PHONE: txtSDT.requestFocus(); break;
+                    case EMAIL: txtEmail.requestFocus(); break;
+                    default: throw new IllegalStateException("Unknown customer input field", ex);
+                }
             }
         });
 
@@ -500,12 +472,13 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Hộp thoại xem chi tiết khách hàng (kèm thú cưng và lịch sử hóa đơn)
      */
     private void hienThiDialogXemChiTiet(String maKH) {
-        KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
-        if (kh == null) {
+        CustomerDetails details = controller.getDetails(maKH);
+        if (details == null) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin khách hàng!", "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
+        KhachHang kh = details.customer;
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 "Hồ Sơ Chi Tiết Khách Hàng - " + maKH, true);
@@ -534,11 +507,11 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // 2. Danh sách thú cưng của khách
-        List<Object[]> dsThuCung = khachHangDAO.getDanhSachThuCungCuaKhachHang(maKH);
         String[] cotThuCung = { "Mã TC", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh", "Đặc điểm" };
-        Object[][] dataTC = new Object[dsThuCung.size()][6];
-        for (int i = 0; i < dsThuCung.size(); i++) {
-            dataTC[i] = dsThuCung.get(i);
+        Object[][] dataTC = new Object[details.pets.size()][6];
+        for (int i = 0; i < details.pets.size(); i++) {
+            PetRow pet = details.pets.get(i);
+            dataTC[i] = new Object[] {pet.code, pet.name, pet.species, pet.gender, pet.birthDate, pet.traits};
         }
 
         JTable tableTC = new JTable(new DefaultTableModel(dataTC, cotThuCung) {
@@ -552,22 +525,21 @@ public class DanhSachKhachHangGUI extends JPanel {
         scrollTC.setPreferredSize(new Dimension(0, 120));
         scrollTC.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Thú cưng sở hữu (" + dsThuCung.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                " Thú cưng sở hữu (" + details.pets.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollTC);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // 3. Lịch sử hóa đơn của khách
-        List<Object[]> dsHoaDon = khachHangDAO.getDanhSachHoaDonCuaKhachHang(maKH);
         String[] cotHoaDon = { "Mã HĐ", "Ngày lập", "Trạng thái", "Số tiền (₫)", "Hình thức" };
-        Object[][] dataHD = new Object[dsHoaDon.size()][5];
-        for (int i = 0; i < dsHoaDon.size(); i++) {
-            Object[] row = dsHoaDon.get(i);
-            dataHD[i][0] = row[0];
-            dataHD[i][1] = row[1];
-            dataHD[i][2] = row[2];
-            dataHD[i][3] = String.format("%,.0f ₫", (Double) row[3]).replace(',', '.');
-            dataHD[i][4] = row[4];
+        Object[][] dataHD = new Object[details.invoices.size()][5];
+        for (int i = 0; i < details.invoices.size(); i++) {
+            InvoiceRow invoice = details.invoices.get(i);
+            dataHD[i][0] = invoice.code;
+            dataHD[i][1] = invoice.date;
+            dataHD[i][2] = invoice.status;
+            dataHD[i][3] = String.format("%,.0f ₫", invoice.amount).replace(',', '.');
+            dataHD[i][4] = invoice.paymentMethod;
         }
 
         JTable tableHD = new JTable(new DefaultTableModel(dataHD, cotHoaDon) {
@@ -581,7 +553,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         scrollHD.setPreferredSize(new Dimension(0, 130));
         scrollHD.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Lịch sử hóa đơn giao dịch (" + dsHoaDon.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                " Lịch sử hóa đơn giao dịch (" + details.invoices.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollHD);
 
@@ -604,7 +576,7 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Hộp thoại chỉnh sửa thông tin khách hàng
      */
     private void hienThiDialogSuaKhachHang(String maKH) {
-        KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
+        KhachHang kh = controller.getCustomer(maKH);
         if (kh == null) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
@@ -662,36 +634,19 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnCapNhat.setForeground(Color.WHITE);
 
         btnCapNhat.addActionListener(e -> {
-            String ten = txtHoTen.getText().trim();
-            String sdt = txtSDT.getText().trim();
-            String email = txtEmail.getText().trim();
-            String diaChi = txtDiaChi.getText().trim();
-
-            if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Họ và tên không được để trống!", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (!sdt.matches("^0\\d{9}$")) {
-                JOptionPane.showMessageDialog(dialog, "Số điện thoại phải có 10 chữ số bắt đầu bằng 0!", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                JOptionPane.showMessageDialog(dialog, "Email không đúng định dạng!", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            KhachHang khCapNhat = new KhachHang(maKH, ten, sdt, email, diaChi);
-            boolean ok = khachHangDAO.updateKhachHang(khCapNhat);
-            if (ok) {
-                JOptionPane.showMessageDialog(this, "Cập nhật thông tin khách hàng thành công!", "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                taiDuLieuTuDatabase();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean updated = controller.update(maKH, txtHoTen.getText(), txtSDT.getText(),
+                        txtEmail.getText(), txtDiaChi.getText());
+                if (updated) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thông tin khách hàng thành công!", "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    taiDuLieuTuDatabase();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (CustomerInputException ex) {
+                JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Lỗi", JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -711,8 +666,8 @@ public class DanhSachKhachHangGUI extends JPanel {
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (chon == JOptionPane.YES_OPTION) {
-            // Kiểm tra ràng buộc trước khi xóa
-            if (khachHangDAO.kiemTraRangBuoc(maKH)) {
+            DeleteResult result = controller.delete(maKH);
+            if (result == DeleteResult.BLOCKED_BY_RELATED_DATA) {
                 JOptionPane.showMessageDialog(this,
                         "Khách hàng " + maKH + " đang có dữ liệu thú cưng hoặc hóa đơn liên quan trong hệ thống.\n" +
                                 "Để đảm bảo tính toàn vẹn dữ liệu kế toán, không thể xóa khách hàng này!",
@@ -720,8 +675,7 @@ public class DanhSachKhachHangGUI extends JPanel {
                 return;
             }
 
-            boolean ok = khachHangDAO.deleteKhachHang(maKH);
-            if (ok) {
+            if (result == DeleteResult.DELETED) {
                 JOptionPane.showMessageDialog(this, "Đã xóa khách hàng " + maKH + " thành công!", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuTuDatabase();
@@ -754,7 +708,4 @@ public class DanhSachKhachHangGUI extends JPanel {
         return txt;
     }
 
-    public KhachHang_DAO getKhachHangDAO() {
-        return khachHangDAO;
-    }
 }

@@ -1,8 +1,8 @@
 package GUI.DichVu;
 
 import GUI.Chung.RangBuocGiaoDien;
-import dao.Thue_DAO;
-import entity.Thue_entity;
+import entity.DichVu.Thue_entity;
+import controller.ThueController;
 
 import java.awt.*;
 import java.util.List;
@@ -20,7 +20,7 @@ public class ThueGUI extends JPanel {
     private static final Color XAM = new Color(0x6B7280);
     private static final Color DO = new Color(0xDC2626);
 
-    private final Thue_DAO dao = new Thue_DAO();
+    private final ThueController controller = new ThueController();
     private JTable table;
     private DefaultTableModel model;
     private JButton btnSua, btnXoa;
@@ -75,7 +75,7 @@ public class ThueGUI extends JPanel {
                 Thue_entity thue = danhSach.get(row);
                 int kq = JOptionPane.showConfirmDialog(this, "Xóa loại thuế " + thue.getTenThue() + " (" + thue.getMaThue() + ")?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
                 if (kq == JOptionPane.YES_OPTION) {
-                    if (dao.deleteThue(thue.getMaThue())) {
+                    if (controller.delete(thue.getMaThue())) {
                         JOptionPane.showMessageDialog(this, "Xóa thành công!");
                         taiLai();
                     } else {
@@ -124,7 +124,7 @@ public class ThueGUI extends JPanel {
 
     private void taiLai() {
         model.setRowCount(0);
-        danhSach = dao.getAllThue();
+        danhSach = controller.getAll();
         if (danhSach != null) {
             for (Thue_entity t : danhSach) {
                 model.addRow(new Object[] {
@@ -172,22 +172,8 @@ public class ThueGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                String ma = txtMa.getText().trim();
-                String ten = txtTen.getText().trim();
-                double muc = Double.parseDouble(txtMuc.getText().trim().replace(",", "."));
-
-                if (ten.isEmpty()) {
-                    JOptionPane.showMessageDialog(dlg, "Tên thuế không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                Thue_entity thue = new Thue_entity(ma, ten, muc);
-                boolean ok;
-                if (goc == null) {
-                    ok = dao.createThue(thue);
-                } else {
-                    ok = dao.updateThue(thue);
-                }
+                boolean ok = controller.save(
+                        txtMa.getText(), txtTen.getText(), txtMuc.getText(), goc == null);
 
                 if (ok) {
                     JOptionPane.showMessageDialog(dlg, "Lưu thành công!");
@@ -196,8 +182,8 @@ public class ThueGUI extends JPanel {
                 } else {
                     JOptionPane.showMessageDialog(dlg, "Không thể lưu thuế vào CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dlg, "Mức thuế phải là số hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

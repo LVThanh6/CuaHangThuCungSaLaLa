@@ -6,22 +6,16 @@ import GUI.GiaoDienChinhGUI;
 import GUI.ThuCung.HoSoThuCungGUI.NutBoTron;
 import GUI.ThuCung.HoSoThuCungGUI.OTimKiemGoiY;
 import GUI.ThuCung.HoSoThuCungGUI.PanelBoTron;
-import dao.BacSi_DAO;
-import dao.HoSoSucKhoe_DAO;
-import dao.ThuCung_DAO;
-import entity.BacSi_entity;
-import entity.HoSoSucKhoe_entity;
-import entity.ThuCung_entity;
+import controller.LichSuKhamController;
+import entity.BacSi.BacSi_entity;
+import entity.ThuCung.HoSoSucKhoe_entity;
+import entity.ThuCung.ThuCung_entity;
 import java.awt.*;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +27,7 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * Class LichSuKhamGUI: Giao diện "Lịch sử khám" (Tab Thú cưng ➔ Lịch sử khám).
- * Quản lý hồ sơ sức khỏe và lịch sử khám thông qua DAO.
+ * Quản lý hồ sơ sức khỏe và lịch sử khám thông qua controller.
  * Các trường hiển thị dựa theo bảng HoSoSucKhoe (kết hợp ThuCung, KhachHang, BacSyThuY).
  * Dùng lại các thành phần PanelBoTron, NutBoTron, OTimKiemGoiY của HoSoThuCungGUI.
  */
@@ -57,10 +51,9 @@ public class LichSuKhamGUI extends JPanel {
             "Chẩn đoán", "Cân nặng (kg)", "Bác sĩ phụ trách" };
     private final String[] dsBacSiLoc = { "Bác sĩ: Tất cả" };
     private final String[] dsThoiGianLoc = { "Thời gian: Tất cả", "Hôm nay", "7 ngày qua", "Tháng này" };
-    private final HoSoSucKhoe_DAO hoSoDAO = new HoSoSucKhoe_DAO();
-    private final ThuCung_DAO thuCungDAO = new ThuCung_DAO();
-    private final BacSi_DAO bacSiDAO = new BacSi_DAO();
+    private final LichSuKhamController controller = new LichSuKhamController();
     private List<HoSoSucKhoe_entity> danhSachHoSo = new ArrayList<>();
+    private List<HoSoSucKhoe_entity> danhSachDangHienThi = new ArrayList<>();
     private LocalDate tuNgay;
     private LocalDate denNgay;
 
@@ -364,8 +357,9 @@ public class LichSuKhamGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            danhSachHoSo = hoSoDAO.getAllHoSoSucKhoe();
-            List<BacSi_entity> bacSi = bacSiDAO.getAll();
+            LichSuKhamController.DuLieuManHinh duLieu = controller.taiDuLieu();
+            danhSachHoSo = duLieu.hoSo;
+            List<BacSi_entity> bacSi = duLieu.bacSi;
             Object selected = cboBacSi.getSelectedItem();
             cboBacSi.removeAllItems();
             cboBacSi.addItem("Bác sĩ: Tất cả");
@@ -379,7 +373,7 @@ public class LichSuKhamGUI extends JPanel {
             }
             locDuLieu();
             capNhatThongKe();
-        } catch (Exception e) {
+        } catch (SQLException | RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Không thể tải lịch sử khám: " + e.getMessage(),
                     "Lỗi tải dữ liệu", JOptionPane.ERROR_MESSAGE);
         }
@@ -387,45 +381,19 @@ public class LichSuKhamGUI extends JPanel {
 
     private void locDuLieu() {
         if (bangLichSuKham == null) return;
-        String keyword = txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
         String doctor = String.valueOf(cboBacSi.getSelectedItem());
         String time = String.valueOf(cboThoiGian.getSelectedItem());
-        LocalDate tu = tuNgay;
-        LocalDate den = denNgay;
         LocalDate today = LocalDate.now();
-        if ("Hôm nay".equals(time)) {
-            tu = today;
-            den = today;
-        } else if ("7 ngày qua".equals(time)) {
-            tu = today.minusDays(6);
-            den = today;
-        } else if ("Tháng này".equals(time)) {
-            tu = today.withDayOfMonth(1);
-            den = today;
-        }
+        danhSachDangHienThi =
+                controller.loc(danhSachHoSo, txtTimKiem.getText(), doctor, time, tuNgay, denNgay, today);
         DefaultTableModel model = (DefaultTableModel) bangLichSuKham.getModel();
         model.setRowCount(0);
-        for (HoSoSucKhoe_entity hs : danhSachHoSo) {
-            LocalDate ngay = hs.getNgayKham() == null ? null : hs.getNgayKham().toLocalDate();
-            boolean matchedKeyword = keyword.isEmpty()
-                    || value(hs.getMaHSSK()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getMaTC()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getTenThuCung()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getChuHo()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getTrieuChung()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getChuanDoan()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(hs.getTenBacSi()).toLowerCase(Locale.ROOT).contains(keyword);
-            boolean matchedDoctor = doctor == null || doctor.startsWith("Bác sĩ:")
-                    || doctor.endsWith("(" + hs.getMaBacSi() + ")");
-            boolean matchedDate = (tu == null || (ngay != null && !ngay.isBefore(tu)))
-                    && (den == null || (ngay != null && !ngay.isAfter(den)));
-            if (matchedKeyword && matchedDoctor && matchedDate) {
-                model.addRow(new Object[] { hs.getMaHSSK(),
-                        value(hs.getTenThuCung()) + " (" + hs.getMaTC() + ")", value(hs.getChuHo()),
-                        hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()),
-                        value(hs.getTrieuChung()), value(hs.getChuanDoan()),
-                        hs.getCanNang() == null ? "" : hs.getCanNang().toPlainString(), value(hs.getTenBacSi()) });
-            }
+        for (HoSoSucKhoe_entity hs : danhSachDangHienThi) {
+            model.addRow(new Object[] { hs.getMaHSSK(),
+                    value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")", value(hs.getChuHo()),
+                    hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()),
+                    value(hs.getTrieuChung()), value(hs.getChuanDoan()),
+                    hs.getCanNang() == null ? "" : hs.getCanNang().toPlainString(), value(hs.getTenBacSi()) });
         }
         bangLichSuKham.clearSelection();
         capNhatTrangThaiNutHanhDong();
@@ -433,22 +401,11 @@ public class LichSuKhamGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        LocalDate today = LocalDate.now();
-        int todayCount = 0;
-        int monthCount = 0;
-        Set<String> doctors = new HashSet<>();
-        for (HoSoSucKhoe_entity hs : danhSachHoSo) {
-            if (hs.getNgayKham() != null) {
-                LocalDate date = hs.getNgayKham().toLocalDate();
-                if (date.equals(today)) todayCount++;
-                if (date.getYear() == today.getYear() && date.getMonth() == today.getMonth()) monthCount++;
-            }
-            doctors.add(hs.getMaBacSi());
-        }
-        nhanSoTongLuotKham.setText(String.valueOf(danhSachHoSo.size()));
-        nhanSoKhamHomNay.setText(String.valueOf(todayCount));
-        nhanSoKhamThangNay.setText(String.valueOf(monthCount));
-        nhanSoBacSi.setText(String.valueOf(doctors.size()));
+        LichSuKhamController.ThongKe thongKe = controller.thongKe(danhSachHoSo, LocalDate.now());
+        nhanSoTongLuotKham.setText(String.valueOf(thongKe.tongLuot));
+        nhanSoKhamHomNay.setText(String.valueOf(thongKe.homNay));
+        nhanSoKhamThangNay.setText(String.valueOf(thongKe.thangNay));
+        nhanSoBacSi.setText(String.valueOf(thongKe.soBacSi));
     }
 
     private String value(String text) {
@@ -464,14 +421,12 @@ public class LichSuKhamGUI extends JPanel {
         if (JOptionPane.showConfirmDialog(this, form, "Lọc theo khoảng ngày",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return;
         try {
-            tuNgay = tu.getText().trim().isEmpty() ? null : LocalDate.parse(tu.getText().trim(), DINH_DANG_NGAY);
-            denNgay = den.getText().trim().isEmpty() ? null : LocalDate.parse(den.getText().trim(), DINH_DANG_NGAY);
-            if (tuNgay != null && denNgay != null && tuNgay.isAfter(denNgay)) {
-                throw new IllegalArgumentException("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.");
-            }
+            LichSuKhamController.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            tuNgay = khoang.tuNgay;
+            denNgay = khoang.denNgay;
             cboThoiGian.setSelectedIndex(0);
             locDuLieu();
-        } catch (DateTimeParseException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this, "Khoảng ngày không hợp lệ: " + e.getMessage(),
                     "Sai định dạng ngày", JOptionPane.WARNING_MESSAGE);
         }
@@ -484,15 +439,15 @@ public class LichSuKhamGUI extends JPanel {
 
     private void moFormHoSo(HoSoSucKhoe_entity hoSoHienTai) {
         try {
-            List<ThuCung_entity> thuCungList = thuCungDAO.getAllThuCung();
-            List<BacSi_entity> bacSiList = bacSiDAO.getAll();
+            List<ThuCung_entity> thuCungList = controller.taiThuCung();
+            List<BacSi_entity> bacSiList = controller.taiBacSi();
             if (thuCungList.isEmpty() || bacSiList.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Cần có thú cưng và bác sĩ trước khi tạo lượt khám.",
                         "Thiếu dữ liệu liên quan", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             JTextField txtMa = new JTextField(hoSoHienTai == null
-                    ? hoSoDAO.getMaTiepTheo() : hoSoHienTai.getMaHSSK());
+                    ? controller.maTiepTheo() : hoSoHienTai.getMaHSSK());
             txtMa.setEditable(false);
             JComboBox<ThuCung_entity> cboThuCung = new JComboBox<>(thuCungList.toArray(new ThuCung_entity[0]));
             cboThuCung.setRenderer(new DefaultListCellRenderer() {
@@ -522,10 +477,10 @@ public class LichSuKhamGUI extends JPanel {
             });
             if (hoSoHienTai != null) {
                 for (int i = 0; i < cboThuCung.getItemCount(); i++) {
-                    if (hoSoHienTai.getMaTC().equals(cboThuCung.getItemAt(i).getMaTC())) cboThuCung.setSelectedIndex(i);
+                    if (hoSoHienTai.getMaTC() != null && hoSoHienTai.getMaTC().equals(cboThuCung.getItemAt(i))) cboThuCung.setSelectedIndex(i);
                 }
                 for (int i = 0; i < cboBacSiForm.getItemCount(); i++) {
-                    if (hoSoHienTai.getMaBacSi().equals(cboBacSiForm.getItemAt(i).getMaBacSi())) cboBacSiForm.setSelectedIndex(i);
+                    if (hoSoHienTai.getMaBacSi() != null && hoSoHienTai.getMaBacSi().equals(cboBacSiForm.getItemAt(i))) cboBacSiForm.setSelectedIndex(i);
                 }
             }
             JTextField txtNgay = new JTextField(hoSoHienTai == null
@@ -548,22 +503,9 @@ public class LichSuKhamGUI extends JPanel {
                     JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return;
             ThuCung_entity tc = (ThuCung_entity) cboThuCung.getSelectedItem();
             BacSi_entity bs = (BacSi_entity) cboBacSiForm.getSelectedItem();
-            String symptoms = txtTrieuChung.getText().trim();
-            String diagnosis = txtChuanDoan.getText().trim();
-            if (tc == null || bs == null || symptoms.isEmpty() || diagnosis.isEmpty()
-                    || symptoms.length() > 500 || diagnosis.length() > 500) {
-                throw new IllegalArgumentException("Chọn thú cưng/bác sĩ và nhập triệu chứng, chẩn đoán (tối đa 500 ký tự).");
-            }
-            BigDecimal weight = txtCanNang.getText().trim().isEmpty()
-                    ? null : new BigDecimal(txtCanNang.getText().trim());
-            if (weight != null && weight.signum() <= 0) {
-                throw new IllegalArgumentException("Cân nặng phải lớn hơn 0.");
-            }
-            HoSoSucKhoe_entity hoSo = new HoSoSucKhoe_entity(txtMa.getText(), tc.getMaTC(), bs.getMaBacSi(),
-                    LocalDateTime.parse(txtNgay.getText().trim(), DINH_DANG_NGAY_GIO),
-                    symptoms, diagnosis, weight);
-            boolean saved = hoSoHienTai == null
-                    ? hoSoDAO.createHoSoSucKhoe(hoSo) : hoSoDAO.updateHoSoSucKhoe(hoSo);
+            boolean saved = controller.luu(new LichSuKhamController.ThongTinHoSo(
+                    txtMa.getText(), hoSoHienTai == null, tc, bs, txtNgay.getText(),
+                    txtTrieuChung.getText(), txtChuanDoan.getText(), txtCanNang.getText()));
             if (saved) {
                 JOptionPane.showMessageDialog(this, "Đã lưu hồ sơ khám.", "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -572,13 +514,13 @@ public class LichSuKhamGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Không thể lưu hồ sơ khám.",
                         "Thao tác thất bại", JOptionPane.WARNING_MESSAGE);
             }
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this, "Ngày khám không hợp lệ, hãy nhập dd/MM/yyyy HH:mm.",
-                    "Sai định dạng ngày", JOptionPane.WARNING_MESSAGE);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Cân nặng phải là số hợp lệ.",
-                    "Sai dữ liệu", JOptionPane.WARNING_MESSAGE);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(),
+                    "Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Lỗi xử lý hồ sơ khám: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Lỗi xử lý hồ sơ khám: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -605,23 +547,23 @@ public class LichSuKhamGUI extends JPanel {
             return;
         }
         try {
-            HoSoSucKhoe_entity hs = hoSoDAO.getHoSoSucKhoeTheoMa(maHoSo);
+            HoSoSucKhoe_entity hs = controller.timTheoMa(maHoSo);
             if (hs == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy hồ sơ " + maHoSo + ".",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             String chiTiet = "Mã hồ sơ: " + hs.getMaHSSK()
-                    + "\nThú cưng: " + value(hs.getTenThuCung()) + " (" + hs.getMaTC() + ")"
+                    + "\nThú cưng: " + value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")"
                     + "\nChủ nuôi: " + value(hs.getChuHo())
-                    + "\nBác sĩ: " + value(hs.getTenBacSi()) + " (" + hs.getMaBacSi() + ")"
+                    + "\nBác sĩ: " + value(hs.getTenBacSi()) + " (" + (hs.getMaBacSi() != null ? hs.getMaBacSi().getMaBacSi() : "") + ")"
                     + "\nNgày khám: " + (hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()))
                     + "\nTriệu chứng: " + value(hs.getTrieuChung())
                     + "\nChẩn đoán: " + value(hs.getChuanDoan())
                     + "\nCân nặng (kg): " + (hs.getCanNang() == null ? "" : hs.getCanNang().toPlainString());
             JOptionPane.showMessageDialog(this, chiTiet, "Chi tiết lượt khám",
                     JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
+        } catch (SQLException | RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Không thể tải chi tiết hồ sơ: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -633,14 +575,14 @@ public class LichSuKhamGUI extends JPanel {
             return;
         }
         try {
-            HoSoSucKhoe_entity hs = hoSoDAO.getHoSoSucKhoeTheoMa(maHoSo);
+            HoSoSucKhoe_entity hs = controller.timTheoMa(maHoSo);
             if (hs == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy hồ sơ " + maHoSo + ".",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             moFormHoSo(hs);
-        } catch (Exception e) {
+        } catch (SQLException | RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Không thể tải hồ sơ để sửa: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -656,7 +598,7 @@ public class LichSuKhamGUI extends JPanel {
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (luaChon == JOptionPane.YES_OPTION) {
             try {
-                if (hoSoDAO.deleteHoSoSucKhoe(maHoSo)) {
+                if (controller.xoa(maHoSo)) {
                     JOptionPane.showMessageDialog(this, "Đã xóa hồ sơ khám.",
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     loadDataToTable();
@@ -664,7 +606,7 @@ public class LichSuKhamGUI extends JPanel {
                     JOptionPane.showMessageDialog(this, "Không tìm thấy hồ sơ để xóa.",
                             "Xóa thất bại", JOptionPane.WARNING_MESSAGE);
                 }
-            } catch (Exception e) {
+            } catch (SQLException | RuntimeException e) {
                 JOptionPane.showMessageDialog(this, "Không thể xóa hồ sơ khám: " + e.getMessage(),
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -681,17 +623,8 @@ public class LichSuKhamGUI extends JPanel {
         }
         if (file.exists() && JOptionPane.showConfirmDialog(this, "Tệp đã tồn tại, ghi đè?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
-        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-            writer.write('\ufeff');
-            DefaultTableModel model = (DefaultTableModel) bangLichSuKham.getModel();
-            for (int r = -1; r < model.getRowCount(); r++) {
-                for (int c = 0; c < model.getColumnCount(); c++) {
-                    if (c > 0) writer.write(',');
-                    String text = r < 0 ? bangLichSuKham.getColumnName(c) : String.valueOf(model.getValueAt(r, c));
-                    writer.write("\"" + text.replace("\"", "\"\"") + "\"");
-                }
-                writer.newLine();
-            }
+        try {
+            controller.xuatDanhSach(file, danhSachDangHienThi);
             JOptionPane.showMessageDialog(this, "Đã xuất tệp: " + file.getAbsolutePath(),
                     "Xuất thành công", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {
@@ -754,7 +687,11 @@ public class LichSuKhamGUI extends JPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                | UnsupportedLookAndFeelException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Không thể áp dụng giao diện hệ thống: " + e.getMessage(),
+                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
         }
 
         SwingUtilities.invokeLater(() -> {

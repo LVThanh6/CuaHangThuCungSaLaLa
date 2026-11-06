@@ -1,9 +1,11 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
-import dao.VatTu_DAO;
-import entity.NhaCungCap_entity;
-import entity.VatTu_entity;
+import controller.VatTuController;
+import controller.VatTuController.CatalogItem;
+import controller.VatTuController.InventorySummary;
+import controller.VatTuController.SupplierOption;
+import controller.VatTuController.VatTuInput;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -13,10 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.text.Collator;
-import java.sql.SQLException;
 import java.text.NumberFormat;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,48 +33,6 @@ import javax.swing.table.TableCellRenderer;
 
 public class VatTuGUI extends JPanel {
 
-    public enum TrangThai {
-        CON_HANG("Còn hàng"),
-        SAP_HET("Sắp hết"),
-        HET_TON("Hết tồn");
-
-        public final String nhan;
-
-        TrangThai(String nhan) {
-            this.nhan = nhan;
-        }
-
-        public static TrangThai tuSoLuong(int ton) {
-            if (ton <= 0) return HET_TON;
-            if (ton <= 30) return SAP_HET; // Ngưỡng sắp hết là 30
-            return CON_HANG;
-        }
-    }
-
-    // --- Entity cho Vật Tư ---
-    public static class VatTuEntity {
-        String ma, ten, danhMuc, donVi, maThuoc;
-        int tonKho;
-        long giaNhap;
-        // Các trường lưu kèm để phục vụ thêm / sửa xuống CSDL
-        String maNCC, trangThaiDb;
-        double giaBan;
-
-        public VatTuEntity(String ma, String ten, String danhMuc, int tonKho, String donVi, long giaNhap, String maThuoc) {
-            this.ma = ma; this.ten = ten; this.danhMuc = danhMuc;
-            this.tonKho = tonKho; this.donVi = donVi; this.giaNhap = giaNhap;
-            this.maThuoc = maThuoc;
-        }
-        // Getters
-        public String getMa() { return ma; }
-        public String getTen() { return ten; }
-        public String getDanhMuc() { return danhMuc; }
-        public int getTonKho() { return tonKho; }
-        public String getDonVi() { return donVi; }
-        public long getGiaNhap() { return giaNhap; }
-        public String getMaThuoc() { return maThuoc; }
-    }
-
     private static final String[] DANH_MUC = {
             "Vật tư thông thường",
             "Thuốc điều trị"
@@ -90,10 +47,10 @@ public class VatTuGUI extends JPanel {
 
     private static final Locale VN = Locale.forLanguageTag("vi-VN");
 
-    private final List<VatTuEntity> tatCa = new ArrayList<>();
-    private final List<VatTuEntity> daLoc = new ArrayList<>();
+    private final List<VatTuController.VatTu> tatCa = new ArrayList<>();
+    private final List<VatTuController.VatTu> daLoc = new ArrayList<>();
     private final Set<String> daChon = new HashSet<>();
-    private final VatTu_DAO vatTuDAO = new VatTu_DAO();
+    private final VatTuController controller = new VatTuController();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -225,10 +182,10 @@ public class VatTuGUI extends JPanel {
         System.arraycopy(DANH_MUC, 0, dsDanhMuc, 1, DANH_MUC.length);
         cbDanhMuc = new JComboBox<>(dsDanhMuc);
 
-        String[] dsTrangThai = new String[TrangThai.values().length + 1];
+        String[] dsTrangThai = new String[VatTuController.TrangThai.values().length + 1];
         dsTrangThai[0] = "Trạng thái";
-        for (int i = 0; i < TrangThai.values().length; i++)
-            dsTrangThai[i + 1] = TrangThai.values()[i].nhan;
+        for (int i = 0; i < VatTuController.TrangThai.values().length; i++)
+            dsTrangThai[i + 1] = VatTuController.TrangThai.values()[i].label;
         cbTrangThai = new JComboBox<>(dsTrangThai);
 
         for (JComboBox<String> cb : java.util.List.of(cbDanhMuc, cbTrangThai)) {
@@ -378,45 +335,23 @@ public class VatTuGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        int du = 0, sapHet = 0, het = 0;
-        for (VatTuEntity vt : tatCa) {
-            switch (TrangThai.tuSoLuong(vt.getTonKho())) {
-                case CON_HANG: du++; break;
-                case SAP_HET:  sapHet++; break;
-                case HET_TON:  het++; break;
-            }
-        }
-        lblSoLieu[0].setText(tatCa.size() + " Mặt hàng");
-        lblSoLieu[1].setText(du + " Mặt hàng");
-        lblSoLieu[2].setText(sapHet + " Mặt hàng");
-        lblSoLieu[3].setText(het + " Mặt hàng");
+        InventorySummary summary = controller.thongKe(tatCa);
+        lblSoLieu[0].setText(summary.getTotal() + " Mặt hàng");
+        lblSoLieu[1].setText(summary.getSufficient() + " Mặt hàng");
+        lblSoLieu[2].setText(summary.getLow() + " Mặt hàng");
+        lblSoLieu[3].setText(summary.getEmpty() + " Mặt hàng");
     }
 
     private void apDungLoc() {
-        String tu = boDau(txtTim.getText().trim());
         int dm = cbDanhMuc.getSelectedIndex();
         int tt = cbTrangThai.getSelectedIndex();
-
+        VatTuController.TrangThai status = tt == 0 ? null
+                : VatTuController.TrangThai.values()[tt - 1];
+        List<VatTuController.VatTu> filtered = controller.loc(
+                tatCa, txtTim.getText(), dm == 0 ? null : DANH_MUC[dm - 1],
+                status, sapXepTang);
         daLoc.clear();
-        for (VatTuEntity vt : tatCa) {
-            if (dm > 0 && !DANH_MUC[dm - 1].equals(vt.getDanhMuc())) continue;
-            if (tt > 0 && TrangThai.tuSoLuong(vt.getTonKho()) != TrangThai.values()[tt - 1]) continue;
-            if (!tu.isEmpty()
-                    && !boDau(vt.getTen()).contains(tu)
-                    && !boDau(vt.getMa()).contains(tu))
-                continue;
-            daLoc.add(vt);
-        }
-
-        if (sapXepTang != null) {
-            Collator cl = Collator.getInstance(VN);
-            boolean tang = sapXepTang;
-            daLoc.sort((a, b) -> {
-                int kq = cl.compare(a.getTen(), b.getTen());
-                return tang ? kq : -kq;
-            });
-        }
-
+        daLoc.addAll(filtered);
         capNhatBang();
     }
 
@@ -429,47 +364,25 @@ public class VatTuGUI extends JPanel {
         bang.getTableHeader().repaint();
     }
 
-    private static String boDau(String s) {
-        String t = Normalizer.normalize(s.toLowerCase(VN), Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return t.replace('đ', 'd');
-    }
-
     private void taiDuLieuMau() {
         tatCa.clear();
-        for (VatTu_entity vatTu : vatTuDAO.getAllVatTu()) {
-            boolean laThuoc = vatTu.getMaThuoc() != null && !vatTu.getMaThuoc().isBlank();
-            String danhMuc = laThuoc ? "Thuốc điều trị" : "Vật tư thông thường";
-            String donVi = laThuoc ? "Viên" : "Gói / Hộp";
-            VatTuEntity vt = new VatTuEntity(
-                    vatTu.getMaVT(),
-                    vatTu.getTenVT(),
-                    danhMuc,
-                    vatTu.getSoLuongTon(),
-                    donVi,
-                    Math.round(vatTu.getGiaNhap()),
-                    vatTu.getMaThuoc());
-            vt.maNCC = vatTu.getMaNCC() != null ? vatTu.getMaNCC().getMaNCC() : null;
-            vt.giaBan = vatTu.getGiaBanCoBan();
-            vt.trangThaiDb = vatTu.getTrangThai();
-            tatCa.add(vt);
-        }
+        tatCa.addAll(controller.taiDanhSach());
         lamMoi();
     }
     
     // ===================== THÊM / SỬA / XÓA =====================
 
     private void themVatTu() {
-        VatTuEntity moi = hienFormVatTu(null);
+        VatTuInput moi = hienFormVatTu(null);
         if (moi == null) return;
 
-        if (vatTuDAO.createVatTu(chuyenSangEntityDB(moi))) {
+        VatTuController.SaveResult result = controller.luu(moi, false);
+        if (result.isSaved()) {
             taiDuLieuMau();
             chonDong(moi.getMa());
             JOptionPane.showMessageDialog(this, "Đã thêm vật tư " + moi.getMa() + ".");
         } else {
-            JOptionPane.showMessageDialog(this,
-                    "Không thể thêm vật tư. Kiểm tra lại mã nhà cung cấp, mã thuốc hoặc kết nối CSDL.",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -479,18 +392,17 @@ public class VatTuGUI extends JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một vật tư để sửa.");
             return;
         }
-        VatTuEntity cu = model.tai(r);
-        VatTuEntity moi = hienFormVatTu(cu);
+        VatTuController.VatTu cu = model.tai(r);
+        VatTuInput moi = hienFormVatTu(cu);
         if (moi == null) return;
 
-        if (vatTuDAO.updateVatTu(chuyenSangEntityDB(moi))) {
+        VatTuController.SaveResult result = controller.luu(moi, true);
+        if (result.isSaved()) {
             taiDuLieuMau();
             chonDong(moi.getMa());
             JOptionPane.showMessageDialog(this, "Đã cập nhật vật tư " + moi.getMa() + ".");
         } else {
-            JOptionPane.showMessageDialog(this,
-                    "Không thể cập nhật vật tư. Kiểm tra lại mã nhà cung cấp, mã thuốc hoặc kết nối CSDL.",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -500,13 +412,13 @@ public class VatTuGUI extends JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một vật tư để xóa.");
             return;
         }
-        VatTuEntity vt = model.tai(r);
+        VatTuController.VatTu vt = model.tai(r);
         int chon = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc muốn xóa vật tư \"" + vt.getTen() + "\" (" + vt.getMa() + ")?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (chon != JOptionPane.YES_OPTION) return;
 
-        if (vatTuDAO.deleteVatTu(vt.getMa())) {
+        if (controller.xoa(vt.getMa())) {
             taiDuLieuMau();
         } else {
             JOptionPane.showMessageDialog(this,
@@ -526,30 +438,14 @@ public class VatTuGUI extends JPanel {
         }
     }
 
-    private VatTu_entity chuyenSangEntityDB(VatTuEntity v) {
-        NhaCungCap_entity ncc = new NhaCungCap_entity(v.maNCC, null, null, null, null);
-        return new VatTu_entity(v.getMa(), ncc, v.getTen(), v.getTonKho(),
-                v.trangThaiDb, v.giaBan, v.getGiaNhap(), v.getMaThuoc());
-    }
-
-    private static Long docTien(String s) {
-        String so = s == null ? "" : s.replaceAll("[^0-9]", "");
-        if (so.isEmpty()) return null;
-        try {
-            return Long.parseLong(so);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
     /**
      * Hiện form thêm (cu == null) hoặc sửa (cu != null).
      * Trả về entity mới nếu người dùng bấm Lưu và dữ liệu hợp lệ, ngược lại trả về null.
      */
-    private VatTuEntity hienFormVatTu(VatTuEntity cu) {
+    private VatTuInput hienFormVatTu(VatTuController.VatTu cu) {
         final boolean sua = cu != null;
 
-        ArrayList<String[]> dsNCC = vatTuDAO.getDanhSachNCC();
+        List<SupplierOption> dsNCC = controller.taiNhaCungCap();
         if (dsNCC.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "Chưa có nhà cung cấp nào trong CSDL nên không thể thêm / sửa vật tư.",
@@ -560,7 +456,7 @@ public class VatTuGUI extends JPanel {
         Window cha = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(cha, sua ? "Sửa vật tư" : "Thêm vật tư", Dialog.ModalityType.APPLICATION_MODAL);
 
-        JTextField txtMa = new JTextField(sua ? cu.getMa() : vatTuDAO.taoMaVatTuMoi(), 22);
+        JTextField txtMa = new JTextField(sua ? cu.getMa() : controller.taoMaMoi(), 22);
         txtMa.setEditable(false); // mã tự phát sinh (VT + STT), không cho nhập tay
         txtMa.setBackground(NEN_HEADER);
         JTextField txtTen = new JTextField(sua ? cu.getTen() : "", 22);
@@ -568,9 +464,9 @@ public class VatTuGUI extends JPanel {
         JComboBox<String> cbNcc = new JComboBox<>();
         int viTriNcc = 0;
         for (int i = 0; i < dsNCC.size(); i++) {
-            String[] n = dsNCC.get(i);
-            cbNcc.addItem(n[0] + " - " + (n[1] == null ? "" : n[1]));
-            if (sua && n[0] != null && n[0].equals(cu.maNCC)) viTriNcc = i;
+            SupplierOption n = dsNCC.get(i);
+            cbNcc.addItem(n.getCode() + " - " + (n.getName() == null ? "" : n.getName()));
+            if (sua && n.getCode() != null && n.getCode().equals(cu.getMaNCC())) viTriNcc = i;
         }
         cbNcc.setSelectedIndex(viTriNcc);
 
@@ -589,7 +485,7 @@ public class VatTuGUI extends JPanel {
         spTon.setEnabled(!sua); // tồn kho chỉ nhập ban đầu; sau đó thay đổi qua phiếu nhập / xuất
 
         JTextField txtGiaNhap = new JTextField(sua ? String.valueOf(cu.getGiaNhap()) : "", 22);
-        JTextField txtGiaBan = new JTextField(sua ? String.valueOf(Math.round(cu.giaBan)) : "", 22);
+        JTextField txtGiaBan = new JTextField(sua ? String.valueOf(cu.getGiaBan()) : "", 22);
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(new EmptyBorder(16, 20, 8, 20));
@@ -617,7 +513,7 @@ public class VatTuGUI extends JPanel {
         chan.add(btnHuy);
         chan.add(btnLuu);
 
-        final VatTuEntity[] ketQua = new VatTuEntity[1];
+        final VatTuInput[] ketQua = new VatTuInput[1];
 
         btnHuy.addActionListener(e -> dlg.dispose());
         btnLuu.addActionListener(e -> {
@@ -627,7 +523,7 @@ public class VatTuGUI extends JPanel {
             boolean laThuoc = DANH_MUC[1].equals(cbDm.getSelectedItem());
 
             if (ma.isEmpty()) { canhBao(dlg, "Vui lòng nhập mã vật tư.", txtMa); return; }
-            if (!sua && vatTuDAO.getVatTuTheoMa(ma) != null) {
+            if (!sua && controller.maVatTuTonTai(ma)) {
                 canhBao(dlg, "Mã vật tư \"" + ma + "\" đã tồn tại.", txtMa);
                 return;
             }
@@ -636,20 +532,28 @@ public class VatTuGUI extends JPanel {
                 canhBao(dlg, "Danh mục \"Thuốc điều trị\" cần nhập mã thuốc.", txtMaThuoc);
                 return;
             }
-            Long giaNhap = docTien(txtGiaNhap.getText());
+            Long giaNhap = VatTuController.docSoTien(txtGiaNhap.getText());
             if (giaNhap == null) { canhBao(dlg, "Giá nhập không hợp lệ.", txtGiaNhap); return; }
-            Long giaBan = docTien(txtGiaBan.getText());
+            Long giaBan = VatTuController.docSoTien(txtGiaBan.getText());
             if (giaBan == null) { canhBao(dlg, "Giá bán cơ bản không hợp lệ.", txtGiaBan); return; }
 
             int ton = (Integer) spTon.getValue();
-            String donVi = laThuoc ? "Viên" : "Gói / Hộp";
-            VatTuEntity moi = new VatTuEntity(ma, ten, (String) cbDm.getSelectedItem(),
-                    ton, donVi, giaNhap, laThuoc ? maThuoc : null);
-            moi.maNCC = dsNCC.get(cbNcc.getSelectedIndex())[0];
-            moi.giaBan = giaBan;
-            moi.trangThaiDb = (sua && cu.trangThaiDb != null)
-                    ? cu.trangThaiDb
-                    : TrangThai.tuSoLuong(ton).nhan;
+            String supplierCode = dsNCC.get(cbNcc.getSelectedIndex()).getCode();
+            String databaseStatus = (sua && cu.getTrangThai() != null)
+                    ? cu.getTrangThai()
+                    : VatTuController.trangThai(ton).label;
+            VatTuInput moi = new VatTuInput(ma, ten, supplierCode,
+                    laThuoc ? maThuoc : null, laThuoc, ton, giaNhap, giaBan, databaseStatus);
+            String validationError = controller.validate(moi, sua);
+            if (validationError != null) {
+                JComponent focus = validationError.contains("mã vật tư") ? txtMa
+                        : validationError.contains("tên vật tư") ? txtTen
+                        : validationError.contains("mã thuốc") ? txtMaThuoc
+                        : validationError.contains("Giá nhập") ? txtGiaNhap
+                        : validationError.contains("Giá bán") ? txtGiaBan : cbNcc;
+                canhBao(dlg, validationError, focus);
+                return;
+            }
             ketQua[0] = moi;
             dlg.dispose();
         });
@@ -673,41 +577,43 @@ public class VatTuGUI extends JPanel {
     // --- Các hàm phục vụ phiếu nhập / xuất ---
     
     public int getTonKho(String ma) {
-        for (VatTuEntity vt : tatCa) {
-            if (vt.getMa().equals(ma)) return vt.getTonKho();
+        try {
+            return controller.tonKho(ma, tatCa);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
+            return 0;
         }
-        return 0;
     }
 
     public java.util.List<Object[]> getDanhSachVatTu() {
-        java.util.List<Object[]> ds = new java.util.ArrayList<>();
-        for (VatTuEntity vt : tatCa) {
-            ds.add(new Object[]{vt.getMa(), vt.getTen(), vt.getDonVi(), vt.getGiaNhap()});
+        java.util.List<Object[]> rows = new java.util.ArrayList<>();
+        for (CatalogItem item : controller.danhMucVatTu(tatCa)) {
+            rows.add(new Object[]{item.getCode(), item.getName(), item.getUnit(), item.getPurchasePrice()});
         }
-        return ds;
+        return rows;
     }
 
     public void tangTon(String ma, int soLuong) {
-        for (VatTuEntity vt : tatCa) {
-            if (vt.getMa().equals(ma)) {
-                vt.tonKho += soLuong;
-                lamMoi(); // Cập nhật lại giao diện
-                return;
-            }
+        try {
+            controller.capNhatTon(ma, soLuong, tatCa);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        lamMoi();
     }
 
 
     private class BangModel extends AbstractTableModel {
         private final String[] cot = { "MÃ VT", "TÊN VẬT TƯ", "DANH MỤC", "TỒN KHO", "ĐƠN VỊ", "GIÁ NHẬP", "TRẠNG THÁI" };
-        private List<VatTuEntity> hang = new ArrayList<>();
+        private List<VatTuController.VatTu> hang = new ArrayList<>();
 
-        void datHang(List<VatTuEntity> h) {
+        void datHang(List<VatTuController.VatTu> h) {
             hang = new ArrayList<>(h);
             fireTableDataChanged();
         }
 
-        VatTuEntity tai(int r) { return hang.get(r); }
+        VatTuController.VatTu tai(int r) { return hang.get(r); }
 
         @Override public int getRowCount() { return hang.size(); }
         @Override public int getColumnCount() { return cot.length; }
@@ -724,7 +630,7 @@ public class VatTuGUI extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     }
 
-    private static String layChu(VatTuEntity vt, int cot) {
+    private static String layChu(VatTuController.VatTu vt, int cot) {
         switch (cot) {
             case 0: return vt.getMa();
             case 1: return vt.getTen();
@@ -748,7 +654,7 @@ public class VatTuGUI extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            VatTuEntity vt = (VatTuEntity) v;
+            VatTuController.VatTu vt = (VatTuController.VatTu) v;
             setText(layChu(vt, cot));
             setBackground(nen(sel));
             
@@ -770,13 +676,13 @@ public class VatTuGUI extends JPanel {
     }
 
     private static class TrangThaiRenderer extends JPanel implements TableCellRenderer {
-        private TrangThai tt = TrangThai.CON_HANG;
+        private VatTuController.TrangThai tt = VatTuController.TrangThai.CON_HANG;
 
         TrangThaiRenderer() { setOpaque(true); }
 
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            tt = TrangThai.tuSoLuong(((VatTuEntity) v).getTonKho());
+            tt = VatTuController.trangThai(((VatTuController.VatTu) v).getTonKho());
             setBackground(nen(sel));
             return this;
         }
@@ -808,14 +714,14 @@ public class VatTuGUI extends JPanel {
             Font f = RangBuocGiaoDien.fontVua(11);
             g2.setFont(f);
             FontMetrics fm = g2.getFontMetrics();
-            int h = 22, w = 10 + 6 + 6 + fm.stringWidth(tt.nhan) + 10;
+            int h = 22, w = 10 + 6 + 6 + fm.stringWidth(tt.label) + 10;
             int x = 8, y = (getHeight() - h) / 2;
             g2.setColor(nenPill);
             g2.fill(new RoundRectangle2D.Double(x, y, w, h, h, h));
             g2.setColor(cham);
             g2.fill(new Ellipse2D.Double(x + 10, y + h / 2.0 - 3, 6, 6));
             g2.setColor(chu);
-            g2.drawString(tt.nhan, x + 22, y + (h - fm.getHeight()) / 2 + fm.getAscent());
+            g2.drawString(tt.label, x + 22, y + (h - fm.getHeight()) / 2 + fm.getAscent());
             g2.dispose();
         }
     }

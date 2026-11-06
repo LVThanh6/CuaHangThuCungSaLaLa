@@ -1,0 +1,524 @@
+package dao.KhachHang;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import connectDB.ConnectDB;
+import entity.KhachHang.HangThanhVien;
+import entity.KhachHang.KhachHang;
+
+public class KhachHang_DAO {
+    ArrayList<KhachHang> dskh;
+    KhachHang kh;
+
+    public KhachHang_DAO() {
+        dskh = new ArrayList<KhachHang>();
+        kh = new KhachHang();
+    }
+
+    /**
+     * Lấy toàn bộ danh sách khách hàng cơ bản từ bảng KhachHang
+     */
+    public ArrayList<KhachHang> getAlltbKhachHang() {
+        dskh.clear();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return dskh;
+        }
+        String sql = "SELECT maKH, hoTen, sdt, email, diaChi FROM KhachHang ORDER BY maKH";
+        try (Statement statement = con.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String maKH = rs.getString(1);
+                String hoTen = rs.getString(2);
+                String sdt = rs.getString(3);
+                String email = rs.getString(4);
+                String diaChi = rs.getString(5);
+                KhachHang s = new KhachHang(maKH, hoTen, sdt, email, diaChi);
+                dskh.add(s);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dskh;
+    }
+
+    /**
+     * Lấy toàn bộ danh sách khách hàng kèm số thú cưng, tổng chi tiêu và hạng thành viên.
+     * Đã triệt tiêu lỗi tích Descartes (Cartesian Product) gây tính sai tổng chi tiêu và lag CSDL.
+     */
+    public ArrayList<KhachHang> getAllKhachHangDayDu() {
+        ArrayList<KhachHang> dsDayDu = new ArrayList<KhachHang>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return dsDayDu;
+        }
+
+        String sql = "SELECT k.maKH, k.hoTen, k.sdt, k.email, k.diaChi, " +
+                "ISNULL(tc.soThuCung, 0) AS soThuCung, " +
+                "ISNULL(hd.tongChiTieu, 0) AS tongChiTieu, " +
+                "ISNULL(q.tenHang, N'Đồng') AS hangThanhVien " +
+                "FROM KhachHang k " +
+                "LEFT JOIN QuanLyHangThanhVien q ON q.maKH = k.maKH " +
+                "LEFT JOIN (SELECT maKH, COUNT(*) AS soThuCung FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
+                "LEFT JOIN (" +
+                "    SELECT h.maKH, SUM(tt.soTien) AS tongChiTieu " +
+                "    FROM HoaDon h " +
+                "    JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "    GROUP BY h.maKH" +
+                ") hd ON hd.maKH = k.maKH " +
+                "ORDER BY k.maKH";
+
+        try (Statement statement = con.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String maKH = rs.getString("maKH");
+                String hoTen = rs.getString("hoTen");
+                String sdt = rs.getString("sdt");
+                String email = rs.getString("email");
+                String diaChi = rs.getString("diaChi");
+                int soThuCung = rs.getInt("soThuCung");
+                double tongChiTieu = rs.getDouble("tongChiTieu");
+                String hang = rs.getString("hangThanhVien");
+                if (hang == null || hang.trim().isEmpty()) {
+                    hang = tinhHangThanhVien(tongChiTieu);
+                }
+
+                KhachHang k = new KhachHang(maKH, hoTen, sdt, email, diaChi, soThuCung, hang, tongChiTieu);
+                dsDayDu.add(k);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dsDayDu;
+    }
+
+    /**
+     * Thêm mới một khách hàng và tự động gán hạng Đồng trong QuanLyHangThanhVien
+     */
+    public boolean createKhachHang(KhachHang kh) {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
+        int n = 0;
+        try (PreparedStatement stmt = con.prepareStatement("INSERT INTO KhachHang (maKH, hoTen, sdt, email, diaChi) VALUES(?, ?, ?, ?, ?)")) {
+            stmt.setString(1, kh.getMaKH());
+            stmt.setString(2, kh.getHoTen());
+            stmt.setString(3, kh.getSdt());
+            stmt.setString(4, kh.getEmail());
+            stmt.setString(5, kh.getDiaChi());
+            n = stmt.executeUpdate();
+
+            if (n > 0) {
+                try {
+                    HangThanhVien_DAO htvDAO = new HangThanhVien_DAO();
+                    String maHang = htvDAO.phatSinhMaHangMoi();
+                    String qlDong = "Giảm 2% hóa đơn dịch vụ\nTích 1 điểm / 10.000 ₫\nNhắc lịch tiêm và tái khám\nƯu đãi sinh nhật thú cưng";
+                    HangThanhVien htv = new HangThanhVien(
+                            maHang, kh.getMaKH(), "Đồng", 0.0, 5000000.0, 2.0, 1.0,
+                            qlDong, 0.0, 0, new java.sql.Timestamp(System.currentTimeMillis()), "Đang áp dụng"
+                    );
+                    htvDAO.themHangThanhVien(htv);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return n > 0;
+    }
+
+    /**
+     * Cập nhật thông tin khách hàng
+     */
+    public boolean updateKhachHang(KhachHang kh) {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
+        try (PreparedStatement stmt = con.prepareStatement(
+                "UPDATE KhachHang SET hoTen = ?, sdt = ?, email = ?, diaChi = ? WHERE maKH = ?")) {
+            stmt.setString(1, kh.getHoTen());
+            stmt.setString(2, kh.getSdt());
+            stmt.setString(3, kh.getEmail());
+            stmt.setString(4, kh.getDiaChi());
+            stmt.setString(5, kh.getMaKH());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Xóa một khách hàng theo mã kèm xóa trong bảng QuanLyHangThanhVien
+     */
+    public boolean deleteKhachHang(String maKH) {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return false;
+        }
+        try {
+            // Xóa bản ghi trong QuanLyHangThanhVien trước để tránh vi phạm khóa ngoại
+            try (PreparedStatement psHtv = con.prepareStatement("DELETE FROM QuanLyHangThanhVien WHERE maKH = ?")) {
+                psHtv.setString(1, maKH);
+                psHtv.executeUpdate();
+            } catch (Exception ignored) {
+            }
+
+            try (PreparedStatement stmt = con.prepareStatement("DELETE FROM KhachHang WHERE maKH = ?")) {
+                stmt.setString(1, maKH);
+                return stmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Tìm khách hàng theo mã (LIKE)
+     */
+    public List<KhachHang> timKhachHangTheoMa(String ma) {
+        List<KhachHang> ds = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return ds;
+        }
+        String sql = "SELECT maKH, hoTen, sdt, email, diaChi FROM KhachHang WHERE maKH LIKE ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, "%" + ma + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String maKH = rs.getString("maKH");
+                    String hoTen = rs.getString("hoTen");
+                    String sdt = rs.getString("sdt");
+                    String email = rs.getString("email");
+                    String diaChi = rs.getString("diaChi");
+                    KhachHang nv = new KhachHang(maKH, hoTen, sdt, email, diaChi);
+                    ds.add(nv);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    /**
+     * Tìm khách hàng theo họ tên (LIKE)
+     */
+    public List<KhachHang> timKhachHangTheoTen(String ten) {
+        List<KhachHang> ds = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return ds;
+        }
+        String sql = "SELECT maKH, hoTen, sdt, email, diaChi FROM KhachHang WHERE hoTen LIKE ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, "%" + ten + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String maKH = rs.getString("maKH");
+                    String hoTen = rs.getString("hoTen");
+                    String sdt = rs.getString("sdt");
+                    String email = rs.getString("email");
+                    String diaChi = rs.getString("diaChi");
+                    KhachHang nv = new KhachHang(maKH, hoTen, sdt, email, diaChi);
+                    ds.add(nv);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    /**
+     * Tìm kiếm tổng hợp theo mã, tên hoặc số điện thoại (kèm số thú cưng và chi tiêu).
+     * Đã tối ưu hóa chống tích Descartes.
+     */
+    public List<KhachHang> timKiemTongHop(String keyword) {
+        List<KhachHang> ds = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return ds;
+        }
+
+        String sql = "SELECT k.maKH, k.hoTen, k.sdt, k.email, k.diaChi, " +
+                "ISNULL(tc.soThuCung, 0) AS soThuCung, " +
+                "ISNULL(hd.tongChiTieu, 0) AS tongChiTieu, " +
+                "ISNULL(q.tenHang, N'Đồng') AS hangThanhVien " +
+                "FROM KhachHang k " +
+                "LEFT JOIN QuanLyHangThanhVien q ON q.maKH = k.maKH " +
+                "LEFT JOIN (SELECT maKH, COUNT(*) AS soThuCung FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
+                "LEFT JOIN (" +
+                "    SELECT h.maKH, SUM(tt.soTien) AS tongChiTieu " +
+                "    FROM HoaDon h " +
+                "    JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "    GROUP BY h.maKH" +
+                ") hd ON hd.maKH = k.maKH " +
+                "WHERE k.maKH LIKE ? OR k.hoTen LIKE ? OR k.sdt LIKE ? " +
+                "ORDER BY k.maKH";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            String pattern = "%" + (keyword != null ? keyword.trim() : "") + "%";
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setString(3, pattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String maKH = rs.getString("maKH");
+                    String hoTen = rs.getString("hoTen");
+                    String sdt = rs.getString("sdt");
+                    String email = rs.getString("email");
+                    String diaChi = rs.getString("diaChi");
+                    int soThuCung = rs.getInt("soThuCung");
+                    double tongChiTieu = rs.getDouble("tongChiTieu");
+                    String hang = rs.getString("hangThanhVien");
+                    if (hang == null || hang.trim().isEmpty()) {
+                        hang = tinhHangThanhVien(tongChiTieu);
+                    }
+
+                    KhachHang k = new KhachHang(maKH, hoTen, sdt, email, diaChi, soThuCung, hang, tongChiTieu);
+                    ds.add(k);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    /**
+     * Lấy 1 khách hàng theo mã chính xác
+     */
+    public KhachHang getKhachHangTheoMa(String maKH) {
+        if (maKH == null || maKH.isBlank()) return null;
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return null;
+        }
+        String sql = "SELECT maKH, hoTen, sdt, email, diaChi FROM KhachHang WHERE maKH = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maKH.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String hoTen = rs.getString("hoTen");
+                    String sdt = rs.getString("sdt");
+                    String email = rs.getString("email");
+                    String diaChi = rs.getString("diaChi");
+                    return new KhachHang(maKH, hoTen, sdt, email, diaChi);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Đếm tổng số lượng khách hàng trong hệ thống
+     */
+    public int getTongSoKhachHang() {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return 0;
+        }
+        String sql = "SELECT COUNT(*) FROM KhachHang";
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Đếm tổng số thú cưng của khách hàng trong hệ thống
+     */
+    public int getTongSoThuCung() {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return 0;
+        }
+        String sql = "SELECT COUNT(*) FROM ThuCung";
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Đếm số lượng khách hàng đạt hạng Vàng trở lên.
+     * Đã tối ưu truy vấn trực tiếp thay vì load toàn bộ bảng vào bộ nhớ.
+     */
+    public int getSoLuongThanhVienVangTroLen() {
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0;
+        String sql = "SELECT COUNT(*) FROM QuanLyHangThanhVien WHERE tenHang IN (N'Vàng', N'Kim cương')";
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Đếm số lượng khách hàng mới (5 khách hàng gần nhất hoặc mới thêm)
+     */
+    public int getSoLuongKhachHangMoi() {
+        int tong = getTongSoKhachHang();
+        return Math.min(5, tong);
+    }
+
+    /**
+     * Quy tắc phân hạng thành viên theo mức tổng chi tiêu:
+     * - Từ 30.000.000 ₫ trở lên: Hạng Kim cương
+     * - Từ 15.000.000 ₫ đến dưới 30.000.000 ₫: Hạng Vàng
+     * - Từ 5.000.000 ₫ đến dưới 15.000.000 ₫: Hạng Bạc
+     * - Dưới 5.000.000 ₫: Hạng Đồng
+     */
+    public static String tinhHangThanhVien(double tongChiTieu) {
+        if (tongChiTieu >= 30_000_000) {
+            return "Kim cương";
+        } else if (tongChiTieu >= 15_000_000) {
+            return "Vàng";
+        } else if (tongChiTieu >= 5_000_000) {
+            return "Bạc";
+        } else {
+            return "Đồng";
+        }
+    }
+
+    /**
+     * Tự động phát sinh mã khách hàng tiếp theo (ví dụ: KH016, KH017,...)
+     */
+    public String phatSinhMaKHMoi() {
+        Connection con = ConnectDB.getCon();
+        if (con == null) {
+            return "KH001";
+        }
+        String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maKH, 3, LEN(maKH)) AS INT)), 0) FROM KhachHang WHERE maKH LIKE 'KH%'";
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                int maxId = rs.getInt(1);
+                return String.format("KH%03d", maxId + 1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "KH001";
+    }
+
+    /**
+     * Lấy danh sách thú cưng của khách hàng để hiển thị trong Xem chi tiết
+     */
+    public List<Object[]> getDanhSachThuCungCuaKhachHang(String maKH) {
+        List<Object[]> ds = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null || maKH == null) {
+            return ds;
+        }
+        String sql = "SELECT maTC, tenTC, loai, gioiTinh, ngaySinh, dacDiemNhanDien FROM ThuCung WHERE maKH = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maKH);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ds.add(new Object[]{
+                            rs.getString("maTC"),
+                            rs.getString("tenTC"),
+                            rs.getString("loai"),
+                            rs.getString("gioiTinh"),
+                            rs.getDate("ngaySinh"),
+                            rs.getString("dacDiemNhanDien")
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    /**
+     * Lấy lịch sử hóa đơn thanh toán của khách hàng
+     */
+    public List<Object[]> getDanhSachHoaDonCuaKhachHang(String maKH) {
+        List<Object[]> ds = new ArrayList<>();
+        Connection con = ConnectDB.getCon();
+        if (con == null || maKH == null) {
+            return ds;
+        }
+        String sql = "SELECT h.maHD, h.ngayLap, h.trangThai, ISNULL(tt.soTien, 0) AS soTien, ISNULL(tt.phuongThuc, N'Tiền mặt') AS phuongThuc " +
+                "FROM HoaDon h " +
+                "LEFT JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "WHERE h.maKH = ? ORDER BY h.ngayLap DESC";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maKH);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ds.add(new Object[]{
+                            rs.getString("maHD"),
+                            rs.getTimestamp("ngayLap"),
+                            rs.getString("trangThai"),
+                            rs.getDouble("soTien"),
+                            rs.getString("phuongThuc")
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    /**
+     * Kiểm tra xem khách hàng có dữ liệu ràng buộc (Thú cưng, Lịch hẹn, Hóa đơn) hay không
+     */
+    public boolean kiemTraRangBuoc(String maKH) {
+        Connection con = ConnectDB.getCon();
+        if (con == null || maKH == null) {
+            return false;
+        }
+        String sql = "SELECT (SELECT COUNT(*) FROM ThuCung WHERE maKH = ?) + " +
+                "(SELECT COUNT(*) FROM HoaDon WHERE maKH = ?) + " +
+                "(SELECT COUNT(*) FROM LichHen WHERE maKH = ?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maKH);
+            ps.setString(2, maKH);
+            ps.setString(3, maKH);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+}

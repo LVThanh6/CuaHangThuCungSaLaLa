@@ -2,8 +2,8 @@ package GUI.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
 
-import dao.TaiKhoan_DAO;
-import entity.TaiKhoan;
+import controller.DoiMatKhauController;
+import entity.TaiKhoan.TaiKhoan;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -22,13 +22,11 @@ public class DoiMatKhauDialog extends JDialog {
     private JPasswordField txtXacNhanMatKhau;
     private JLabel lblLoi;
     private final TaiKhoan taiKhoan;
-    private final TaiKhoan_DAO taiKhoanDAO;
+    private final DoiMatKhauController controller = new DoiMatKhauController();
 
     public DoiMatKhauDialog(Frame parent, TaiKhoan taiKhoan) {
         super(parent, "Đổi mật khẩu tài khoản", true);
         this.taiKhoan = taiKhoan;
-        this.taiKhoanDAO = new TaiKhoan_DAO();
-
         khoiTaoGiaoDien();
     }
 
@@ -131,55 +129,25 @@ public class DoiMatKhauDialog extends JDialog {
     }
 
     private void xuLyDoiMatKhau() {
-        if (taiKhoan == null) {
-            lblLoi.setText("Không tìm thấy thông tin tài khoản hợp lệ!");
-            return;
-        }
-
         String passCu = new String(txtMatKhauCu.getPassword()).trim();
         String passMoi = new String(txtMatKhauMoi.getPassword()).trim();
         String passXacNhan = new String(txtXacNhanMatKhau.getPassword()).trim();
 
-        if (passCu.isEmpty()) {
-            lblLoi.setText("Vui lòng nhập mật khẩu hiện tại!");
-            txtMatKhauCu.requestFocus();
-            return;
-        }
-        if (passMoi.isEmpty()) {
-            lblLoi.setText("Vui lòng nhập mật khẩu mới!");
-            txtMatKhauMoi.requestFocus();
-            return;
-        }
-        if (passMoi.length() < 6) {
-            lblLoi.setText("Mật khẩu mới phải có ít nhất 6 ký tự!");
-            txtMatKhauMoi.requestFocus();
-            return;
-        }
-        if (!passMoi.equals(passXacNhan)) {
-            lblLoi.setText("Mật khẩu xác nhận không khớp!");
-            txtXacNhanMatKhau.requestFocus();
-            return;
-        }
-
-        // Kiểm tra mật khẩu cũ có đúng không
-        String hashedOld = TaiKhoan_DAO.hashPassword(passCu);
-        boolean khopOld = hashedOld.equalsIgnoreCase(taiKhoan.getMatKhau()) || passCu.equals(taiKhoan.getMatKhau());
-        if (!khopOld) {
-            lblLoi.setText("Mật khẩu hiện tại không chính xác!");
-            txtMatKhauCu.requestFocus();
-            return;
-        }
-
-        // Đổi mật khẩu trong CSDL
-        boolean ok = taiKhoanDAO.doiMatKhau(taiKhoan.getMaTK(), passMoi);
-        if (ok) {
-            taiKhoan.setMatKhau(TaiKhoan_DAO.hashPassword(passMoi));
+        DoiMatKhauController.KetQuaDoiMatKhau result =
+                controller.doiMatKhau(taiKhoan, passCu, passMoi, passXacNhan);
+        if (result.isThanhCong()) {
             JOptionPane.showMessageDialog(this,
                     "Đổi mật khẩu thành công!",
                     "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             dispose();
         } else {
-            lblLoi.setText("Không thể cập nhật mật khẩu vào CSDL!");
+            lblLoi.setText(result.getThongBao());
+            switch (result.getTruongNhap()) {
+                case MAT_KHAU_CU: txtMatKhauCu.requestFocus(); break;
+                case MAT_KHAU_MOI: txtMatKhauMoi.requestFocus(); break;
+                case XAC_NHAN: txtXacNhanMatKhau.requestFocus(); break;
+                default: break;
+            }
         }
     }
 }

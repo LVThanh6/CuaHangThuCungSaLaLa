@@ -1,7 +1,7 @@
 ﻿/* =========================================================
    DATABASE: SALALA
    HỆ THỐNG QUẢN LÝ CỬA HÀNG THÚ CƯNG / PHÒNG KHÁM THÚ Y
-   (Cập nhật: Xóa bỏ bảng LuongChucVu, gán lương cơ bản trực tiếp)
+   (Cập nhật: Xóa bỏ bảng LuongChucVu, gán lương cơ bản trực tiếp, cập nhật khóa chính ChiTietHoaDon)
    ========================================================= */
 
 USE master;
@@ -326,6 +326,7 @@ CREATE TABLE HoaDon
     maThanhToan  VARCHAR(20)  NULL,
 
     CONSTRAINT PK_HoaDon PRIMARY KEY (maHD),
+    CONSTRAINT UQ_HoaDon_maHD_maKH UNIQUE (maHD, maKH),
     CONSTRAINT FK_HoaDon_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
     CONSTRAINT FK_HoaDon_ThuCung_KhachHang FOREIGN KEY (maKH, maTC) REFERENCES ThuCung(maKH, maTC),
     CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
@@ -394,8 +395,9 @@ GO
 -- 20. CHI TIẾT HÓA ĐƠN
 CREATE TABLE ChiTietHoaDon
 (
-    maCTHD     VARCHAR(20)   NOT NULL,
     maHD       VARCHAR(20)   NOT NULL,
+    maKH       VARCHAR(20)   NOT NULL, -- Thêm trường mã khách hàng
+    soDong     INT           NOT NULL,
     maDV       VARCHAR(20)   NULL,
     maVT       VARCHAR(20)   NULL,
     maCTDT     VARCHAR(20)   NULL,
@@ -404,14 +406,16 @@ CREATE TABLE ChiTietHoaDon
     soLuong    DECIMAL(18,2) NOT NULL,
     donGia     DECIMAL(18,2) NOT NULL,
 
-    CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY (maCTHD),
-    CONSTRAINT FK_ChiTietHoaDon_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
+    CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY (maHD, maKH, soDong),
+
+    CONSTRAINT FK_ChiTietHoaDon_HoaDon_KhachHang FOREIGN KEY (maHD, maKH) REFERENCES HoaDon(maHD, maKH),
     CONSTRAINT FK_ChiTietHoaDon_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
     CONSTRAINT FK_ChiTietHoaDon_VatTu FOREIGN KEY (maVT) REFERENCES VatTu(maVT),
     CONSTRAINT FK_ChiTietHoaDon_ChiTietDonThuoc FOREIGN KEY (maCTDT) REFERENCES ChiTietDonThuoc(maCTDT),
     CONSTRAINT FK_ChiTietHoaDon_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
     CONSTRAINT FK_ChiTietHoaDon_BacSy FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi),
     CONSTRAINT CK_ChiTietHoaDon_SoLuong CHECK (soLuong > 0),
+    CONSTRAINT CK_ChiTietHoaDon_SoDong CHECK (soDong > 0),
     CONSTRAINT CK_ChiTietHoaDon_DonGia CHECK (donGia >= 0),
     CONSTRAINT CK_ChiTietHoaDon_DV_hoac_VT
         CHECK ((CASE WHEN maDV IS NULL THEN 0 ELSE 1 END) + (CASE WHEN maVT IS NULL THEN 0 ELSE 1 END) = 1)
@@ -969,7 +973,7 @@ SELECT 'TT' + dbo.fn_C3(n),
 FROM #N WHERE n <= 75;
 
 INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maTC, maNhanVien, maKM, maThue, maThanhToan)
-SELECT 'HD' + dbo.fn_C3(n), 
+SELECT 'HD' + dbo.fn_C3(n),
        DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')), 
        N'Đã thanh toán', 
        'KH' + dbo.fn_C3((n % 10) + 1), 
@@ -980,25 +984,28 @@ SELECT 'HD' + dbo.fn_C3(n),
        'TT' + dbo.fn_C3(n)
 FROM #N WHERE n <= 75;
 
-INSERT INTO ChiTietHoaDon (maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
-SELECT 'CTHD' + dbo.fn_C3(n), 
-       'HD' + dbo.fn_C3(n), 
-       'DV' + dbo.fn_C3((n % 5) + 1), 
-       NULL, 
-       'NV' + dbo.fn_C3((n % 5) + 6), 
-       'BS' + dbo.fn_C3((n % 5) + 1), 
-       1, 
+-- Khởi tạo chi tiết hóa đơn (Dịch vụ)
+INSERT INTO ChiTietHoaDon (maHD, maKH, soDong, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
+SELECT 'HD' + dbo.fn_C3(n),
+       'KH' + dbo.fn_C3((n % 10) + 1), -- Lấy khớp với maKH đã gen ở bảng HoaDon
+       1,
+       'DV' + dbo.fn_C3((n % 5) + 1),
+       NULL,
+       'NV' + dbo.fn_C3((n % 5) + 6),
+       'BS' + dbo.fn_C3((n % 5) + 1),
+       1,
        150000 + (n % 3) * 50000
 FROM #N WHERE n <= 75;
 
-INSERT INTO ChiTietHoaDon (maCTHD, maHD, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
-SELECT 'CTHD' + dbo.fn_C3(n + 75), 
-       'HD' + dbo.fn_C3(n), 
-       NULL, 
-       'VT' + dbo.fn_C3((n % 5) + 1), 
-       'NV' + dbo.fn_C3((n % 5) + 1), 
-       NULL, 
-       (n % 3) + 1, 
+INSERT INTO ChiTietHoaDon (maHD, maKH, soDong, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
+SELECT 'HD' + dbo.fn_C3(n),
+       'KH' + dbo.fn_C3((n % 10) + 1),
+       2,
+       NULL,
+       'VT' + dbo.fn_C3((n % 5) + 1),
+       'NV' + dbo.fn_C3((n % 5) + 1),
+       NULL,
+       (n % 3) + 1,
        100000 + (n % 2) * 50000
 FROM #N WHERE n <= 75 AND n % 2 = 0;
 GO
@@ -1111,5 +1118,6 @@ GO
 
 PRINT '========================================================';
 PRINT 'ĐÃ XÓA HOÀN TOÀN BẢNG LUONGCHUCVU VÀ GÁN DỮ LIỆU THÀNH CÔNG!';
+PRINT 'CẬP NHẬT: CHI TIẾT HÓA ĐƠN SỬ DỤNG KHÓA (maHD, maKH)';
 PRINT '========================================================';
 GO
