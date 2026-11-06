@@ -1,8 +1,6 @@
 package GUI.TaiKhoan;
-
-import dao.DangNhap_DAO;
-import dao.TaiKhoan_DAO;
-import model.TaiKhoan;
+import controller.DangNhapController;
+import entity.TaiKhoan.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.GiaoDienChinhGUI;
@@ -17,7 +15,7 @@ import java.awt.event.KeyEvent;
 
 /**
  * Giao diện Đăng nhập hệ thống SALALA Pet Shop.
- * Tích hợp xác thực bảo mật chuẩn SHA-256 khớp với CSDL SALALA và lưu Session.
+ * Hỗ trợ xác thực bảo mật SHA-256 khớp CSDL SALALA, lưu Session và phân quyền 6 vai trò người dùng
  */
 public class DangNhapGUI extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -28,18 +26,17 @@ public class DangNhapGUI extends JFrame {
     private JButton btnDangNhap;
     private JLabel lblThongBaoLoi;
 
-    private final TaiKhoan_DAO taiKhoanDAO;
+    private final DangNhapController controller = new DangNhapController();
 
     public DangNhapGUI() {
-        this.taiKhoanDAO = new TaiKhoan_DAO();
         khoiTaoGiaoDien();
     }
 
     private void khoiTaoGiaoDien() {
         setTitle("Đăng nhập - SALALA Pet Shop");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(880, 540);
-        setMinimumSize(new Dimension(800, 500));
+        setSize(960, 600);
+        setMinimumSize(new Dimension(850, 520));
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         getContentPane().setLayout(new GridLayout(1, 2));
@@ -130,10 +127,12 @@ public class DangNhapGUI extends JFrame {
 
         // Các tính năng nổi bật
         String[] tinhNang = {
-                "🐾 Quản lý hồ sơ thú cưng & khám chữa bệnh",
-                "📦 Kiểm soát vật tư, thuốc & hóa đơn xuất nhập",
-                "🔒 Bảo mật đăng nhập phân quyền đa cấp SHA-256",
-                "📊 Báo cáo doanh thu & hiệu suất hoạt động"
+                "🐾 Quản lý hồ sơ thú cưng, khám chữa bệnh & kê thuốc",
+                "📦 Kiểm soát kho, vật tư, phiếu nhập xuất & nhà cung cấp",
+                "🛒 Quản lý bán hàng, dịch vụ, bảng giá & hóa đơn thanh toán",
+                "📅 Xếp lịch làm việc & tiếp nhận đặt lịch hẹn linh hoạt",
+                "👥 Phân quyền chuẩn xác 6 nhóm người dùng hệ thống",
+                "📊 Báo cáo doanh thu & biểu đồ hiệu suất hoạt động"
         };
         for (String tn : tinhNang) {
             JLabel lblTN = new JLabel(tn);
@@ -162,14 +161,14 @@ public class DangNhapGUI extends JFrame {
         JPanel form = new JPanel();
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.setBackground(Color.WHITE);
-        form.setBorder(new EmptyBorder(50, 48, 40, 48));
+        form.setBorder(new EmptyBorder(40, 48, 30, 48));
 
         JLabel lblTieuDe = new JLabel("Đăng nhập hệ thống");
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         lblTieuDe.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblPhu = new JLabel("Vui lòng nhập tài khoản để truy cập giao diện quản trị");
+        JLabel lblPhu = new JLabel("Vui lòng nhập tài khoản để truy cập giao diện theo phân quyền");
         lblPhu.setFont(RangBuocGiaoDien.fontThuong(12));
         lblPhu.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         lblPhu.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -177,7 +176,7 @@ public class DangNhapGUI extends JFrame {
         form.add(lblTieuDe);
         form.add(Box.createVerticalStrut(4));
         form.add(lblPhu);
-        form.add(Box.createVerticalStrut(24));
+        form.add(Box.createVerticalStrut(20));
 
         // 1. Ô Tên đăng nhập
         JLabel lblUser = new JLabel("Tên đăng nhập:");
@@ -187,7 +186,7 @@ public class DangNhapGUI extends JFrame {
         form.add(lblUser);
         form.add(Box.createVerticalStrut(6));
 
-        txtTenDangNhap = new JTextField("quanly01");
+        txtTenDangNhap = new JTextField("admin");
         txtTenDangNhap.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         txtTenDangNhap.setPreferredSize(new Dimension(300, 38));
         txtTenDangNhap.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -196,7 +195,7 @@ public class DangNhapGUI extends JFrame {
                 new EmptyBorder(0, 12, 0, 12)));
         txtTenDangNhap.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(txtTenDangNhap);
-        form.add(Box.createVerticalStrut(16));
+        form.add(Box.createVerticalStrut(14));
 
         // 2. Ô Mật khẩu
         JLabel lblPass = new JLabel("Mật khẩu:");
@@ -215,7 +214,7 @@ public class DangNhapGUI extends JFrame {
                 new EmptyBorder(0, 12, 0, 12)));
         txtMatKhau.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(txtMatKhau);
-        form.add(Box.createVerticalStrut(8));
+        form.add(Box.createVerticalStrut(6));
 
         // 3. Checkbox Hiện mật khẩu
         chkHienMatKhau = new JCheckBox("Hiển thị mật khẩu");
@@ -228,7 +227,7 @@ public class DangNhapGUI extends JFrame {
             txtMatKhau.setEchoChar(chkHienMatKhau.isSelected() ? (char) 0 : '•');
         });
         form.add(chkHienMatKhau);
-        form.add(Box.createVerticalStrut(10));
+        form.add(Box.createVerticalStrut(6));
 
         // 4. Nhãn thông báo lỗi
         lblThongBaoLoi = new JLabel(" ");
@@ -236,7 +235,7 @@ public class DangNhapGUI extends JFrame {
         lblThongBaoLoi.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
         lblThongBaoLoi.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(lblThongBaoLoi);
-        form.add(Box.createVerticalStrut(12));
+        form.add(Box.createVerticalStrut(8));
 
         // 5. Nút Đăng nhập
         btnDangNhap = new JButton("ĐĂNG NHẬP") {
@@ -266,40 +265,24 @@ public class DangNhapGUI extends JFrame {
         btnDangNhap.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnDangNhap.addActionListener(e -> xuLyDangNhap());
         form.add(btnDangNhap);
-        form.add(Box.createVerticalStrut(20));
+        form.add(Box.createVerticalStrut(16));
 
-        // 6. Gợi ý tài khoản mẫu để test nhanh
-        JPanel panelGoiY = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        panelGoiY.setOpaque(false);
-        panelGoiY.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel lblGoiY = new JLabel("💡 Mẹo thử nhanh (pass: 123456):");
-        lblGoiY.setFont(RangBuocGiaoDien.fontThuong(11));
-        lblGoiY.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
-        panelGoiY.add(lblGoiY);
-
-        JButton btnTestQL = taoNutChonNhanh("quanly01");
-        JButton btnTestNV = taoNutChonNhanh("nhanvien01");
-        JButton btnTestBS = taoNutChonNhanh("bacsi01");
-
-        panelGoiY.add(btnTestQL);
-        panelGoiY.add(btnTestNV);
-        panelGoiY.add(btnTestBS);
-
-        form.add(panelGoiY);
+        
         form.add(Box.createVerticalGlue());
 
         return form;
     }
 
-    private JButton taoNutChonNhanh(String username) {
-        JButton b = new JButton(username);
+    private JButton taoNutChonNhanh(String username, String label) {
+        JButton b = new JButton("<html><div style='text-align:center; white-space:nowrap;'><b>" + label + "</b><br><span style='font-size:10px; color:#0f766e;'>" + username + "</span></div></html>");
         b.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         b.setForeground(new Color(13, 148, 136));
         b.setBackground(new Color(240, 253, 250));
         b.setBorder(new CompoundBorder(
                 new LineBorder(new Color(204, 251, 241), 1, true),
-                new EmptyBorder(2, 6, 2, 6)));
+                new EmptyBorder(6, 4, 6, 4)));
+        b.setMargin(new Insets(0, 0, 0, 0));
+        b.setPreferredSize(new Dimension(90, 52));
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.addActionListener(e -> {
@@ -313,61 +296,58 @@ public class DangNhapGUI extends JFrame {
     // ==========================================
     // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
     // ==========================================
+ // ==========================================
+    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
+    // ==========================================
     private void xuLyDangNhap() {
         String username = txtTenDangNhap.getText().trim();
         String password = new String(txtMatKhau.getPassword()).trim();
-
-        if (username.isEmpty()) {
-            hienThiLoi("Vui lòng nhập tên đăng nhập!");
-            txtTenDangNhap.requestFocus();
-            return;
-        }
-        if (password.isEmpty()) {
-            hienThiLoi("Vui lòng nhập mật khẩu!");
-            txtMatKhau.requestFocus();
-            return;
-        }
 
         btnDangNhap.setEnabled(false);
         btnDangNhap.setText("Đang kiểm tra...");
 
         SwingUtilities.invokeLater(() -> {
-            try {
-                TaiKhoan_DAO.KetQuaDangNhap kq = taiKhoanDAO.dangNhap(username, password);
-
-                if (kq.isThanhCong()) {
-                    lblThongBaoLoi.setText(" ");
-                    TaiKhoan tk = kq.getTaiKhoan();
-                    String tenHienThi = kq.getTenNguoiDung();
-                    String vaiTro = tk.getVaiTro();
-
-                    // ⭐ LƯU THÔNG TIN PHIÊN LÀM VIỆC VÀO SESSION
-                    DangNhap_DAO.dangNhap(tk, tenHienThi, kq.getMaDoiTuong());
-
-                    // Mở giao diện chính với thông tin tài khoản đã đăng nhập
-                    JFrame frameMain = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
-                    frameMain.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-                    GiaoDienChinhGUI giaoDienChinh = new GiaoDienChinhGUI(tenHienThi, vaiTro);
-                    frameMain.setContentPane(giaoDienChinh);
-                    GiaoDienChinhGUI.caiDatKichThuocCuaSo(frameMain, true);
-                    frameMain.setVisible(true);
-
-                    // Đóng cửa sổ đăng nhập
-                    this.dispose();
-                } else {
-                    hienThiLoi(kq.getThongBao());
+            DangNhapController.KetQuaDangNhap result = controller.dangNhap(username, password);
+            if (result.isThanhCong()) {
+                lblThongBaoLoi.setText(" ");
+                TaiKhoan tk = result.getTaiKhoan();
+                
+                // --- THÊM LOGIC KIỂM TRA MẬT KHẨU LẦN ĐẦU TẠI ĐÂY ---
+                if (password.equals("123456")) {
+                    int luaChon = JOptionPane.showConfirmDialog(this,
+                            "Bạn đang đăng nhập bằng mật khẩu mặc định (123456).\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
+                            "Cảnh báo bảo mật",
+                            JOptionPane.YES_NO_OPTION, 
+                            JOptionPane.WARNING_MESSAGE);
+                            
+                    if (luaChon == JOptionPane.YES_OPTION) {
+                        // Gọi dialog đổi mật khẩu đã được định nghĩa sẵn
+                        DoiMatKhauDialog doiMkDialog = new DoiMatKhauDialog(this, tk);
+                        doiMkDialog.setVisible(true);
+                    }
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                hienThiLoi("Lỗi hệ thống: " + ex.getMessage());
-            } finally {
-                btnDangNhap.setEnabled(true);
-                btnDangNhap.setText("ĐĂNG NHẬP");
+                // ----------------------------------------------------
+
+                String tenHienThi = result.getTenNguoiDung();
+                String vaiTro = tk.getVaiTro();
+
+                JFrame frameMain = new JFrame("Hệ thống Quản lý SALALA Pet Shop");
+                frameMain.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+                GiaoDienChinhGUI giaoDienChinh = new GiaoDienChinhGUI(tenHienThi, vaiTro);
+                frameMain.setContentPane(giaoDienChinh);
+                GiaoDienChinhGUI.caiDatKichThuocCuaSo(frameMain, true);
+                frameMain.setVisible(true);
+                this.dispose();
+            } else {
+                hienThiLoi(result.getThongBao());
+                if (username.isEmpty()) txtTenDangNhap.requestFocus();
+                else if (password.isEmpty()) txtMatKhau.requestFocus();
             }
+            btnDangNhap.setEnabled(true);
+            btnDangNhap.setText("ĐĂNG NHẬP");
         });
     }
-
     private void hienThiLoi(String msg) {
         lblThongBaoLoi.setText("⚠ " + msg);
     }
@@ -378,10 +358,19 @@ public class DangNhapGUI extends JFrame {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
+        } catch (java.awt.AWTError | ClassNotFoundException | InstantiationException
+                | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            JOptionPane.showMessageDialog(null, "Không thể thiết lập giao diện hệ thống: " + ex.getMessage(),
+                    "Lỗi giao diện", JOptionPane.ERROR_MESSAGE);
         }
 
         SwingUtilities.invokeLater(() -> {
+            connectDB.ConnectDB.getInstance().connect();
+            if (connectDB.ConnectDB.getInstance().getConnection() == null) {
+                JOptionPane.showMessageDialog(null, "Không thể kết nối cơ sở dữ liệu SALALA.",
+                        "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
+            }
+
             DangNhapGUI login = new DangNhapGUI();
             login.setVisible(true);
         });

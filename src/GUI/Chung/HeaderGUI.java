@@ -4,52 +4,42 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import dao.DangNhap_DAO;
+import controller.NavigationController;
 import GUI.GiaoDienChinhGUI;
+import GUI.TaiKhoan.ThongTinTaiKhoanDialog;
 
-/**
- * Class HeaderGUI: Thanh tiêu đề và điều hướng của SALALA Pet Shop.
- * Đọc thông tin người dùng từ Session, hiển thị thanh header, phân quyền danh sách tab
- * theo vai trò và tích hợp tính năng Đăng xuất.
- */
 public class HeaderGUI extends JPanel {
 
     public interface TabSelectionListener {
         void onTabSelected(String tenTab, String menuCon);
     }
 
-    // --- Thông tin người dùng ---
     private String tenNguoiDung;
     private String chucVu;
     private String chuCaiAvatar;
+    private NavigationController.VaiTroHeThong vaiTroHeThong;
 
-    // --- Cấu trúc Tab & Menu con ---
     private String[] danhSachTabs;
-    private Map<String, String[]> menuConMap;
+    private NavigationController.MenuQuyen menuQuyen;
+    private final NavigationController controller = new NavigationController();
     private String tabHienTai;
 
-    // --- Giao diện ---
     private List<JButton> danhSachNutTab;
     private JPanel panelTabContainer;
     private TabSelectionListener tabSelectionListener;
     private Consumer<String> onTabChanged;
 
-    // ==========================================
-    // CONSTRUCTORS
-    // ==========================================
     public HeaderGUI() {
-        // Tự động đồng bộ với phiên đăng nhập hiện tại
-        this(DangNhap_DAO.isDaDangNhap() ? DangNhap_DAO.getTenNguoiDung() : "Người dùng",
-             DangNhap_DAO.isDaDangNhap() ? DangNhap_DAO.getVaiTro() : "Quản lý");
+        this(
+                new NavigationController().getTenNguoiDungHienTai(),
+                new NavigationController().getVaiTroNguoiDungHienTai());
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu) {
@@ -57,7 +47,6 @@ public class HeaderGUI extends JPanel {
         this.chucVu = (chucVu != null && !chucVu.trim().isEmpty()) ? chucVu : "Quản lý";
         this.danhSachNutTab = new ArrayList<>();
 
-        khoiTaoMenuConMacDinh();
         thietLapTheoVaiTro(this.chucVu);
         khoiTaoGiaoDien();
     }
@@ -67,49 +56,34 @@ public class HeaderGUI extends JPanel {
         this.tabSelectionListener = listener;
     }
 
-    // ==========================================
-    // KHỞI TẠO MENU CON VÀ PHÂN QUYỀN VAI TRÒ
-    // ==========================================
-    private void khoiTaoMenuConMacDinh() {
-        menuConMap = new HashMap<>();
-        menuConMap.put("Nhân viên", new String[] { "Danh sách nhân viên", "Thống kê" });
-        menuConMap.put("Bác sĩ", new String[] { "Danh sách bác sĩ" });
-        menuConMap.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
-        menuConMap.put("Khách hàng", new String[] { "Danh sách khách hàng", "Quản lý hạng thành viên" });
-        menuConMap.put("Hóa đơn", new String[] { "Tạo hóa đơn mới", "Danh sách hóa đơn" });
-        menuConMap.put("Vật tư", new String[] { "Kho thuốc", "Dụng cụ y tế" });
-        menuConMap.put("Lịch hẹn", new String[] { "Xem lịch", "Đặt lịch mới" });
-        menuConMap.put("Dịch vụ", new String[] { "Bảng giá dịch vụ", "Gói chăm sóc" });
-    }
-
-    /**
-     * Tự động điều chỉnh danh sách Tabs hiển thị dựa theo vai trò người dùng.
-     */
     public void thietLapTheoVaiTro(String vaiTro) {
         this.chucVu = vaiTro;
         capNhatChuCaiAvatar();
-
-        // Phân quyền Tab hiển thị theo vai trò
-        if ("Bác sĩ".equalsIgnoreCase(vaiTro) || "Bác sĩ thú y".equalsIgnoreCase(vaiTro) || vaiTro.toLowerCase().contains("bác sĩ")) {
-            this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Vật tư", "Lịch hẹn", "Dịch vụ" };
-        } else if ("Nhân viên".equalsIgnoreCase(vaiTro) || "Thu ngân".equalsIgnoreCase(vaiTro) || vaiTro.toLowerCase().contains("nhân viên")) {
-            this.danhSachTabs = new String[] { "Thú cưng", "Khách hàng", "Hóa đơn", "Lịch hẹn", "Dịch vụ" };
-        } else {
-            // Mặc định là Quản lý / Toàn quyền
-            this.danhSachTabs = new String[] { "Nhân viên", "Bác sĩ", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư",
-                    "Lịch hẹn", "Dịch vụ" };
-        }
+        menuQuyen = controller.layMenuQuyen(vaiTro);
+        vaiTroHeThong = menuQuyen.getVaiTro();
+        danhSachTabs = menuQuyen.getDanhSachTabs();
 
         if (danhSachTabs.length > 0) {
             this.tabHienTai = danhSachTabs[0];
         }
     }
 
+    public String[] getMenuConCuaTab(String tenTab) {
+        return menuQuyen == null ? null : menuQuyen.getMenuCon(tenTab);
+    }
+
+    public String[] getDanhSachTabs() {
+        return danhSachTabs;
+    }
+
+    public NavigationController.VaiTroHeThong getVaiTroHeThong() {
+        return vaiTroHeThong;
+    }
+
     private void capNhatChuCaiAvatar() {
         String[] parts = tenNguoiDung.trim().split("\\s+");
         if (parts.length >= 2) {
-            chuCaiAvatar = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1))
-                    .toUpperCase();
+            chuCaiAvatar = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
         } else if (parts.length == 1 && !parts[0].isEmpty()) {
             chuCaiAvatar = parts[0].substring(0, 1).toUpperCase();
         } else {
@@ -117,9 +91,6 @@ public class HeaderGUI extends JPanel {
         }
     }
 
-    // ==========================================
-    // KHỞI TẠO GIAO DIỆN HEADER
-    // ==========================================
     private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
@@ -129,13 +100,11 @@ public class HeaderGUI extends JPanel {
         add(taoHangDieuHuongTab(), BorderLayout.CENTER);
     }
 
-    // 1. HÀNG TRÊN: LOGO THƯƠNG HIỆU & THÔNG TIN NGƯỜI DÙNG
     private JPanel taoHangThongTinTren() {
         JPanel hangTren = new JPanel(new BorderLayout());
         hangTren.setBackground(Color.WHITE);
         hangTren.setBorder(new EmptyBorder(12, 24, 12, 24));
 
-        // --- Logo + Tên thương hiệu ---
         JPanel panelLogo = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         panelLogo.setOpaque(false);
 
@@ -146,17 +115,13 @@ public class HeaderGUI extends JPanel {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(RangBuocGiaoDien.MAU_CHU_DAO);
                 g2.fillRoundRect(0, 0, 32, 32, 10, 10);
-
                 g2.setColor(Color.WHITE);
                 g2.fillOval(8, 8, 6, 6);
                 g2.fillOval(18, 8, 6, 6);
                 g2.fillOval(13, 17, 7, 7);
             }
-
             @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(32, 32);
-            }
+            public Dimension getPreferredSize() { return new Dimension(32, 32); }
         };
 
         JLabel lblTenThuongHieu = new JLabel("SALALA Pet Shop");
@@ -167,7 +132,6 @@ public class HeaderGUI extends JPanel {
         panelLogo.add(lblTenThuongHieu);
         hangTren.add(panelLogo, BorderLayout.WEST);
 
-        // --- Khối thông tin người dùng bên phải ---
         JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 0));
         panelPhai.setOpaque(false);
 
@@ -182,7 +146,6 @@ public class HeaderGUI extends JPanel {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(new Color(220, 244, 238));
                 g2.fillOval(0, 0, 36, 36);
-
                 g2.setColor(RangBuocGiaoDien.MAU_CHU_DAO);
                 g2.setFont(RangBuocGiaoDien.fontDam(13));
                 FontMetrics fm = g2.getFontMetrics();
@@ -190,11 +153,8 @@ public class HeaderGUI extends JPanel {
                 int textH = fm.getAscent();
                 g2.drawString(chuCaiAvatar, (36 - textW) / 2, (36 + textH) / 2 - 2);
             }
-
             @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(36, 36);
-            }
+            public Dimension getPreferredSize() { return new Dimension(36, 36); }
         };
 
         JPanel thongTin = new JPanel();
@@ -205,7 +165,7 @@ public class HeaderGUI extends JPanel {
         lblTen.setFont(RangBuocGiaoDien.fontDam(13));
         lblTen.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
-        JLabel lblChucVu = new JLabel(chucVu);
+        JLabel lblChucVu = new JLabel(vaiTroHeThong != null ? vaiTroHeThong.getTenHienThi() : chucVu);
         lblChucVu.setFont(RangBuocGiaoDien.fontThuong(11));
         lblChucVu.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
@@ -217,7 +177,6 @@ public class HeaderGUI extends JPanel {
         khoiNguoiDung.add(thongTin);
         panelPhai.add(khoiNguoiDung);
 
-        // --- Tạo Popup Menu cho chức năng Đăng xuất ---
         JPopupMenu userMenu = new JPopupMenu();
         userMenu.setBackground(Color.WHITE);
         userMenu.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
@@ -226,6 +185,12 @@ public class HeaderGUI extends JPanel {
         itemThongTin.setFont(RangBuocGiaoDien.fontThuong(13));
         itemThongTin.setBackground(Color.WHITE);
         itemThongTin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        itemThongTin.addActionListener(e -> {
+            Frame frame = (Frame) SwingUtilities.getWindowAncestor(this);
+            ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanDialog(
+                    frame, controller.getTaiKhoanHienTai(), controller.getTenNguoiDungHienTai());
+            dlg.setVisible(true);
+        });
         
         JMenuItem itemDangXuat = new JMenuItem("Đăng xuất");
         itemDangXuat.setFont(RangBuocGiaoDien.fontDam(13));
@@ -233,18 +198,9 @@ public class HeaderGUI extends JPanel {
         itemDangXuat.setBackground(Color.WHITE);
         itemDangXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Sự kiện click Đăng xuất
         itemDangXuat.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                this, 
-                "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?", 
-                "Xác nhận đăng xuất", 
-                JOptionPane.YES_NO_OPTION, 
-                JOptionPane.QUESTION_MESSAGE
-            );
-            
+            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?", "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (confirm == JOptionPane.YES_OPTION) {
-                // Lấy Frame chính đang chứa Header này để tắt và quay về trang đăng nhập
                 JFrame frameChinh = (JFrame) SwingUtilities.getWindowAncestor(this);
                 GiaoDienChinhGUI.xuLyDangXuat(frameChinh);
             }
@@ -254,7 +210,6 @@ public class HeaderGUI extends JPanel {
         userMenu.addSeparator();
         userMenu.add(itemDangXuat);
 
-        // Hiển thị menu khi nhấn vào khối người dùng
         khoiNguoiDung.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -266,7 +221,6 @@ public class HeaderGUI extends JPanel {
         return hangTren;
     }
 
-    // 2. HÀNG ĐIỀU HƯỚNG TAB
     private JPanel taoHangDieuHuongTab() {
         panelTabContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         panelTabContainer.setBackground(Color.WHITE);
@@ -276,8 +230,7 @@ public class HeaderGUI extends JPanel {
     }
 
     private void veLaiCacNutTab() {
-        if (panelTabContainer == null)
-            return;
+        if (panelTabContainer == null) return;
         panelTabContainer.removeAll();
         danhSachNutTab.clear();
 
@@ -312,7 +265,6 @@ public class HeaderGUI extends JPanel {
             nut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             nut.setMargin(new Insets(6, 14, 6, 14));
 
-            // Popup menu khi rê chuột
             JPopupMenu popupMenu = taoPopupMenu(tenTab);
             nut.addMouseListener(new MouseAdapter() {
                 @Override
@@ -323,9 +275,7 @@ public class HeaderGUI extends JPanel {
                 }
             });
 
-            // Sự kiện Click chọn tab
             nut.addActionListener(e -> setTabHienTai(tenTab));
-
             danhSachNutTab.add(nut);
             panelTabContainer.add(nut);
         }
@@ -333,11 +283,9 @@ public class HeaderGUI extends JPanel {
         panelTabContainer.repaint();
     }
 
-    // Popup Menu sổ xuống cho từng tab
     private JPopupMenu taoPopupMenu(String tenTab) {
-        String[] cacCon = menuConMap.get(tenTab);
-        if (cacCon == null || cacCon.length == 0)
-            return null;
+        String[] cacCon = getMenuConCuaTab(tenTab);
+        if (cacCon == null || cacCon.length == 0) return null;
 
         JPopupMenu menu = new JPopupMenu();
         menu.setBackground(Color.WHITE);
@@ -349,17 +297,12 @@ public class HeaderGUI extends JPanel {
             item.setBackground(Color.WHITE);
             item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            item.addActionListener(e -> {
-                chonMenuCon(tenTab, con);
-            });
+            item.addActionListener(e -> chonMenuCon(tenTab, con));
             menu.add(item);
         }
         return menu;
     }
 
-    // ==========================================
-    // CHỌN TAB VÀ MENU CON
-    // ==========================================
     public void setTabHienTai(String tenTab) {
         this.tabHienTai = tenTab;
         capNhatMauNutTab();
@@ -392,13 +335,9 @@ public class HeaderGUI extends JPanel {
         }
     }
 
-    // ==========================================
-    // CẬP NHẬT THÔNG TIN NGƯỜI DÙNG & VAI TRÒ
-    // ==========================================
     public void setThongTinNguoiDung(String ten, String chucVu) {
         this.tenNguoiDung = ten;
         thietLapTheoVaiTro(chucVu);
-
         removeAll();
         khoiTaoGiaoDien();
         revalidate();
@@ -409,107 +348,13 @@ public class HeaderGUI extends JPanel {
         this.tenNguoiDung = ten;
         this.chucVu = chucVu;
         this.chuCaiAvatar = avatarText;
-
+        thietLapTheoVaiTro(chucVu);
         removeAll();
         khoiTaoGiaoDien();
         revalidate();
         repaint();
     }
 
-    // ==========================================
-    // GETTERS & SETTERS
-    // ==========================================
-    public String getTenNguoiDung() {
-        return tenNguoiDung;
-    }
-
-    public void setTenNguoiDung(String tenNguoiDung) {
-        this.tenNguoiDung = tenNguoiDung;
-        capNhatChuCaiAvatar();
-        repaint();
-    }
-
-    public String getChucVu() {
-        return chucVu;
-    }
-
-    public void setChucVu(String chucVu) {
-        setThongTinNguoiDung(this.tenNguoiDung, chucVu);
-    }
-
-    public String getChuCaiAvatar() {
-        return chuCaiAvatar;
-    }
-
-    public void setChuCaiAvatar(String chuCaiAvatar) {
-        this.chuCaiAvatar = chuCaiAvatar;
-        repaint();
-    }
-
-    public String[] getDanhSachTabs() {
-        return danhSachTabs;
-    }
-
-    public void setDanhSachTabs(String[] danhSachTabs) {
-        this.danhSachTabs = danhSachTabs;
-        veLaiCacNutTab();
-    }
-
-    public Map<String, String[]> getMenuConMap() {
-        return menuConMap;
-    }
-
-    public void setMenuConMap(Map<String, String[]> menuConMap) {
-        this.menuConMap = menuConMap;
-    }
-
-    public String getTabHienTai() {
-        return tabHienTai;
-    }
-
-    public List<JButton> getDanhSachNutTab() {
-        return danhSachNutTab;
-    }
-
-    public TabSelectionListener getTabSelectionListener() {
-        return tabSelectionListener;
-    }
-
-    public void setTabSelectionListener(TabSelectionListener tabSelectionListener) {
-        this.tabSelectionListener = tabSelectionListener;
-    }
-
-    public Consumer<String> getOnTabChanged() {
-        return onTabChanged;
-    }
-
-    public void setOnTabChanged(Consumer<String> onTabChanged) {
-        this.onTabChanged = onTabChanged;
-    }
-
-    // ==========================================
-    // MAIN TEST ĐỘC LẬP CHO HEADER
-    // ==========================================
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
-
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Kiểm thử HeaderGUI theo vai trò người dùng");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 300);
-            frame.setLocationRelativeTo(null);
-
-            // Test với vai trò Quản lý
-            HeaderGUI header = new HeaderGUI("Lê Văn Thành", "Quản lý");
-            header.setTabSelectionListener((tab, menuCon) -> {
-                System.out.println("Đã chọn: " + tab + (menuCon != null ? " -> " + menuCon : ""));
-            });
-
-            frame.setContentPane(header);
-            frame.setVisible(true);
-        });
-    }
+    public String getTabHienTai() { return tabHienTai; }
+    public void setTabSelectionListener(TabSelectionListener tabSelectionListener) { this.tabSelectionListener = tabSelectionListener; }
 }

@@ -48,8 +48,8 @@ public class RangBuocGiaoDien {
     public static final Color MAU_DUONG_VIEN = new Color(226, 232, 240); // #E2E8F0
 
     // Màu chữ
-    public static final Color MAU_CHU_CHINH = new Color(30, 41, 59); // #1E293B
-    public static final Color MAU_CHU_PHU = new Color(100, 116, 139); // #64748B
+    public static final Color MAU_CHU_CHINH = new Color(15, 23, 42); // #0F172A (đậm hơn để nổi trên ảnh nền)
+    public static final Color MAU_CHU_PHU = new Color(71, 85, 105); // #475569 (đậm hơn bản cũ #64748B)
     public static final Color MAU_CHU_GOI_Y = new Color(148, 163, 184); // #94A3B8
 
     // Màu Bảng Dữ Liệu
@@ -108,5 +108,43 @@ public class RangBuocGiaoDien {
             doHoa2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             doHoa2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         }
+    }
+
+    // =========================================================================
+    // 4. ẢNH NỀN GIAO DIỆN CHÍNH
+    // =========================================================================
+    // Đường dẫn tương đối (tính từ thư mục gốc project, nơi chạy chương trình)
+    public static final String DUONG_DAN_ANH_NEN = "img/background.jpg";
+    // Đường dẫn dự phòng
+    public static final String DUONG_DAN_ANH_NEN_TUYET_DOI =
+            "D:\\GitHub\\ProjectMini\\CuaHangThuCungSaLaLa\\img\\background.jpg";
+    // Các độ đục bên dưới có giá trị 0-255: càng nhỏ càng trong suốt (ảnh càng rõ)
+    // Lớp phủ trắng nhẹ trên toàn bộ ảnh nền (phần lề quanh nội dung)
+    public static final int DO_DUC_LOP_PHU = 40;
+    // Thanh header: ảnh được làm mờ rồi phủ kem với độ đục này
+    public static final int DO_DUC_THANH_MO = 215;
+    // Tấm nền kem phía sau nội dung (giúp chữ tiêu đề, mô tả luôn rõ)
+    public static final int DO_DUC_TAM_NOI_DUNG = 220;
+    // Các thẻ (card) trắng nằm trên tấm nền
+    public static final int DO_DUC_THE = 200;
+
+    // Lề chừa quanh tấm nền nội dung (px). Để 0 = nội dung phủ kín 100% phần còn lại dưới header.
+    // Muốn ảnh hiện thành khung viền quanh nội dung thì đặt lại, ví dụ 28 và 18.
+    public static final int LE_NOI_DUNG_NGANG = 0;
+    public static final int LE_NOI_DUNG_DOC = 0;
+
+    // Màu kem lấy theo màu nền của bức ảnh + màu nhấn cam (lấy từ chú corgi)
+    public static final Color MAU_TAM_NOI_DUNG = new Color(255, 252, 245);
+    public static final Color MAU_NHAN_CAM = new Color(234, 138, 60);
+
+    /**
+     * Nếu là màu trắng đặc (thẻ/card) thì trả về trắng bán trong suốt (DO_DUC_THE)
+     * để ảnh nền hiện lên bên dưới; các màu khác giữ nguyên.
+     */
+    public static Color theMo(Color c) {
+        if (c != null && c.getAlpha() == 255 && (c.getRGB() & 0xFFFFFF) == 0xFFFFFF) {
+            return new Color(255, 255, 255, DO_DUC_THE);
+        }
+        return c;
     }
 }

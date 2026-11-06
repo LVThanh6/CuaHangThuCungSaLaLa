@@ -1,7 +1,7 @@
 package GUI.ThongKe;
 
 import GUI.Chung.RangBuocGiaoDien;
-import dao.ThongKe_DAO;
+import controller.ThongKeController;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -34,7 +34,6 @@ import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -58,14 +57,9 @@ public class ThongKeGUI extends JPanel {
     private final JSpinner ngayBatDau = taoBoChonNgay(LocalDate.now().withDayOfMonth(1));
     private final JSpinner ngayKetThuc = taoBoChonNgay(LocalDate.now());
     private final JComboBox<String> cboKhoangNhanh = new JComboBox<>(
-            new String[] { "Tùy chọn", "Hôm nay", "Tuần này", "Tháng này", "Năm nay" });
-    private static final String[] NHOM_CHI_SO = {
-            "01. Doanh thu và tài chính",
-            "02. Vật tư và kho hàng",
-            "03. Hiệu suất và doanh số nhân viên",
-            "04. Tiền lương và chi phí nhân sự"
-    };
-    private final JComboBox<String> cboNhomChiSo = new JComboBox<>(NHOM_CHI_SO);
+            new String[] { "Tùy chọn", "Hôm nay", "7 ngày qua", "30 ngày qua", "Tháng này", "Năm nay" });
+    private final JComboBox<ThongKeController.Category> cboNhomChiSo =
+            new JComboBox<>(ThongKeController.Category.values());
     private final JComboBox<ChiSo> cboChiSo = new JComboBox<>();
     private final List<ChiSo> tatCaChiSo = new java.util.ArrayList<>();
     private final JLabel lblGhiChuChiSo = new JLabel(" ");
@@ -79,8 +73,9 @@ public class ThongKeGUI extends JPanel {
         }
     };
     private final JTable bangDuLieu = new JTable(modelBang);
+    private final ThongKeController thongKeController = new ThongKeController();
     private int maYeuCauDuLieu;
-    private ThongKe_DAO.DuLieuThongKe duLieuThongKe;
+    private ThongKeController.ReportData duLieuThongKe;
 
     public ThongKeGUI() {
         khoiTaoGiaoDien();
@@ -111,7 +106,7 @@ public class ThongKeGUI extends JPanel {
         JLabel duongDan = new JLabel("Tổng quan / Thống kê");
         duongDan.setFont(RangBuocGiaoDien.fontThuong(12));
         duongDan.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-        JLabel tieuDe = new JLabel("Thống kê số liệu");
+        JLabel tieuDe = new JLabel("Thống kê bán hàng");
         tieuDe.setFont(RangBuocGiaoDien.fontDam(24));
         tieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         lblMoTa.setFont(RangBuocGiaoDien.fontThuong(12));
@@ -157,12 +152,12 @@ public class ThongKeGUI extends JPanel {
 
     private JComponent taoHangKpi() {
         String[][] thongTin = {
-                { "Nhân viên", "—", "Toàn hệ thống" },
-                { "Bác sĩ", "—", "Toàn hệ thống" },
-                { "Khách hàng", "—", "Toàn hệ thống" },
-                { "Thú cưng", "—", "Toàn hệ thống" },
-                { "Hóa đơn", "—", "Khoảng thời gian đã chọn" },
-                { "Doanh thu thanh toán", "—", "Khoảng thời gian đã chọn" }
+                { "Doanh thu", "—", "Hàng hóa + dịch vụ" },
+                { "Hóa đơn", "—", "Số hóa đơn trong kỳ" },
+                { "Số lượng bán", "—", "Sản phẩm đã bán" },
+                { "Doanh thu hàng hóa", "—", "Vật tư bán ra" },
+                { "Doanh thu dịch vụ", "—", "Dịch vụ đã thực hiện" },
+                { "Tiền lương", "—", "Nhân viên + bác sĩ" }
         };
 
         JPanel hang = new JPanel(new GridLayout(1, thongTin.length, 12, 0));
@@ -247,25 +242,27 @@ public class ThongKeGUI extends JPanel {
         if (chon == 0) {
             return;
         }
-        LocalDate homNay = LocalDate.now();
-        LocalDate tu;
-        LocalDate den = homNay;
+        ThongKeController.QuickRange quickRange;
         switch (chon) {
             case 1:
-                tu = homNay;
+                quickRange = ThongKeController.QuickRange.TODAY;
                 break;
             case 2:
-                tu = homNay.with(DayOfWeek.MONDAY);
+                quickRange = ThongKeController.QuickRange.LAST_7_DAYS;
                 break;
             case 3:
-                tu = homNay.withDayOfMonth(1);
+                quickRange = ThongKeController.QuickRange.LAST_30_DAYS;
+                break;
+            case 4:
+                quickRange = ThongKeController.QuickRange.THIS_MONTH;
                 break;
             default:
-                tu = homNay.withDayOfYear(1);
+                quickRange = ThongKeController.QuickRange.THIS_YEAR;
                 break;
         }
-        datNgay(ngayBatDau, tu);
-        datNgay(ngayKetThuc, den);
+        ThongKeController.DateRange range = ThongKeController.khoangNhanh(quickRange, LocalDate.now());
+        datNgay(ngayBatDau, range.getStart());
+        datNgay(ngayKetThuc, range.getEnd());
         apDungKhoangDaChon();
     }
 
@@ -278,18 +275,19 @@ public class ThongKeGUI extends JPanel {
     }
 
     private void taiLaiDuLieu(LocalDate tu, LocalDate den) {
-        if (tu == null || den == null || tu.isAfter(den)) {
-            hienLoi("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.");
+        String loiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
+        if (loiKhoangNgay != null) {
+            hienLoi(loiKhoangNgay);
             return;
         }
         int yeuCau = ++maYeuCauDuLieu;
         lblTrangThai.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         lblTrangThai.setToolTipText(null);
         lblTrangThai.setText("Đang tải dữ liệu thống kê...");
-        new SwingWorker<ThongKe_DAO.DuLieuThongKe, Void>() {
+        new SwingWorker<ThongKeController.LoadResult, Void>() {
             @Override
-            protected ThongKe_DAO.DuLieuThongKe doInBackground() throws Exception {
-                return new ThongKe_DAO().layDuLieuThongKe(tu, den);
+            protected ThongKeController.LoadResult doInBackground() {
+                return thongKeController.taiDuLieu(tu, den);
             }
 
             @Override
@@ -298,9 +296,14 @@ public class ThongKeGUI extends JPanel {
                     return;
                 }
                 try {
-                    capNhatDuLieu(get());
+                    ThongKeController.LoadResult result = get();
+                    if (!result.isSuccess()) {
+                        hienLoi("Không thể tải dữ liệu thống kê: " + result.getErrorMessage());
+                        return;
+                    }
+                    capNhatDuLieu(result.getReport());
                     lblMoTa.setText("Từ " + DINH_DANG_NGAY.format(tu) + " đến " + DINH_DANG_NGAY.format(den)
-                            + " · Mốc thời gian được tự động nhóm theo ngày, tháng hoặc năm.");
+                            + " · Dữ liệu " + ThongKeController.moTaNhomThoiGian(tu, den) + ".");
                     lblTrangThai.setText(" ");
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -313,13 +316,13 @@ public class ThongKeGUI extends JPanel {
         }.execute();
     }
 
-    private void capNhatDuLieu(ThongKe_DAO.DuLieuThongKe duLieu) {
+    private void capNhatDuLieu(ThongKeController.ReportData duLieu) {
         duLieuThongKe = duLieu;
 
         ChiSo dangChon = (ChiSo) cboChiSo.getSelectedItem();
         String maDangChon = dangChon == null ? null : dangChon.ma;
         tatCaChiSo.clear();
-        for (ThongKe_DAO.ChiSoThongKe chiSo : duLieu.chiSo) {
+        for (ThongKeController.Indicator chiSo : duLieu.getIndicators()) {
             tatCaChiSo.add(new ChiSo(chiSo));
         }
         capNhatDanhSachChiSo(maDangChon);
@@ -328,9 +331,9 @@ public class ThongKeGUI extends JPanel {
 
     private void capNhatDanhSachChiSo(String maCanChon) {
         cboChiSo.removeAllItems();
-        String nhomChon = (String) cboNhomChiSo.getSelectedItem();
+        ThongKeController.Category nhomChon = (ThongKeController.Category) cboNhomChiSo.getSelectedItem();
         for (ChiSo chiSo : tatCaChiSo) {
-            if (nhomChon.equals(nhomCuaChiSo(chiSo.ma))) {
+            if (nhomChon == ThongKeController.categoryFor(chiSo.ma)) {
                 cboChiSo.addItem(chiSo);
             }
         }
@@ -355,112 +358,20 @@ public class ThongKeGUI extends JPanel {
         if (duLieuThongKe == null) {
             return;
         }
-        String nhom = (String) cboNhomChiSo.getSelectedItem();
-        String[][] cauHinh;
-        if (NHOM_CHI_SO[0].equals(nhom)) {
-            cauHinh = new String[][] {
-                    { "Hóa đơn", "hoa-don", "hóa đơn" },
-                    { "Doanh thu thanh toán", "doanh-thu", "đ" },
-                    { "Doanh thu vật tư", "doanh-thu-vat-tu", "đ" },
-                    { "Doanh thu dịch vụ", "doanh-thu-dich-vu", "đ" },
-                    { "Chi phí nhập hàng", "gia-tri-nhap-kho", "đ" },
-                    { "Lợi nhuận ước tính", "loi-nhuan-uoc-tinh", "đ" }
-            };
-        } else if (NHOM_CHI_SO[1].equals(nhom)) {
-            cauHinh = new String[][] {
-                    { "Số lượng tồn", "ton-kho", "vật tư" },
-                    { "Giá trị tồn theo giá nhập", "gia-tri-ton-kho", "đ" },
-                    { "Số lượng nhập", "luong-nhap-kho", "vật tư" },
-                    { "Giá trị nhập", "gia-tri-nhap-kho", "đ" },
-                    { "Số lượng xuất kho", "luong-xuat-kho", "vật tư" },
-                    { "Số lượng bán", "so-luong-ban", "đơn vị" }
-            };
-        } else if (NHOM_CHI_SO[2].equals(nhom)) {
-            cauHinh = new String[][] {
-                    { "Nhân viên", "nhan-vien", "người" },
-                    { "Bác sĩ", "bac-si", "người" },
-                    { "Doanh số nhân viên", "doanh-so-nhan-vien", "đ" },
-                    { "Doanh thu dịch vụ theo người làm", "doanh-thu-dich-vu-nguoi-thuc-hien", "đ" },
-                    { "Giờ làm việc", "so-gio-lam-viec", "giờ" },
-                    { "Hồ sơ khám", "ho-so-suc-khoe", "hồ sơ" }
-            };
-        } else {
-            cauHinh = new String[][] {
-                    { "Tổng lương dự tính", "tong-luong-du-tinh", "đ" },
-                    { "Lương cơ bản", "luong-co-ban-du-tinh", "đ" },
-                    { "Hoa hồng", "hoa-hong-du-tinh", "đ" },
-                    { "Nhân viên", "nhan-vien", "người" },
-                    { "Bác sĩ", "bac-si", "người" },
-                    { "Giờ làm việc", "so-gio-lam-viec", "giờ" }
-            };
-        }
-
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
-        dinhDang.setMaximumFractionDigits(2);
-        for (int i = 0; i < cauHinh.length; i++) {
-            lblTieuDeKpi[i].setText(cauHinh[i][0]);
-            ChiSo chiSo = timChiSo(cauHinh[i][1]);
-            if (chiSo == null) {
-                lblGiaTriKpi[i].setText("—");
-            } else {
-                lblGiaTriKpi[i].setText(dinhDang.format(chiSo.tong) + " " + cauHinh[i][2]);
-            }
-            lblGhiChuKpi[i].setText(i == 0 ? "Tổng hợp theo bộ lọc hiện tại" : "Khoảng thời gian đã chọn");
-        }
-    }
-
-    private ChiSo timChiSo(String ma) {
-        for (ChiSo chiSo : tatCaChiSo) {
-            if (chiSo.ma.equals(ma)) {
-                return chiSo;
-            }
-        }
-        return null;
-    }
-
-    private static String nhomCuaChiSo(String ma) {
-        switch (ma) {
-            case "tai-khoan":
-            case "quan-ly":
-            case "nhan-vien":
-            case "bac-si":
-            case "khach-hang":
-            case "thu-cung":
-            case "lich-lam-viec":
-            case "ho-so-suc-khoe":
-            case "don-thuoc":
-            case "chi-tiet-don-thuoc":
-            case "lich-hen":
-            case "lich-hen-trang-thai":
-            case "doanh-so-nhan-vien":
-            case "doanh-thu-dich-vu-nguoi-thuc-hien":
-            case "so-gio-lam-viec":
-            case "ho-so-kham-theo-bac-si":
-                return NHOM_CHI_SO[2];
-            case "tong-luong-du-tinh":
-            case "luong-co-ban-du-tinh":
-            case "hoa-hong-du-tinh":
-                return NHOM_CHI_SO[3];
-            case "thuoc":
-            case "nha-cung-cap":
-            case "vat-tu":
-            case "chi-tiet-hoa-don":
-            case "phieu-xuat-kho":
-            case "chi-tiet-phieu-xuat-kho":
-            case "phieu-nhap-kho":
-            case "chi-tiet-phieu-nhap-kho":
-            case "so-luong-ban":
-            case "luong-nhap-kho":
-            case "gia-tri-nhap-kho":
-            case "luong-xuat-kho":
-            case "ton-kho":
-            case "gia-tri-ton-kho":
-            case "vat-tu-theo-trang-thai":
-            case "luot-ban-theo-vat-tu":
-            case "hang-ton-khong-ban-trong-ky":
-                return NHOM_CHI_SO[1];
-            default:
-                return NHOM_CHI_SO[0];
+        dinhDang.setMaximumFractionDigits(0);
+        double[] giaTri = {
+                duLieuThongKe.getTotalRevenue(),
+                duLieuThongKe.getInvoiceCount(),
+                duLieuThongKe.getItemsSold(),
+                duLieuThongKe.getGoodsRevenue(),
+                duLieuThongKe.getServiceRevenue(),
+                duLieuThongKe.getTotalPayroll()
+        };
+        String[] hauTo = { "đ", "", "", "đ", "đ", "đ" };
+        for (int i = 0; i < giaTri.length; i++) {
+            lblGiaTriKpi[i].setText(dinhDang.format(giaTri[i]) + " " + hauTo[i]);
+            lblGhiChuKpi[i].setText("Trong khoảng thời gian đã chọn");
         }
     }
 
@@ -471,9 +382,12 @@ public class ThongKeGUI extends JPanel {
             lblGhiChuChiSo.setText("Chưa có dữ liệu cho chỉ số này.");
             return;
         }
-        lblGhiChuChiSo.setText(ghiChuNhom() + " " + chiSo.ghiChu);
+        lblGhiChuChiSo.setText(chiSo.ghiChu);
+        boolean theoThoiGian = ThongKeController.isTimeSeries(chiSo.ma);
+        modelBang.setColumnIdentifiers(new Object[] {
+                theoThoiGian ? "Thời gian" : "Danh mục", "Số liệu" });
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
-        dinhDang.setMaximumFractionDigits(2);
+        dinhDang.setMaximumFractionDigits(0);
         for (int i = 0; i < chiSo.nhan.length; i++) {
             String giaTri = dinhDang.format(chiSo.giaTri[0][i]);
             if (!chiSo.hauTo.isEmpty()) {
@@ -481,26 +395,13 @@ public class ThongKeGUI extends JPanel {
             }
             modelBang.addRow(new Object[] { chiSo.nhan[i], giaTri });
         }
+        modelBang.addRow(new Object[] { "Tổng cộng", dinhDang.format(chiSo.tong) + " " + chiSo.hauTo });
     }
 
     private void hienLoi(String loi) {
         lblTrangThai.setForeground(new Color(185, 28, 28));
         lblTrangThai.setText("Không thể tải dữ liệu thống kê.");
         lblTrangThai.setToolTipText(loi);
-    }
-
-    private String ghiChuNhom() {
-        String nhom = (String) cboNhomChiSo.getSelectedItem();
-        if (NHOM_CHI_SO[0].equals(nhom)) {
-            return "Lợi nhuận hiện là ước tính: chưa có dữ liệu chi phí vận hành riêng; thuốc chỉ tính doanh thu nếu được ghi thành dòng vật tư.";
-        }
-        if (NHOM_CHI_SO[1].equals(nhom)) {
-            return "Schema chưa có mức tồn tối thiểu, hạn sử dụng hoặc lô hàng; chỉ số tồn không bán là tham khảo theo kỳ, không thay cho tuổi tồn kho.";
-        }
-        if (NHOM_CHI_SO[2].equals(nhom)) {
-            return "Doanh số bán gắn theo nhân viên lập hóa đơn; doanh thu dịch vụ được phân theo người thực hiện đã lưu trên từng dòng.";
-        }
-        return "Giờ làm việc lấy từ lịch có trạng thái Đang làm hoặc Hoàn thành, làm tròn theo giờ; lương nhân viên tính theo giờ thực tế và 208 giờ chuẩn mỗi tháng.";
     }
 
     private void moDialogTaoBieuDo() {
@@ -523,7 +424,7 @@ public class ThongKeGUI extends JPanel {
         }
         Window cha = SwingUtilities.getWindowAncestor(this);
         DialogTaoBieuDo dialog = new DialogTaoBieuDo(
-                cha, dsChiSo, (ChiSo) cboChiSo.getSelectedItem(), tu, den);
+                cha, dsChiSo, (ChiSo) cboChiSo.getSelectedItem(), tu, den, thongKeController);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
@@ -562,25 +463,21 @@ public class ThongKeGUI extends JPanel {
         private final double[][] giaTri;
         private final double tong;
 
-        private ChiSo(ThongKe_DAO.ChiSoThongKe duLieu) {
-            ma = duLieu.ma;
-            ten = duLieu.ten;
-            donVi = duLieu.donVi;
-            hauTo = duLieu.hauTo;
-            ghiChu = duLieu.ghiChu;
-            tong = duLieu.tong;
-            nhan = duLieu.nhan.toArray(new String[0]);
-            chuoi = duLieu.chuoi.toArray(new String[0]);
-            giaTri = new double[duLieu.giaTri.size()][];
+        private ChiSo(ThongKeController.Indicator duLieu) {
+            ma = duLieu.getCode();
+            ten = duLieu.getName();
+            donVi = duLieu.getUnit();
+            hauTo = duLieu.getSuffix();
+            ghiChu = duLieu.getDescription();
+            tong = duLieu.getTotal();
+            nhan = duLieu.getLabels().toArray(new String[0]);
+            chuoi = duLieu.getSeries().toArray(new String[0]);
+            giaTri = new double[duLieu.getValues().size()][];
             for (int i = 0; i < giaTri.length; i++) {
-                giaTri[i] = new double[duLieu.giaTri.get(i).size()];
+                giaTri[i] = new double[duLieu.getValues().get(i).size()];
                 for (int j = 0; j < giaTri[i].length; j++) {
-                    giaTri[i][j] = duLieu.giaTri.get(i).get(j);
+                    giaTri[i][j] = duLieu.getValues().get(i).get(j);
                 }
-            }
-            if (chuoi.length != giaTri.length) {
-                throw new IllegalArgumentException("Chỉ số '" + ten
-                        + "' có số chuỗi và số dòng giá trị không khớp.");
             }
         }
 
@@ -599,10 +496,12 @@ public class ThongKeGUI extends JPanel {
         private final JSpinner ngayKetThuc;
         private final JLabel lblTrangThai = new JLabel(" ");
         private final JButton btnTao = new JButton("Tạo biểu đồ");
+        private final ThongKeController thongKeController;
 
         private DialogTaoBieuDo(Window cha, List<ChiSo> danhSachChiSo, ChiSo chiSoChon,
-                LocalDate tu, LocalDate den) {
+                LocalDate tu, LocalDate den, ThongKeController thongKeController) {
             super(cha, "Tạo biểu đồ thống kê", ModalityType.APPLICATION_MODAL);
+            this.thongKeController = thongKeController;
             ngayBatDau = taoBoChonNgay(tu);
             ngayKetThuc = taoBoChonNgay(den);
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -668,8 +567,9 @@ public class ThongKeGUI extends JPanel {
                 lblTrangThai.setText(ex.getMessage());
                 return;
             }
-            if (tu.isAfter(den)) {
-                lblTrangThai.setText("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.");
+            String loiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
+            if (loiKhoangNgay != null) {
+                lblTrangThai.setText(loiKhoangNgay);
                 return;
             }
             ChiSo chiSoChon = (ChiSo) cboChiSo.getSelectedItem();
@@ -681,19 +581,22 @@ public class ThongKeGUI extends JPanel {
             lblTrangThai.setText("Đang nạp dữ liệu cho khoảng thời gian đã chọn...");
             String maChiSo = chiSoChon.ma;
             int loai = loaiBieuDo(cboLoai.getSelectedIndex());
-            new SwingWorker<ThongKe_DAO.DuLieuThongKe, Void>() {
+            new SwingWorker<ThongKeController.LoadResult, Void>() {
                 @Override
-                protected ThongKe_DAO.DuLieuThongKe doInBackground() throws Exception {
-                    return new ThongKe_DAO().layDuLieuThongKe(tu, den);
+                protected ThongKeController.LoadResult doInBackground() {
+                    return thongKeController.taiDuLieu(tu, den);
                 }
 
                 @Override
                 protected void done() {
                     try {
-                        ThongKe_DAO.DuLieuThongKe duLieu = get();
+                        ThongKeController.LoadResult result = get();
+                        if (!result.isSuccess()) {
+                            throw new IllegalStateException(result.getErrorMessage());
+                        }
                         ChiSo chiSo = null;
-                        for (ThongKe_DAO.ChiSoThongKe ketQua : duLieu.chiSo) {
-                            if (ketQua.ma.equals(maChiSo)) {
+                        for (ThongKeController.Indicator ketQua : result.getReport().getIndicators()) {
+                            if (ketQua.getCode().equals(maChiSo)) {
                                 chiSo = new ChiSo(ketQua);
                                 break;
                             }
