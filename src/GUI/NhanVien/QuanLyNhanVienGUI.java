@@ -3,8 +3,8 @@ package GUI.NhanVien;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 
-import dao.NhanVien_DAO;
-import entity.NhanVien_entity;
+import controller.QuanLyNhanVienController;
+import entity.NhanVien.NhanVien_entity;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -17,10 +17,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.text.DecimalFormat;
@@ -30,12 +30,12 @@ import java.util.ArrayList;
 /**
  * Giao diện Quản lý Nhân viên hoàn chỉnh của SALALA Pet Shop.
  * Tích hợp đầy đủ CRUD (Thêm, Sửa, Xóa, Tìm kiếm, Lọc, Xuất Excel)
- * và kết nối trực tiếp với CSDL SALALA qua NhanVien_DAO.
+ * và xử lý dữ liệu thông qua bộ điều khiển nhân viên.
  */
 public class QuanLyNhanVienGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private NhanVien_DAO nhanVienDAO;
+    private final QuanLyNhanVienController controller;
     private TableMau bangNhanVien;
     private DefaultTableModel modelBang;
     private TableRowSorter<DefaultTableModel> rowSorter;
@@ -49,7 +49,7 @@ public class QuanLyNhanVienGUI extends JPanel {
     private final SimpleDateFormat dfNgay = new SimpleDateFormat("dd/MM/yyyy");
 
     public QuanLyNhanVienGUI() {
-        nhanVienDAO = new NhanVien_DAO();
+        controller = new QuanLyNhanVienController();
         khoiTaoGiaoDien();
         taiDuLieuLenBang();
     }
@@ -256,10 +256,17 @@ public class QuanLyNhanVienGUI extends JPanel {
      */
     public void taiDuLieuLenBang() {
         modelBang.setRowCount(0);
-        ArrayList<NhanVien_entity> list = nhanVienDAO.getAllNhanVien();
+        ArrayList<NhanVien_entity> list;
+        try {
+            list = new ArrayList<>(controller.taiDanhSach());
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Không thể tải danh sách nhân viên: " + ex.getMessage(),
+                    "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         for (NhanVien_entity nv : list) {
             String ngaySinhStr = nv.getNgaySinh() != null
-                    ? dfNgay.format(Date.valueOf(nv.getNgaySinh())) : "";
+                    ? dfNgay.format(java.sql.Date.valueOf(nv.getNgaySinh())) : "";
             modelBang.addRow(new Object[]{
                     nv.getMaNhanVien(),
                     nv.getHoTen(),
@@ -309,7 +316,14 @@ public class QuanLyNhanVienGUI extends JPanel {
     // ==========================================
 
     private void xuLyThemNhanVien() {
-        String maTuDong = nhanVienDAO.phatSinhMaNhanVien();
+        String maTuDong;
+        try {
+            maTuDong = controller.taoMaMoi();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Không thể tạo mã nhân viên: " + ex.getMessage(),
+                    "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (maTuDong == null) {
             JOptionPane.showMessageDialog(this, "Không thể tạo mã nhân viên. Vui lòng kiểm tra kết nối cơ sở dữ liệu.",
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -333,51 +347,18 @@ public class QuanLyNhanVienGUI extends JPanel {
 
         int res = JOptionPane.showConfirmDialog(this, form, "Thêm mới nhân viên", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (res == JOptionPane.OK_OPTION) {
-            String hoTen = txtHoTen.getText().trim();
-            String sdt = txtSdt.getText().trim();
-            if (hoTen.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Họ và tên nhân viên không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (sdt.isEmpty() || !sdt.matches("^0\\d{9}$")) {
-                JOptionPane.showMessageDialog(this, "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            double luong;
             try {
-                luong = nhanVienDAO.getLuongTheoChucVu((String) cbChucVu.getSelectedItem());
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Không thể lấy lương theo chức vụ: " + ex.getMessage(),
-                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            Date ngaySinh;
-            try {
-                ngaySinh = Date.valueOf(txtNgaySinh.getText().trim());
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, "Ngày sinh phải theo định dạng yyyy-MM-dd!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            NhanVien_entity nv = new NhanVien_entity(
-                    maTuDong,
-                    null,
-                    hoTen,
-                    (String) cbChucVu.getSelectedItem(),
-                    sdt,
-                    txtDiaChi.getText().trim(),
-                    ngaySinh.toLocalDate(),
-                    (String) cbGioiTinh.getSelectedItem(),
-                    luong
-            );
-
-            boolean ok = nhanVienDAO.createNhanVien(nv);
-            if (ok) {
-                JOptionPane.showMessageDialog(this, "Thêm nhân viên " + hoTen + " thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                QuanLyNhanVienController.KetQuaLuu result = controller.validateAndCreate(maTuDong,
+                        txtHoTen.getText(), (String) cbChucVu.getSelectedItem(), txtSdt.getText(),
+                        (String) cbGioiTinh.getSelectedItem(), txtNgaySinh.getText(), txtDiaChi.getText());
+                if (!result.isThanhCong()) {
+                    JOptionPane.showMessageDialog(this, result.getThongBao(), "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                JOptionPane.showMessageDialog(this, "Thêm nhân viên " + txtHoTen.getText().trim() + " thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuLenBang();
-            } else {
-                JOptionPane.showMessageDialog(this, "Không thể lưu nhân viên vào cơ sở dữ liệu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Không thể lưu nhân viên: " + ex.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -393,9 +374,11 @@ public class QuanLyNhanVienGUI extends JPanel {
         String maNV = (String) modelBang.getValueAt(modelRow, 0);
         NhanVien_entity nv = null;
         try {
-            nv = nhanVienDAO.getNhanVienTheoMa(maNV);
+            nv = controller.timTheoMa(maNV);
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không thể tải nhân viên: " + e.getMessage(),
+                    "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            return;
         }
         if (nv == null) return;
 
@@ -418,40 +401,18 @@ public class QuanLyNhanVienGUI extends JPanel {
 
         int res = JOptionPane.showConfirmDialog(this, form, "Cập nhật thông tin nhân viên: " + nv.getMaNhanVien(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (res == JOptionPane.OK_OPTION) {
-            String hoTen = txtHoTen.getText().trim();
-            String sdt = txtSdt.getText().trim();
-            if (hoTen.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Họ và tên nhân viên không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            double luong;
             try {
-                luong = nhanVienDAO.getLuongTheoChucVu((String) cbChucVu.getSelectedItem());
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Không thể lấy lương theo chức vụ: " + ex.getMessage(),
-                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            nv.setHoTen(hoTen);
-            nv.setChucVu((String) cbChucVu.getSelectedItem());
-            nv.setSdt(sdt);
-            nv.setGioiTinh((String) cbGioiTinh.getSelectedItem());
-            try {
-                nv.setNgaySinh(LocalDate.parse(txtNgaySinh.getText().trim()));
-            } catch (java.time.format.DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(this, "Ngày sinh phải theo định dạng yyyy-MM-dd!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            nv.setDiaChi(txtDiaChi.getText().trim());
-            nv.setLuongCoBan(luong);
-
-            if (nhanVienDAO.updateNhanVien(nv)) {
+                QuanLyNhanVienController.KetQuaLuu result = controller.validateAndUpdate(nv,
+                        txtHoTen.getText(), (String) cbChucVu.getSelectedItem(), txtSdt.getText(),
+                        (String) cbGioiTinh.getSelectedItem(), txtNgaySinh.getText(), txtDiaChi.getText());
+                if (!result.isThanhCong()) {
+                    JOptionPane.showMessageDialog(this, result.getThongBao(), "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 JOptionPane.showMessageDialog(this, "Cập nhật thông tin nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuLenBang();
-            } else {
-                JOptionPane.showMessageDialog(this, "Không thể cập nhật nhân viên trong cơ sở dữ liệu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Không thể cập nhật nhân viên: " + ex.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -472,11 +433,15 @@ public class QuanLyNhanVienGUI extends JPanel {
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (xacNhan == JOptionPane.YES_OPTION) {
-            if (nhanVienDAO.deleteNhanVien(maNV)) {
+            try {
+            if (controller.xoa(maNV)) {
                 JOptionPane.showMessageDialog(this, "Đã xóa nhân viên " + maNV + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuLenBang();
             } else {
                 JOptionPane.showMessageDialog(this, "Không thể xóa nhân viên " + maNV + " khỏi cơ sở dữ liệu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Không thể xóa nhân viên: " + ex.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -503,7 +468,7 @@ public class QuanLyNhanVienGUI extends JPanel {
                     writer.write('\n');
                 }
                 JOptionPane.showMessageDialog(this, "Đã xuất danh sách nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Không thể xuất file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -552,7 +517,11 @@ public class QuanLyNhanVienGUI extends JPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (java.awt.AWTError | ClassNotFoundException | InstantiationException
+                | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            JOptionPane.showMessageDialog(null, "Không thể thiết lập giao diện hệ thống: " + ex.getMessage(),
+                    "Lỗi giao diện", JOptionPane.ERROR_MESSAGE);
+        }
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Kiểm thử Quản lý nhân viên SALALA");
