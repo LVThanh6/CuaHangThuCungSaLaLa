@@ -81,18 +81,15 @@ public class GiaoDienChinhGUI extends JPanel {
         // --- KHỞI TẠO DỮ LIỆU LIÊN KẾT CHO TAB VẬT TƯ ---
         vatTuGUI = new VatTuGUI();
         
-        phieuNhapGUI = new PhieuNhapKhoGUI(
-                vatTuGUI::getDanhSachVatTu,
-                vatTuGUI::tangTon,
-                () -> {
-                    try {
-                        if (headerGUI != null) {
-                            headerGUI.chonMenuCon("Vật tư", "Phiếu xuất kho");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+        phieuNhapGUI = new PhieuNhapKhoGUI(() -> {
+            try {
+                if (headerGUI != null) {
+                    headerGUI.chonMenuCon("Vật tư", "Phiếu xuất kho");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 
         phieuXuatGUI = new PhieuXuatKhoGUI(
                 vatTuGUI::getDanhSachVatTu,

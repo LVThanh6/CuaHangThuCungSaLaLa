@@ -3,6 +3,7 @@ package dao;
 import connectDB.ConnectDB;
 import entity.ChiTietPhieuNhapKho_entity;
 import entity.PhieuNhapKho_entity.TrangThai;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,25 +12,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO "Chi tiết phiếu nhập kho".
+ * DAO "Chi tiết phiếu nhập kho" - làm việc trực tiếp với CSDL SALALA:
+ *   ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong)   -- PK maCTPNK
+ *   PhieuNhapKho(maPNK, ngayNhap, ghiChu, trangThai, maNhanVien, maNCC)
+ *   VatTu(maVT, ..., tenVT, ..., maThuoc)  +  Thuoc(maThuoc, donViTinh)
  *
- * Giả định CSDL (SQL Server):
- *   VatTu(maVT, tenVT, donVi, giaNhap, soLuongTon)
- *   PhieuNhapKho(soPhieu, ngayLap, nhanVien, nhaCungCap, ghiChu, trangThai)
- *   ChiTietPhieuNhap(soPhieu, maVT, soLuong, donGia)  -- PK (soPhieu, maVT)
- *
- * Quy tắc: chỉ được thêm / sửa / xóa dòng chi tiết khi phiếu đang "Chờ xác nhận".
- * Các thao tác ghi KHÔNG tự cộng tồn kho; việc cộng tồn do PhieuNhapKho_DAO.xacNhan() đảm nhiệm.
+ * Quy tắc: chỉ thêm / sửa / xóa dòng chi tiết khi phiếu đang "Chờ xác nhận".
+ * Các thao tác ghi KHÔNG cộng tồn kho; việc đó do PhieuNhapKho_DAO.xacNhan() đảm nhiệm.
+ * Mỗi (maPNK, maVT) chỉ có một dòng.
  */
 public class ChiTietPhieuNhapKho_DAO {
 
     private static final String SELECT_BASE =
-            "SELECT c.soPhieu, c.maVT, v.tenVT, v.donVi, c.soLuong, c.donGia "
-            + "FROM ChiTietPhieuNhap c JOIN VatTu v ON c.maVT = v.maVT ";
+            "SELECT c.maPNK, c.maVT, v.tenVT, COALESCE(t.donViTinh, N'') AS donVi, c.soLuong, c.donGia "
+            + "FROM ChiTietPhieuNhapKho c "
+            + "JOIN VatTu v ON c.maVT = v.maVT "
+            + "LEFT JOIN Thuoc t ON t.maThuoc = v.maThuoc ";
 
-    /** Điều kiện: phiếu tồn tại và đang Chờ xác nhận (tham số: soPhieu, trangThai). */
+    /** Điều kiện: phiếu tồn tại và đang Chờ xác nhận (tham số: maPNK, trangThai). */
     private static final String PHIEU_CHO_XAC_NHAN =
-            "EXISTS (SELECT 1 FROM PhieuNhapKho WHERE soPhieu = ? AND trangThai = ?)";
+            "EXISTS (SELECT 1 FROM PhieuNhapKho WHERE maPNK = ? AND trangThai = ?)";
+
+    private String lastError = null;
+
+    public String getLastError() { return lastError; }
 
     private Connection conn() throws SQLException {
         Connection c = ConnectDB.getInstance().getConnection();
@@ -37,28 +43,52 @@ public class ChiTietPhieuNhapKho_DAO {
         return c;
     }
 
+    private void setError(SQLException e) {
+        e.printStackTrace();
+        lastError = e.getMessage();
+    }
+
+    // ---- sinh mã chi tiết CTPNK01, CTPNK02... (dùng chung với PhieuNhapKho_DAO) ----
+    static int maxChiTietSo(Connection c) throws SQLException {
+        int max = 0;
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT maCTPNK FROM ChiTietPhieuNhapKho WHERE maCTPNK LIKE 'CTPNK%'");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                try {
+                    max = Math.max(max, Integer.parseInt(rs.getString(1).substring(5)));
+                } catch (NumberFormatException ignored) { }
+            }
+        }
+        return max;
+    }
+
+    static String maChiTiet(int so) { return String.format("CTPNK%02d", so); }
+
     // ===================================================================
     // Truy vấn
     // ===================================================================
 
     /** Tất cả dòng chi tiết của một phiếu. */
     public List<ChiTietPhieuNhapKho_entity> getBySoPhieu(String soPhieu) {
+        lastError = null;
         List<ChiTietPhieuNhapKho_entity> ds = new ArrayList<>();
-        String sql = SELECT_BASE + "WHERE c.soPhieu = ? ORDER BY c.maVT";
+        String sql = SELECT_BASE + "WHERE c.maPNK = ? ORDER BY c.maCTPNK";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) ds.add(map(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
         }
         return ds;
     }
 
     /** Một dòng chi tiết theo (soPhieu, maVT); không có -> null. */
     public ChiTietPhieuNhapKho_entity getOne(String soPhieu, String maVT) {
-        String sql = SELECT_BASE + "WHERE c.soPhieu = ? AND c.maVT = ?";
+        lastError = null;
+        String sql = SELECT_BASE + "WHERE c.maPNK = ? AND c.maVT = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             ps.setString(2, maVT);
@@ -66,14 +96,15 @@ public class ChiTietPhieuNhapKho_DAO {
                 if (rs.next()) return map(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
         }
         return null;
     }
 
     /** Kiểm tra vật tư đã có trong phiếu chưa. */
     public boolean exists(String soPhieu, String maVT) {
-        String sql = "SELECT 1 FROM ChiTietPhieuNhap WHERE soPhieu = ? AND maVT = ?";
+        lastError = null;
+        String sql = "SELECT 1 FROM ChiTietPhieuNhapKho WHERE maPNK = ? AND maVT = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             ps.setString(2, maVT);
@@ -81,36 +112,37 @@ public class ChiTietPhieuNhapKho_DAO {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
             return false;
         }
     }
 
     /** Tổng số lượng của phiếu. */
     public int tongSoLuong(String soPhieu) {
-        String sql = "SELECT COALESCE(SUM(soLuong), 0) FROM ChiTietPhieuNhap WHERE soPhieu = ?";
+        lastError = null;
+        String sql = "SELECT COALESCE(SUM(soLuong), 0) FROM ChiTietPhieuNhapKho WHERE maPNK = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
         }
         return 0;
     }
 
     /** Tổng tiền của phiếu (soLuong x donGia). */
     public long tongTien(String soPhieu) {
-        String sql = "SELECT COALESCE(SUM(CAST(soLuong AS BIGINT) * donGia), 0) "
-                + "FROM ChiTietPhieuNhap WHERE soPhieu = ?";
+        lastError = null;
+        String sql = "SELECT COALESCE(SUM(soLuong * donGia), 0) FROM ChiTietPhieuNhapKho WHERE maPNK = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getLong(1);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
         }
         return 0;
     }
@@ -121,24 +153,36 @@ public class ChiTietPhieuNhapKho_DAO {
 
     /** Thêm một dòng vật tư vào phiếu (chỉ khi phiếu Chờ xác nhận và vật tư chưa có trong phiếu). */
     public boolean insert(ChiTietPhieuNhapKho_entity ct) {
-        String sql = "INSERT INTO ChiTietPhieuNhap(soPhieu, maVT, soLuong, donGia) "
-                + "SELECT ?, ?, ?, ? WHERE " + PHIEU_CHO_XAC_NHAN;
-        try (PreparedStatement ps = conn().prepareStatement(sql)) {
-            ps.setString(1, ct.getSoPhieu());
-            ps.setString(2, ct.getMaVT());
-            ps.setInt(3, ct.getSoLuong());
-            ps.setLong(4, ct.getDonGia());
-            ps.setString(5, ct.getSoPhieu());
-            ps.setString(6, TrangThai.CHO_XAC_NHAN.getText());
-            return ps.executeUpdate() > 0;
+        lastError = null;
+        String sql = "INSERT INTO ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong) "
+                + "SELECT ?, ?, ?, ?, ? WHERE " + PHIEU_CHO_XAC_NHAN
+                + " AND NOT EXISTS (SELECT 1 FROM ChiTietPhieuNhapKho WHERE maPNK = ? AND maVT = ?)";
+        try {
+            Connection c = conn();
+            String ma = maChiTiet(maxChiTietSo(c) + 1);
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setString(1, ma);
+                ps.setString(2, ct.getSoPhieu());
+                ps.setString(3, ct.getMaVT());
+                ps.setLong(4, ct.getDonGia());
+                ps.setInt(5, ct.getSoLuong());
+                ps.setString(6, ct.getSoPhieu());
+                ps.setString(7, TrangThai.CHO_XAC_NHAN.getText());
+                ps.setString(8, ct.getSoPhieu());
+                ps.setString(9, ct.getMaVT());
+                boolean ok = ps.executeUpdate() > 0;
+                if (!ok) lastError = "Phiếu không ở trạng thái Chờ xác nhận hoặc vật tư đã có trong phiếu.";
+                return ok;
+            }
         } catch (SQLException e) {
-            e.printStackTrace(); // ví dụ: trùng khóa (vật tư đã có trong phiếu)
+            setError(e);
             return false;
         }
     }
 
     /** Thêm nhiều dòng cùng lúc trong 1 transaction (chỉ khi phiếu Chờ xác nhận). */
     public boolean insertAll(String soPhieu, List<ChiTietPhieuNhapKho_entity> ds) {
+        lastError = null;
         if (ds == null || ds.isEmpty()) return true;
         Connection c = null;
         try {
@@ -146,15 +190,18 @@ public class ChiTietPhieuNhapKho_DAO {
             c.setAutoCommit(false);
             if (!isChoXacNhan(c, soPhieu)) {
                 c.rollback();
+                lastError = "Phiếu không ở trạng thái Chờ xác nhận.";
                 return false;
             }
-            String sql = "INSERT INTO ChiTietPhieuNhap(soPhieu, maVT, soLuong, donGia) VALUES (?,?,?,?)";
+            int so = maxChiTietSo(c);
+            String sql = "INSERT INTO ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong) VALUES (?,?,?,?,?)";
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 for (ChiTietPhieuNhapKho_entity d : ds) {
-                    ps.setString(1, soPhieu);
-                    ps.setString(2, d.getMaVT());
-                    ps.setInt(3, d.getSoLuong());
+                    ps.setString(1, maChiTiet(++so));
+                    ps.setString(2, soPhieu);
+                    ps.setString(3, d.getMaVT());
                     ps.setLong(4, d.getDonGia());
+                    ps.setInt(5, d.getSoLuong());
                     ps.addBatch();
                 }
                 ps.executeBatch();
@@ -163,7 +210,7 @@ public class ChiTietPhieuNhapKho_DAO {
             return true;
         } catch (SQLException e) {
             rollback(c);
-            e.printStackTrace();
+            setError(e);
             return false;
         } finally {
             resetAutoCommit(c);
@@ -172,8 +219,9 @@ public class ChiTietPhieuNhapKho_DAO {
 
     /** Sửa số lượng / đơn giá của một dòng (chỉ khi phiếu Chờ xác nhận). */
     public boolean update(ChiTietPhieuNhapKho_entity ct) {
-        String sql = "UPDATE ChiTietPhieuNhap SET soLuong = ?, donGia = ? "
-                + "WHERE soPhieu = ? AND maVT = ? AND " + PHIEU_CHO_XAC_NHAN;
+        lastError = null;
+        String sql = "UPDATE ChiTietPhieuNhapKho SET soLuong = ?, donGia = ? "
+                + "WHERE maPNK = ? AND maVT = ? AND " + PHIEU_CHO_XAC_NHAN;
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, ct.getSoLuong());
             ps.setLong(2, ct.getDonGia());
@@ -183,15 +231,15 @@ public class ChiTietPhieuNhapKho_DAO {
             ps.setString(6, TrangThai.CHO_XAC_NHAN.getText());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
             return false;
         }
     }
 
     /** Xóa một dòng vật tư khỏi phiếu (chỉ khi phiếu Chờ xác nhận). */
     public boolean delete(String soPhieu, String maVT) {
-        String sql = "DELETE FROM ChiTietPhieuNhap WHERE soPhieu = ? AND maVT = ? AND "
-                + PHIEU_CHO_XAC_NHAN;
+        lastError = null;
+        String sql = "DELETE FROM ChiTietPhieuNhapKho WHERE maPNK = ? AND maVT = ? AND " + PHIEU_CHO_XAC_NHAN;
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             ps.setString(2, maVT);
@@ -199,21 +247,23 @@ public class ChiTietPhieuNhapKho_DAO {
             ps.setString(4, TrangThai.CHO_XAC_NHAN.getText());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
             return false;
         }
     }
 
     /** Xóa toàn bộ chi tiết của một phiếu (chỉ khi phiếu Chờ xác nhận). */
     public boolean deleteBySoPhieu(String soPhieu) {
-        String sql = "DELETE FROM ChiTietPhieuNhap WHERE soPhieu = ? AND " + PHIEU_CHO_XAC_NHAN;
+        lastError = null;
+        String sql = "DELETE FROM ChiTietPhieuNhapKho WHERE maPNK = ? AND " + PHIEU_CHO_XAC_NHAN;
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             ps.setString(2, soPhieu);
             ps.setString(3, TrangThai.CHO_XAC_NHAN.getText());
-            return ps.executeUpdate() >= 0 && isChoXacNhanQuiet(soPhieu);
+            ps.executeUpdate();
+            return isChoXacNhan(conn(), soPhieu);
         } catch (SQLException e) {
-            e.printStackTrace();
+            setError(e);
             return false;
         }
     }
@@ -224,7 +274,7 @@ public class ChiTietPhieuNhapKho_DAO {
 
     private ChiTietPhieuNhapKho_entity map(ResultSet rs) throws SQLException {
         return new ChiTietPhieuNhapKho_entity(
-                rs.getString("soPhieu"),
+                rs.getString("maPNK"),
                 rs.getString("maVT"),
                 rs.getString("tenVT"),
                 rs.getString("donVi"),
@@ -233,22 +283,13 @@ public class ChiTietPhieuNhapKho_DAO {
     }
 
     private boolean isChoXacNhan(Connection c, String soPhieu) throws SQLException {
-        String sql = "SELECT 1 FROM PhieuNhapKho WHERE soPhieu = ? AND trangThai = ?";
+        String sql = "SELECT 1 FROM PhieuNhapKho WHERE maPNK = ? AND trangThai = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, soPhieu);
             ps.setString(2, TrangThai.CHO_XAC_NHAN.getText());
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-        }
-    }
-
-    private boolean isChoXacNhanQuiet(String soPhieu) {
-        try {
-            return isChoXacNhan(conn(), soPhieu);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
         }
     }
 

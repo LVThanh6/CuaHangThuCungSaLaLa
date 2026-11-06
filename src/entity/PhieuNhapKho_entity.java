@@ -3,15 +3,14 @@ package entity;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * Entity "Phiếu nhập kho" - SALALA Pet Shop.
- * Bảng: PhieuNhapKho (header) + ChiTietPhieuNhap (các dòng vật tư).
+ * Phiếu nhập kho (ánh xạ bảng PhieuNhapKho + ChiTietPhieuNhapKho của CSDL SALALA).
+ *  soPhieu  = maPNK       nhanVien   = NhanVien.hoTen   (maNhanVien lưu riêng)
+ *  ngayLap  = ngayNhap    nhaCungCap = NhaCungCap.tenNCC (maNCC lưu riêng)
  */
 public class PhieuNhapKho_entity {
 
-    // ===== Trạng thái =====
     public enum TrangThai {
         CHO_XAC_NHAN("Chờ xác nhận"), DA_XAC_NHAN("Đã xác nhận"), DA_HUY("Đã hủy");
 
@@ -19,51 +18,39 @@ public class PhieuNhapKho_entity {
         TrangThai(String text) { this.text = text; }
         public String getText() { return text; }
 
-        /** Chuyển chuỗi lưu trong CSDL về enum. */
+        /** Chuyển chuỗi trong CSDL thành enum. Dữ liệu cũ "Hoàn thành" coi như đã xác nhận. */
         public static TrangThai fromText(String s) {
-            for (TrangThai t : values()) if (t.text.equals(s)) return t;
+            if (s != null) {
+                String t = s.trim();
+                for (TrangThai tt : values()) if (tt.text.equalsIgnoreCase(t)) return tt;
+                if (t.equalsIgnoreCase("Hoàn thành")) return DA_XAC_NHAN;
+            }
             return CHO_XAC_NHAN;
         }
     }
 
-    // ===== Chi tiết phiếu (1 dòng vật tư) =====
+    /** Một dòng vật tư của phiếu. */
     public static class ChiTiet {
-        private String maVT, tenVT, donVi;
-        private int soLuong;
-        private long donGia;
+        private final String maVT, tenVT, donVi;
+        private final int soLuong;
+        private final long donGia;
 
-        public ChiTiet() {}
         public ChiTiet(String maVT, String tenVT, String donVi, int soLuong, long donGia) {
             this.maVT = maVT; this.tenVT = tenVT; this.donVi = donVi;
             this.soLuong = soLuong; this.donGia = donGia;
         }
-
         public String getMaVT() { return maVT; }
-        public void setMaVT(String maVT) { this.maVT = maVT; }
         public String getTenVT() { return tenVT; }
-        public void setTenVT(String tenVT) { this.tenVT = tenVT; }
         public String getDonVi() { return donVi; }
-        public void setDonVi(String donVi) { this.donVi = donVi; }
         public int getSoLuong() { return soLuong; }
-        public void setSoLuong(int soLuong) { this.soLuong = soLuong; }
         public long getDonGia() { return donGia; }
-        public void setDonGia(long donGia) { this.donGia = donGia; }
-
-        public long getThanhTien() { return soLuong * donGia; }
+        public long thanhTien() { return (long) soLuong * donGia; }
     }
 
-    // ===== Thuộc tính =====
-    private String soPhieu;          // PN-yyyy-NNNN
+    private String soPhieu, maNhanVien, nhanVien, maNCC, nhaCungCap, ghiChu;
     private LocalDate ngayLap;
-    private String nhanVien;
-    private String nhaCungCap;
-    private String ghiChu = "";
-    private TrangThai trangThai = TrangThai.CHO_XAC_NHAN;
+    private TrangThai trangThai;
     private List<ChiTiet> chiTiet = new ArrayList<>();
-
-    public PhieuNhapKho_entity() {}
-
-    public PhieuNhapKho_entity(String soPhieu) { this.soPhieu = soPhieu; }
 
     public PhieuNhapKho_entity(String soPhieu, LocalDate ngayLap, String nhanVien,
                                String nhaCungCap, String ghiChu, TrangThai trangThai) {
@@ -72,37 +59,20 @@ public class PhieuNhapKho_entity {
     }
 
     public String getSoPhieu() { return soPhieu; }
-    public void setSoPhieu(String soPhieu) { this.soPhieu = soPhieu; }
     public LocalDate getNgayLap() { return ngayLap; }
-    public void setNgayLap(LocalDate ngayLap) { this.ngayLap = ngayLap; }
     public String getNhanVien() { return nhanVien; }
-    public void setNhanVien(String nhanVien) { this.nhanVien = nhanVien; }
     public String getNhaCungCap() { return nhaCungCap; }
-    public void setNhaCungCap(String nhaCungCap) { this.nhaCungCap = nhaCungCap; }
-    public String getGhiChu() { return ghiChu; }
-    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+    public String getGhiChu() { return ghiChu == null ? "" : ghiChu; }
     public TrangThai getTrangThai() { return trangThai; }
-    public void setTrangThai(TrangThai trangThai) { this.trangThai = trangThai; }
+    public String getMaNhanVien() { return maNhanVien; }
+    public String getMaNCC() { return maNCC; }
     public List<ChiTiet> getChiTiet() { return chiTiet; }
-    public void setChiTiet(List<ChiTiet> chiTiet) { this.chiTiet = chiTiet; }
 
-    public int tongSL() {
-        int t = 0;
-        for (ChiTiet d : chiTiet) t += d.getSoLuong();
-        return t;
-    }
+    public void setMaNhanVien(String maNhanVien) { this.maNhanVien = maNhanVien; }
+    public void setMaNCC(String maNCC) { this.maNCC = maNCC; }
+    public void setTrangThai(TrangThai trangThai) { this.trangThai = trangThai; }
+    public void setChiTiet(List<ChiTiet> chiTiet) { this.chiTiet = chiTiet == null ? new ArrayList<>() : chiTiet; }
 
-    public long tongTien() {
-        long t = 0;
-        for (ChiTiet d : chiTiet) t += d.getThanhTien();
-        return t;
-    }
-
-    @Override public boolean equals(Object o) {
-        return o instanceof PhieuNhapKho_entity
-                && Objects.equals(soPhieu, ((PhieuNhapKho_entity) o).soPhieu);
-    }
-    @Override public int hashCode() { return Objects.hash(soPhieu); }
-
-    @Override public String toString() { return soPhieu + "  ·  " + trangThai.getText(); }
+    public int tongSoLuong() { int t = 0; for (ChiTiet d : chiTiet) t += d.getSoLuong(); return t; }
+    public long tongTien() { long t = 0; for (ChiTiet d : chiTiet) t += d.thanhTien(); return t; }
 }

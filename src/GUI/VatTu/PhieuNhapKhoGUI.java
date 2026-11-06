@@ -1,5 +1,12 @@
 package GUI.VatTu;
 
+import dao.NhaCungCap_DAO;
+import dao.PhieuNhapKho_DAO;
+import entity.NhaCungCap_entity;
+import entity.PhieuNhapKho_entity;
+import entity.PhieuNhapKho_entity.ChiTiet;
+import entity.PhieuNhapKho_entity.TrangThai;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
@@ -16,14 +23,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 /**
  * Giao diện "Phiếu nhập kho" - SALALA Pet Shop.
- * Danh sách quản lý phiếu nhập kho với tìm kiếm, lọc,
- * các nút Xem / Sửa / Xuất danh sách trên toolbar, lập phiếu mới, xác nhận nhập kho.
+ * Kết nối trực tiếp cơ sở dữ liệu thông qua PhieuNhapKho_DAO và ChiTietPhieuNhapKho_DAO.
  */
 public class PhieuNhapKhoGUI extends JPanel {
 
@@ -34,7 +39,6 @@ public class PhieuNhapKhoGUI extends JPanel {
     private static final Color TEXT_DARK   = new Color(0x111827);
     private static final Color TEXT_GRAY   = new Color(0x6B7280);
     private static final Color PRIMARY     = new Color(0x0F6B5A);
-    private static final Color PRIMARY_BG  = new Color(0xE6F7F3);
     private static final Color GREEN       = new Color(0x047857);
     private static final Color ORANGE      = new Color(0xC2410C);
     private static final Color RED         = new Color(0xB91C1C);
@@ -53,53 +57,17 @@ public class PhieuNhapKhoGUI extends JPanel {
         MONEY = new DecimalFormat("#,##0", s);
     }
 
-    private static final String[] NHA_CUNG_CAP = {
-            "Công ty Dược Thú Y VetGroup",
-            "Công ty TNHH Thú Y Á Châu",
-            "Pharma Pet Việt Nam"
-    };
+    // ===== DAO kết nối CSDL =====
+    private final PhieuNhapKho_DAO pnkDAO = new PhieuNhapKho_DAO();
+    private final NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
 
-    // =====================================================================
-    // Mô hình dữ liệu
-    // =====================================================================
-    enum TrangThai {
-        CHO_XAC_NHAN("Chờ xác nhận"), DA_XAC_NHAN("Đã xác nhận"), DA_HUY("Đã hủy");
-        final String text;
-        TrangThai(String text) { this.text = text; }
-    }
-
-    static class Dong {
-        String ma, ten, donVi;
-        int sl;
-        long donGia;
-        Dong(String ma, String ten, String donVi, int sl, long donGia) {
-            this.ma = ma; this.ten = ten; this.donVi = donVi; this.sl = sl; this.donGia = donGia;
-        }
-        long thanhTien() { return (long) sl * donGia; }
-    }
-
-    static class Phieu {
-        String so, nhanVien, nhaCungCap, ghiChu = "";
-        LocalDate ngay;
-        TrangThai tt = TrangThai.CHO_XAC_NHAN;
-        java.util.List<Dong> dong = new ArrayList<>();
-
-        int tongSL() { int t = 0; for (Dong d : dong) t += d.sl; return t; }
-        long tongTien() { long t = 0; for (Dong d : dong) t += d.thanhTien(); return t; }
-    }
-
-    // ===== Thành phần =====
-    private final Supplier<java.util.List<Object[]>> catalogSupplier;
-    private final BiConsumer<String, Integer> stockUpdater;
     private final Runnable onLapPhieuXuat;
 
-    private final java.util.List<Phieu> all = new ArrayList<>();
-    private java.util.List<Phieu> filtered = new ArrayList<>();
-    private final java.util.List<Phieu> pageRows = new ArrayList<>();
+    private List<PhieuNhapKho_entity> all = new ArrayList<>();
+    private List<PhieuNhapKho_entity> filtered = new ArrayList<>();
+    private List<PhieuNhapKho_entity> pageRows = new ArrayList<>();
 
     private LocalDate tuNgay, denNgay;
-    private int seq = 42;
-    private String nhanVien = "Lê Minh";
 
     private JTextField txtSearch;
     private RoundButton btnDate;
@@ -108,11 +76,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     private DefaultTableModel model;
     private JLabel lblShowing;
 
-    public PhieuNhapKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
-                           BiConsumer<String, Integer> stockUpdater,
-                           Runnable onLapPhieuXuat) {
-        this.catalogSupplier = catalogSupplier;
-        this.stockUpdater = stockUpdater;
+    public PhieuNhapKhoGUI(Runnable onLapPhieuXuat) {
         this.onLapPhieuXuat = onLapPhieuXuat;
 
         setLayout(new BorderLayout(0, 14));
@@ -122,11 +86,8 @@ public class PhieuNhapKhoGUI extends JPanel {
         add(createHeader(), BorderLayout.NORTH);
         add(createTablePanel(), BorderLayout.CENTER);
 
-        loadSampleData();
-        reload(true);
+        loadDataFromDB();
     }
-
-    public void setNhanVien(String ten) { this.nhanVien = ten; }
 
     // =====================================================================
     // Header
@@ -141,7 +102,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         JLabel t = new JLabel("Phiếu nhập kho");
         t.setFont(new Font(FONT, Font.BOLD, 18));
         t.setForeground(TEXT_DARK);
-        JLabel s = new JLabel("Tạo mới, xem, sửa và xác nhận phiếu nhập kho cho vật tư");
+        JLabel s = new JLabel("Tạo mới, xem, sửa và xác nhận phiếu nhập kho cho vật tư từ CSDL");
         s.setFont(new Font(FONT, Font.PLAIN, 12));
         s.setForeground(TEXT_GRAY);
         t.setAlignmentX(LEFT_ALIGNMENT);
@@ -277,7 +238,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         sp.getViewport().setBackground(WHITE);
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
-        // Thông tin bên dưới bảng
+        // Thông tin dưới bảng
         lblShowing = new JLabel();
         lblShowing.setFont(new Font(FONT, Font.PLAIN, 12));
         lblShowing.setForeground(TEXT_GRAY);
@@ -307,30 +268,12 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     // =====================================================================
-    // Dữ liệu & Lọc
+    // Nạp dữ liệu từ CSDL
     // =====================================================================
-    private void loadSampleData() {
-        Phieu p42 = new Phieu();
-        p42.so = "PN-2025-0042";
-        p42.ngay = LocalDate.of(2025, 7, 5);
-        p42.nhanVien = "Lê Minh";
-        p42.nhaCungCap = "Công ty Dược Thú Y VetGroup";
-        p42.ghiChu = "Nhập bổ sung vắc-xin và kháng sinh tháng 7/2025";
-        p42.dong.add(new Dong("VT-001", "Amoxicillin 250mg", "Ống", 100, 45000));
-        p42.dong.add(new Dong("VT-002", "Rabisin Vắc-xin Dại", "Lọ", 30, 320000));
-        p42.dong.add(new Dong("VT-006", "Kim tiêm 5ml", "Hộp", 10, 35000));
-
-        Phieu p41 = new Phieu();
-        p41.so = "PN-2025-0041";
-        p41.ngay = LocalDate.of(2025, 6, 20);
-        p41.nhanVien = "Lê Minh";
-        p41.nhaCungCap = "Công ty TNHH Thú Y Á Châu";
-        p41.ghiChu = "Bổ sung thuốc giảm đau";
-        p41.dong.add(new Dong("VT-003", "Prednisolone 5mg", "Viên", 200, 8500));
-        p41.tt = TrangThai.DA_XAC_NHAN;
-
-        all.add(p42);
-        all.add(p41);
+    public void loadDataFromDB() {
+        all = pnkDAO.getAll();
+        if (all == null) all = new ArrayList<>();
+        reload(true);
     }
 
     private void reload(boolean resetPage) {
@@ -339,30 +282,30 @@ public class PhieuNhapKhoGUI extends JPanel {
         TrangThai[] stMap = {null, TrangThai.CHO_XAC_NHAN, TrangThai.DA_XAC_NHAN, TrangThai.DA_HUY};
 
         filtered = new ArrayList<>();
-        for (Phieu p : all) {
+        for (PhieuNhapKho_entity p : all) {
             if (!kw.isEmpty()
-                    && !p.so.toLowerCase().contains(kw)
-                    && !p.nhanVien.toLowerCase().contains(kw)
-                    && !p.nhaCungCap.toLowerCase().contains(kw)) continue;
-            if (stIdx > 0 && p.tt != stMap[stIdx]) continue;
-            if (tuNgay != null && p.ngay.isBefore(tuNgay)) continue;
-            if (denNgay != null && p.ngay.isAfter(denNgay)) continue;
+                    && !p.getSoPhieu().toLowerCase().contains(kw)
+                    && !p.getNhanVien().toLowerCase().contains(kw)
+                    && !p.getNhaCungCap().toLowerCase().contains(kw)) continue;
+            if (stIdx > 0 && p.getTrangThai() != stMap[stIdx]) continue;
+            if (tuNgay != null && p.getNgayLap().isBefore(tuNgay)) continue;
+            if (denNgay != null && p.getNgayLap().isAfter(denNgay)) continue;
             filtered.add(p);
         }
 
         model.setRowCount(0);
         pageRows.clear();
         for (int i = 0; i < filtered.size(); i++) {
-            Phieu p = filtered.get(i);
+            PhieuNhapKho_entity p = filtered.get(i);
             pageRows.add(p);
             model.addRow(new Object[]{
-                    p.so,
-                    p.ngay.format(DF),
-                    p.nhanVien,
-                    p.nhaCungCap,
-                    p.dong.size(),
+                    p.getSoPhieu(),
+                    p.getNgayLap().format(DF),
+                    p.getNhanVien(),
+                    p.getNhaCungCap(),
+                    p.getChiTiet().size(),
                     p.tongTien(),
-                    p.tt.text
+                    p.getTrangThai().getText()
             });
         }
 
@@ -409,39 +352,46 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     // =====================================================================
-    // Chức năng Xem, Sửa, Lập, Xác nhận, Hủy, In/Xuất
+    // Chức năng Lập, Xem, Sửa, Xác nhận, Hủy
     // =====================================================================
     private void lapPhieu() {
-        Phieu p = openEditor(null);
+        PhieuNhapKho_entity p = openEditor(null);
         if (p != null) {
-            all.add(0, p);
-            reload(true);
+            boolean success = pnkDAO.insert(p);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Lập phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadDataFromDB();
+            } else {
+                JOptionPane.showMessageDialog(this, "Lập phiếu thất bại: " + pnkDAO.getLastError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    private void xemPhieu(Phieu p) {
+    private void xemPhieu(PhieuNhapKho_entity p) {
         openDetail(p);
     }
 
-    private void suaPhieu(Phieu p) {
-        if (p.tt != TrangThai.CHO_XAC_NHAN) {
+    private void suaPhieu(PhieuNhapKho_entity p) {
+        if (p.getTrangThai() != TrangThai.CHO_XAC_NHAN) {
             JOptionPane.showMessageDialog(this, "Chỉ sửa được phiếu đang ở trạng thái Chờ xác nhận.", "Không thể sửa",
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        Phieu np = openEditor(p);
+        PhieuNhapKho_entity np = openEditor(p);
         if (np != null) {
-            p.ngay = np.ngay;
-            p.nhaCungCap = np.nhaCungCap;
-            p.ghiChu = np.ghiChu;
-            p.dong = np.dong;
-            reload(false);
+            boolean success = pnkDAO.update(np);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Cập nhật phiếu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadDataFromDB();
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại: " + pnkDAO.getLastError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    private void openDetail(Phieu p) {
+    private void openDetail(PhieuNhapKho_entity p) {
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
-                "Chi tiết phiếu nhập: " + p.so, Dialog.ModalityType.APPLICATION_MODAL);
+                "Chi tiết phiếu nhập: " + p.getSoPhieu(), Dialog.ModalityType.APPLICATION_MODAL);
         d.setSize(720, 520);
         d.setLocationRelativeTo(this);
 
@@ -451,17 +401,18 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel info = new JPanel(new GridLayout(2, 2, 16, 8));
         info.setOpaque(false);
-        info.add(detailItem("Số phiếu", p.so));
-        info.add(detailItem("Ngày lập", p.ngay.format(DF)));
-        info.add(detailItem("Nhân viên lập", p.nhanVien));
-        info.add(detailItem("Nhà cung cấp", p.nhaCungCap));
+        info.add(detailItem("Số phiếu", p.getSoPhieu()));
+        info.add(detailItem("Ngày lập", p.getNgayLap().format(DF)));
+        info.add(detailItem("Nhân viên lập", p.getNhanVien()));
+        info.add(detailItem("Nhà cung cấp", p.getNhaCungCap()));
 
         String[] cols = {"Tên vật tư", "Đơn vị", "SL", "Đơn giá", "Thành tiền"};
         DefaultTableModel m = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (Dong dItem : p.dong) {
-            m.addRow(new Object[]{dItem.ten, dItem.donVi, dItem.sl, MONEY.format(dItem.donGia) + " đ", MONEY.format(dItem.thanhTien()) + " đ"});
+        for (ChiTiet dItem : p.getChiTiet()) {
+            m.addRow(new Object[]{dItem.getTenVT(), dItem.getDonVi(), dItem.getSoLuong(),
+                    MONEY.format(dItem.getDonGia()) + " đ", MONEY.format(dItem.thanhTien()) + " đ"});
         }
         JTable tbl = new JTable(m);
         tbl.setRowHeight(32);
@@ -469,7 +420,7 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
-        JLabel lblSum = new JLabel("Tổng số lượng: " + p.tongSL() + "    Tổng giá trị: " + MONEY.format(p.tongTien()) + " đ");
+        JLabel lblSum = new JLabel("Tổng số lượng: " + p.tongSoLuong() + "    Tổng giá trị: " + MONEY.format(p.tongTien()) + " đ");
         lblSum.setFont(new Font(FONT, Font.BOLD, 13));
         lblSum.setForeground(PRIMARY);
         bottom.add(lblSum, BorderLayout.WEST);
@@ -482,38 +433,45 @@ public class PhieuNhapKhoGUI extends JPanel {
         RoundButton btnIn = new RoundButton("In / Xuất", WHITE, BORDER, TEXT_DARK);
         RoundButton btnDong = new RoundButton("Đóng", WHITE, BORDER, TEXT_DARK);
 
-        boolean cho = p.tt == TrangThai.CHO_XAC_NHAN;
+        boolean cho = p.getTrangThai() == TrangThai.CHO_XAC_NHAN;
         btnXN.setEnabled(cho);
         btnHuyP.setEnabled(cho);
 
         btnXN.addActionListener(e -> {
-            if (p.dong.isEmpty()) {
+            if (p.getChiTiet().isEmpty()) {
                 JOptionPane.showMessageDialog(d, "Phiếu chưa có vật tư nào.", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             int ok = JOptionPane.showConfirmDialog(d,
-                    "Xác nhận phiếu nhập " + p.so + " và cộng " + p.tongSL() + " đơn vị vào tồn kho?",
+                    "Xác nhận phiếu nhập " + p.getSoPhieu() + " và cộng " + p.tongSoLuong() + " đơn vị vào tồn kho?",
                     "Xác nhận nhập kho", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (ok != JOptionPane.YES_OPTION) return;
 
-            for (Dong dItem : p.dong) {
-                stockUpdater.accept(dItem.ma, dItem.sl);
+            boolean success = pnkDAO.xacNhan(p.getSoPhieu());
+            if (success) {
+                JOptionPane.showMessageDialog(d, "Đã xác nhận phiếu nhập và cập nhật tồn kho thành công.", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadDataFromDB();
+                d.dispose();
+            } else {
+                JOptionPane.showMessageDialog(d, "Xác nhận thất bại: " + pnkDAO.getLastError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-            p.tt = TrangThai.DA_XAC_NHAN;
-            reload(false);
-            JOptionPane.showMessageDialog(d, "Đã xác nhận phiếu nhập và cập nhật tồn kho thành công.", "Thành công",
-                    JOptionPane.INFORMATION_MESSAGE);
-            d.dispose();
         });
 
         btnHuyP.addActionListener(e -> {
             int ok = JOptionPane.showConfirmDialog(d,
-                    "Hủy phiếu nhập " + p.so + "? Thao tác này không thể hoàn tác.",
+                    "Hủy phiếu nhập " + p.getSoPhieu() + "? Thao tác này không thể hoàn tác.",
                     "Hủy phiếu nhập", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (ok != JOptionPane.YES_OPTION) return;
-            p.tt = TrangThai.DA_HUY;
-            reload(false);
-            d.dispose();
+
+            boolean success = pnkDAO.huy(p.getSoPhieu());
+            if (success) {
+                JOptionPane.showMessageDialog(d, "Đã hủy phiếu thành công.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadDataFromDB();
+                d.dispose();
+            } else {
+                JOptionPane.showMessageDialog(d, "Hủy thất bại: " + pnkDAO.getLastError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         btnIn.addActionListener(e -> xuatIn(p, d));
@@ -550,25 +508,36 @@ public class PhieuNhapKhoGUI extends JPanel {
         return p;
     }
 
-    private Phieu openEditor(Phieu src) {
-        final java.util.List<Object[]> catalog = catalogSupplier.get();
-        final Phieu[] result = {null};
+    private PhieuNhapKho_entity openEditor(PhieuNhapKho_entity src) {
+        final List<Object[]> catalog = pnkDAO.getDanhMucVatTu();
+        final List<NhaCungCap_entity> listNCC = nccDAO.getAllNhaCungCap();
+        final PhieuNhapKho_entity[] result = {null};
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
                 src == null ? "Lập phiếu nhập" : "Sửa phiếu nhập", Dialog.ModalityType.APPLICATION_MODAL);
         d.setSize(720, 560);
         d.setLocationRelativeTo(this);
 
-        JTextField txtSo = new JTextField(src == null
-                ? String.format("PN-%d-%04d", LocalDate.now().getYear(), ++seq) : src.so);
+        JTextField txtSo = new JTextField(src == null ? pnkDAO.taoSoPhieuMoi() : src.getSoPhieu());
         txtSo.setEditable(false);
-        JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.ngay).format(DF));
-        JTextField txtNV = new JTextField(src == null ? nhanVien : src.nhanVien);
+        JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.getNgayLap()).format(DF));
+        
+        // Lấy thông tin nhân viên mặc định từ CSDL
+        Object[] nvInfo = pnkDAO.getNhanVien(null);
+        final String maNV = nvInfo != null ? (String) nvInfo[0] : "NV001";
+        final String tenNV = nvInfo != null ? (String) nvInfo[1] : "Nhân viên kho";
+
+        JTextField txtNV = new JTextField(src == null ? tenNV : src.getNhanVien());
         txtNV.setEditable(false);
-        JComboBox<String> cboNCC = new JComboBox<>(NHA_CUNG_CAP);
-        cboNCC.setEditable(true);
-        if (src != null) cboNCC.setSelectedItem(src.nhaCungCap);
-        JTextField txtGhiChu = new JTextField(src == null ? "" : src.ghiChu);
+
+        // ComboBox Nhà cung cấp
+        JComboBox<String> cboNCC = new JComboBox<>();
+        for (NhaCungCap_entity ncc : listNCC) {
+            cboNCC.addItem(ncc.getTenNCC());
+        }
+        if (src != null) cboNCC.setSelectedItem(src.getNhaCungCap());
+
+        JTextField txtGhiChu = new JTextField(src == null ? "" : src.getGhiChu());
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(new EmptyBorder(12, 14, 6, 14));
@@ -580,30 +549,35 @@ public class PhieuNhapKhoGUI extends JPanel {
         addFormRow(form, 4, "Ghi chú", txtGhiChu);
 
         DefaultTableModel m = new DefaultTableModel(
-                new String[]{"Mã VT", "Tên vật tư", "Đơn vị", "SL", "Đơn giá", "Thành tiền"}, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return c == 3 || c == 4; }
+                new String[]{"Mã VT", "Tên vật tư", "Đơn vị", "SL", "DonGiaVal", "Đơn giá", "Thành tiền"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return c == 3 || c == 5; }
             @Override public Class<?> getColumnClass(int c) {
-                return c == 3 ? Integer.class : (c >= 4 ? Long.class : String.class);
+                return c == 3 ? Integer.class : (c >= 5 ? Long.class : String.class);
             }
         };
         JTable t = new JTable(m);
         t.setRowHeight(28);
         t.setFont(new Font(FONT, Font.PLAIN, 12));
+        // Ẩn cột chứa giá trị thô DonGiaVal (cột 4)
+        t.getColumnModel().getColumn(4).setMinWidth(0);
+        t.getColumnModel().getColumn(4).setMaxWidth(0);
+        t.getColumnModel().getColumn(4).setWidth(0);
 
         m.addTableModelListener(e -> {
-            if (e.getType() == TableModelEvent.UPDATE && (e.getColumn() == 3 || e.getColumn() == 4)) {
+            if (e.getType() == TableModelEvent.UPDATE && (e.getColumn() == 3 || e.getColumn() == 5)) {
                 int r = e.getFirstRow();
                 if (r >= 0 && r < m.getRowCount()) {
                     int sl = ((Number) m.getValueAt(r, 3)).intValue();
-                    long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                    m.setValueAt((long) sl * gia, r, 5);
+                    long gia = ((Number) m.getValueAt(r, 5)).longValue();
+                    m.setValueAt(gia, r, 4); // cập nhật giá thô
+                    m.setValueAt((long) sl * gia, r, 6);
                 }
             }
         });
 
         if (src != null) {
-            for (Dong dg : src.dong) {
-                m.addRow(new Object[]{dg.ma, dg.ten, dg.donVi, dg.sl, dg.donGia, dg.thanhTien()});
+            for (ChiTiet dg : src.getChiTiet()) {
+                m.addRow(new Object[]{dg.getMaVT(), dg.getTenVT(), dg.getDonVi(), dg.getSoLuong(), dg.getDonGia(), dg.getDonGia(), dg.thanhTien()});
             }
         }
 
@@ -616,7 +590,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             if (i >= 0 && i < catalog.size()) txtGia.setText(String.valueOf(catalog.get(i)[3]));
         };
         cboVT.addActionListener(e -> fillGia.run());
-        if (catalog.size() > 0) fillGia.run();
+        if (!catalog.isEmpty()) fillGia.run();
 
         JButton btnThem = new JButton("Thêm vật tư");
         JButton btnXoa = new JButton("Xóa dòng");
@@ -638,11 +612,12 @@ public class PhieuNhapKhoGUI extends JPanel {
                     int slMoi = ((Number) m.getValueAt(r, 3)).intValue() + sl;
                     m.setValueAt(slMoi, r, 3);
                     m.setValueAt(gia, r, 4);
-                    m.setValueAt((long) slMoi * gia, r, 5);
+                    m.setValueAt(gia, r, 5);
+                    m.setValueAt((long) slMoi * gia, r, 6);
                     return;
                 }
             }
-            m.addRow(new Object[]{vt[0], vt[1], vt[2], sl, gia, (long) sl * gia});
+            m.addRow(new Object[]{vt[0], vt[1], vt[2], sl, gia, gia, (long) sl * gia});
         });
         btnXoa.addActionListener(e -> {
             if (t.isEditing()) t.getCellEditor().stopCellEditing();
@@ -679,32 +654,35 @@ public class PhieuNhapKhoGUI extends JPanel {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            Object nccObj = cboNCC.getEditor().getItem();
-            String ncc = nccObj == null ? "" : nccObj.toString().trim();
-            if (ncc.isEmpty()) {
-                JOptionPane.showMessageDialog(d, "Vui lòng nhập nhà cung cấp.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            int nccIndex = cboNCC.getSelectedIndex();
+            if (nccIndex < 0 || nccIndex >= listNCC.size()) {
+                JOptionPane.showMessageDialog(d, "Vui lòng chọn nhà cung cấp hợp lệ.", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            NhaCungCap_entity selectedNCC = listNCC.get(nccIndex);
+
             if (m.getRowCount() == 0) {
                 JOptionPane.showMessageDialog(d, "Phiếu cần có ít nhất một vật tư.", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            Phieu p = src == null ? new Phieu() : src;
-            p.so = txtSo.getText().trim();
-            p.ngay = ngay;
-            p.nhanVien = txtNV.getText().trim();
-            p.nhaCungCap = ncc;
-            p.ghiChu = txtGhiChu.getText().trim();
-            p.dong.clear();
+            PhieuNhapKho_entity p = src == null
+                    ? new PhieuNhapKho_entity(txtSo.getText().trim(), ngay, tenNV, selectedNCC.getTenNCC(), txtGhiChu.getText().trim(), TrangThai.CHO_XAC_NHAN)
+                    : src;
+            p.setMaNhanVien(maNV);
+            p.setMaNCC(selectedNCC.getMaNCC());
+            p.setTrangThai(TrangThai.CHO_XAC_NHAN);
+
+            List<ChiTiet> dsCT = new ArrayList<>();
             for (int r = 0; r < m.getRowCount(); r++) {
                 String ma = (String) m.getValueAt(r, 0);
                 String ten = (String) m.getValueAt(r, 1);
                 String dv = (String) m.getValueAt(r, 2);
                 int sl = ((Number) m.getValueAt(r, 3)).intValue();
-                long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                p.dong.add(new Dong(ma, ten, dv, sl, gia));
+                long gia = ((Number) m.getValueAt(r, 5)).longValue();
+                dsCT.add(new ChiTiet(ma, ten, dv, sl, gia));
             }
+            p.setChiTiet(dsCT);
             result[0] = p;
             d.dispose();
         });
@@ -745,14 +723,14 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         StringBuilder sb = new StringBuilder("\uFEFF");
         sb.append("Mã phiếu nhập,Ngày lập,Nhân viên,Nhà cung cấp,Số lượng mặt hàng,Tổng giá trị,Trạng thái\r\n");
-        for (Phieu p : filtered) {
-            sb.append(csv(p.so)).append(',')
-              .append(csv(p.ngay.format(DF))).append(',')
-              .append(csv(p.nhanVien)).append(',')
-              .append(csv(p.nhaCungCap)).append(',')
-              .append(p.dong.size()).append(',')
+        for (PhieuNhapKho_entity p : filtered) {
+            sb.append(csv(p.getSoPhieu())).append(',')
+              .append(csv(p.getNgayLap().format(DF))).append(',')
+              .append(csv(p.getNhanVien())).append(',')
+              .append(csv(p.getNhaCungCap())).append(',')
+              .append(p.getChiTiet().size()).append(',')
               .append(p.tongTien()).append(',')
-              .append(csv(p.tt.text)).append("\r\n");
+              .append(csv(p.getTrangThai().getText())).append("\r\n");
         }
         try {
             Files.write(fc.getSelectedFile().toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -768,14 +746,14 @@ public class PhieuNhapKhoGUI extends JPanel {
         return "\"" + (s == null ? "" : s.replace("\"", "\"\"")) + "\"";
     }
 
-    private void xuatIn(Phieu p, Window owner) {
+    private void xuatIn(PhieuNhapKho_entity p, Window owner) {
         final String text = buildText(p);
         JTextArea area = new JTextArea(text);
         area.setEditable(false);
         area.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         area.setMargin(new Insets(10, 12, 10, 12));
 
-        JDialog d = new JDialog(owner, "Phiếu " + p.so, Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog d = new JDialog(owner, "Phiếu " + p.getSoPhieu(), Dialog.ModalityType.APPLICATION_MODAL);
         JButton btnPrint = new JButton("In");
         JButton btnSave = new JButton("Lưu file .txt");
         JButton btnClose = new JButton("Đóng");
@@ -789,7 +767,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         });
         btnSave.addActionListener(e -> {
             JFileChooser fc = new JFileChooser();
-            fc.setSelectedFile(new File(p.so + ".txt"));
+            fc.setSelectedFile(new File(p.getSoPhieu() + ".txt"));
             if (fc.showSaveDialog(d) == JFileChooser.APPROVE_OPTION) {
                 try {
                     Files.write(fc.getSelectedFile().toPath(), text.getBytes(StandardCharsets.UTF_8));
@@ -814,27 +792,27 @@ public class PhieuNhapKhoGUI extends JPanel {
         d.setVisible(true);
     }
 
-    private String buildText(Phieu p) {
+    private String buildText(PhieuNhapKho_entity p) {
         StringBuilder sb = new StringBuilder();
         String line = "-".repeat(78) + "\n";
         sb.append("SALALA PET SHOP\n");
         sb.append("PHIẾU NHẬP KHO\n");
         sb.append(line);
-        sb.append("Số phiếu     : ").append(p.so).append('\n');
-        sb.append("Ngày lập     : ").append(p.ngay.format(DF)).append('\n');
-        sb.append("Nhân viên lập: ").append(p.nhanVien).append('\n');
-        sb.append("Nhà cung cấp : ").append(p.nhaCungCap).append('\n');
-        sb.append("Ghi chú      : ").append(p.ghiChu == null ? "" : p.ghiChu).append('\n');
-        sb.append("Trạng thái   : ").append(p.tt.text).append('\n');
+        sb.append("Số phiếu     : ").append(p.getSoPhieu()).append('\n');
+        sb.append("Ngày lập     : ").append(p.getNgayLap().format(DF)).append('\n');
+        sb.append("Nhân viên lập: ").append(p.getNhanVien()).append('\n');
+        sb.append("Nhà cung cấp : ").append(p.getNhaCungCap()).append('\n');
+        sb.append("Ghi chú      : ").append(p.getGhiChu()).append('\n');
+        sb.append("Trạng thái   : ").append(p.getTrangThai().getText()).append('\n');
         sb.append(line);
         sb.append(String.format("%-28s %-7s %5s %14s %17s%n", "Tên vật tư", "ĐVT", "SL", "Đơn giá", "Thành tiền"));
         sb.append(line);
-        for (Dong d : p.dong) {
-            sb.append(String.format("%-28s %-7s %5d %14s %17s%n", d.ten, d.donVi, d.sl,
-                    MONEY.format(d.donGia) + " đ", MONEY.format(d.thanhTien()) + " đ"));
+        for (ChiTiet d : p.getChiTiet()) {
+            sb.append(String.format("%-28s %-7s %5d %14s %17s%n", d.getTenVT(), d.getDonVi(), d.getSoLuong(),
+                    MONEY.format(d.getDonGia()) + " đ", MONEY.format(d.thanhTien()) + " đ"));
         }
         sb.append(line);
-        sb.append(String.format("%-28s %-7s %5d %14s %17s%n", "TỔNG CỘNG", "", p.tongSL(), "",
+        sb.append(String.format("%-28s %-7s %5d %14s %17s%n", "TỔNG CỘNG", "", p.tongSoLuong(), "",
                 MONEY.format(p.tongTien()) + " đ"));
         return sb.toString();
     }
