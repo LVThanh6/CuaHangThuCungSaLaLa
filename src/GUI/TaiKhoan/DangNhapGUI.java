@@ -267,33 +267,7 @@ public class DangNhapGUI extends JFrame {
         form.add(btnDangNhap);
         form.add(Box.createVerticalStrut(16));
 
-        // 6. Gợi ý tài khoản 6 VAI TRÒ để test nhanh phân quyền
-        JPanel panelGoiYContainer = new JPanel();
-        panelGoiYContainer.setLayout(new BoxLayout(panelGoiYContainer, BoxLayout.Y_AXIS));
-        panelGoiYContainer.setOpaque(false);
-        panelGoiYContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel lblGoiY = new JLabel("💡 Thử nhanh 6 vai trò người dùng (pass: 123456):");
-        lblGoiY.setFont(RangBuocGiaoDien.fontDam(11));
-        lblGoiY.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
-        panelGoiYContainer.add(lblGoiY);
-        panelGoiYContainer.add(Box.createVerticalStrut(6));
-
-        JPanel panelNutGoiY = new JPanel(new GridLayout(2, 3, 8, 8));
-        panelNutGoiY.setOpaque(false);
-        panelNutGoiY.setPreferredSize(new Dimension(300, 112));
-        panelNutGoiY.setMaximumSize(new Dimension(Integer.MAX_VALUE, 112));
-        panelNutGoiY.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        panelNutGoiY.add(taoNutChonNhanh("admin", "👑 Admin"));
-        panelNutGoiY.add(taoNutChonNhanh("quanly01", "👔 Quản lý"));
-        panelNutGoiY.add(taoNutChonNhanh("bacsi01", "🩺 Bác sĩ"));
-        panelNutGoiY.add(taoNutChonNhanh("nhanvien01", "🛒 Bán hàng"));
-        panelNutGoiY.add(taoNutChonNhanh("nhanvien06", "✂️ Dịch vụ"));
-        panelNutGoiY.add(taoNutChonNhanh("nhanvien11", "📦 Quản lý kho"));
-
-        panelGoiYContainer.add(panelNutGoiY);
-        form.add(panelGoiYContainer);
+        
         form.add(Box.createVerticalGlue());
 
         return form;
@@ -322,6 +296,9 @@ public class DangNhapGUI extends JFrame {
     // ==========================================
     // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
     // ==========================================
+ // ==========================================
+    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
+    // ==========================================
     private void xuLyDangNhap() {
         String username = txtTenDangNhap.getText().trim();
         String password = new String(txtMatKhau.getPassword()).trim();
@@ -334,6 +311,23 @@ public class DangNhapGUI extends JFrame {
             if (result.isThanhCong()) {
                 lblThongBaoLoi.setText(" ");
                 TaiKhoan tk = result.getTaiKhoan();
+                
+                // --- THÊM LOGIC KIỂM TRA MẬT KHẨU LẦN ĐẦU TẠI ĐÂY ---
+                if (password.equals("123456")) {
+                    int luaChon = JOptionPane.showConfirmDialog(this,
+                            "Bạn đang đăng nhập bằng mật khẩu mặc định (123456).\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
+                            "Cảnh báo bảo mật",
+                            JOptionPane.YES_NO_OPTION, 
+                            JOptionPane.WARNING_MESSAGE);
+                            
+                    if (luaChon == JOptionPane.YES_OPTION) {
+                        // Gọi dialog đổi mật khẩu đã được định nghĩa sẵn
+                        DoiMatKhauDialog doiMkDialog = new DoiMatKhauDialog(this, tk);
+                        doiMkDialog.setVisible(true);
+                    }
+                }
+                // ----------------------------------------------------
+
                 String tenHienThi = result.getTenNguoiDung();
                 String vaiTro = tk.getVaiTro();
 
@@ -354,7 +348,6 @@ public class DangNhapGUI extends JFrame {
             btnDangNhap.setText("ĐĂNG NHẬP");
         });
     }
-
     private void hienThiLoi(String msg) {
         lblThongBaoLoi.setText("⚠ " + msg);
     }
