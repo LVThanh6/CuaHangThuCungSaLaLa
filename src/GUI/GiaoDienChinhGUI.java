@@ -91,10 +91,8 @@ public class GiaoDienChinhGUI extends JPanel {
             }
         });
 
-        phieuXuatGUI = new PhieuXuatKhoGUI(
-                vatTuGUI::getDanhSachVatTu,
-                vatTuGUI::tangTon, 
-                vatTuGUI::getTonKho);
+        phieuXuatGUI = new PhieuXuatKhoGUI();
+        phieuXuatGUI.setNhanVien(tenNguoiDung); // Hoặc setNhanVien(maNV, tenNV)
 
         // 1. NHÚNG PHẦN HEADER VÀO NORTH
         headerGUI = new HeaderGUI(tenNguoiDung, chucVu);
