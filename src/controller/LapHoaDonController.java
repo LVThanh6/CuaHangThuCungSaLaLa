@@ -156,6 +156,81 @@ public class LapHoaDonController {
         return hoaDonDao.laySoHoaDonLonNhat() + 1;
     }
 
+    /**
+     * Tạo mã hóa đơn kế tiếp theo định dạng HD001, HD002...
+     * Đây là quy tắc nghiệp vụ về mã hóa đơn nên đặt ở Controller.
+     */
+    public String taoMaHoaDonTiepTheo() {
+        return String.format("HD%03d", laySoHoaDonTiepTheo());
+    }
+
+    public String layTenLoaiMatHang(LoaiMatHang loai) {
+        if (loai == null) return "";
+        return switch (loai) {
+            case DICH_VU -> "Dịch vụ";
+            case VAT_TU -> "Vật tư";
+            case THUOC -> "Thuốc";
+        };
+    }
+
+    /**
+     * Kiểm tra rồi thêm mới hoặc gộp mặt hàng trùng vào danh sách chi tiết.
+     * Trả kết quả để GUI chỉ cập nhật JTable và hiển thị thông báo.
+     */
+    public AddLineResult themHoacGopMatHang(
+            List<InvoiceLine> lines, InvoiceLine line, boolean coThuCung) throws SQLException {
+        ValidationError validation = kiemTraThemMatHang(line, coThuCung, lines);
+        if (validation != ValidationError.NONE) {
+            return new AddLineResult(validation, -1, null, false);
+        }
+
+        int index = timDongGopMatHang(lines, line);
+        if (index >= 0) {
+            InvoiceLine existing = lines.get(index);
+            InvoiceLine updated = existing.voiSoLuong(existing.getSoLuong() + line.getSoLuong());
+
+            List<InvoiceLine> otherLines = new ArrayList<>(lines);
+            otherLines.remove(index);
+            validation = kiemTraThemMatHang(updated, coThuCung, otherLines);
+            if (validation != ValidationError.NONE) {
+                return new AddLineResult(validation, -1, null, false);
+            }
+
+            lines.set(index, updated);
+            return new AddLineResult(ValidationError.NONE, index, updated, true);
+        }
+
+        lines.add(line);
+        return new AddLineResult(ValidationError.NONE, lines.size() - 1, line, false);
+    }
+
+    public boolean xoaDongChiTiet(List<InvoiceLine> lines, int index) {
+        if (lines == null || index < 0 || index >= lines.size()) {
+            return false;
+        }
+        lines.remove(index);
+        return true;
+    }
+
+    public static final class AddLineResult {
+        private final ValidationError validation;
+        private final int index;
+        private final InvoiceLine line;
+        private final boolean merged;
+
+        private AddLineResult(ValidationError validation, int index, InvoiceLine line, boolean merged) {
+            this.validation = validation;
+            this.index = index;
+            this.line = line;
+            this.merged = merged;
+        }
+
+        public ValidationError getValidation() { return validation; }
+        public int getIndex() { return index; }
+        public InvoiceLine getLine() { return line; }
+        public boolean isMerged() { return merged; }
+    }
+
     public boolean laSoLuongHopLe(int soLuong) {
         return soLuong > 0;
     }

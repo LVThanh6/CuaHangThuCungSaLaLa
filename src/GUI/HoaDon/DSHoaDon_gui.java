@@ -13,9 +13,8 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DSHoaDon_gui extends JPanel {
 
@@ -26,8 +25,6 @@ public class DSHoaDon_gui extends JPanel {
     private final Color VIEN = new Color(226, 232, 240);
     private final Color CHU = new Color(30, 41, 59);
     private final Color CHU_GOI_Y = new Color(148, 163, 184);
-
-    private final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final JTextField txtTimKiem = new JTextField();
     private static final String PLACEHOLDER_TIM_KIEM = "Tìm kiếm theo mã hóa đơn...";
@@ -65,6 +62,7 @@ public class DSHoaDon_gui extends JPanel {
 
     private final JTable table = new JTable(model);
     private ArrayList<HoaDon_entity> danhSach = new ArrayList<>();
+    private ArrayList<HoaDon_entity> danhSachHienThi = new ArrayList<>();
     private final Runnable hanhDongLapHoaDon;
 
     public DSHoaDon_gui() {
@@ -369,17 +367,9 @@ public class DSHoaDon_gui extends JPanel {
     private void hienThiBang(ArrayList<HoaDon_entity> ds) {
         table.clearSelection();
         model.setRowCount(0);
+        danhSachHienThi = new ArrayList<>(ds);
         for (HoaDon_entity hd : ds) {
-            model.addRow(new Object[] {
-                    hd.getMaHD(),
-                    hd.getNgayLap() == null ? "" : hd.getNgayLap().format(DMY),
-                    hd.getTrangThai(),
-                    layMa(hd.getMaKH()),
-                    layMa(hd.getMaNhanVien()),
-                    layMa(hd.getMaKM()),
-                    layMa(hd.getMaThue()),
-                    layMa(hd.getMaThanhToan())
-            });
+            model.addRow(controller.taoDongHienThi(hd));
         }
         capNhatNutThaoTac();
     }
@@ -388,22 +378,6 @@ public class DSHoaDon_gui extends JPanel {
         boolean chonMot = table != null && table.getSelectedRowCount() == 1;
         if (btnXem != null) btnXem.setEnabled(chonMot);
         if (btnXoa != null) btnXoa.setEnabled(chonMot);
-    }
-
-    private String layMa(Object doiTuong) {
-        if (doiTuong == null) return "NULL";
-        if (doiTuong instanceof String) return (String) doiTuong;
-        String[] cacGetter = {"getMaKH", "getMaNhanVien", "getMaKM", "getMaThue",
-                "getMaThanhToan", "getMaNCC", "getMaDV", "getMaVT", "getMa"};
-        for (String tenGetter : cacGetter) {
-            try {
-                Method method = doiTuong.getClass().getMethod(tenGetter);
-                Object ketQua = method.invoke(doiTuong);
-                if (ketQua != null && ketQua != doiTuong) return layMa(ketQua);
-            } catch (ReflectiveOperationException ignored) {
-            }
-        }
-        return doiTuong.toString();
     }
 
     //================LỌC DỮ LIỆU CHO TÌM KIẾM VÀ TRẠNG THÁI===========
@@ -465,30 +439,22 @@ public class DSHoaDon_gui extends JPanel {
     private void xuatCSV() {
         JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new File("DanhSachHoaDon.csv"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
 
         File file = chooser.getSelectedFile();
-        try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
-            writer.write('\uFEFF');
-            for (int c = 0; c < model.getColumnCount(); c++) {
-                if (c > 0) writer.print(",");
-                writer.print("\"" + model.getColumnName(c) + "\"");
-            }
-            writer.println();
 
-            for (int r = 0; r < table.getRowCount(); r++) {
-                for (int c = 0; c < table.getColumnCount(); c++) {
-                    if (c > 0) writer.print(",");
-                    Object value = table.getValueAt(r, c);
-                    String text = value == null ? "" : value.toString();
-                    writer.print("\"" + text.replace("\"", "\"\"") + "\"");
-                }
-                writer.println();
-            }
-            JOptionPane.showMessageDialog(this, "Xuất danh sách thành công.");
+        try {
+            controller.xuatCSV(danhSachHienThi, file);
+            JOptionPane.showMessageDialog(this,
+                    "Xuất danh sách thành công.");
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Không thể xuất file: " + ex.getMessage(),
+            JOptionPane.showMessageDialog(this,
+                    "Không thể xuất file: " + ex.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 }
