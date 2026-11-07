@@ -4,18 +4,19 @@ import java.util.Objects;
 
 /**
  * Entity "Chi tiết phiếu xuất kho" - SALALA Pet Shop.
- * Bảng: ChiTietPhieuXuat(maPhieu, maVT, soLuong, donGia)  -- khóa chính (maPhieu, maVT).
- * Đơn giá = giá nhập tại thời điểm lập phiếu.
- * tenVT, donVi không nằm trong bảng ChiTietPhieuXuat; được lấy bằng JOIN với VatTu để hiển thị.
+ * Bảng thật: ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong)  -- khóa chính maCTPXK.
+ * donGia, tenVT, donVi KHÔNG nằm trong bảng; lấy bằng JOIN với VatTu (giaNhap, tenVT)
+ * và Thuoc (donViTinh) để hiển thị. donGia = VatTu.giaNhap hiện tại.
  */
 public class ChiTietPhieuXuatKho_entity {
 
+    private String maCTPXK;      // khóa chính; DAO tự sinh khi thêm mới
     private PhieuXuatKho_entity maPhieu;
     private VatTu_entity maVT;
     private String tenVT = "";   // chỉ để hiển thị (JOIN VatTu)
-    private String donVi = "";   // chỉ để hiển thị (JOIN VatTu)
+    private String donVi = "";   // chỉ để hiển thị (JOIN Thuoc.donViTinh)
     private int soLuong;
-    private long donGia;
+    private long donGia;         // chỉ để hiển thị (VatTu.giaNhap)
 
     public ChiTietPhieuXuatKho_entity() {}
 
@@ -57,6 +58,9 @@ public class ChiTietPhieuXuatKho_entity {
     }
 
     // ===== Getter / Setter =====
+    public String getMaCTPXK() { return maCTPXK; }
+    public void setMaCTPXK(String maCTPXK) { this.maCTPXK = maCTPXK; }
+
     public PhieuXuatKho_entity getMaPhieu() { return maPhieu; }
     public void setMaPhieu(PhieuXuatKho_entity maPhieu) { this.maPhieu = maPhieu; }
     public void setMaPhieu(String maPhieu) {
