@@ -320,7 +320,6 @@ public class DonThuocGUI extends JPanel {
             List<ThuCung_entity> thuCungList = duLieu.thuCung;
             List<BacSi_entity> bacSiList = duLieu.bacSi;
             List<Thuoc_entity> thuocList = duLieu.thuoc;
-            if (hoSoList.isEmpty() || thuCungList.isEmpty() || bacSiList.isEmpty()) { JOptionPane.showMessageDialog(this, "Thiếu dữ liệu gốc.", "Cảnh báo", JOptionPane.WARNING_MESSAGE); return; }
             
             JTextField txtMa = new JTextField(donHienTai == null ? controller.maTiepTheo() : donHienTai.getMaDonThuoc()); txtMa.setEditable(false);
             JComboBox<HoSoSucKhoe_entity> cboHoSo = new JComboBox<>(hoSoList.toArray(new HoSoSucKhoe_entity[0]));
