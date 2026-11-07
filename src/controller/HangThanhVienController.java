@@ -20,9 +20,15 @@ public class HangThanhVienController {
 
     public static final String[] DANH_SACH_TEN_HANG = { "Đồng", "Bạc", "Vàng", "Kim cương" };
 
-    // Tương thích ngược
-    public static final String[] MEMBER_COLUMNS = DANH_SACH_COT_THANH_VIEN;
-    public static final String[] TIER_NAMES = DANH_SACH_TEN_HANG;
+    public static final int COT_MA_HANG = 0;
+    public static final int COT_MA_KH = 1;
+    public static final int COT_HO_TEN = 2;
+    public static final int COT_SO_DIEN_THOAI = 3;
+    public static final int COT_EMAIL = 4;
+    public static final int COT_SO_THU_CUNG = 5;
+    public static final int COT_TONG_CHI_TIEU = 6;
+    public static final int COT_DIEM_TICH_LUY = 7;
+    public static final int COT_NGAY_CAP_NHAT = 8;
 
     private final HangThanhVien_DAO tierDao;
     private final KhachHang_DAO customerDao;
@@ -49,6 +55,49 @@ public class HangThanhVienController {
 
     public String[] layDanhSachTenHang() {
         return DANH_SACH_TEN_HANG.clone();
+    }
+
+    public int layViTriCotMaHang() {
+        return COT_MA_HANG;
+    }
+
+    public int layViTriCotMaKHThanhVien() {
+        return COT_MA_KH;
+    }
+
+    public int layViTriCotHoTenThanhVien() {
+        return COT_HO_TEN;
+    }
+
+    public int layViTriCotChiTieuThanhVien() {
+        return COT_TONG_CHI_TIEU;
+    }
+
+    public int layViTriCotDiemTichLuy() {
+        return COT_DIEM_TICH_LUY;
+    }
+
+    public String layTieuDeDialogDanhSachThanhVien(String tenHang, int soLuong) {
+        return "Danh Sách Thành Viên - Hạng " + tenHang + " (" + soLuong + " thành viên)";
+    }
+
+    public String layTieuDeNhomKhachHang(String tenHang) {
+        return "Nhóm khách hàng đạt Hạng " + tenHang + " (Từ bảng QuanLyHangThanhVien)";
+    }
+
+    public String layThongBaoChuaChonKhachHangChuyenHang() {
+        return "Vui lòng chọn khách hàng cần chuyển hạng trong bảng!";
+    }
+
+    public String layNhanKhachHangChuyenHang(String hoTen, String maKH) {
+        return "Khách hàng: " + hoTen + " (" + maKH + ")";
+    }
+
+    public ThongTinDongThanhVien trichXuatThongTinDong(javax.swing.table.TableModel model, int modelRow) {
+        String maHang = String.valueOf(model.getValueAt(modelRow, COT_MA_HANG));
+        String maKH = String.valueOf(model.getValueAt(modelRow, COT_MA_KH));
+        String hoTen = String.valueOf(model.getValueAt(modelRow, COT_HO_TEN));
+        return new ThongTinDongThanhVien(maHang, maKH, hoTen);
     }
 
     public Dashboard layThongKeTongQuan() {
@@ -175,40 +224,84 @@ public class HangThanhVienController {
         return new TierPolicyFormData(min, max, discount, points, benefits);
     }
 
-    public PolicyResult capNhatChinhSach(String tenHang, String minText, String maxText, String giamGiaText,
+    public KetQuaCapNhatChinhSach xuLyCapNhatChinhSach(String tenHang, String minText, String maxText, String giamGiaText,
             String diemText, String quyenLoi) {
-        double minimum = chuyenChuoiSangSo(minText, PolicyField.MINIMUM, "Chi tiêu tối thiểu phải là số >= 0!");
-        if (minimum < 0) {
-            throw new PolicyInputException(PolicyField.MINIMUM, "Chi tiêu tối thiểu phải là số >= 0!");
+        Double minimum = chuyenChuoiSangSo(minText);
+        if (minimum == null || minimum < 0) {
+            return new KetQuaCapNhatChinhSach(false, true, PolicyField.MINIMUM, "Chi tiêu tối thiểu phải là số >= 0!");
         }
 
         Double maximum = null;
-        if (!maxText.trim().isEmpty()) {
-            maximum = chuyenChuoiSangSo(maxText, PolicyField.MAXIMUM, "Chi tiêu tối đa phải là số hợp lệ!");
+        if (maxText != null && !maxText.trim().isEmpty()) {
+            maximum = chuyenChuoiSangSo(maxText);
+            if (maximum == null) {
+                return new KetQuaCapNhatChinhSach(false, true, PolicyField.MAXIMUM, "Chi tiêu tối đa phải là số hợp lệ!");
+            }
             if (maximum <= minimum) {
-                throw new PolicyInputException(PolicyField.MAXIMUM,
+                return new KetQuaCapNhatChinhSach(false, true, PolicyField.MAXIMUM,
                         "Chi tiêu tối đa phải lớn hơn chi tiêu tối thiểu!");
             }
         }
 
-        double discount = chuyenChuoiSangSo(giamGiaText, PolicyField.DISCOUNT, "Mức giảm giá phải từ 0% đến 100%!");
-        if (discount < 0 || discount > 100) {
-            throw new PolicyInputException(PolicyField.DISCOUNT, "Mức giảm giá phải từ 0% đến 100%!");
+        Double discount = chuyenChuoiSangSo(giamGiaText);
+        if (discount == null || discount < 0 || discount > 100) {
+            return new KetQuaCapNhatChinhSach(false, true, PolicyField.DISCOUNT, "Mức giảm giá phải từ 0% đến 100%!");
         }
-        double points = chuyenChuoiSangSo(diemText, PolicyField.POINTS,
-                "Điểm tích lũy trên 1 vạn phải là số >= 0!");
-        if (points < 0) {
-            throw new PolicyInputException(PolicyField.POINTS, "Điểm tích lũy trên 1 vạn phải là số >= 0!");
+
+        Double points = chuyenChuoiSangSo(diemText);
+        if (points == null || points < 0) {
+            return new KetQuaCapNhatChinhSach(false, true, PolicyField.POINTS,
+                    "Điểm tích lũy trên 1 vạn phải là số >= 0!");
         }
-        boolean saved = tierDao.capNhatChinhSachHang(tenHang, minimum, maximum, discount, points, quyenLoi.trim());
-        return new PolicyResult(saved, minimum, maximum, discount, points);
+
+        boolean saved = tierDao.capNhatChinhSachHang(tenHang, minimum, maximum, discount, points,
+                quyenLoi != null ? quyenLoi.trim() : "");
+        if (saved) {
+            String thongBao = "Đã lưu chính sách hạng \"" + tenHang + "\" thành công vào database SALALA!\n" +
+                    "- Chi tiêu: từ " + String.format(Locale.US, "%,.0f ₫", minimum).replace(',', '.')
+                    + (maximum != null ? " đến " + String.format(Locale.US, "%,.0f ₫", maximum).replace(',', '.') : " trở lên")
+                    + "\n" +
+                    "- Giảm giá: " + discount + "% | Điểm/10.000₫: " + points;
+            return new KetQuaCapNhatChinhSach(true, false, null, thongBao);
+        } else {
+            return new KetQuaCapNhatChinhSach(false, false, null,
+                    "Không thể cập nhật chính sách hạng. Vui lòng thử lại!");
+        }
     }
 
-    private static double chuyenChuoiSangSo(String text, PolicyField field, String message) {
+    public KetQuaChuyenHang xuLyChuyenHang(String maHang, String maKH, String hoTen, String hangHienTai, String hangMoi) {
+        if (hangMoi == null || hangMoi.equals(hangHienTai)) {
+            return new KetQuaChuyenHang(false, false, "Hạng thành viên không thay đổi.");
+        }
+        boolean updated = ganHangThanhVien(maHang, maKH, hangMoi);
+        if (updated) {
+            return new KetQuaChuyenHang(true, true,
+                    "Chuyển khách hàng " + hoTen + " sang hạng " + hangMoi + " thành công!");
+        } else {
+            return new KetQuaChuyenHang(false, true,
+                    "Không thể cập nhật hạng thành viên. Vui lòng kiểm tra kết nối!");
+        }
+    }
+
+    public KetQuaPhanHang xuLyPhanHangKhachHang(int soLuongKhachHang, String khSelected, String tenHangMoi) {
+        if (soLuongKhachHang <= 0 || khSelected == null || khSelected.trim().isEmpty()) {
+            return new KetQuaPhanHang(false, true, "Không có khách hàng nào trong hệ thống!");
+        }
+        boolean ok = ganHangTheoLuaChon(khSelected, tenHangMoi);
+        if (ok) {
+            return new KetQuaPhanHang(true, false,
+                    "Phân khách hàng " + khSelected + " sang hạng " + tenHangMoi + " thành công!");
+        } else {
+            return new KetQuaPhanHang(false, false, "Không thể lưu phân hạng. Vui lòng thử lại!");
+        }
+    }
+
+    private static Double chuyenChuoiSangSo(String text) {
+        if (text == null) return null;
         try {
             return Double.parseDouble(text.trim().replace(".", "").replace(",", ""));
-        } catch (NumberFormatException ex) {
-            throw new PolicyInputException(field, message, ex);
+        } catch (Exception ex) {
+            return null;
         }
     }
 
@@ -288,56 +381,76 @@ public class HangThanhVienController {
         return String.format(Locale.US, "%,.0f ₫", giaTri).replace(',', '.');
     }
 
-    // Các hàm tương thích ngược (aliases)
-    public String[] getMemberColumns() { return layDanhSachCotThanhVien(); }
-    public String[] getTierNames() { return layDanhSachTenHang(); }
-    public Dashboard getDashboard() { return layThongKeTongQuan(); }
-    public List<TierCardModel> getTierCards(Dashboard dashboard) { return layDanhSachTheHang(dashboard); }
-    public List<HangThanhVien> getAllTiers() { return layTatCaHangThanhVien(); }
-    public List<HangThanhVien> getMembersByTier(String tierName) { return layDanhSachThanhVienTheoHang(tierName); }
-    public Object[][] getMembersTableData(String tierName) { return taiDuLieuBangThanhVien(tierName); }
-    public Object[][] toMembersTableData(List<HangThanhVien> list) { return chuyenThanhDuLieuBangThanhVien(list); }
-    public String buildMemberSearchRegex(String keyword) { return taoRegexTimKiem(keyword); }
-    public KhachHangController.CustomerDetails getCustomerDetails(String customerCode) { return layChiTietKhachHang(customerCode); }
-    public List<KhachHang> getCustomers() { return layDanhSachKhachHang(); }
-    public List<String> getCustomerDisplayList() { return layDanhSachHienThiKhachHang(); }
-    public boolean assignCustomerBySelection(String selection, String newTierName) { return ganHangTheoLuaChon(selection, newTierName); }
-    public TierPolicyFormData getTierPolicyFormData(String tierName) { return layDuLieuFormChinhSach(tierName); }
-    public PolicyResult updatePolicy(String name, String minText, String maxText, String discountText, String pointsText, String benefits) {
-        return capNhatChinhSach(name, minText, maxText, discountText, pointsText, benefits);
-    }
-    public boolean assignTier(String tierCode, String customerCode, String tierName) { return ganHangThanhVien(tierCode, customerCode, tierName); }
-    public boolean assignOrCreateTier(String customerCode, String tierName) { return ganHoacTaoHangThanhVien(customerCode, tierName); }
-    public static String formatSpendingRange(double minimum, Double maximum) { return dinhDangKhoangChiTieu(minimum, maximum); }
-
     public enum PolicyField { MINIMUM, MAXIMUM, DISCOUNT, POINTS }
 
-    public static final class PolicyInputException extends IllegalArgumentException {
-        private static final long serialVersionUID = 1L;
-        private final PolicyField field;
+    public static final class ThongTinDongThanhVien {
+        private final String maHang;
+        private final String maKH;
+        private final String hoTen;
 
-        public PolicyInputException(PolicyField field, String message) {
-            super(message);
-            this.field = field;
+        public ThongTinDongThanhVien(String maHang, String maKH, String hoTen) {
+            this.maHang = maHang;
+            this.maKH = maKH;
+            this.hoTen = hoTen;
         }
 
-        public PolicyInputException(PolicyField field, String message, Throwable cause) {
-            super(message, cause);
-            this.field = field;
+        public String getMaHang() { return maHang; }
+        public String getMaKH() { return maKH; }
+        public String getHoTen() { return hoTen; }
+    }
+
+    public static final class KetQuaChuyenHang {
+        private final boolean thanhCong;
+        private final boolean coThayDoi;
+        private final String thongBao;
+
+        public KetQuaChuyenHang(boolean thanhCong, boolean coThayDoi, String thongBao) {
+            this.thanhCong = thanhCong;
+            this.coThayDoi = coThayDoi;
+            this.thongBao = thongBao;
         }
 
-        public PolicyField getField() {
-            return field;
+        public boolean isThanhCong() { return thanhCong; }
+        public boolean isCoThayDoi() { return coThayDoi; }
+        public String getThongBao() { return thongBao; }
+    }
+
+    public static final class KetQuaCapNhatChinhSach {
+        private final boolean thanhCong;
+        private final boolean loiNhapLieu;
+        private final PolicyField truongLoi;
+        private final String thongBao;
+
+        public KetQuaCapNhatChinhSach(boolean thanhCong, boolean loiNhapLieu, PolicyField truongLoi, String thongBao) {
+            this.thanhCong = thanhCong;
+            this.loiNhapLieu = loiNhapLieu;
+            this.truongLoi = truongLoi;
+            this.thongBao = thongBao;
         }
+
+        public boolean isThanhCong() { return thanhCong; }
+        public boolean isLoiNhapLieu() { return loiNhapLieu; }
+        public PolicyField getTruongLoi() { return truongLoi; }
+        public String getThongBao() { return thongBao; }
+    }
+
+    public static final class KetQuaPhanHang {
+        private final boolean thanhCong;
+        private final boolean danhSachRong;
+        private final String thongBao;
+
+        public KetQuaPhanHang(boolean thanhCong, boolean danhSachRong, String thongBao) {
+            this.thanhCong = thanhCong;
+            this.danhSachRong = danhSachRong;
+            this.thongBao = thongBao;
+        }
+
+        public boolean isThanhCong() { return thanhCong; }
+        public boolean isDanhSachRong() { return danhSachRong; }
+        public String getThongBao() { return thongBao; }
     }
 
     public static final class Dashboard {
-        public final int memberCount;
-        public final int recentUpgrades;
-        public final double totalSpending;
-        public final double totalDiscount;
-        public final List<HangThanhVien> tiers;
-
         public final int tongThanhVien;
         public final int soNangHangGanDay;
         public final double tongChiTieu;
@@ -346,17 +459,19 @@ public class HangThanhVienController {
 
         private Dashboard(int memberCount, int recentUpgrades, double totalSpending,
                 double totalDiscount, List<HangThanhVien> tiers) {
-            this.memberCount = memberCount;
-            this.recentUpgrades = recentUpgrades;
-            this.totalSpending = totalSpending;
-            this.totalDiscount = totalDiscount;
-            this.tiers = java.util.Objects.requireNonNull(tiers, "Dữ liệu hạng không được trả về từ DAO");
-
             this.tongThanhVien = memberCount;
             this.soNangHangGanDay = recentUpgrades;
             this.tongChiTieu = totalSpending;
             this.tongGiamGia = totalDiscount;
-            this.danhSachHang = this.tiers;
+            this.danhSachHang = java.util.Objects.requireNonNull(tiers, "Dữ liệu hạng không được trả về từ DAO");
+        }
+
+        public String layChuoiTongThanhVien() {
+            return String.valueOf(tongThanhVien);
+        }
+
+        public String layChuoiSoNangHangGanDay() {
+            return String.valueOf(soNangHangGanDay);
         }
 
         public String layChiTieuDinhDang() {
@@ -370,9 +485,6 @@ public class HangThanhVienController {
                     ? String.format(Locale.US, "%.1f tr", tongGiamGia / 1_000_000)
                     : String.format(Locale.US, "%,.0f ₫", tongGiamGia).replace(',', '.');
         }
-
-        public String getFormattedSpending() { return layChiTieuDinhDang(); }
-        public String getFormattedDiscount() { return layGiamGiaDinhDang(); }
     }
 
     public static final class TierCardModel {
@@ -400,72 +512,19 @@ public class HangThanhVienController {
     }
 
     public static final class TierPolicyFormData {
-        public final String minSpend;
-        public final String maxSpend;
-        public final String discount;
-        public final String pointsPer10k;
-        public final String benefits;
-
         public final String chiTieuMin;
         public final String chiTieuMax;
         public final String mucGiamGia;
         public final String diemTichLuy1Van;
         public final String quyenLoi;
 
-        public TierPolicyFormData(String minSpend, String maxSpend, String discount,
-                String pointsPer10k, String benefits) {
-            this.minSpend = minSpend;
-            this.maxSpend = maxSpend;
-            this.discount = discount;
-            this.pointsPer10k = pointsPer10k;
-            this.benefits = benefits;
-
-            this.chiTieuMin = minSpend;
-            this.chiTieuMax = maxSpend;
-            this.mucGiamGia = discount;
-            this.diemTichLuy1Van = pointsPer10k;
-            this.quyenLoi = benefits;
-        }
-    }
-
-    public static final class PolicyResult {
-        public final boolean saved;
-        public final double minimumSpend;
-        public final Double maximumSpend;
-        public final double discount;
-        public final double pointsPerTenThousand;
-
-        public final boolean thanhCong;
-        public final double chiTieuToiThieu;
-        public final Double chiTieuToiDa;
-        public final double mucGiamGia;
-        public final double diemTichLuy1Van;
-
-        public PolicyResult(boolean saved, double minimumSpend, Double maximumSpend,
-                double discount, double pointsPerTenThousand) {
-            this.saved = saved;
-            this.minimumSpend = minimumSpend;
-            this.maximumSpend = maximumSpend;
-            this.discount = discount;
-            this.pointsPerTenThousand = pointsPerTenThousand;
-
-            this.thanhCong = saved;
-            this.chiTieuToiThieu = minimumSpend;
-            this.chiTieuToiDa = maximumSpend;
-            this.mucGiamGia = discount;
-            this.diemTichLuy1Van = pointsPerTenThousand;
-        }
-
-        public String layThongBaoThanhCong(String tenHang) {
-            return "Đã lưu chính sách hạng \"" + tenHang + "\" thành công vào database SALALA!\n" +
-                    "- Chi tiêu: từ " + String.format(Locale.US, "%,.0f ₫", minimumSpend).replace(',', '.')
-                    + (maximumSpend != null ? " đến " + String.format(Locale.US, "%,.0f ₫", maximumSpend).replace(',', '.') : " trở lên")
-                    + "\n" +
-                    "- Giảm giá: " + discount + "% | Điểm/10.000₫: " + pointsPerTenThousand;
-        }
-
-        public String getSuccessSummary(String tierName) {
-            return layThongBaoThanhCong(tierName);
+        public TierPolicyFormData(String chiTieuMin, String chiTieuMax, String mucGiamGia,
+                String diemTichLuy1Van, String quyenLoi) {
+            this.chiTieuMin = chiTieuMin;
+            this.chiTieuMax = chiTieuMax;
+            this.mucGiamGia = mucGiamGia;
+            this.diemTichLuy1Van = diemTichLuy1Van;
+            this.quyenLoi = quyenLoi;
         }
     }
 }
