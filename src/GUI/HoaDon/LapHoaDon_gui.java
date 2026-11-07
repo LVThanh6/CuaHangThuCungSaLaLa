@@ -830,6 +830,7 @@ public class LapHoaDon_gui extends JPanel {
             txtSoLuong.requestFocus();
             return;
         }
+
         if (!controller.laSoLuongHopLe(soLuong)) {
             JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương.");
             txtSoLuong.requestFocus();
@@ -845,6 +846,7 @@ public class LapHoaDon_gui extends JPanel {
                 JOptionPane.showMessageDialog(this, stockValidation.getMessage());
                 return;
             }
+
             ChiTietDonThuoc_entity chiTietDon = null;
             if (controller.laThuocKeDon(vt)) {
                 ValidationError petValidation = controller.kiemTraThuCungBatBuoc(
@@ -870,54 +872,39 @@ public class LapHoaDon_gui extends JPanel {
                 ? (BacSi_entity) nguoiThucHien : null;
         line = controller.ganNguoiThucHien(line, nhanVienThucHien, bacSiThucHien);
 
-        ValidationError validation;
         try {
-            validation = controller.kiemTraThemMatHang(line, cboThuCung.getSelectedItem() != null, chiTietHoaDon);
+            LapHoaDonController.AddLineResult result = controller.themHoacGopMatHang(
+                    chiTietHoaDon, line, cboThuCung.getSelectedItem() != null);
+
+            if (result.getValidation() != ValidationError.NONE) {
+                JOptionPane.showMessageDialog(this, result.getValidation().getMessage());
+                return;
+            }
+
+            int row = result.getIndex();
+            InvoiceLine savedLine = result.getLine();
+
+            if (result.isMerged()) {
+                model.setValueAt(savedLine.getSoLuong(), row, 4);
+                model.setValueAt(
+                        dinhDangTien(controller.tinhThanhTienDong(savedLine)), row, 5);
+            } else {
+                model.addRow(new Object[]{
+                        savedLine.getMaHang(),
+                        savedLine.getTenHang(),
+                        controller.layTenLoaiMatHang(savedLine.getLoai()),
+                        savedLine.getDonGia(),
+                        savedLine.getSoLuong(),
+                        dinhDangTien(controller.tinhThanhTienDong(savedLine))
+                });
+            }
+
+            capNhatTongTien();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
                     "Không thể kiểm tra số lượng thuốc đã cấp: " + ex.getMessage(),
                     "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-            return;
         }
-        if (validation != ValidationError.NONE) {
-            JOptionPane.showMessageDialog(this, validation.getMessage());
-            return;
-        }
-
-        int matchingLine = controller.timDongGopMatHang(chiTietHoaDon, line);
-        if (matchingLine >= 0) {
-            int i = matchingLine;
-            InvoiceLine existing = chiTietHoaDon.get(i);
-            InvoiceLine updated = existing.voiSoLuong(existing.getSoLuong() + soLuong);
-            ArrayList<InvoiceLine> otherLines = new ArrayList<>(chiTietHoaDon);
-            otherLines.remove(i);
-            try {
-                validation = controller.kiemTraThemMatHang(updated,
-                        cboThuCung.getSelectedItem() != null, otherLines);
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Không thể kiểm tra số lượng thuốc đã cấp: " + ex.getMessage(),
-                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (validation != ValidationError.NONE) {
-                JOptionPane.showMessageDialog(this, validation.getMessage());
-                return;
-            }
-            chiTietHoaDon.set(i, updated);
-            model.setValueAt(updated.getSoLuong(), i, 4);
-            model.setValueAt(dinhDangTien(controller.tinhThanhTienDong(updated)), i, 5);
-            capNhatTongTien();
-            return;
-        }
-
-        chiTietHoaDon.add(line);
-        model.addRow(new Object[] {
-                line.getMaHang(), line.getTenHang(), tenLoai(line.getLoai()),
-                line.getDonGia(), line.getSoLuong(),
-                dinhDangTien(controller.tinhThanhTienDong(line))
-        });
-        capNhatTongTien();
     }
 
     // ==================== XÓA DÒNG CHI TIẾT ====================
@@ -936,9 +923,10 @@ public class LapHoaDon_gui extends JPanel {
 
         int modelRow = tblChiTiet.convertRowIndexToModel(row);
 
-        model.removeRow(modelRow);
-        chiTietHoaDon.remove(modelRow);
-        capNhatTongTien();
+        if (controller.xoaDongChiTiet(chiTietHoaDon, modelRow)) {
+            model.removeRow(modelRow);
+            capNhatTongTien();
+        }
     }
 
     private void capNhatTongTien() {
@@ -960,14 +948,6 @@ public class LapHoaDon_gui extends JPanel {
         return controller.tinhTongTien(chiTietHoaDon,
                 (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem(),
                 (Thue_entity) cboThue.getSelectedItem());
-    }
-
-    private String tenLoai(LoaiMatHang loai) {
-        return switch (loai) {
-            case DICH_VU -> "Dịch vụ";
-            case VAT_TU -> "Vật tư";
-            case THUOC -> "Thuốc";
-        };
     }
 
     // ==================== LƯU HÓA ĐƠN ====================
@@ -1090,9 +1070,7 @@ public class LapHoaDon_gui extends JPanel {
     }
     // ==================== MÃ HÓA ĐƠN ====================
     private String phatSinhMaHD() {
-
-        int soThuTu = controller.laySoHoaDonTiepTheo();
-        return String.format("HD%03d", soThuTu);
+        return controller.taoMaHoaDonTiepTheo();
     }
     // ==================== ĐỊNH DẠNG TIỀN ====================
     private String dinhDangTien(double tien) {

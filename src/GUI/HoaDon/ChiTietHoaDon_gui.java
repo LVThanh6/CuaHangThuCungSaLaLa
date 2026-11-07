@@ -533,61 +533,14 @@ public class ChiTietHoaDon_gui extends JPanel {
         };
 
         for (ChiTietHoaDon_entity c : dong) {
+            Object[] duLieuDong = controller.taoDongChiTietHienThi(c, mucKM);
 
-            String ma;
+            // Định dạng các cột tiền theo cách trình bày của GUI.
+            duLieuDong[4] = tien((double) duLieuDong[4]);
+            duLieuDong[5] = tien((double) duLieuDong[5]);
+            duLieuDong[6] = tien((double) duLieuDong[6]);
 
-            String ten;
-
-            String loai;
-
-            if (c.getMaDV() != null) {
-
-                ma = c.getMaDV().getMaDV();
-
-                ten = c.getMaDV().getTenDV();
-
-                loai = "Dịch vụ";
-
-            } else if (c.getMaVT() != null) {
-
-                ma = c.getMaVT().getMaVT();
-
-                ten = c.getMaVT().getTenVT();
-
-                loai = c.getMaVT().getMaThuoc() == null ? "Vật tư" : "Thuốc kê đơn";
-
-            } else {
-
-                ma = null;
-
-                ten = null;
-
-                loai = "—";
-
-            }
-
-            double goc = c.getSoLuong() * c.getDonGia();
-
-            double km = goc * mucKM / 100.0;
-
-            model.addRow(new Object[] {
-
-                    giaTri(ma),
-
-                    giaTri(ten),
-
-                    loai,
-
-                    c.getSoLuong(),
-
-                    tien(c.getDonGia()),
-
-                    tien(km),
-
-                    tien(goc - km)
-
-            });
-
+            model.addRow(duLieuDong);
         }
 
         JTable bang = new JTable(model);
@@ -739,12 +692,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         ThanhToan_entity tt = hd.getMaThanhToan();
 
-        String trangThai = tt != null && tt.getTrangThai() != null
+        String trangThai = controller.layTrangThaiThanhToan(hd);
 
-                ? tt.getTrangThai()
-                : hd.getTrangThai();
-
-        boolean daTT = ChiTietHoaDonController.laDaThanhToan(trangThai);
+        boolean daTT = controller.laHoaDonDaThanhToan(hd);
 
         Chip chip = daTT
 
