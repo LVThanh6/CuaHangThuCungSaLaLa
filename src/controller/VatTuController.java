@@ -1,10 +1,10 @@
 package controller;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.text.Normalizer;
 
 import dao.VatTu.VatTu_DAO;
 import entity.VatTu.NhaCungCap_entity;
@@ -12,6 +12,11 @@ import entity.VatTu.VatTu_entity;
 
 public class VatTuController {
     private static final int NGUONG_SAP_HET = 30;
+
+    public static final String DM_VAT_TU = "Vật tư thông thường";
+    public static final String DM_THUOC = "Thuốc điều trị";
+    public static final String[] DANH_MUC = { DM_VAT_TU, DM_THUOC };
+
     private final VatTu_DAO vatTuDao;
 
     public VatTuController() {
@@ -22,21 +27,21 @@ public class VatTuController {
         this.vatTuDao = vatTuDao;
     }
 
+    // ===================== Tải dữ liệu =====================
+
     public List<VatTu> taiDanhSach() {
         List<VatTu> result = new ArrayList<>();
         for (VatTu_entity entity : vatTuDao.getAllVatTu()) {
-            boolean laThuoc = entity.getMaThuoc() != null
-                    && entity.getMaThuoc().getMaThuoc() != null
-                    && !entity.getMaThuoc().getMaThuoc().isBlank();
-            VatTu vatTu = new VatTu(
+            String maThuoc = entity.getMaThuoc() == null ? null : entity.getMaThuoc().getMaThuoc();
+            boolean laThuoc = maThuoc != null && !maThuoc.isBlank();
+            result.add(new VatTu(
                     entity.getMaVT(), entity.getTenVT(),
-                    laThuoc ? "Thuốc điều trị" : "Vật tư thông thường",
+                    laThuoc ? DM_THUOC : DM_VAT_TU,
                     entity.getSoLuongTon(), laThuoc ? "Viên" : "Gói / Hộp",
                     Math.round(entity.getGiaNhap()),
-                    entity.getMaThuoc() == null ? null : entity.getMaThuoc().getMaThuoc(),
+                    maThuoc,
                     entity.getMaNCC() == null ? null : entity.getMaNCC().getMaNCC(),
-                    entity.getTrangThai(), entity.getGiaBanCoBan());
-            result.add(vatTu);
+                    entity.getTrangThai(), entity.getGiaBanCoBan()));
         }
         return result;
     }
@@ -52,6 +57,8 @@ public class VatTuController {
     public String taoMaMoi() {
         return vatTuDao.taoMaVatTuMoi();
     }
+
+    // ===================== Thêm / sửa / xóa =====================
 
     public SaveResult luu(VatTuInput input, boolean editing) {
         String validationError = validate(input, editing);
@@ -76,6 +83,66 @@ public class VatTuController {
     public boolean maVatTuTonTai(String maVatTu) {
         return vatTuDao.getVatTuTheoMa(maVatTu) != null;
     }
+
+    // ===================== Kiểm tra dữ liệu form =====================
+
+    /**
+     * Đọc dữ liệu thô từ form, kiểm tra theo đúng thứ tự các ô và trả về input hợp lệ
+     * hoặc (thông báo lỗi + trường lỗi) để GUI focus.
+     */
+    public FormResult kiemTraForm(String ma, String ten, String maNCC, String danhMuc, String maThuoc,
+                                  int tonKho, String giaNhapText, String giaBanText,
+                                  String trangThaiHienTai, boolean editing) {
+        String maTrim = ma == null ? "" : ma.trim();
+        String tenTrim = ten == null ? "" : ten.trim();
+        boolean laThuoc = laThuoc(danhMuc);
+        String maThuocTrim = maThuoc == null ? "" : maThuoc.trim();
+
+        if (maTrim.isEmpty()) return FormResult.loi(TruongLoi.MA, "Vui lòng nhập mã vật tư.");
+        if (!editing && maVatTuTonTai(maTrim)) {
+            return FormResult.loi(TruongLoi.MA, "Mã vật tư \"" + maTrim + "\" đã tồn tại.");
+        }
+        if (tenTrim.isEmpty()) return FormResult.loi(TruongLoi.TEN, "Vui lòng nhập tên vật tư.");
+        if (maNCC == null || maNCC.isBlank()) {
+            return FormResult.loi(TruongLoi.NCC, "Vui lòng chọn nhà cung cấp.");
+        }
+        if (laThuoc && maThuocTrim.isEmpty()) {
+            return FormResult.loi(TruongLoi.MA_THUOC, "Danh mục \"Thuốc điều trị\" cần nhập mã thuốc.");
+        }
+        Long giaNhap = docSoTien(giaNhapText);
+        if (giaNhap == null) return FormResult.loi(TruongLoi.GIA_NHAP, "Giá nhập không hợp lệ.");
+        Long giaBan = docSoTien(giaBanText);
+        if (giaBan == null) return FormResult.loi(TruongLoi.GIA_BAN, "Giá bán cơ bản không hợp lệ.");
+
+        VatTuInput input = new VatTuInput(maTrim, tenTrim, maNCC,
+                laThuoc ? maThuocTrim : null, laThuoc, tonKho, giaNhap, giaBan,
+                trangThaiCSDL(trangThaiHienTai, tonKho));
+        return kiemTraInput(input, editing);
+    }
+
+    public String validate(VatTuInput input, boolean editing) {
+        return kiemTraInput(input, editing).getError();
+    }
+
+    private FormResult kiemTraInput(VatTuInput input, boolean editing) {
+        if (input.ma == null || input.ma.isBlank()) return FormResult.loi(TruongLoi.MA, "Vui lòng nhập mã vật tư.");
+        if (!editing && maVatTuTonTai(input.ma)) {
+            return FormResult.loi(TruongLoi.MA, "Mã vật tư \"" + input.ma + "\" đã tồn tại.");
+        }
+        if (input.ten == null || input.ten.isBlank()) return FormResult.loi(TruongLoi.TEN, "Vui lòng nhập tên vật tư.");
+        if (input.maNCC == null || input.maNCC.isBlank()) {
+            return FormResult.loi(TruongLoi.NCC, "Vui lòng chọn nhà cung cấp.");
+        }
+        if (input.laThuoc && (input.maThuoc == null || input.maThuoc.isBlank())) {
+            return FormResult.loi(TruongLoi.MA_THUOC, "Danh mục \"Thuốc điều trị\" cần nhập mã thuốc.");
+        }
+        if (input.giaNhap < 0) return FormResult.loi(TruongLoi.GIA_NHAP, "Giá nhập không hợp lệ.");
+        if (input.giaBan < 0) return FormResult.loi(TruongLoi.GIA_BAN, "Giá bán cơ bản không hợp lệ.");
+        if (input.soLuongTon < 0) return FormResult.loi(TruongLoi.TON_KHO, "Tồn kho không hợp lệ.");
+        return FormResult.ok(input);
+    }
+
+    // ===================== Tồn kho (phục vụ phiếu nhập / xuất) =====================
 
     public int tonKho(String maVatTu, List<VatTu> vatTu) {
         for (VatTu item : vatTu) {
@@ -104,6 +171,8 @@ public class VatTuController {
         return result;
     }
 
+    // ===================== Lọc / sắp xếp / thống kê =====================
+
     public List<VatTu> loc(List<VatTu> source, String tuKhoa, String danhMuc,
                            TrangThai trangThai, Boolean sapXepTang) {
         String keyword = boDau(tuKhoa == null ? "" : tuKhoa.trim());
@@ -124,6 +193,12 @@ public class VatTuController {
         return result;
     }
 
+    /** Vòng xoay sắp xếp theo tên: chưa sắp xếp -> tăng -> giảm -> chưa sắp xếp. */
+    public static Boolean xoaySapXep(Boolean hienTai) {
+        if (hienTai == null) return Boolean.TRUE;
+        return hienTai ? Boolean.FALSE : null;
+    }
+
     public InventorySummary thongKe(List<VatTu> vatTu) {
         int conHang = 0, sapHet = 0, hetTon = 0;
         for (VatTu item : vatTu) {
@@ -136,24 +211,31 @@ public class VatTuController {
         return new InventorySummary(vatTu.size(), conHang, sapHet, hetTon);
     }
 
+    // ===================== Hàm tĩnh dùng chung =====================
+
     public static TrangThai trangThai(int soLuong) {
         if (soLuong <= 0) return TrangThai.HET_TON;
         if (soLuong <= NGUONG_SAP_HET) return TrangThai.SAP_HET;
         return TrangThai.CON_HANG;
     }
 
-    public String validate(VatTuInput input, boolean editing) {
-        if (input.ma == null || input.ma.isBlank()) return "Vui lòng nhập mã vật tư.";
-        if (!editing && maVatTuTonTai(input.ma)) return "Mã vật tư \"" + input.ma + "\" đã tồn tại.";
-        if (input.ten == null || input.ten.isBlank()) return "Vui lòng nhập tên vật tư.";
-        if (input.maNCC == null || input.maNCC.isBlank()) return "Vui lòng chọn nhà cung cấp.";
-        if (input.laThuoc && (input.maThuoc == null || input.maThuoc.isBlank())) {
-            return "Danh mục \"Thuốc điều trị\" cần nhập mã thuốc.";
+    public static boolean laThuoc(String danhMuc) {
+        return DM_THUOC.equals(danhMuc);
+    }
+
+    /** Khi sửa giữ trạng thái đang có trong CSDL; khi thêm mới suy ra từ tồn kho. */
+    public static String trangThaiCSDL(String trangThaiHienTai, int tonKho) {
+        return trangThaiHienTai != null ? trangThaiHienTai : trangThai(tonKho).label;
+    }
+
+    public static Long docSoTien(String text) {
+        String digits = text == null ? "" : text.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return null;
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException exception) {
+            return null;
         }
-        if (input.giaNhap < 0) return "Giá nhập không hợp lệ.";
-        if (input.giaBan < 0) return "Giá bán cơ bản không hợp lệ.";
-        if (input.soLuongTon < 0) return "Tồn kho không hợp lệ.";
-        return null;
     }
 
     private static String boDau(String value) {
@@ -162,10 +244,35 @@ public class VatTuController {
         return normalized.replace('đ', 'd');
     }
 
+    // ===================== Kiểu dữ liệu =====================
+
     public enum TrangThai {
         CON_HANG("Còn hàng"), SAP_HET("Sắp hết"), HET_TON("Hết tồn");
         public final String label;
         TrangThai(String label) { this.label = label; }
+    }
+
+    /** Trường trên form bị lỗi, để GUI biết focus vào đâu. */
+    public enum TruongLoi { MA, TEN, NCC, MA_THUOC, GIA_NHAP, GIA_BAN, TON_KHO }
+
+    public static final class FormResult {
+        private final VatTuInput input;
+        private final TruongLoi field;
+        private final String error;
+
+        private FormResult(VatTuInput input, TruongLoi field, String error) {
+            this.input = input;
+            this.field = field;
+            this.error = error;
+        }
+
+        static FormResult ok(VatTuInput input) { return new FormResult(input, null, null); }
+        static FormResult loi(TruongLoi field, String error) { return new FormResult(null, field, error); }
+
+        public boolean isValid() { return error == null; }
+        public VatTuInput getInput() { return input; }
+        public TruongLoi getField() { return field; }
+        public String getError() { return error; }
     }
 
     public static final class VatTu {
@@ -219,6 +326,7 @@ public class VatTuController {
             this.giaBan = giaBan;
             this.trangThai = trangThai;
         }
+
         public String getMa() { return ma; }
     }
 
@@ -258,15 +366,5 @@ public class VatTuController {
         public int getSufficient() { return sufficient; }
         public int getLow() { return low; }
         public int getEmpty() { return empty; }
-    }
-
-    public static Long docSoTien(String text) {
-        String digits = text == null ? "" : text.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return null;
-        try {
-            return Long.parseLong(digits);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
     }
 }
