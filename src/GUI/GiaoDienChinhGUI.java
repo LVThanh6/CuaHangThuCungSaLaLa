@@ -345,13 +345,17 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
         setNoiDung(new NhaCungCapGUI());
     }
 
-//    public void hienThiPhieuNhapKho() {
-//        setNoiDung(new PhieuNhapKhoGUI());
-//    }
-//
-//    public void hienThiPhieuXuatKho() {
-//        setNoiDung(new PhieuXuatKhoGUI());
-//    }
+    public void hienThiPhieuNhapKho() {
+        // PhieuNhapKhoGUI yêu cầu 2 tham số: (onLapPhieuXuat, onTonKhoThayDoi)
+        setNoiDung(new PhieuNhapKhoGUI(
+            () -> hienThiPhieuXuatKho(), // Điều hướng sang màn hình Lập phiếu xuất khi bấm nút trên giao diện
+            null // onTonKhoThayDoi: Để null vì khi chuyển tab Vật Tư, dữ liệu sẽ tự động load lại từ CSDL
+        ));
+    }
+
+    public void hienThiPhieuXuatKho() {
+        setNoiDung(new PhieuXuatKhoGUI());
+    }
 
     public void hienThiDanhSachKhachHang() {
         setNoiDung(new DanhSachKhachHangGUI());
