@@ -1,17 +1,45 @@
 package controller;
 
+import dao.VatTu.PhieuXuatKho_DAO;
+import entity.VatTu.PhieuXuatKho_entity;
+import entity.VatTu.PhieuXuatKho_entity.ChiTiet;
+
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.ToIntFunction;
 
+/**
+ * Controller "Quản lý xuất kho" - lấy dữ liệu thật từ CSDL SALALA thông qua PhieuXuatKho_DAO.
+ * Không còn dữ liệu mẫu: danh sách phiếu, danh mục vật tư, tồn kho, nhân viên đều đọc từ CSDL.
+ * Các lớp Phieu / Dong là mô hình hiển thị cho GUI, được chuyển đổi qua lại với PhieuXuatKho_entity.
+ */
 public class PhieuXuatKhoController {
-    private final List<Phieu> all = new ArrayList<>();
-    private int sequence = 12;
+    private final PhieuXuatKho_DAO dao = new PhieuXuatKho_DAO();
+    private List<Phieu> all = new ArrayList<>();
+    private String lastError = "";
 
-    public PhieuXuatKhoController() {
-        loadSampleData();
+    // =====================================================================
+    // Nạp dữ liệu từ CSDL
+    // =====================================================================
+    /** Nạp lại toàn bộ phiếu xuất từ CSDL. Trả về false (và có getLastError()) nếu không đọc được. */
+    public boolean reload() {
+        try {
+            List<Phieu> list = new ArrayList<>();
+            for (PhieuXuatKho_entity e : dao.getAll()) list.add(fromEntity(e));
+            all = list;
+            lastError = "";
+            return true;
+        } catch (SQLException ex) {
+            all = new ArrayList<>();
+            lastError = ex.getMessage();
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    public String getLastError() {
+        return lastError;
     }
 
     public List<Phieu> getAll() {
@@ -31,14 +59,40 @@ public class PhieuXuatKhoController {
         return result;
     }
 
-    public String previewNextCode() {
-        return String.format("PX%04d", sequence + 1);
+    /** Danh mục vật tư (giá nhập + tồn hiện tại) để chọn khi lập phiếu. */
+    public List<CatalogItem> layDanhMucVatTu() {
+        List<CatalogItem> catalog = new ArrayList<>();
+        try {
+            for (PhieuXuatKho_DAO.VatTuRow r : dao.getDanhMucVatTu()) {
+                catalog.add(new CatalogItem(r.maVT, r.tenVT, r.donVi, r.giaNhap, r.tonKho));
+            }
+            lastError = "";
+        } catch (SQLException ex) {
+            lastError = ex.getMessage();
+            ex.printStackTrace();
+        }
+        return catalog;
     }
 
-    public void acceptCode(String code) {
-        if (code != null && code.matches("PX\\d+")) {
-            sequence = Math.max(sequence, Integer.parseInt(code.substring(2)));
+    /** Danh sách nhân viên {maNhanVien, hoTen} để chọn người lập phiếu. */
+    public List<String[]> layDanhSachNhanVien() {
+        try {
+            return dao.getDanhSachNhanVien();
+        } catch (SQLException ex) {
+            lastError = ex.getMessage();
+            ex.printStackTrace();
+            return new ArrayList<>();
         }
+    }
+
+    /** Mã phiếu kế tiếp (xem trước), ví dụ PXK003. */
+    public String previewNextCode() {
+        return dao.taoMaPhieuMoi();
+    }
+
+    /** Tồn kho hiện tại của vật tư (đọc trực tiếp từ CSDL). */
+    public int tonKho(String maVatTu) {
+        return dao.getTonKho(maVatTu);
     }
 
     public static String validateDateRange(LocalDate from, LocalDate to) {
@@ -64,21 +118,53 @@ public class PhieuXuatKhoController {
         return new Statistics(all.size(), exported, drafts, value);
     }
 
-    public void add(Phieu issue) {
-        all.add(0, issue);
+    // =====================================================================
+    // Ghi xuống CSDL (trả về false + getLastError() nếu thất bại; GUI gọi reload() sau khi thành công)
+    // =====================================================================
+    /** Lưu phiếu mới (trạng thái Nháp). Mã phiếu có thể được đổi nếu bị trùng; xem p.so sau khi gọi. */
+    public boolean add(Phieu issue) {
+        PhieuXuatKho_entity e = toEntity(issue);
+        e.setTrangThai(PhieuXuatKho_entity.TrangThai.NHAP);
+        boolean ok = dao.insert(e);
+        if (ok) issue.so = e.getMaPhieu(); else lastError = dao.getLastError();
+        return ok;
     }
 
-    public void update(Phieu original, Phieu edited) {
-        original.ngay = edited.ngay;
-        original.lyDo = edited.lyDo;
-        original.ghiChu = edited.ghiChu;
-        original.dong = new ArrayList<>(edited.dong);
+    /** Lưu thay đổi của phiếu Nháp. */
+    public boolean update(Phieu original, Phieu edited) {
+        edited.so = original.so;
+        boolean ok = dao.update(toEntity(edited));
+        if (!ok) lastError = dao.getLastError();
+        return ok;
     }
 
-    public List<String> kiemTraTon(Phieu issue, ToIntFunction<String> tonKho) {
+    /** Xác nhận xuất kho: kiểm tra tồn rồi trừ tồn trong 1 transaction. */
+    public boolean confirm(Phieu issue) {
+        if (issue.tt != TrangThai.NHAP || issue.dong.isEmpty()) return false;
+        List<String> errors = kiemTraTon(issue);
+        if (!errors.isEmpty()) {
+            lastError = String.join("\n", errors);
+            return false;
+        }
+        boolean ok = dao.xacNhan(issue.so);
+        if (!ok) lastError = dao.getLastError();
+        return ok;
+    }
+
+    public boolean cancel(Phieu issue) {
+        if (issue.tt != TrangThai.NHAP) return false;
+        boolean ok = dao.huy(issue.so);
+        if (!ok) lastError = dao.getLastError();
+        return ok;
+    }
+
+    // =====================================================================
+    // Kiểm tra nghiệp vụ (dùng tồn kho thật trong CSDL)
+    // =====================================================================
+    public List<String> kiemTraTon(Phieu issue) {
         List<String> errors = new ArrayList<>();
         for (Dong line : issue.dong) {
-            int currentStock = tonKho.applyAsInt(line.ma);
+            int currentStock = dao.getTonKho(line.ma);
             if (line.sl > currentStock) {
                 errors.add("• " + line.ten + ": cần xuất " + line.sl + ", tồn hiện tại " + currentStock);
             }
@@ -86,18 +172,17 @@ public class PhieuXuatKhoController {
         return errors;
     }
 
-    public int tonKho(String maVatTu, ToIntFunction<String> tonKho) {
-        return tonKho.applyAsInt(maVatTu);
-    }
-
-    public String validate(Draft draft, ToIntFunction<String> tonKho) {
+    public String validate(Draft draft) {
         if (draft.ngay == null) return "Ngày xuất không hợp lệ.";
-        if (draft.lyDo == null || draft.lyDo.isBlank()) return "Vui lòng nhập lý do xuất.";
+        if (draft.lyDo == null || draft.lyDo.trim().isEmpty()) return "Vui lòng nhập lý do xuất.";
+        if (PhieuXuatKho_entity.ghepGhiChu(draft.lyDo, draft.ghiChu).length() > PhieuXuatKho_entity.GHI_CHU_TOI_DA) {
+            return "Lý do và ghi chú quá dài (tối đa " + PhieuXuatKho_entity.GHI_CHU_TOI_DA + " ký tự).";
+        }
         if (draft.lines.isEmpty()) return "Phiếu cần có ít nhất một vật tư.";
         for (int i = 0; i < draft.lines.size(); i++) {
             Dong line = draft.lines.get(i);
             if (line.sl <= 0) return "Số lượng phải > 0 (dòng " + (i + 1) + ").";
-            int stock = tonKho.applyAsInt(line.ma);
+            int stock = dao.getTonKho(line.ma);
             if (line.sl > stock) return "Dòng " + (i + 1) + " vượt tồn kho (tồn: " + stock + ").";
         }
         return null;
@@ -109,18 +194,6 @@ public class PhieuXuatKhoController {
         if (exceededStock) quantity = stock;
         if (quantity < 1) quantity = 1;
         return new QuantityResult(quantity, exceededStock);
-    }
-
-    public static long tongTienDong(List<Dong> lines) {
-        long total = 0;
-        for (Dong line : lines) total += thanhTien(line);
-        return total;
-    }
-
-    public static int tongSoLuongDong(List<Dong> lines) {
-        int total = 0;
-        for (Dong line : lines) total += line.sl;
-        return total;
     }
 
     public LineAdditionResult mergeLine(List<Dong> lines, Dong added, int currentStock) {
@@ -143,31 +216,53 @@ public class PhieuXuatKhoController {
         return new Dong(item.ma, item.ten, item.donVi, quantity, item.giaNhap);
     }
 
-    public static final class CatalogItem {
-        private final String ma, ten, donVi;
-        private final long giaNhap;
-        public CatalogItem(String ma, String ten, String donVi, long giaNhap) {
-            this.ma = ma; this.ten = ten; this.donVi = donVi; this.giaNhap = giaNhap;
+    // =====================================================================
+    // Chuyển đổi Phieu <-> PhieuXuatKho_entity
+    // =====================================================================
+    private static Phieu fromEntity(PhieuXuatKho_entity e) {
+        Phieu p = new Phieu();
+        p.so = e.getMaPhieu();
+        p.ngay = e.getNgayXuat();
+        p.maNhanVien = e.getNhanVien() != null ? e.getNhanVien().getMaNhanVien() : null;
+        p.nhanVien = e.getTenNhanVien() != null && !e.getTenNhanVien().isEmpty() ? e.getTenNhanVien() : p.maNhanVien;
+        p.lyDo = e.getLyDo();
+        p.ghiChu = e.getGhiChu() == null ? "" : e.getGhiChu();
+        p.tt = TrangThai.valueOf(e.getTrangThai().name());
+        for (ChiTiet d : e.getChiTiet()) {
+            p.dong.add(new Dong(d.getMaVT() != null ? d.getMaVT().getMaVT() : null,
+                    d.getTenVT(), d.getDonVi(), d.getSoLuong(), d.getDonGia()));
         }
-        public String getMa() { return ma; }
-        public String getTen() { return ten; }
-        public String getDonVi() { return donVi; }
-        public long getGiaNhap() { return giaNhap; }
+        return p;
     }
 
-    public boolean confirm(Phieu issue, BiConsumer<String, Integer> stockUpdater,
-                           ToIntFunction<String> tonKho) {
-        if (issue.tt != TrangThai.NHAP || issue.dong.isEmpty()
-                || !kiemTraTon(issue, tonKho).isEmpty()) return false;
-        for (Dong line : issue.dong) stockUpdater.accept(line.ma, -line.sl);
-        issue.tt = TrangThai.DA_XUAT;
-        return true;
+    private static PhieuXuatKho_entity toEntity(Phieu p) {
+        PhieuXuatKho_entity e = new PhieuXuatKho_entity();
+        e.setMaPhieu(p.so);
+        e.setNgayXuat(p.ngay);
+        e.setNhanVien(p.maNhanVien);
+        e.setTenNhanVien(p.nhanVien);
+        e.setLyDo(p.lyDo);
+        e.setGhiChu(p.ghiChu);
+        e.setTrangThai(PhieuXuatKho_entity.TrangThai.valueOf(p.tt.name()));
+        List<ChiTiet> lines = new ArrayList<>();
+        for (Dong d : p.dong) lines.add(new ChiTiet(d.ma, d.ten, d.donVi, d.sl, d.donGia));
+        e.setChiTiet(lines);
+        return e;
     }
 
-    public boolean cancel(Phieu issue) {
-        if (issue.tt != TrangThai.NHAP) return false;
-        issue.tt = TrangThai.DA_HUY;
-        return true;
+    // =====================================================================
+    // Tính toán, xuất CSV / văn bản (không phụ thuộc CSDL)
+    // =====================================================================
+    public static long tongTienDong(List<Dong> lines) {
+        long total = 0;
+        for (Dong line : lines) total += thanhTien(line);
+        return total;
+    }
+
+    public static int tongSoLuongDong(List<Dong> lines) {
+        int total = 0;
+        for (Dong line : lines) total += line.sl;
+        return total;
     }
 
     public static long thanhTien(Dong line) {
@@ -222,63 +317,22 @@ public class PhieuXuatKhoController {
         return text.toString();
     }
 
-    private void loadSampleData() {
-        all.add(mau("PX0012", LocalDate.of(2026, 10, 5), "Lê Minh", "Sử dụng cho điều trị", TrangThai.NHAP,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 4, 45000),
-                dong("VT-004", "Fronil Spot-on Dog", "Tuýp", 1, 78000),
-                dong("VT-006", "Kim tiêm 5ml", "Hộp", 4, 35000)));
-        all.add(mau("PX0011", LocalDate.of(2026, 10, 5), "Võ Hoàng Nam", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 6, 45000),
-                dong("VT-005", "Bông y tế vô trùng", "Gói", 5, 12000)));
-        all.add(mau("PX0010", LocalDate.of(2026, 10, 4), "Phạm Ngọc Mai", "Chăm sóc thú cưng", TrangThai.DA_XUAT,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 2, 45000),
-                dong("VT-003", "Prednisolone 5mg", "Viên", 8, 8500)));
-        all.add(mau("PX0009", LocalDate.of(2026, 10, 4), "Lê Minh", "Sử dụng cho điều trị", TrangThai.DA_XUAT,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 5, 45000),
-                dong("VT-002", "Rabisin Vắc-xin Dại", "Lọ", 1, 320000),
-                dong("VT-003", "Prednisolone 5mg", "Viên", 2, 8500),
-                dong("VT-004", "Fronil Spot-on Dog", "Tuýp", 1, 78000)));
-        all.add(mau("PX0008", LocalDate.of(2026, 10, 3), "Trần Quốc Huy", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 1, 45000),
-                dong("VT-002", "Rabisin Vắc-xin Dại", "Lọ", 1, 320000),
-                dong("VT-005", "Bông y tế vô trùng", "Gói", 5, 12000)));
-        all.add(mau("PX0007", LocalDate.of(2026, 10, 3), "Võ Hoàng Nam", "Vật tư hư hỏng", TrangThai.DA_HUY,
-                dong("VT-005", "Bông y tế vô trùng", "Gói", 5, 13000)));
-        all.add(mau("PX0006", LocalDate.of(2026, 10, 2), "Đặng Thanh Trúc", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 1, 45000),
-                dong("VT-006", "Kim tiêm 5ml", "Hộp", 5, 35000)));
-        all.add(mau("PX0005", LocalDate.of(2026, 10, 2), "Lê Minh", "Sử dụng cho điều trị", TrangThai.DA_XUAT,
-                dong("VT-001", "Amoxicillin 250mg", "Ống", 4, 45000),
-                dong("VT-003", "Prednisolone 5mg", "Viên", 4, 8500),
-                dong("VT-005", "Bông y tế vô trùng", "Gói", 7, 12000)));
-        all.add(mau("PX0004", LocalDate.of(2026, 10, 1), "Phạm Ngọc Mai", "Chăm sóc thú cưng", TrangThai.DA_XUAT,
-                dong("VT-004", "Fronil Spot-on Dog", "Tuýp", 2, 78000)));
-        all.add(mau("PX0003", LocalDate.of(2026, 10, 1), "Trần Quốc Huy", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-006", "Kim tiêm 5ml", "Hộp", 3, 35000)));
-        all.add(mau("PX0002", LocalDate.of(2026, 9, 30), "Lê Minh", "Sử dụng cho điều trị", TrangThai.NHAP,
-                dong("VT-002", "Rabisin Vắc-xin Dại", "Lọ", 2, 320000)));
-        all.add(mau("PX0001", LocalDate.of(2026, 9, 30), "Đặng Thanh Trúc", "Bán hàng cho khách", TrangThai.DA_XUAT,
-                dong("VT-005", "Bông y tế vô trùng", "Gói", 10, 12000)));
-    }
-
-    private static Dong dong(String ma, String ten, String donVi, int soLuong, long donGia) {
-        return new Dong(ma, ten, donVi, soLuong, donGia);
-    }
-
-    private static Phieu mau(String so, LocalDate ngay, String nhanVien, String lyDo,
-                             TrangThai status, Dong... lines) {
-        Phieu issue = new Phieu();
-        issue.so = so;
-        issue.ngay = ngay;
-        issue.nhanVien = nhanVien;
-        issue.lyDo = lyDo;
-        issue.tt = status;
-        for (Dong line : lines) issue.dong.add(line);
-        return issue;
-    }
-
     private static String csv(String value) {
         return "\"" + (value == null ? "" : value.replace("\"", "\"\"")) + "\"";
+    }
+
+    public static final class CatalogItem {
+        private final String ma, ten, donVi;
+        private final long giaNhap;
+        private final int ton;
+        public CatalogItem(String ma, String ten, String donVi, long giaNhap, int ton) {
+            this.ma = ma; this.ten = ten; this.donVi = donVi; this.giaNhap = giaNhap; this.ton = ton;
+        }
+        public String getMa() { return ma; }
+        public String getTen() { return ten; }
+        public String getDonVi() { return donVi; }
+        public long getGiaNhap() { return giaNhap; }
+        public int getTon() { return ton; }
     }
 
     public enum TrangThai {
@@ -297,7 +351,7 @@ public class PhieuXuatKhoController {
     }
 
     public static final class Phieu {
-        public String so, nhanVien, lyDo, ghiChu = "";
+        public String so, nhanVien, maNhanVien, lyDo, ghiChu = "";   // nhanVien = họ tên (hiển thị), maNhanVien = khóa ngoại
         public LocalDate ngay;
         public TrangThai tt = TrangThai.NHAP;
         public List<Dong> dong = new ArrayList<>();
@@ -317,11 +371,12 @@ public class PhieuXuatKhoController {
 
     public static final class Draft {
         public final LocalDate ngay;
-        public final String lyDo;
+        public final String lyDo, ghiChu;
         public final List<Dong> lines;
-        public Draft(LocalDate ngay, String lyDo, List<Dong> lines) {
+        public Draft(LocalDate ngay, String lyDo, String ghiChu, List<Dong> lines) {
             this.ngay = ngay;
             this.lyDo = lyDo;
+            this.ghiChu = ghiChu == null ? "" : ghiChu;
             this.lines = new ArrayList<>(lines);
         }
     }

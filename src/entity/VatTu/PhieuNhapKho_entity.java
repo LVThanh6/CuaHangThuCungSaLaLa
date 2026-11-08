@@ -9,7 +9,8 @@ import java.util.Objects;
 
 /**
  * Entity "Phiếu nhập kho" - SALALA Pet Shop.
- * Bảng: PhieuNhapKho (header) + ChiTietPhieuNhap (các dòng vật tư).
+ * Bảng: PhieuNhapKho(maPNK, ngayNhap, ghiChu, trangThai, maNhanVien, maNCC)
+ * + ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong).
  */
 public class PhieuNhapKho_entity {
 
@@ -21,8 +22,12 @@ public class PhieuNhapKho_entity {
         TrangThai(String text) { this.text = text; }
         public String getText() { return text; }
 
-        /** Chuyển chuỗi lưu trong CSDL về enum. */
+        /**
+         * Chuyển chuỗi lưu trong CSDL về enum.
+         * Dữ liệu mẫu trong SALALA_Database.sql dùng "Hoàn thành" -> coi là Đã xác nhận.
+         */
         public static TrangThai fromText(String s) {
+            if (s != null && s.trim().equalsIgnoreCase("Hoàn thành")) return DA_XAC_NHAN;
             for (TrangThai t : values()) if (t.text.equals(s)) return t;
             return CHO_XAC_NHAN;
         }
@@ -61,8 +66,8 @@ public class PhieuNhapKho_entity {
     }
 
     // ===== Thuộc tính =====
-    private String soPhieu;          // PN-yyyy-NNNN
-    private LocalDate ngayLap;
+    private String maPNK;          // PNK001, PNK002, ...
+    private LocalDate ngayNhap;
     private NhanVien_entity nhanVien;
     private NhaCungCap_entity nhaCungCap;
     private String ghiChu = "";
@@ -71,27 +76,27 @@ public class PhieuNhapKho_entity {
 
     public PhieuNhapKho_entity() {}
 
-    public PhieuNhapKho_entity(String soPhieu) { this.soPhieu = soPhieu; }
+    public PhieuNhapKho_entity(String maPNK) { this.maPNK = maPNK; }
 
-    public PhieuNhapKho_entity(String soPhieu, LocalDate ngayLap, NhanVien_entity nhanVien,
+    public PhieuNhapKho_entity(String maPNK, LocalDate ngayNhap, NhanVien_entity nhanVien,
                                NhaCungCap_entity nhaCungCap, String ghiChu, TrangThai trangThai) {
-        this.soPhieu = soPhieu; this.ngayLap = ngayLap; this.nhanVien = nhanVien;
+        this.maPNK = maPNK; this.ngayNhap = ngayNhap; this.nhanVien = nhanVien;
         this.nhaCungCap = nhaCungCap; this.ghiChu = ghiChu; this.trangThai = trangThai;
     }
 
-    public PhieuNhapKho_entity(String soPhieu, LocalDate ngayLap, String nhanVien,
+    public PhieuNhapKho_entity(String maPNK, LocalDate ngayNhap, String nhanVien,
                                String nhaCungCap, String ghiChu, TrangThai trangThai) {
-        this(soPhieu, ngayLap,
+        this(maPNK, ngayNhap,
              nhanVien != null ? new NhanVien_entity(nhanVien) : null,
              nhaCungCap != null ? new NhaCungCap_entity(nhaCungCap) : null,
              ghiChu, trangThai);
     }
 
-    public String getSoPhieu() { return soPhieu; }
-    public void setSoPhieu(String soPhieu) { this.soPhieu = soPhieu; }
+    public String getMaPNK() { return maPNK; }
+    public void setMaPNK(String maPNK) { this.maPNK = maPNK; }
 
-    public LocalDate getNgayLap() { return ngayLap; }
-    public void setNgayLap(LocalDate ngayLap) { this.ngayLap = ngayLap; }
+    public LocalDate getNgayNhap() { return ngayNhap; }
+    public void setNgayNhap(LocalDate ngayNhap) { this.ngayNhap = ngayNhap; }
 
     public NhanVien_entity getNhanVien() { return nhanVien; }
     public void setNhanVien(NhanVien_entity nhanVien) { this.nhanVien = nhanVien; }
@@ -128,9 +133,9 @@ public class PhieuNhapKho_entity {
 
     @Override public boolean equals(Object o) {
         return o instanceof PhieuNhapKho_entity
-                && Objects.equals(soPhieu, ((PhieuNhapKho_entity) o).soPhieu);
+                && Objects.equals(maPNK, ((PhieuNhapKho_entity) o).maPNK);
     }
-    @Override public int hashCode() { return Objects.hash(soPhieu); }
+    @Override public int hashCode() { return Objects.hash(maPNK); }
 
-    @Override public String toString() { return soPhieu + "  ·  " + (trangThai != null ? trangThai.getText() : ""); }
+    @Override public String toString() { return maPNK + "  ·  " + (trangThai != null ? trangThai.getText() : ""); }
 }
