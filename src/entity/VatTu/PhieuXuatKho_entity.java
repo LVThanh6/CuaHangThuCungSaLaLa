@@ -9,22 +9,36 @@ import java.util.Objects;
 
 /**
  * Entity "Phiếu xuất kho" - SALALA Pet Shop.
- * Bảng: PhieuXuatKho (header) + ChiTietPhieuXuat (các dòng vật tư).
- * Đơn giá của dòng = giá nhập tại thời điểm lập phiếu.
+ * Bảng thật trong CSDL SALALA:
+ *   PhieuXuatKho(maPXK, ngayXuat DATETIME2, ghiChu, trangThai, maNhanVien)
+ *   ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong)
+ * Lưu ý: CSDL KHÔNG có cột lý do xuất và đơn giá.
+ *   - Lý do xuất được lưu chung trong cột ghiChu theo dạng "Lý do: ... | Ghi chú: ..."
+ *     (xem ghepGhiChu / tachGhiChu).
+ *   - Đơn giá = VatTu.giaNhap hiện tại (JOIN khi đọc).
  */
 public class PhieuXuatKho_entity {
 
     // ===== Trạng thái =====
+    /**
+     * text   : chữ hiển thị trên giao diện.
+     * dbText : giá trị lưu trong cột PhieuXuatKho.trangThai.
+     * Dữ liệu mẫu của SALALA dùng "Hoàn thành" cho phiếu đã xuất nên DA_XUAT lưu là "Hoàn thành".
+     */
     public enum TrangThai {
-        NHAP("Nháp"), DA_XUAT("Đã xuất"), DA_HUY("Đã hủy");
+        NHAP("Nháp", "Nháp"), DA_XUAT("Đã xuất", "Hoàn thành"), DA_HUY("Đã hủy", "Đã hủy");
 
-        private final String text;
-        TrangThai(String text) { this.text = text; }
+        private final String text, dbText;
+        TrangThai(String text, String dbText) { this.text = text; this.dbText = dbText; }
         public String getText() { return text; }
+        public String getDbText() { return dbText; }
 
-        /** Chuyển chuỗi lưu trong CSDL về enum. */
+        /** Chuyển chuỗi lưu trong CSDL (hoặc chữ hiển thị) về enum. */
         public static TrangThai fromText(String s) {
-            for (TrangThai t : values()) if (t.text.equals(s)) return t;
+            if (s != null) {
+                String v = s.trim();
+                for (TrangThai t : values()) if (t.dbText.equalsIgnoreCase(v) || t.text.equalsIgnoreCase(v)) return t;
+            }
             return NHAP;
         }
     }
@@ -34,7 +48,7 @@ public class PhieuXuatKho_entity {
         private VatTu_entity maVT;
         private String tenVT, donVi;
         private int soLuong;
-        private long donGia; // giá nhập
+        private long donGia; // giá nhập hiện tại của VatTu (KHÔNG lưu trong ChiTietPhieuXuatKho)
 
         public ChiTiet() {}
         public ChiTiet(VatTu_entity maVT, String tenVT, String donVi, int soLuong, long donGia) {
@@ -58,13 +72,14 @@ public class PhieuXuatKho_entity {
         public long getDonGia() { return donGia; }
         public void setDonGia(long donGia) { this.donGia = donGia; }
 
-        public long getThanhTien() { return soLuong * donGia; }
+        public long getThanhTien() { return (long) soLuong * donGia; }
     }
 
     // ===== Thuộc tính =====
-    private String maPhieu;          // PX0001
+    private String maPhieu;          // PXK001
     private LocalDate ngayXuat;
     private NhanVien_entity nhanVien;
+    private String tenNhanVien = "";   // chỉ để hiển thị (JOIN NhanVien.hoTen)
     private String lyDo;
     private String ghiChu = "";
     private TrangThai trangThai = TrangThai.NHAP;
@@ -99,6 +114,9 @@ public class PhieuXuatKho_entity {
         this.nhanVien = nhanVien != null ? new NhanVien_entity(nhanVien) : null;
     }
 
+    public String getTenNhanVien() { return tenNhanVien; }
+    public void setTenNhanVien(String tenNhanVien) { this.tenNhanVien = tenNhanVien; }
+
     public String getLyDo() { return lyDo; }
     public void setLyDo(String lyDo) { this.lyDo = lyDo; }
 
@@ -110,6 +128,31 @@ public class PhieuXuatKho_entity {
 
     public List<ChiTiet> getChiTiet() { return chiTiet; }
     public void setChiTiet(List<ChiTiet> chiTiet) { this.chiTiet = chiTiet; }
+
+    // ===== Ghép / tách "lý do" và "ghi chú" vào cột ghiChu =====
+    public static final int GHI_CHU_TOI_DA = 500;
+    private static final String TIEN_TO_LY_DO = "Lý do: ";
+    private static final String NGAN_CACH = " | Ghi chú: ";
+
+    /** Ghép lý do + ghi chú thành chuỗi lưu vào cột ghiChu. */
+    public static String ghepGhiChu(String lyDo, String ghiChu) {
+        String ld = lyDo == null ? "" : lyDo.trim();
+        String gc = ghiChu == null ? "" : ghiChu.trim();
+        if (ld.isEmpty()) return gc;
+        return TIEN_TO_LY_DO + ld + (gc.isEmpty() ? "" : NGAN_CACH + gc);
+    }
+
+    /** Tách chuỗi trong cột ghiChu thành {lyDo, ghiChu}. Dữ liệu cũ (không có tiền tố) coi toàn bộ là lý do. */
+    public static String[] tachGhiChu(String raw) {
+        String v = raw == null ? "" : raw.trim();
+        if (v.startsWith(TIEN_TO_LY_DO)) {
+            String rest = v.substring(TIEN_TO_LY_DO.length());
+            int i = rest.indexOf(NGAN_CACH);
+            if (i < 0) return new String[]{rest.trim(), ""};
+            return new String[]{rest.substring(0, i).trim(), rest.substring(i + NGAN_CACH.length()).trim()};
+        }
+        return new String[]{v, ""};
+    }
 
     public int tongSL() {
         int t = 0;

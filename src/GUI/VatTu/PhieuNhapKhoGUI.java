@@ -65,16 +65,15 @@ public class PhieuNhapKhoGUI extends JPanel {
     // Mô hình dữ liệu
     // =====================================================================
     // ===== Thành phần =====
-    private final Supplier<java.util.List<Object[]>> catalogSupplier;
-    private final BiConsumer<String, Integer> stockUpdater;
     private final Runnable onLapPhieuXuat;
+    private final Runnable onTonKhoThayDoi;   // gọi sau khi xác nhận phiếu để tab Vật tư tải lại tồn kho
     private final PhieuNhapKhoController controller = new PhieuNhapKhoController();
 
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
 
     private LocalDate tuNgay, denNgay;
-    private String nhanVien = "Lê Minh";
+    private String maNV;     // nhân viên đang đăng nhập (NhanVien.maNhanVien), null = chưa đặt
 
     private JTextField txtSearch;
     private RoundButton btnDate;
@@ -83,12 +82,17 @@ public class PhieuNhapKhoGUI extends JPanel {
     private DefaultTableModel model;
     private JLabel lblShowing;
 
+    /** @deprecated Danh mục vật tư và tồn kho giờ lấy trực tiếp từ CSDL; hai tham số đầu bị bỏ qua. */
+    @Deprecated
     public PhieuNhapKhoGUI(Supplier<java.util.List<Object[]>> catalogSupplier,
                            BiConsumer<String, Integer> stockUpdater,
                            Runnable onLapPhieuXuat) {
-        this.catalogSupplier = catalogSupplier;
-        this.stockUpdater = stockUpdater;
+        this(onLapPhieuXuat, null);
+    }
+
+    public PhieuNhapKhoGUI(Runnable onLapPhieuXuat, Runnable onTonKhoThayDoi) {
         this.onLapPhieuXuat = onLapPhieuXuat;
+        this.onTonKhoThayDoi = onTonKhoThayDoi;
 
         setLayout(new BorderLayout(0, 14));
         setBackground(BG);
@@ -100,7 +104,14 @@ public class PhieuNhapKhoGUI extends JPanel {
         reload(true);
     }
 
-    public void setNhanVien(String ten) { this.nhanVien = ten; }
+    /** Đặt nhân viên đang đăng nhập bằng mã nhân viên (vd "NV011"); form lập phiếu sẽ chọn sẵn người này. */
+    public void setNhanVien(String maNhanVien) { this.maNV = maNhanVien; }
+
+    /** Tải lại danh sách phiếu từ CSDL (gọi khi chuyển sang tab này). */
+    public void taiLai() {
+        controller.refresh();
+        reload(true);
+    }
 
     // =====================================================================
     // Header
@@ -304,7 +315,9 @@ public class PhieuNhapKhoGUI extends JPanel {
             });
         }
 
-        lblShowing.setText(filtered.isEmpty()
+        lblShowing.setText(!controller.isConnected()
+                ? "Không kết nối được CSDL SALALA - hãy kiểm tra SQL Server"
+                : filtered.isEmpty()
                 ? "Không có phiếu nhập nào"
                 : "Hiển thị tất cả " + filtered.size() + " phiếu nhập");
     }
@@ -352,7 +365,10 @@ public class PhieuNhapKhoGUI extends JPanel {
     private void lapPhieu() {
         Phieu p = openEditor(null);
         if (p != null) {
-            controller.add(p);
+            if (!controller.add(p)) {
+                JOptionPane.showMessageDialog(this, "Không lưu được phiếu nhập vào CSDL. Xem chi tiết lỗi ở console.",
+                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            }
             reload(true);
         }
     }
@@ -369,7 +385,10 @@ public class PhieuNhapKhoGUI extends JPanel {
         }
         Phieu np = openEditor(p);
         if (np != null) {
-            controller.update(p, np);
+            if (!controller.update(p, np)) {
+                JOptionPane.showMessageDialog(this, "Không cập nhật được phiếu (phiếu đã đổi trạng thái hoặc lỗi CSDL).",
+                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            }
             reload(false);
         }
     }
@@ -434,7 +453,13 @@ public class PhieuNhapKhoGUI extends JPanel {
                     "Xác nhận nhập kho", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (ok != JOptionPane.YES_OPTION) return;
 
-            if (!controller.confirm(p, stockUpdater)) return;
+            if (!controller.confirm(p)) {
+                JOptionPane.showMessageDialog(d, "Không xác nhận được phiếu (phiếu đã đổi trạng thái hoặc lỗi CSDL).",
+                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+                reload(false);
+                return;
+            }
+            if (onTonKhoThayDoi != null) onTonKhoThayDoi.run();
             reload(false);
             JOptionPane.showMessageDialog(d, "Đã xác nhận phiếu nhập và cập nhật tồn kho thành công.", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -446,7 +471,10 @@ public class PhieuNhapKhoGUI extends JPanel {
                     "Hủy phiếu nhập " + p.so + "? Thao tác này không thể hoàn tác.",
                     "Hủy phiếu nhập", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (ok != JOptionPane.YES_OPTION) return;
-            controller.cancel(p);
+            if (!controller.cancel(p)) {
+                JOptionPane.showMessageDialog(d, "Không hủy được phiếu (phiếu đã đổi trạng thái hoặc lỗi CSDL).",
+                        "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+            }
             reload(false);
             d.dispose();
         });
@@ -486,7 +514,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     private Phieu openEditor(Phieu src) {
-        final java.util.List<CatalogItem> catalog = catalogFromLegacy(catalogSupplier.get());
+        final java.util.List<CatalogItem> catalog = controller.getCatalog();
         final Phieu[] result = {null};
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
@@ -495,14 +523,29 @@ public class PhieuNhapKhoGUI extends JPanel {
         d.setLocationRelativeTo(this);
 
         JTextField txtSo = new JTextField(src == null
-                ? String.format("PN-%d-%04d", LocalDate.now().getYear(), controller.nextSequence()) : src.so);
+                ? controller.taoMaPhieuMoi() : src.so);
         txtSo.setEditable(false);
         JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.ngay).format(DF));
-        JTextField txtNV = new JTextField(src == null ? nhanVien : src.nhanVien);
-        txtNV.setEditable(false);
-        JComboBox<String> cboNCC = new JComboBox<>(controller.getSupplierSuggestions().toArray(new String[0]));
-        cboNCC.setEditable(true);
-        if (src != null) cboNCC.setSelectedItem(src.nhaCungCap);
+        // Nhân viên lập & nhà cung cấp: chọn từ bảng NhanVien / NhaCungCap (khóa ngoại của PhieuNhapKho)
+        final java.util.List<String[]> dsNV = controller.getNhanVienOptions();
+        JComboBox<String> cboNV = new JComboBox<>();
+        for (String[] r : dsNV) cboNV.addItem(r[0] + " - " + r[1]);
+        String maNVChon = src != null ? src.maNV : maNV;
+        for (int i = 0; i < dsNV.size(); i++) {
+            if (dsNV.get(i)[0].equals(maNVChon)) { cboNV.setSelectedIndex(i); break; }
+        }
+        if (src != null) cboNV.setEnabled(false);   // không đổi người lập khi sửa phiếu
+
+        final java.util.List<String[]> dsNCC = controller.getNhaCungCapOptions();
+        JComboBox<String> cboNCC = new JComboBox<>();
+        for (String[] r : dsNCC) cboNCC.addItem(r[0] + " - " + r[1]);
+        if (src != null) {
+            for (int i = 0; i < dsNCC.size(); i++) {
+                if (dsNCC.get(i)[0].equals(src.maNCC)) { cboNCC.setSelectedIndex(i); break; }
+            }
+        } else {
+            cboNCC.setSelectedIndex(-1);
+        }
         JTextField txtGhiChu = new JTextField(src == null ? "" : src.ghiChu);
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -510,7 +553,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         form.setBackground(WHITE);
         addFormRow(form, 0, "Số phiếu", txtSo);
         addFormRow(form, 1, "Ngày lập (dd/MM/yyyy)", txtNgay);
-        addFormRow(form, 2, "Nhân viên lập", txtNV);
+        addFormRow(form, 2, "Nhân viên lập", cboNV);
         addFormRow(form, 3, "Nhà cung cấp", cboNCC);
         addFormRow(form, 4, "Ghi chú", txtGhiChu);
 
@@ -605,10 +648,15 @@ public class PhieuNhapKhoGUI extends JPanel {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            Object nccObj = cboNCC.getEditor().getItem();
-            String ncc = nccObj == null ? "" : nccObj.toString().trim();
+            int idxNV = cboNV.getSelectedIndex();
+            if (idxNV < 0) {
+                JOptionPane.showMessageDialog(d, "Vui lòng chọn nhân viên lập phiếu.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int idxNCC = cboNCC.getSelectedIndex();
+            String maNCC = idxNCC >= 0 ? dsNCC.get(idxNCC)[0] : "";
             java.util.List<Dong> lines = linesFromModel(m);
-            String validationError = controller.validate(new PhieuNhapKhoController.Draft(ngay, ncc, lines));
+            String validationError = controller.validate(new PhieuNhapKhoController.Draft(ngay, maNCC, lines));
             if (validationError != null) {
                 JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -616,8 +664,10 @@ public class PhieuNhapKhoGUI extends JPanel {
             Phieu p = src == null ? new Phieu() : src;
             p.so = txtSo.getText().trim();
             p.ngay = ngay;
-            p.nhanVien = txtNV.getText().trim();
-            p.nhaCungCap = ncc;
+            p.maNV = dsNV.get(idxNV)[0];
+            p.nhanVien = dsNV.get(idxNV)[1];
+            p.maNCC = maNCC;
+            p.nhaCungCap = dsNCC.get(idxNCC)[1];
             p.ghiChu = txtGhiChu.getText().trim();
             p.dong = lines;
             result[0] = p;
@@ -735,15 +785,6 @@ public class PhieuNhapKhoGUI extends JPanel {
             model.addRow(new Object[]{line.ma, line.ten, line.donVi, line.sl,
                     line.donGia, PhieuNhapKhoController.thanhTien(line)});
         }
-    }
-
-    private static java.util.List<CatalogItem> catalogFromLegacy(java.util.List<Object[]> rows) {
-        java.util.List<CatalogItem> catalog = new ArrayList<>();
-        for (Object[] row : rows) {
-            catalog.add(new CatalogItem((String) row[0], (String) row[1],
-                    (String) row[2], ((Number) row[3]).longValue()));
-        }
-        return catalog;
     }
 
     // =====================================================================
