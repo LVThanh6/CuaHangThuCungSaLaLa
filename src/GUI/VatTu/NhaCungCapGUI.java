@@ -301,7 +301,7 @@ public class NhaCungCapGUI extends JPanel {
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
                 isNew ? "Thêm nhà cung cấp mới" : "Sửa nhà cung cấp", Dialog.ModalityType.APPLICATION_MODAL);
 
-        JTextField txtMa = new JTextField(isNew ? controller.taoMaMoi() : src.getMa());
+        JTextField txtMa = new JTextField(isNew ? controller.taoMaMoi(null) : src.getMa());
         txtMa.setEditable(isNew);
         JTextField txtTen = new JTextField(isNew ? "" : src.getTen());
         JTextField txtDiaChi = new JTextField(isNew ? "" : src.getDiaChi());

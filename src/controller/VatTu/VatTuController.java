@@ -377,4 +377,9 @@ public class VatTuController {
             return null;
         }
     }
+
+	public void tangSoLuongTon(String ma, int soLuong, List<VatTu> tatCa) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -599,15 +599,15 @@ public class VatTuGUI extends JPanel {
     
     public int getTonKho(String ma) {
         try {
-            return controller.layTonKho(ma, tatCa);
+            return controller.tonKho(ma, tatCa);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
             return 0;
         }
     }
 
-    public java.util.List<Object[]> getDanhSachVatTu() {
-        return controller.layDanhSachDanhMucVatTu(tatCa);
+    public List<CatalogItem> getDanhSachVatTu() {
+        return controller.danhMucVatTu(tatCa);
     }
 
     public void tangTon(String ma, int soLuong) {
