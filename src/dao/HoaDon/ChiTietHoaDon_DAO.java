@@ -19,19 +19,16 @@ import entity.NhanVien.NhanVien_entity;
 import entity.VatTu.VatTu_entity;
 
 /**
- * DAO Chi Tiết Hóa Đơn (Đã tối ưu hóa bằng JOIN, triệt tiêu việc gọi
- * BacSi_DAO.getAll() trong vòng lặp).
+ * DAO Chi Tiết Hóa Đơn (Đã tối ưu hóa bằng JOIN, triệt tiêu việc gọi BacSi_DAO.getAll() trong vòng lặp).
  */
 public class ChiTietHoaDon_DAO {
 
-    private static final String SELECT_BASE = "SELECT ct.maHD, ct.maKH, ct.soDong, ct.maDV, ct.maVT, ct.maCTDT, ct.maNhanVien, ct.maBacSi, ct.soLuong, ct.donGia, "
-            +
+    private static final String SELECT_BASE =
+            "SELECT ct.maHD, ct.maKH, ct.soDong, ct.maDV, ct.maVT, ct.maCTDT, ct.maNhanVien, ct.maBacSi, ct.soLuong, ct.donGia, " +
             "dv.tenDV, dv.moTa AS moTaDV, dv.giaDV, dv.thoiGian, dv.trangThai AS trangThaiDV, " +
             "vt.tenVT, vt.soLuongTon, vt.trangThai AS trangThaiVT, vt.giaBanCoBan, vt.giaNhap, vt.maThuoc, " +
-            "nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, "
-            +
-            "bs.maTK AS maTKBS, bs.hoTen AS hoTenBS, bs.gioiTinh AS gioiTinhBS, bs.sdt AS sdtBS, bs.email AS emailBS, bs.ngaySinh AS ngaySinhBS, bs.luongThang "
-            +
+            "nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, " +
+            "bs.maTK AS maTKBS, bs.hoTen AS hoTenBS, bs.gioiTinh AS gioiTinhBS, bs.sdt AS sdtBS, bs.email AS emailBS, bs.ngaySinh AS ngaySinhBS, bs.luongThang " +
             "FROM ChiTietHoaDon ct " +
             "LEFT JOIN DichVu dv ON dv.maDV = ct.maDV " +
             "LEFT JOIN VatTu vt ON vt.maVT = ct.maVT " +
@@ -48,7 +45,7 @@ public class ChiTietHoaDon_DAO {
 
         String sql = SELECT_BASE + "ORDER BY ct.maHD DESC, ct.soDong ASC";
         try (PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 dsCTHD.add(mapRowToEntity(rs, null));
@@ -84,10 +81,10 @@ public class ChiTietHoaDon_DAO {
             return false;
         }
         String sql = """
-                INSERT INTO ChiTietHoaDon
-                    (maHD, maKH, soDong, maDV, maVT, maCTDT, maNhanVien, maBacSi, soLuong, donGia)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO ChiTietHoaDon
+                (maHD, maKH, soDong, maDV, maVT, maCTDT, maNhanVien, maBacSi, soLuong, donGia)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, ct.getMaHD().getMaHD());
@@ -157,11 +154,11 @@ public class ChiTietHoaDon_DAO {
         }
 
         String sql = """
-                UPDATE ChiTietHoaDon
-                SET maDV = ?, maVT = ?, maCTDT = ?, maNhanVien = ?, maBacSi = ?,
-                    soLuong = ?, donGia = ?
-                WHERE maHD = ? AND maKH = ? AND soDong = ?
-                """;
+            UPDATE ChiTietHoaDon
+            SET maDV = ?, maVT = ?, maCTDT = ?, maNhanVien = ?, maBacSi = ?,
+                soLuong = ?, donGia = ?
+            WHERE maHD = ? AND maKH = ? AND soDong = ?
+            """;
 
         Connection con = ConnectDB.getCon();
         if (con == null) {
@@ -209,8 +206,7 @@ public class ChiTietHoaDon_DAO {
 
     // 5. Tìm chi tiết hóa đơn theo khóa ghép
     public ChiTietHoaDon_entity getChiTietHoaDonTheoKhoa(String maHD, String maKH, int soDong) {
-        if (maHD == null || maHD.isBlank() || maKH == null || maKH.isBlank() || soDong <= 0)
-            return null;
+        if (maHD == null || maHD.isBlank() || maKH == null || maKH.isBlank() || soDong <= 0) return null;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return null;
@@ -236,15 +232,13 @@ public class ChiTietHoaDon_DAO {
     // 6. Lấy danh sách chi tiết theo mã hóa đơn (CỰC NHANH - 1 query)
     public ArrayList<ChiTietHoaDon_entity> getChiTietHoaDonTheoMaHD(String maHD) {
         ArrayList<ChiTietHoaDon_entity> dsCTHD = new ArrayList<>();
-        if (maHD == null || maHD.isBlank())
-            return dsCTHD;
+        if (maHD == null || maHD.isBlank()) return dsCTHD;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return dsCTHD;
         }
 
-        // Tạo sẵn đối tượng HoaDon tối thiểu để gán vào các dòng chi tiết mà không cần
-        // query lại
+        // Tạo sẵn đối tượng HoaDon tối thiểu để gán vào các dòng chi tiết mà không cần query lại
         HoaDon_entity stubHD = new HoaDon_entity(maHD.trim(), null, null, null, null, null, null, null);
 
         String sql = SELECT_BASE + "WHERE ct.maHD = ? ORDER BY ct.soDong ASC";
@@ -263,8 +257,7 @@ public class ChiTietHoaDon_DAO {
     }
 
     public BigDecimal getSoLuongThuocDaCap(String maCTDT) throws SQLException {
-        if (maCTDT == null || maCTDT.isBlank())
-            return BigDecimal.ZERO;
+        if (maCTDT == null || maCTDT.isBlank()) return BigDecimal.ZERO;
         String sql = "SELECT COALESCE(SUM(soLuong), 0) FROM ChiTietHoaDon WHERE maCTDT = ?";
         Connection con = ConnectDB.getCon();
         if (con == null) {
@@ -299,7 +292,8 @@ public class ChiTietHoaDon_DAO {
                     rs.getString("moTaDV"),
                     rs.getDouble("giaDV"),
                     thoiGian,
-                    rs.getString("trangThaiDV"));
+                    rs.getString("trangThaiDV")
+            );
         }
 
         String maVT = rs.getString("maVT");
@@ -313,7 +307,8 @@ public class ChiTietHoaDon_DAO {
                     rs.getString("trangThaiVT"),
                     rs.getDouble("giaBanCoBan"),
                     rs.getDouble("giaNhap"),
-                    rs.getString("maThuoc"));
+                    rs.getString("maThuoc")
+            );
         }
 
         String maNhanVien = rs.getString("maNhanVien");
@@ -330,7 +325,8 @@ public class ChiTietHoaDon_DAO {
                     ngaySinhNV != null ? ngaySinhNV.toLocalDate() : null,
                     rs.getString("gioiTinhNV"),
                     rs.getDouble("luongCoBan"),
-                    null);
+                    null
+            );
         }
 
         String maBacSi = rs.getString("maBacSi");
@@ -348,7 +344,8 @@ public class ChiTietHoaDon_DAO {
                     ngaySinhBS != null ? ngaySinhBS.toLocalDate() : null,
                     rs.getDouble("luongThang"),
                     0,
-                    null);
+                    null
+            );
         }
 
         ChiTietHoaDon_entity chiTiet = new ChiTietHoaDon_entity(
@@ -359,7 +356,8 @@ public class ChiTietHoaDon_DAO {
                 nv,
                 bs,
                 rs.getInt("soLuong"),
-                rs.getDouble("donGia"));
+                rs.getDouble("donGia")
+        );
         chiTiet.setMaCTDT(rs.getString("maCTDT"));
         return chiTiet;
     }

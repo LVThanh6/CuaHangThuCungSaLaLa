@@ -6,10 +6,8 @@ import dao.TaiKhoan.TaiKhoan_DAO;
 import entity.TaiKhoan.TaiKhoan;
 
 /**
- * Controller xử lý nghiệp vụ đăng nhập: kiểm tra đầu vào, xác thực (SHA-256 qua
- * TaiKhoan_DAO),
- * lưu Session (DangNhap_DAO) và các quy tắc liên quan (mật khẩu mặc định, kết
- * nối CSDL).
+ * Controller xử lý nghiệp vụ đăng nhập: kiểm tra đầu vào, xác thực (SHA-256 qua TaiKhoan_DAO),
+ * lưu Session (DangNhap_DAO) và các quy tắc liên quan (mật khẩu mặc định, kết nối CSDL).
  * Không chứa bất kỳ thành phần giao diện nào.
  */
 public class DangNhapController {
@@ -18,9 +16,7 @@ public class DangNhapController {
     public static final String MAT_KHAU_MAC_DINH = "123456";
 
     /** Ô nhập liệu GUI nên đưa con trỏ về khi đăng nhập lỗi. */
-    public enum TruongNhap {
-        TEN_DANG_NHAP, MAT_KHAU, KHONG
-    }
+    public enum TruongNhap { TEN_DANG_NHAP, MAT_KHAU, KHONG }
 
     public static class KetQuaDangNhap {
         private final boolean thanhCong;
@@ -31,7 +27,7 @@ public class DangNhapController {
         private final TruongNhap truongLoi;
 
         public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan taiKhoan,
-                String tenNguoiDung, String maDoiTuong, TruongNhap truongLoi) {
+                              String tenNguoiDung, String maDoiTuong, TruongNhap truongLoi) {
             this.thanhCong = thanhCong;
             this.thongBao = thongBao;
             this.taiKhoan = taiKhoan;
@@ -40,29 +36,12 @@ public class DangNhapController {
             this.truongLoi = truongLoi;
         }
 
-        public boolean isThanhCong() {
-            return thanhCong;
-        }
-
-        public String getThongBao() {
-            return thongBao;
-        }
-
-        public TaiKhoan getTaiKhoan() {
-            return taiKhoan;
-        }
-
-        public String getTenNguoiDung() {
-            return tenNguoiDung;
-        }
-
-        public String getMaDoiTuong() {
-            return maDoiTuong;
-        }
-
-        public TruongNhap getTruongLoi() {
-            return truongLoi;
-        }
+        public boolean isThanhCong() { return thanhCong; }
+        public String getThongBao() { return thongBao; }
+        public TaiKhoan getTaiKhoan() { return taiKhoan; }
+        public String getTenNguoiDung() { return tenNguoiDung; }
+        public String getMaDoiTuong() { return maDoiTuong; }
+        public TruongNhap getTruongLoi() { return truongLoi; }
     }
 
     private final TaiKhoan_DAO taiKhoanDAO = new TaiKhoan_DAO();
@@ -97,9 +76,7 @@ public class DangNhapController {
         return matKhau != null && MAT_KHAU_MAC_DINH.equals(matKhau.trim());
     }
 
-    /**
-     * Mở kết nối CSDL khi khởi động ứng dụng. @return true nếu kết nối thành công.
-     */
+    /** Mở kết nối CSDL khi khởi động ứng dụng. @return true nếu kết nối thành công. */
     public boolean ketNoiCoSoDuLieu() {
         ConnectDB.getInstance().connect();
         return ConnectDB.getInstance().getConnection() != null;

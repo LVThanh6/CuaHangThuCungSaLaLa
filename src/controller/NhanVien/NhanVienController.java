@@ -39,9 +39,7 @@ public class NhanVienController {
     public static final String[] CHUC_VU = { CV_BAN_HANG, CV_DICH_VU, CV_KHO, CV_QUAN_LY };
     public static final String[] GIOI_TINH = { "Nam", "Nữ" };
 
-    /**
-     * Hoa hồng dịch vụ của nhân viên dịch vụ: 5% doanh thu dịch vụ họ thực hiện.
-     */
+    /** Hoa hồng dịch vụ của nhân viên dịch vụ: 5% doanh thu dịch vụ họ thực hiện. */
     private static final double TY_LE_HOA_HONG = 0.05;
 
     private static final Locale VN = Locale.forLanguageTag("vi-VN");
@@ -129,14 +127,9 @@ public class NhanVienController {
         int dangLam = 0, ngung = 0, chuaTk = 0;
         for (NhanVien_entity nv : ds) {
             switch (TrangThai.tuEntity(nv)) {
-                case DANG_LAM:
-                    dangLam++;
-                    break;
-                case NGUNG:
-                    ngung++;
-                    break;
-                default:
-                    chuaTk++;
+                case DANG_LAM: dangLam++; break;
+                case NGUNG: ngung++; break;
+                default: chuaTk++;
             }
         }
         return new ThongKe(ds.size(), dangLam, ngung, chuaTk);
@@ -145,12 +138,11 @@ public class NhanVienController {
     // ====================== LỌC / SẮP XẾP ======================
 
     /**
-     * @param tuKhoa    tìm theo tên, mã, SĐT (không phân biệt hoa thường và dấu);
-     *                  rỗng = bỏ qua
-     * @param chucVu    null = tất cả
+     * @param tuKhoa   tìm theo tên, mã, SĐT (không phân biệt hoa thường và dấu); rỗng = bỏ qua
+     * @param chucVu   null = tất cả
      * @param trangThai tên của {@link TrangThai} (DANG_LAM...), null = tất cả
-     * @param sapXep    true = sắp xếp theo tên
-     * @param tang      chiều sắp xếp khi sapXep = true
+     * @param sapXep   true = sắp xếp theo tên
+     * @param tang     chiều sắp xếp khi sapXep = true
      */
     public List<NhanVien_entity> locDanhSach(List<NhanVien_entity> ds, String tuKhoa, String chucVu,
             String trangThai, boolean sapXep, boolean tang) {
@@ -190,11 +182,9 @@ public class NhanVienController {
 
     /**
      * Kiểm tra dữ liệu form rồi thêm (goc == null) hoặc cập nhật (goc != null).
-     * Tài khoản liên kết của nhân viên được giữ nguyên; chỉ trạng thái được đổi nếu
-     * khác.
+     * Tài khoản liên kết của nhân viên được giữ nguyên; chỉ trạng thái được đổi nếu khác.
      *
-     * @param dangLam trạng thái tài khoản mong muốn (bỏ qua nếu nhân viên chưa có
-     *                tài khoản)
+     * @param dangLam trạng thái tài khoản mong muốn (bỏ qua nếu nhân viên chưa có tài khoản)
      */
     public KetQuaLuu validateAndSave(String ma, NhanVien_entity goc, String hoTen, String sdt, String diaChi,
             String ngaySinh, String gioiTinh, String chucVu, String luong, boolean dangLam) throws SQLException {
@@ -269,8 +259,7 @@ public class NhanVienController {
 
     /**
      * Xóa nhân viên. Nếu đã có dữ liệu tham chiếu (LichLamViec, LichHen, HoaDon,
-     * ChiTietHoaDon, PhieuXuatKho, PhieuNhapKho) thì SQL Server báo lỗi khóa ngoại
-     * 547
+     * ChiTietHoaDon, PhieuXuatKho, PhieuNhapKho) thì SQL Server báo lỗi khóa ngoại 547
      * và kết quả trả về coDuLieuLienQuan = true.
      */
     public KetQuaXoa xoa(String maNhanVien) throws SQLException {
@@ -286,14 +275,11 @@ public class NhanVienController {
     // ====================== TÍNH LƯƠNG THÁNG ======================
 
     /**
-     * Tổng lương nhận trong tháng của {@code homNay}, tính từ ngày 1 đến hết
-     * {@code homNay}:
+     * Tổng lương nhận trong tháng của {@code homNay}, tính từ ngày 1 đến hết {@code homNay}:
      * <ul>
      * <li>Bán hàng: lương theo giờ x số giờ làm (lịch trạng thái hoàn thành).</li>
-     * <li>Dịch vụ: lương theo giờ x số giờ làm + hoa hồng 5% doanh thu dịch vụ đã
-     * thực hiện.</li>
-     * <li>Quản lý kho: lương tháng cố định phân bổ theo số ngày đã qua / số ngày
-     * của tháng.</li>
+     * <li>Dịch vụ: lương theo giờ x số giờ làm + hoa hồng 5% doanh thu dịch vụ đã thực hiện.</li>
+     * <li>Quản lý kho: lương tháng cố định phân bổ theo số ngày đã qua / số ngày của tháng.</li>
      * <li>Quản lý hoặc nhân viên mới (chưa lưu): chưa áp dụng, trả về NaN.</li>
      * </ul>
      */
@@ -317,19 +303,12 @@ public class NhanVienController {
         return Double.NaN;
     }
 
-    /**
-     * Lương cơ bản gợi ý khi chọn chức vụ lúc thêm nhân viên (khớp dữ liệu mẫu
-     * trong DB).
-     */
+    /** Lương cơ bản gợi ý khi chọn chức vụ lúc thêm nhân viên (khớp dữ liệu mẫu trong DB). */
     public static long luongMacDinh(String chucVu) {
-        if (CV_BAN_HANG.equals(chucVu))
-            return 45_000; // theo giờ
-        if (CV_DICH_VU.equals(chucVu))
-            return 60_000; // theo giờ
-        if (CV_KHO.equals(chucVu))
-            return 13_500_000; // theo tháng
-        if (CV_QUAN_LY.equals(chucVu))
-            return 15_000_000; // theo tháng
+        if (CV_BAN_HANG.equals(chucVu)) return 45_000;       // theo giờ
+        if (CV_DICH_VU.equals(chucVu)) return 60_000;        // theo giờ
+        if (CV_KHO.equals(chucVu)) return 13_500_000;        // theo tháng
+        if (CV_QUAN_LY.equals(chucVu)) return 15_000_000;    // theo tháng
         return 0;
     }
 

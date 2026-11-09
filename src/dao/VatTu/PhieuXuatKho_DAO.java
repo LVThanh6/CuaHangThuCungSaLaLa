@@ -24,40 +24,30 @@ import java.util.Map;
  * DAO "Phiếu xuất kho" - khớp với CSDL SALALA (file SALALA_Database.sql).
  *
  * Bảng được GHI:
- * PhieuXuatKho(maPXK, ngayXuat DATETIME2, ghiChu, trangThai, maNhanVien)
- * ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong) (qua
- * ChiTietPhieuXuatKho_DAO)
- * VatTu(soLuongTon, trangThai) -- DUY NHẤT ở hàm xacNhan(): trừ tồn kho khi
- * phiếu chuyển sang "Đã xuất"
+ *   PhieuXuatKho(maPXK, ngayXuat DATETIME2, ghiChu, trangThai, maNhanVien)
+ *   ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong)       (qua ChiTietPhieuXuatKho_DAO)
+ *   VatTu(soLuongTon, trangThai)  -- DUY NHẤT ở hàm xacNhan(): trừ tồn kho khi phiếu chuyển sang "Đã xuất"
  * Bảng chỉ ĐỌC (JOIN / danh mục): NhanVien, VatTu, Thuoc.
  *
  * CSDL không có cột lý do và đơn giá:
- * - lý do xuất được ghép vào cột ghiChu (PhieuXuatKho_entity.ghepGhiChu /
- * tachGhiChu);
- * - đơn giá = VatTu.giaNhap hiện tại.
- * trangThai lưu: "Nháp" / "Hoàn thành" (= Đã xuất) / "Đã hủy" (xem
- * TrangThai.getDbText()).
+ *   - lý do xuất được ghép vào cột ghiChu (PhieuXuatKho_entity.ghepGhiChu / tachGhiChu);
+ *   - đơn giá = VatTu.giaNhap hiện tại.
+ * trangThai lưu: "Nháp" / "Hoàn thành" (= Đã xuất) / "Đã hủy"  (xem TrangThai.getDbText()).
  */
 public class PhieuXuatKho_DAO {
 
-    /**
-     * Ngưỡng "Sắp hết" - giống trigger trg_ChiTietHoaDon_DongBoKhoVaDonThuoc của
-     * CSDL.
-     */
+    /** Ngưỡng "Sắp hết" - giống trigger trg_ChiTietHoaDon_DongBoKhoVaDonThuoc của CSDL. */
     private static final int NGUONG_SAP_HET = 30;
 
     private final ChiTietPhieuXuatKho_DAO chiTietDAO = new ChiTietPhieuXuatKho_DAO();
     private String lastError = "";
 
     /** Lý do thất bại của thao tác ghi gần nhất (để GUI hiển thị). */
-    public String getLastError() {
-        return lastError;
-    }
+    public String getLastError() { return lastError; }
 
     private Connection conn() throws SQLException {
         Connection c = ConnectDB.getInstance().getConnection();
-        if (c == null)
-            throw new SQLException("Không kết nối được CSDL SALALA.");
+        if (c == null) throw new SQLException("Không kết nối được CSDL SALALA.");
         return c;
     }
 
@@ -86,8 +76,7 @@ public class PhieuXuatKho_DAO {
         try (PreparedStatement ps = c.prepareStatement(ct); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 PhieuXuatKho_entity p = map.get(rs.getString("maPXK"));
-                if (p != null)
-                    p.getChiTiet().add(mapChiTiet(rs));
+                if (p != null) p.getChiTiet().add(mapChiTiet(rs));
             }
         }
         return new ArrayList<>(map.values());
@@ -113,26 +102,20 @@ public class PhieuXuatKho_DAO {
         return null;
     }
 
-    /**
-     * Các dòng vật tư của phiếu (JOIN VatTu, Thuoc để lấy tên, đơn vị, giá nhập).
-     */
+    /** Các dòng vật tư của phiếu (JOIN VatTu, Thuoc để lấy tên, đơn vị, giá nhập). */
     public List<ChiTiet> getChiTiet(String maPXK) throws SQLException {
         List<ChiTiet> ds = new ArrayList<>();
-        for (ChiTietPhieuXuatKho_entity e : chiTietDAO.getByMaPhieu(maPXK))
-            ds.add(e.toChiTiet());
+        for (ChiTietPhieuXuatKho_entity e : chiTietDAO.getByMaPhieu(maPXK)) ds.add(e.toChiTiet());
         return ds;
     }
 
-    /**
-     * Tồn kho hiện tại của một vật tư, làm tròn xuống số nguyên (không có -> 0).
-     */
+    /** Tồn kho hiện tại của một vật tư, làm tròn xuống số nguyên (không có -> 0). */
     public int getTonKho(String maVT) {
         String sql = "SELECT soLuongTon FROM VatTu WHERE maVT = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, maVT);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next())
-                    return floorInt(rs.getBigDecimal(1));
+                if (rs.next()) return floorInt(rs.getBigDecimal(1));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -140,21 +123,14 @@ public class PhieuXuatKho_DAO {
         return 0;
     }
 
-    /**
-     * Dòng danh mục vật tư dùng cho hộp thoại lập phiếu (chỉ đọc bảng VatTu /
-     * Thuoc).
-     */
+    /** Dòng danh mục vật tư dùng cho hộp thoại lập phiếu (chỉ đọc bảng VatTu / Thuoc). */
     public static final class VatTuRow {
         public final String maVT, tenVT, donVi;
         public final long giaNhap;
         public final int tonKho;
-
         VatTuRow(String maVT, String tenVT, String donVi, long giaNhap, int tonKho) {
-            this.maVT = maVT;
-            this.tenVT = tenVT;
-            this.donVi = donVi;
-            this.giaNhap = giaNhap;
-            this.tonKho = tonKho;
+            this.maVT = maVT; this.tenVT = tenVT; this.donVi = donVi;
+            this.giaNhap = giaNhap; this.tonKho = tonKho;
         }
     }
 
@@ -174,23 +150,17 @@ public class PhieuXuatKho_DAO {
         return ds;
     }
 
-    /**
-     * Danh sách nhân viên {maNhanVien, hoTen} để chọn người lập phiếu - chỉ đọc.
-     */
+    /** Danh sách nhân viên {maNhanVien, hoTen} để chọn người lập phiếu - chỉ đọc. */
     public List<String[]> getDanhSachNhanVien() throws SQLException {
         List<String[]> ds = new ArrayList<>();
         String sql = "SELECT maNhanVien, hoTen FROM NhanVien ORDER BY maNhanVien";
         try (PreparedStatement ps = conn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next())
-                ds.add(new String[] { rs.getString(1), rs.getString(2) });
+            while (rs.next()) ds.add(new String[]{rs.getString(1), rs.getString(2)});
         }
         return ds;
     }
 
-    /**
-     * Sinh mã phiếu kế tiếp, dạng PXK001 (đúng định dạng dữ liệu mẫu PXK001,
-     * PXK002...).
-     */
+    /** Sinh mã phiếu kế tiếp, dạng PXK001 (đúng định dạng dữ liệu mẫu PXK001, PXK002...). */
     public String taoMaPhieuMoi() {
         try {
             return taoMaPhieuMoi(conn());
@@ -205,8 +175,7 @@ public class PhieuXuatKho_DAO {
                 + "FROM PhieuXuatKho WHERE maPXK LIKE 'PXK%'";
         int max = 0;
         try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            if (rs.next())
-                max = rs.getInt(1); // NULL -> 0
+            if (rs.next()) max = rs.getInt(1);   // NULL -> 0
         }
         return String.format("PXK%03d", max + 1);
     }
@@ -254,10 +223,7 @@ public class PhieuXuatKho_DAO {
         }
     }
 
-    /**
-     * Sửa phiếu (chỉ khi Nháp): cập nhật ngày, lý do/ghi chú và thay toàn bộ chi
-     * tiết.
-     */
+    /** Sửa phiếu (chỉ khi Nháp): cập nhật ngày, lý do/ghi chú và thay toàn bộ chi tiết. */
     public boolean update(PhieuXuatKho_entity p) {
         lastError = "";
         Connection c = null;
@@ -300,8 +266,7 @@ public class PhieuXuatKho_DAO {
     // Xác nhận (trừ tồn) / hủy
     // ===================================================================
     /**
-     * Xác nhận xuất kho: chuyển phiếu sang Đã xuất và trừ tồn từng vật tư (1
-     * transaction).
+     * Xác nhận xuất kho: chuyển phiếu sang Đã xuất và trừ tồn từng vật tư (1 transaction).
      * Nếu bất kỳ vật tư nào không đủ tồn thì rollback toàn bộ và trả về false.
      */
     public boolean xacNhan(String maPXK) {
@@ -325,8 +290,7 @@ public class PhieuXuatKho_DAO {
                 return false;
             }
 
-            // Điều kiện soLuongTon >= soLuong đảm bảo không xuất quá tồn (kể cả khi có
-            // người khác thao tác song song).
+            // Điều kiện soLuongTon >= soLuong đảm bảo không xuất quá tồn (kể cả khi có người khác thao tác song song).
             // Các biểu thức trong SET đều dùng giá trị tồn TRƯỚC khi cập nhật.
             String upd = "UPDATE VatTu SET soLuongTon = soLuongTon - ?, "
                     + "trangThai = CASE WHEN soLuongTon - ? <= 0 THEN N'Hết tồn' "
@@ -367,8 +331,7 @@ public class PhieuXuatKho_DAO {
             ps.setString(1, TrangThai.DA_HUY.getDbText());
             ps.setString(2, maPXK);
             ps.setString(3, TrangThai.NHAP.getDbText());
-            if (ps.executeUpdate() > 0)
-                return true;
+            if (ps.executeUpdate() > 0) return true;
             lastError = "Phiếu không còn ở trạng thái Nháp hoặc không tồn tại.";
             return false;
         } catch (SQLException e) {
@@ -393,8 +356,7 @@ public class PhieuXuatKho_DAO {
     /** Ghi chi tiết bằng ChiTietPhieuXuatKho_DAO (tự sinh maCTPXK). */
     private void insertChiTiet(Connection c, String maPXK, List<ChiTiet> lines) throws SQLException {
         List<ChiTietPhieuXuatKho_entity> ds = new ArrayList<>();
-        for (ChiTiet d : lines)
-            ds.add(ChiTietPhieuXuatKho_entity.fromChiTiet(maPXK, d));
+        for (ChiTiet d : lines) ds.add(ChiTietPhieuXuatKho_entity.fromChiTiet(maPXK, d));
         chiTietDAO.insertAll(c, maPXK, ds);
     }
 
@@ -447,18 +409,10 @@ public class PhieuXuatKho_DAO {
     }
 
     private void rollback(Connection c) {
-        try {
-            if (c != null)
-                c.rollback();
-        } catch (SQLException ignored) {
-        }
+        try { if (c != null) c.rollback(); } catch (SQLException ignored) { }
     }
 
     private void resetAutoCommit(Connection c) {
-        try {
-            if (c != null)
-                c.setAutoCommit(true);
-        } catch (SQLException ignored) {
-        }
+        try { if (c != null) c.setAutoCommit(true); } catch (SQLException ignored) { }
     }
 }

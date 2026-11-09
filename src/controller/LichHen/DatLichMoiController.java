@@ -62,8 +62,7 @@ public class DatLichMoiController {
 
     public KhachHang timKhachHangTheoSoDienThoai(String soDienThoai) {
         String sdtSo = soDienThoai == null ? "" : soDienThoai.trim().replaceAll("[^0-9]", "");
-        if (sdtSo.isEmpty())
-            throw new IllegalArgumentException("Vui lòng nhập số điện thoại khách hàng.");
+        if (sdtSo.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập số điện thoại khách hàng.");
         for (KhachHang khachHang : khachHangDao.timKiemTongHop(sdtSo)) {
             if (khachHang.getSdt() != null
                     && khachHang.getSdt().replaceAll("[^0-9]", "").equals(sdtSo)) {
@@ -102,7 +101,7 @@ public class DatLichMoiController {
         }
         if (thongTin.thuCung == null || thongTin.nhanVien == null
                 || (thongTin.dichVu == null && (thongTin.noiDung == null
-                        || thongTin.noiDung.startsWith("--")))
+                    || thongTin.noiDung.startsWith("--")))
                 || thongTin.gioKham == null) {
             throw new IllegalArgumentException("Vui lòng chọn thú cưng, nhân viên, nội dung khám và giờ khám.");
         }
@@ -141,8 +140,7 @@ public class DatLichMoiController {
     }
 
     private boolean laDichVuNgungHoatDong(String trangThai) {
-        if (trangThai == null)
-            return false;
+        if (trangThai == null) return false;
         String normalized = trangThai.trim().toLowerCase();
         return normalized.contains("ngưng") || normalized.contains("ngừng")
                 || normalized.contains("không hoạt động");
@@ -151,7 +149,6 @@ public class DatLichMoiController {
     public static final class DuLieuTuyChon {
         public final List<NhanVien_entity> nhanVien;
         public final List<DichVu_entity> dichVu;
-
         public DuLieuTuyChon(List<NhanVien_entity> nhanVien, List<DichVu_entity> dichVu) {
             this.nhanVien = nhanVien;
             this.dichVu = dichVu;
@@ -161,7 +158,6 @@ public class DatLichMoiController {
     public static final class DuLieuThuCung {
         public final List<ThuCung_entity> thuCung;
         public final Map<String, CanNangGanNhat> canNangGanNhat;
-
         public DuLieuThuCung(List<ThuCung_entity> thuCung,
                 Map<String, CanNangGanNhat> canNangGanNhat) {
             this.thuCung = thuCung;
@@ -172,7 +168,6 @@ public class DatLichMoiController {
     public static final class CanNangGanNhat {
         public final LocalDateTime ngayKham;
         public final String canNang;
-
         public CanNangGanNhat(LocalDateTime ngayKham, String canNang) {
             this.ngayKham = ngayKham;
             this.canNang = canNang;
@@ -188,7 +183,6 @@ public class DatLichMoiController {
         public final String ngayKham;
         public final String gioKham;
         public final String ghiChu;
-
         public ThongTinDatLich(KhachHang khachHang, ThuCung_entity thuCung,
                 NhanVien_entity nhanVien, DichVu_entity dichVu, String noiDung,
                 String ngayKham, String gioKham, String ghiChu) {

@@ -16,7 +16,7 @@ public class NhaCungCap_DAO {
         ArrayList<NhaCungCap_entity> dsNCC = new ArrayList<>();
 
         String sql = "SELECT maNCC, tenNCC, diaChi, sdt, email "
-                + "FROM NhaCungCap";
+                   + "FROM NhaCungCap";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -25,11 +25,12 @@ public class NhaCungCap_DAO {
 
             while (rs.next()) {
                 NhaCungCap_entity ncc = new NhaCungCap_entity(
-                        rs.getString("maNCC"),
-                        rs.getString("tenNCC"),
-                        rs.getString("diaChi"),
-                        rs.getString("sdt"),
-                        rs.getString("email"));
+                    rs.getString("maNCC"),
+                    rs.getString("tenNCC"),
+                    rs.getString("diaChi"),
+                    rs.getString("sdt"),
+                    rs.getString("email")
+                );
 
                 dsNCC.add(ncc);
             }
@@ -47,8 +48,8 @@ public class NhaCungCap_DAO {
     // 2. Thêm nhà cung cấp
     public boolean createNhaCungCap(NhaCungCap_entity ncc) {
         String sql = "INSERT INTO NhaCungCap "
-                + "(maNCC, tenNCC, diaChi, sdt, email) "
-                + "VALUES (?, ?, ?, ?, ?)";
+                   + "(maNCC, tenNCC, diaChi, sdt, email) "
+                   + "VALUES (?, ?, ?, ?, ?)";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -97,8 +98,8 @@ public class NhaCungCap_DAO {
     // 4. Cập nhật nhà cung cấp
     public boolean updateNhaCungCap(NhaCungCap_entity ncc) {
         String sql = "UPDATE NhaCungCap "
-                + "SET tenNCC = ?, diaChi = ?, sdt = ?, email = ? "
-                + "WHERE maNCC = ?";
+                   + "SET tenNCC = ?, diaChi = ?, sdt = ?, email = ? "
+                   + "WHERE maNCC = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -125,7 +126,7 @@ public class NhaCungCap_DAO {
     // 5. Tìm nhà cung cấp theo mã
     public NhaCungCap_entity getNhaCungCapTheoMa(String maNCC) {
         String sql = "SELECT maNCC, tenNCC, diaChi, sdt, email "
-                + "FROM NhaCungCap WHERE maNCC = ?";
+                   + "FROM NhaCungCap WHERE maNCC = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -137,11 +138,12 @@ public class NhaCungCap_DAO {
 
             if (rs.next()) {
                 NhaCungCap_entity ncc = new NhaCungCap_entity(
-                        rs.getString("maNCC"),
-                        rs.getString("tenNCC"),
-                        rs.getString("diaChi"),
-                        rs.getString("sdt"),
-                        rs.getString("email"));
+                    rs.getString("maNCC"),
+                    rs.getString("tenNCC"),
+                    rs.getString("diaChi"),
+                    rs.getString("sdt"),
+                    rs.getString("email")
+                );
 
                 rs.close();
                 stmt.close();

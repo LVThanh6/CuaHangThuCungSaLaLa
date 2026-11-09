@@ -105,7 +105,7 @@ public class LapHoaDonController {
             boolean trongThoiHan = (khuyenMai.getNgayBatDau() == null
                     || !ngay.isBefore(khuyenMai.getNgayBatDau()))
                     && (khuyenMai.getNgayKetThuc() == null
-                            || !ngay.isAfter(khuyenMai.getNgayKetThuc()));
+                    || !ngay.isAfter(khuyenMai.getNgayKetThuc()));
             if (trongThoiHan) {
                 ketQua.add(khuyenMai);
             }
@@ -165,8 +165,7 @@ public class LapHoaDonController {
     }
 
     public String layTenLoaiMatHang(LoaiMatHang loai) {
-        if (loai == null)
-            return "";
+        if (loai == null) return "";
         return switch (loai) {
             case DICH_VU -> "Dịch vụ";
             case VAT_TU -> "Vật tư";
@@ -226,21 +225,10 @@ public class LapHoaDonController {
             this.merged = merged;
         }
 
-        public ValidationError getValidation() {
-            return validation;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public InvoiceLine getLine() {
-            return line;
-        }
-
-        public boolean isMerged() {
-            return merged;
-        }
+        public ValidationError getValidation() { return validation; }
+        public int getIndex() { return index; }
+        public InvoiceLine getLine() { return line; }
+        public boolean isMerged() { return merged; }
     }
 
     public boolean laSoLuongHopLe(int soLuong) {
@@ -248,12 +236,9 @@ public class LapHoaDonController {
     }
 
     public ValidationError kiemTraThuCungBatBuoc(LoaiMatHang loai, boolean coThuCung) {
-        if (coThuCung)
-            return ValidationError.NONE;
-        if (loai == LoaiMatHang.DICH_VU)
-            return ValidationError.DICH_VU_CAN_THU_CUNG;
-        if (loai == LoaiMatHang.THUOC)
-            return ValidationError.THUOC_CAN_THU_CUNG;
+        if (coThuCung) return ValidationError.NONE;
+        if (loai == LoaiMatHang.DICH_VU) return ValidationError.DICH_VU_CAN_THU_CUNG;
+        if (loai == LoaiMatHang.THUOC) return ValidationError.THUOC_CAN_THU_CUNG;
         return ValidationError.NONE;
     }
 
@@ -374,12 +359,9 @@ public class LapHoaDonController {
             NhanVien_entity nhanVien,
             List<InvoiceLine> lines,
             boolean coThuCung) {
-        if (nhanVien == null)
-            return ValidationError.CHUA_CO_NHAN_VIEN;
-        if (khachHang == null)
-            return ValidationError.CHUA_CHON_KHACH_HANG;
-        if (lines.isEmpty())
-            return ValidationError.HOA_DON_TRONG;
+        if (nhanVien == null) return ValidationError.CHUA_CO_NHAN_VIEN;
+        if (khachHang == null) return ValidationError.CHUA_CHON_KHACH_HANG;
+        if (lines.isEmpty()) return ValidationError.HOA_DON_TRONG;
         if (!coThuCung && lines.stream().anyMatch(InvoiceLine::canThuCung)) {
             return ValidationError.HOA_DON_CAN_THU_CUNG;
         }
@@ -471,18 +453,14 @@ public class LapHoaDonController {
             try {
                 connection.setAutoCommit(autoCommitCu);
             } catch (SQLException restoreError) {
-                if (loiChinh == null)
-                    loiChinh = restoreError;
-                else
-                    loiChinh.addSuppressed(restoreError);
+                if (loiChinh == null) loiChinh = restoreError;
+                else loiChinh.addSuppressed(restoreError);
             }
             try {
                 connection.close();
             } catch (SQLException closeError) {
-                if (loiChinh == null)
-                    loiChinh = closeError;
-                else
-                    loiChinh.addSuppressed(closeError);
+                if (loiChinh == null) loiChinh = closeError;
+                else loiChinh.addSuppressed(closeError);
             }
         }
         if (loiChinh != null) {
@@ -504,13 +482,8 @@ public class LapHoaDonController {
             this.soLuongConLai = soLuongConLai;
         }
 
-        public ChiTietDonThuoc_entity getChiTiet() {
-            return chiTiet;
-        }
-
-        public BigDecimal getSoLuongConLai() {
-            return soLuongConLai;
-        }
+        public ChiTietDonThuoc_entity getChiTiet() { return chiTiet; }
+        public BigDecimal getSoLuongConLai() { return soLuongConLai; }
     }
 
     public enum ValidationError {
@@ -533,9 +506,7 @@ public class LapHoaDonController {
             this.message = message;
         }
 
-        public String getMessage() {
-            return message;
-        }
+        public String getMessage() { return message; }
     }
 
     public static final class InvoiceLine {
@@ -563,55 +534,25 @@ public class LapHoaDonController {
             this.bacSiThucHien = bacSiThucHien;
         }
 
-        public String getMaHang() {
-            return maHang;
-        }
-
-        public String getTenHang() {
-            return tenHang;
-        }
-
-        public LoaiMatHang getLoai() {
-            return loai;
-        }
-
-        public int getSoLuong() {
-            return soLuong;
-        }
-
-        public double getDonGia() {
-            return donGia;
-        }
-
-        public VatTu_entity getVatTu() {
-            return vatTu;
-        }
-
-        public ChiTietDonThuoc_entity getChiTietDonThuoc() {
-            return chiTietDonThuoc;
-        }
-
+        public String getMaHang() { return maHang; }
+        public String getTenHang() { return tenHang; }
+        public LoaiMatHang getLoai() { return loai; }
+        public int getSoLuong() { return soLuong; }
+        public double getDonGia() { return donGia; }
+        public VatTu_entity getVatTu() { return vatTu; }
+        public ChiTietDonThuoc_entity getChiTietDonThuoc() { return chiTietDonThuoc; }
         public String getMaCTDT() {
             return chiTietDonThuoc == null ? null : chiTietDonThuoc.getMaCTDT();
         }
-
-        public NhanVien_entity getNhanVienThucHien() {
-            return nhanVienThucHien;
-        }
-
-        public BacSi_entity getBacSiThucHien() {
-            return bacSiThucHien;
-        }
-
+        public NhanVien_entity getNhanVienThucHien() { return nhanVienThucHien; }
+        public BacSi_entity getBacSiThucHien() { return bacSiThucHien; }
         public boolean canThuCung() {
             return loai == LoaiMatHang.DICH_VU || loai == LoaiMatHang.THUOC;
         }
-
         public InvoiceLine voiSoLuong(int soLuongMoi) {
             return new InvoiceLine(maHang, tenHang, loai, soLuongMoi, donGia, vatTu,
                     chiTietDonThuoc, nhanVienThucHien, bacSiThucHien);
         }
-
         public boolean cungMatHang(InvoiceLine other) {
             return maHang.equals(other.maHang) && loai == other.loai
                     && Objects.equals(getMaCTDT(), other.getMaCTDT())
@@ -656,20 +597,9 @@ public class LapHoaDonController {
             this.tongThanhToan = tongThanhToan;
         }
 
-        public double getTienHang() {
-            return tienHang;
-        }
-
-        public double getTienGiam() {
-            return tienGiam;
-        }
-
-        public double getTienThue() {
-            return tienThue;
-        }
-
-        public double getTongThanhToan() {
-            return tongThanhToan;
-        }
+        public double getTienHang() { return tienHang; }
+        public double getTienGiam() { return tienGiam; }
+        public double getTienThue() { return tienThue; }
+        public double getTongThanhToan() { return tongThanhToan; }
     }
 }
