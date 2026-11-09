@@ -125,7 +125,8 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelTrai.add(lblMoTa);
         panelTieuDe.add(panelTrai, BorderLayout.WEST);
 
-        // Nút "Thêm hạng" - Nút phẳng tiêu chuẩn, nền màu chủ đạo, chữ trắng, không icon, không animation
+        // Nút "Thêm hạng" - Nút phẳng tiêu chuẩn, nền màu chủ đạo, chữ trắng, không
+        // icon, không animation
         btnThemHang = new JButton("Thêm hạng");
         btnThemHang.setFont(RangBuocGiaoDien.fontDam(13));
         btnThemHang.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
@@ -609,12 +610,13 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelBody.add(panelInfo);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        JTable tableTC = new JTable(new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
-            @Override
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
-        });
+        JTable tableTC = new JTable(
+                new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
+                    @Override
+                    public boolean isCellEditable(int r, int c) {
+                        return false;
+                    }
+                });
         tableTC.setRowHeight(30);
         JScrollPane scrollTC = new JScrollPane(tableTC);
         scrollTC.setPreferredSize(new Dimension(0, 110));
@@ -798,11 +800,20 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                     JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Lỗi định dạng",
                             JOptionPane.WARNING_MESSAGE);
                     switch (kq.getTruongLoi()) {
-                        case MINIMUM: txtChiTieuMin.requestFocus(); break;
-                        case MAXIMUM: txtChiTieuMax.requestFocus(); break;
-                        case DISCOUNT: txtGiamGia.requestFocus(); break;
-                        case POINTS: txtDiemTichLuy1Van.requestFocus(); break;
-                        default: break;
+                        case MINIMUM:
+                            txtChiTieuMin.requestFocus();
+                            break;
+                        case MAXIMUM:
+                            txtChiTieuMax.requestFocus();
+                            break;
+                        case DISCOUNT:
+                            txtGiamGia.requestFocus();
+                            break;
+                        case POINTS:
+                            txtDiemTichLuy1Van.requestFocus();
+                            break;
+                        default:
+                            break;
                     }
                 } else {
                     JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Lỗi",

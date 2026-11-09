@@ -161,7 +161,7 @@ public class HeaderGUI extends JPanel {
         thongTin.setLayout(new BoxLayout(thongTin, BoxLayout.Y_AXIS));
         thongTin.setOpaque(false);
 
-        JLabel lblTen = new JLabel(tenNguoiDung + " ▾");
+        JLabel lblTen = new JLabel(tenNguoiDung);
         lblTen.setFont(RangBuocGiaoDien.fontDam(13));
         lblTen.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
@@ -235,7 +235,7 @@ public class HeaderGUI extends JPanel {
         danhSachNutTab.clear();
 
         for (String tenTab : danhSachTabs) {
-            JButton nut = new JButton(tenTab + " ▾") {
+            JButton nut = new JButton(tenTab) {
                 @Override
                 protected void paintComponent(Graphics g) {
                     RangBuocGiaoDien.batKhuRangCua(g);

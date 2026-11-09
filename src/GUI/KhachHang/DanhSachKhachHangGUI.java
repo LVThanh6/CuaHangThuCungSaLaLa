@@ -262,20 +262,21 @@ public class DanhSachKhachHangGUI extends JPanel {
         // Thiết lập renderer cho cột Hạng thành viên
         table.getColumnModel().getColumn(controller.layViTriCotHangThanhVien())
                 .setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
-                    int r, int c) {
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
-                lbl.setFont(RangBuocGiaoDien.fontDam(12));
-                String valStr = val != null ? val.toString() : "";
-                lbl.setForeground(KhachHangController.layMauHang(valStr));
-                lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
-                if (!isSel) {
-                    lbl.setBackground(KhachHangController.layMauNenDong(r));
-                }
-                return lbl;
-            }
-        });
+                    @Override
+                    public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel,
+                            boolean hasFoc,
+                            int r, int c) {
+                        JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
+                        lbl.setFont(RangBuocGiaoDien.fontDam(12));
+                        String valStr = val != null ? val.toString() : "";
+                        lbl.setForeground(KhachHangController.layMauHang(valStr));
+                        lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
+                        if (!isSel) {
+                            lbl.setBackground(KhachHangController.layMauNenDong(r));
+                        }
+                        return lbl;
+                    }
+                });
     }
 
     private void capNhatTrangThaiNut(JTable table) {
@@ -424,11 +425,20 @@ public class DanhSachKhachHangGUI extends JPanel {
                 JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi định dạng",
                         JOptionPane.WARNING_MESSAGE);
                 switch (ketQua.getTruongLoi()) {
-                    case CODE: txtMaKH.requestFocus(); break;
-                    case NAME: txtHoTen.requestFocus(); break;
-                    case PHONE: txtSDT.requestFocus(); break;
-                    case EMAIL: txtEmail.requestFocus(); break;
-                    default: break;
+                    case CODE:
+                        txtMaKH.requestFocus();
+                        break;
+                    case NAME:
+                        txtHoTen.requestFocus();
+                        break;
+                    case PHONE:
+                        txtSDT.requestFocus();
+                        break;
+                    case EMAIL:
+                        txtEmail.requestFocus();
+                        break;
+                    default:
+                        break;
                 }
             } else {
                 JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",
@@ -481,12 +491,13 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // 2. Danh sách thú cưng của khách
-        JTable tableTC = new JTable(new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
-            @Override
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
-        });
+        JTable tableTC = new JTable(
+                new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
+                    @Override
+                    public boolean isCellEditable(int r, int c) {
+                        return false;
+                    }
+                });
         tableTC.setRowHeight(30);
         JScrollPane scrollTC = new JScrollPane(tableTC);
         scrollTC.setPreferredSize(new Dimension(0, 120));
@@ -603,11 +614,20 @@ public class DanhSachKhachHangGUI extends JPanel {
                 JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",
                         JOptionPane.WARNING_MESSAGE);
                 switch (ketQua.getTruongLoi()) {
-                    case CODE: txtMaKH.requestFocus(); break;
-                    case NAME: txtHoTen.requestFocus(); break;
-                    case PHONE: txtSDT.requestFocus(); break;
-                    case EMAIL: txtEmail.requestFocus(); break;
-                    default: break;
+                    case CODE:
+                        txtMaKH.requestFocus();
+                        break;
+                    case NAME:
+                        txtHoTen.requestFocus();
+                        break;
+                    case PHONE:
+                        txtSDT.requestFocus();
+                        break;
+                    case EMAIL:
+                        txtEmail.requestFocus();
+                        break;
+                    default:
+                        break;
                 }
             } else {
                 JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",

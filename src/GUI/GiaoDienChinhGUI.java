@@ -192,7 +192,7 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
 
     private void xuLyChonMenuCon(String tenTab, String tenMenuCon) {
         this.tabHienTai = tenTab;
-        hienThiNoiDungMacDinh("Đang xem: " + tenTab + " ➔ " + tenMenuCon);
+        hienThiNoiDungMacDinh("Đang xem: " + tenTab + " - " + tenMenuCon);
 
         hienThiManHinh(dieuHuongController.layManHinhChoMenuCon(tenMenuCon));
     }

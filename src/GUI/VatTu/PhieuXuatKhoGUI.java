@@ -222,7 +222,7 @@ public class PhieuXuatKhoGUI extends JPanel {
         body.add(t);
         body.add(valRow);
 
-        card.add(iconWrap, BorderLayout.WEST);
+        // card.add(iconWrap, BorderLayout.WEST);
         card.add(body, BorderLayout.CENTER);
         return card;
     }
@@ -274,10 +274,10 @@ public class PhieuXuatKhoGUI extends JPanel {
         filterLeft.add(btnDate);
         filterLeft.add(cboTrangThai);
 
-        RoundButton btnTai = new RoundButton("⟳  Tải lại", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnTai = new RoundButton("Tải lại", WHITE, BORDER, TEXT_DARK);
         RoundButton btnXem = new RoundButton("Xem", WHITE, BORDER, TEXT_DARK);
         RoundButton btnSua = new RoundButton("Sửa", WHITE, BORDER, TEXT_DARK);
-        RoundButton btnExport = new RoundButton("⤓  Xuất danh sách", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnExport = new RoundButton("Xuất danh sách", WHITE, BORDER, TEXT_DARK);
 
         btnTai.addActionListener(e -> taiLaiTuDB());
 
@@ -625,7 +625,7 @@ public class PhieuXuatKhoGUI extends JPanel {
 
         // ---- thông tin ----
         Badge badge = new Badge();
-        badge.setText("● " + p.tt.text);
+            badge.setText(p.tt.text);
         applyBadge(badge, p.tt);
         JPanel badgeWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         badgeWrap.setOpaque(false);
@@ -715,7 +715,7 @@ public class PhieuXuatKhoGUI extends JPanel {
         actions.add(btnHuy);
         actions.add(btnDong);
 
-        JLabel note = new JLabel("ⓘ  Tồn kho chỉ bị trừ sau khi xác nhận. Không được xuất quá số lượng tồn hiện tại.");
+        JLabel note = new JLabel("Lưu ý: Tồn kho chỉ bị trừ sau khi xác nhận. Không được xuất quá số lượng tồn hiện tại.");
         note.setFont(new Font(FONT, Font.PLAIN, 11));
         note.setForeground(ORANGE);
         JPanel noteBox = new JPanel(new BorderLayout());
@@ -1096,7 +1096,7 @@ public class PhieuXuatKhoGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String s = v == null ? "" : v.toString();
-            badge.setText("● " + s);
+            badge.setText(s);
             if ("Đã xuất".equals(s)) badge.setColors(GREEN_BG, GREEN);
             else if ("Đã hủy".equals(s)) badge.setColors(RED_BG, RED);
             else badge.setColors(GRAY_BG, GRAY_FG);

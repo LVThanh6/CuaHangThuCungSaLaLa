@@ -92,7 +92,7 @@ public class NhaCungCapGUI extends JPanel {
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
         right.add(lblTongNCC);
-        RoundButton btnThem = new RoundButton("+ Them nha cung cap", PRIMARY, PRIMARY, WHITE);
+        RoundButton btnThem = new RoundButton("Thêm nhà cung cấp", PRIMARY, PRIMARY, WHITE);
         btnThem.addActionListener(e -> themNhaCungCap());
         right.add(btnThem);
 

@@ -27,8 +27,10 @@ import entity.BacSi.BacSi_entity;
 import entity.BacSi.ChuyenNganh_entity;
 
 /**
- * Bộ điều khiển Bác sĩ: toàn bộ nghiệp vụ (tải, thống kê, lọc/sắp xếp, kiểm tra hợp lệ,
- * thêm/sửa/xóa, đổi trạng thái tài khoản, chuyên ngành, lịch làm việc, xuất CSV).
+ * Bộ điều khiển Bác sĩ: toàn bộ nghiệp vụ (tải, thống kê, lọc/sắp xếp, kiểm tra
+ * hợp lệ,
+ * thêm/sửa/xóa, đổi trạng thái tài khoản, chuyên ngành, lịch làm việc, xuất
+ * CSV).
  * BacSiGUI chỉ hiển thị và gọi các hàm này.
  */
 public class BacSiController {
@@ -175,10 +177,11 @@ public class BacSiController {
     // ====================== LỌC / SẮP XẾP ======================
 
     /**
-     * @param tuKhoa     tìm theo tên, mã, SĐT (không phân biệt hoa thường và dấu)
+     * @param tuKhoa      tìm theo tên, mã, SĐT (không phân biệt hoa thường và dấu)
      * @param chuyenNganh tên chuyên ngành, null = tất cả
-     * @param trangThai  tên của {@link TrangThai}, null = tất cả
-     * @param cotSapXep  {@link #COT_HO_TEN}, {@link #COT_SO_CA} hoặc -1 (không sắp xếp)
+     * @param trangThai   tên của {@link TrangThai}, null = tất cả
+     * @param cotSapXep   {@link #COT_HO_TEN}, {@link #COT_SO_CA} hoặc -1 (không sắp
+     *                    xếp)
      */
     public List<BacSi_entity> locDanhSach(List<BacSi_entity> ds, String tuKhoa, String chuyenNganh,
             String trangThai, int cotSapXep, boolean tang) {
@@ -239,7 +242,8 @@ public class BacSiController {
      * Kiểm tra dữ liệu form rồi thêm (goc == null) hoặc cập nhật (goc != null).
      * Tài khoản liên kết được giữ nguyên; chỉ trạng thái được đổi nếu khác.
      *
-     * @param dangLam trạng thái tài khoản mong muốn (bỏ qua nếu bác sĩ chưa có tài khoản)
+     * @param dangLam trạng thái tài khoản mong muốn (bỏ qua nếu bác sĩ chưa có tài
+     *                khoản)
      */
     public KetQuaLuu validateAndSave(String ma, BacSi_entity goc, String hoTen, String sdt, String email,
             String ngaySinh, String gioiTinh, String chuyenNganh, String luongThang, boolean dangLam)
@@ -319,7 +323,8 @@ public class BacSiController {
 
     /**
      * Xóa bác sĩ. Nếu đã có dữ liệu tham chiếu (LichLamViec, HoSoSucKhoe, DonThuoc,
-     * ChiTietHoaDon) thì SQL Server báo lỗi khóa ngoại 547 và coDuLieuLienQuan = true.
+     * ChiTietHoaDon) thì SQL Server báo lỗi khóa ngoại 547 và coDuLieuLienQuan =
+     * true.
      */
     public KetQuaXoa xoa(String maBacSi) throws SQLException {
         try {
@@ -333,7 +338,10 @@ public class BacSiController {
 
     // ====================== LỊCH LÀM VIỆC ======================
 
-    /** Lịch tuần hiện tại (thứ Hai - Chủ nhật); ngày không có lịch hiện "Không có lịch". */
+    /**
+     * Lịch tuần hiện tại (thứ Hai - Chủ nhật); ngày không có lịch hiện "Không có
+     * lịch".
+     */
     public LichTuan taiLichTuan(String maBacSi) throws SQLException {
         LocalDate dauTuan = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate cuoiTuan = dauTuan.plusWeeks(1); // không bao gồm

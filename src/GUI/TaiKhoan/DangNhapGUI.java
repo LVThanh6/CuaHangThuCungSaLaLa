@@ -127,12 +127,12 @@ public class DangNhapGUI extends JFrame {
 
         // Các tính năng nổi bật
         String[] tinhNang = {
-                "🐾 Quản lý hồ sơ thú cưng, khám chữa bệnh & kê thuốc",
-                "📦 Kiểm soát kho, vật tư, phiếu nhập xuất & nhà cung cấp",
-                "🛒 Quản lý bán hàng, dịch vụ, bảng giá & hóa đơn thanh toán",
-                "📅 Xếp lịch làm việc & tiếp nhận đặt lịch hẹn linh hoạt",
-                "👥 Phân quyền chuẩn xác 6 nhóm người dùng hệ thống",
-                "📊 Báo cáo doanh thu & biểu đồ hiệu suất hoạt động"
+                "Quản lý hồ sơ thú cưng, khám chữa bệnh & kê thuốc",
+                "Kiểm soát kho, vật tư, phiếu nhập xuất & nhà cung cấp",
+                "Quản lý bán hàng, dịch vụ, bảng giá & hóa đơn thanh toán",
+                "Xếp lịch làm việc & tiếp nhận đặt lịch hẹn linh hoạt",
+                "Phân quyền chuẩn xác 6 nhóm người dùng hệ thống",
+                "Báo cáo doanh thu & biểu đồ hiệu suất hoạt động"
         };
         for (String tn : tinhNang) {
             JLabel lblTN = new JLabel(tn);
@@ -345,7 +345,7 @@ public class DangNhapGUI extends JFrame {
         });
     }
     private void hienThiLoi(String msg) {
-        lblThongBaoLoi.setText("⚠ " + msg);
+        lblThongBaoLoi.setText(msg);
     }
 
     // ==========================================

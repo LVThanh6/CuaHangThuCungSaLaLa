@@ -105,11 +105,11 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         JPanel pPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         pPhai.setOpaque(false);
 
-        JButton btnLamMoi = taoNutPhu("🔄 Làm mới");
+        JButton btnLamMoi = taoNutPhu("Làm mới");
         btnLamMoi.addActionListener(e -> taiDuLieuLenBang());
         pPhai.add(btnLamMoi);
 
-        JButton btnThemTK = taoNutChinh("+ Thêm tài khoản mới");
+        JButton btnThemTK = taoNutChinh("Thêm tài khoản mới");
         btnThemTK.addActionListener(e -> xuLyThemTaiKhoan());
         pPhai.add(btnThemTK);
 
@@ -126,10 +126,10 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         lblBiKhoa = new JLabel("0");
         lblPhanBo = new JLabel("0 QL / 0 NV / 0 BS");
 
-        pKpi.add(taoTheKpi("TỔNG TÀI KHOẢN", lblTongTK, new Color(13, 148, 136), "👥"));
-        pKpi.add(taoTheKpi("ĐANG HOẠT ĐỘNG", lblDangHoatDong, new Color(16, 185, 129), "🟢"));
-        pKpi.add(taoTheKpi("ĐANG BỊ KHÓA", lblBiKhoa, new Color(239, 68, 68), "🔒"));
-        pKpi.add(taoTheKpi("PHÂN BỔ VAI TRÒ", lblPhanBo, new Color(99, 102, 241), "🛡"));
+        pKpi.add(taoTheKpi("TỔNG TÀI KHOẢN", lblTongTK, new Color(13, 148, 136), ""));
+        pKpi.add(taoTheKpi("ĐANG HOẠT ĐỘNG", lblDangHoatDong, new Color(16, 185, 129), ""));
+        pKpi.add(taoTheKpi("ĐANG BỊ KHÓA", lblBiKhoa, new Color(239, 68, 68), ""));
+        pKpi.add(taoTheKpi("PHÂN BỔ VAI TRÒ", lblPhanBo, new Color(99, 102, 241), ""));
 
         p.add(pKpi);
         return p;
@@ -785,7 +785,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
             JPanel pNut = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
             pNut.setOpaque(false);
 
-            JButton btnDoiMatKhau = new JButton("🔑 Đổi mật khẩu");
+            JButton btnDoiMatKhau = new JButton("Đổi mật khẩu");
             btnDoiMatKhau.setFont(RangBuocGiaoDien.fontVua(12));
             btnDoiMatKhau.setPreferredSize(new Dimension(130, 34));
             btnDoiMatKhau.setBackground(new Color(240, 253, 250));

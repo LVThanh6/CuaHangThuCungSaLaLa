@@ -137,8 +137,8 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
-        RoundButton btnLap = new RoundButton("+ Lập phiếu nhập", PRIMARY, PRIMARY, WHITE);
-        RoundButton btnXuat = new RoundButton("+ Lập phiếu xuất", WHITE, PRIMARY, PRIMARY);
+        RoundButton btnLap = new RoundButton("Lập phiếu nhập", PRIMARY, PRIMARY, WHITE);
+        RoundButton btnXuat = new RoundButton("Lập phiếu xuất", WHITE, PRIMARY, PRIMARY);
         btnLap.addActionListener(e -> lapPhieu());
         btnXuat.addActionListener(e -> {
             if (onLapPhieuXuat != null) onLapPhieuXuat.run();
@@ -185,7 +185,7 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         RoundButton btnXem = new RoundButton("Xem", WHITE, BORDER, TEXT_DARK);
         RoundButton btnSua = new RoundButton("Sửa", WHITE, BORDER, TEXT_DARK);
-        RoundButton btnExport = new RoundButton("⤓  Xuất danh sách", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnExport = new RoundButton("Xuất danh sách", WHITE, BORDER, TEXT_DARK);
 
         btnXem.addActionListener(e -> {
             int sel = table.getSelectedRow();
@@ -841,7 +841,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String s = v == null ? "" : v.toString();
-            badge.setText("● " + s);
+            badge.setText(s);
             if ("Đã xác nhận".equals(s)) badge.setColors(GREEN_BG, GREEN);
             else if ("Đã hủy".equals(s)) badge.setColors(RED_BG, RED);
             else badge.setColors(ORANGE_BG, ORANGE);

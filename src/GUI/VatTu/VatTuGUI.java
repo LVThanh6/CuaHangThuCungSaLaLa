@@ -213,7 +213,7 @@ public class VatTuGUI extends JPanel {
         bar.add(btnLamMoi);
         bar.add(Box.createHorizontalGlue());
 
-        JButton btnThem = taoNut("+ Thêm vật tư", MAU_XANH_LA, Color.BLACK, MAU_XANH_LA, 130);
+        JButton btnThem = taoNut("Thêm vật tư", MAU_XANH_LA, Color.BLACK, MAU_XANH_LA, 130);
         JButton btnSua = taoNut("Sửa", Color.BLACK, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 80);
         JButton btnXoa = taoNut("Xóa", Color.BLACK, MAU_DO, MAU_DO, 80);
         btnThem.addActionListener(e -> themVatTu());
@@ -740,9 +740,6 @@ public class VatTuGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String text = v == null ? "" : v.toString();
-            if (c == 1) { // Mũi tên sort ở cột Tên
-                text += sapXepTang == null ? "  ↕" : (sapXepTang ? "  ↑" : "  ↓");
-            }
             lbl.setText(text);
             return lbl;
         }

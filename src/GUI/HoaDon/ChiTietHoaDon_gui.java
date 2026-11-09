@@ -698,11 +698,11 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         Chip chip = daTT
 
-                ? new Chip("● Đã thanh toán",
+                ? new Chip("Đã thanh toán",
 
                         new Color(21, 128, 61), new Color(220, 252, 231))
 
-                : new Chip("● " + (trangThai == null
+                : new Chip((trangThai == null
 
                         ? "Chưa thanh toán"
                         : trangThai),
