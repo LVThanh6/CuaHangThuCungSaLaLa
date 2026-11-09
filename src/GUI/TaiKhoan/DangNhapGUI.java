@@ -72,42 +72,21 @@ public class DangNhapGUI extends JFrame {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g;
                 RangBuocGiaoDien.batKhuRangCua(g2);
-                // Gradient nền chuyển sắc nhẹ nhàng
+                // Nền chuyển sắc nhẹ nhàng
                 GradientPaint gp = new GradientPaint(
                         0, 0, new Color(13, 148, 136),
                         getWidth(), getHeight(), new Color(15, 118, 110));
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-
-                // Họa tiết trang trí vòng tròn chìm
-                g2.setColor(new Color(255, 255, 255, 20));
-                g2.fillOval(-50, -50, 220, 220);
-                g2.fillOval(getWidth() - 120, getHeight() - 140, 200, 200);
             }
         };
         banner.setLayout(new BoxLayout(banner, BoxLayout.Y_AXIS));
         banner.setBorder(new EmptyBorder(60, 40, 60, 40));
 
-        // Biểu tượng Logo
-        JComponent logoIcon = new JComponent() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                RangBuocGiaoDien.batKhuRangCua(g2);
-                g2.setColor(Color.WHITE);
-                g2.fillRoundRect(0, 0, 54, 54, 16, 16);
-
-                g2.setColor(new Color(13, 148, 136));
-                g2.fillOval(14, 14, 10, 10);
-                g2.fillOval(30, 14, 10, 10);
-                g2.fillOval(22, 28, 11, 11);
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(54, 54);
-            }
-        };
+        // Tên thương hiệu dạng văn bản (thay cho logo đồ họa)
+        JLabel logoIcon = new JLabel("[SALALA]");
+        logoIcon.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        logoIcon.setForeground(Color.WHITE);
         logoIcon.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblTenThuongHieu = new JLabel("SALALA Pet Shop");
@@ -240,29 +219,14 @@ public class DangNhapGUI extends JFrame {
         form.add(Box.createVerticalStrut(8));
 
         // 5. Nút Đăng nhập
-        btnDangNhap = new JButton("ĐĂNG NHẬP") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                RangBuocGiaoDien.batKhuRangCua(g2);
-                if (getModel().isPressed()) {
-                    g2.setColor(new Color(15, 118, 110));
-                } else if (getModel().isRollover()) {
-                    g2.setColor(new Color(20, 184, 166));
-                } else {
-                    g2.setColor(new Color(13, 148, 136));
-                }
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-                super.paintComponent(g);
-            }
-        };
+        btnDangNhap = new JButton("ĐĂNG NHẬP");
         btnDangNhap.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btnDangNhap.setPreferredSize(new Dimension(300, 42));
         btnDangNhap.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnDangNhap.setForeground(Color.WHITE);
+        btnDangNhap.setBackground(new Color(13, 148, 136));
         btnDangNhap.setFocusPainted(false);
         btnDangNhap.setBorderPainted(false);
-        btnDangNhap.setContentAreaFilled(false);
         btnDangNhap.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnDangNhap.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnDangNhap.addActionListener(e -> xuLyDangNhap());

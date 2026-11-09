@@ -129,16 +129,16 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         lblBiKhoa = new JLabel("0");
         lblPhanBo = new JLabel("0 QL / 0 NV / 0 BS");
 
-        pKpi.add(taoTheKpi("TỔNG TÀI KHOẢN", lblTongTK, new Color(13, 148, 136), ""));
-        pKpi.add(taoTheKpi("ĐANG HOẠT ĐỘNG", lblDangHoatDong, new Color(16, 185, 129), ""));
-        pKpi.add(taoTheKpi("ĐANG BỊ KHÓA", lblBiKhoa, new Color(239, 68, 68), ""));
-        pKpi.add(taoTheKpi("PHÂN BỔ VAI TRÒ", lblPhanBo, new Color(99, 102, 241), ""));
+        pKpi.add(taoTheKpi("TỔNG TÀI KHOẢN", lblTongTK, new Color(13, 148, 136)));
+        pKpi.add(taoTheKpi("ĐANG HOẠT ĐỘNG", lblDangHoatDong, new Color(16, 185, 129)));
+        pKpi.add(taoTheKpi("ĐANG BỊ KHÓA", lblBiKhoa, new Color(239, 68, 68)));
+        pKpi.add(taoTheKpi("PHÂN BỔ VAI TRÒ", lblPhanBo, new Color(99, 102, 241)));
 
         p.add(pKpi);
         return p;
     }
 
-    private JPanel taoTheKpi(String tieuDe, JLabel lblGiaTri, Color mauNhan, String icon) {
+    private JPanel taoTheKpi(String tieuDe, JLabel lblGiaTri, Color mauNhan) {
         JPanel card = new JPanel(new BorderLayout(8, 4));
         card.setBackground(Color.WHITE);
         card.setBorder(new CompoundBorder(
@@ -160,10 +160,6 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         pTrai.add(Box.createVerticalStrut(4));
         pTrai.add(lblGiaTri);
         card.add(pTrai, BorderLayout.CENTER);
-
-        JLabel lblIcon = new JLabel(icon);
-        lblIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
-        card.add(lblIcon, BorderLayout.EAST);
 
         return card;
     }
@@ -751,35 +747,13 @@ public class ThongTinTaiKhoanGUI extends JPanel {
             p.setBackground(Color.WHITE);
             p.setBorder(new EmptyBorder(24, 28, 20, 28));
 
-            // Khối Avatar lớn
-            JPanel pAvatar = new JPanel(new FlowLayout(FlowLayout.CENTER));
-            pAvatar.setOpaque(false);
-
-            final String avatarText = thongTin.chuCaiDau;
-
-            JComponent avatarComp = new JComponent() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    Graphics2D g2 = (Graphics2D) g;
-                    RangBuocGiaoDien.batKhuRangCua(g2);
-                    g2.setColor(new Color(204, 251, 241));
-                    g2.fillOval(0, 0, 72, 72);
-
-                    g2.setColor(RangBuocGiaoDien.MAU_CHU_DAO);
-                    g2.setFont(new Font("Segoe UI", Font.BOLD, 26));
-                    FontMetrics fm = g2.getFontMetrics();
-                    int textW = fm.stringWidth(avatarText);
-                    int textH = fm.getAscent();
-                    g2.drawString(avatarText, (72 - textW) / 2, (72 + textH) / 2 - 4);
-                }
-
-                @Override
-                public Dimension getPreferredSize() {
-                    return new Dimension(72, 72);
-                }
-            };
-            pAvatar.add(avatarComp);
-            p.add(pAvatar);
+            // Tên viết tắt đại diện (thay thế khối vẽ avatar tròn đồ họa)
+            JLabel lblAvatar = new JLabel("[" + thongTin.chuCaiDau + "]");
+            lblAvatar.setFont(RangBuocGiaoDien.fontDam(22));
+            lblAvatar.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+            lblAvatar.setAlignmentX(Component.CENTER_ALIGNMENT);
+            p.add(lblAvatar);
+            p.add(Box.createVerticalStrut(8));
 
             // Tên & Vai trò
             JLabel lblTen = new JLabel(thongTin.tenHienThi);
