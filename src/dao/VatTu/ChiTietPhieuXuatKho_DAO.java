@@ -197,14 +197,11 @@ public class ChiTietPhieuXuatKho_DAO {
     /** Thêm một dòng bằng connection đang dùng; ném SQLException để caller rollback. */
     public boolean insert(Connection c, ChiTietPhieuXuatKho_entity ct) throws SQLException {
         String sql = "INSERT INTO ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong) VALUES (?,?,?,?)";
-        String maPXK = ct.getMaPhieu() != null ? ct.getMaPhieu().getMaPhieu() : null;
-        String ma = ct.getMaCTPXK();
-        if (ma == null || ma.isEmpty()) {
-            ma = taoMaCT(c, maPXK, demDong(c, maPXK) + 1);
-        }
+        String ma = ct.getMaCTPXK() != null && !ct.getMaCTPXK().isEmpty()
+                ? ct.getMaCTPXK() : formatMaCT(maxSoCT(c) + 1);
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, ma);
-            ps.setString(2, maPXK);
+            ps.setString(2, ct.getMaPhieu() != null ? ct.getMaPhieu().getMaPhieu() : null);
             ps.setString(3, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
             ps.setInt(4, ct.getSoLuong());
             boolean ok = ps.executeUpdate() > 0;
@@ -217,10 +214,10 @@ public class ChiTietPhieuXuatKho_DAO {
     public void insertAll(Connection c, String maPXK, List<ChiTietPhieuXuatKho_entity> ds) throws SQLException {
         if (ds == null || ds.isEmpty()) return;
         String sql = "INSERT INTO ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong) VALUES (?,?,?,?)";
-        int dong = demDong(c, maPXK);   // số dòng đã có; dòng mới đánh số tiếp theo
+        int next = maxSoCT(c) + 1;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             for (ChiTietPhieuXuatKho_entity ct : ds) {
-                ps.setString(1, taoMaCT(c, maPXK, ++dong));
+                ps.setString(1, formatMaCT(next++));
                 ps.setString(2, maPXK);
                 ps.setString(3, ct.getMaVT() != null ? ct.getMaVT().getMaVT() : null);
                 ps.setInt(4, ct.getSoLuong());
@@ -241,40 +238,17 @@ public class ChiTietPhieuXuatKho_DAO {
     // ===================================================================
     // Hàm hỗ trợ
     // ===================================================================
-    /** Độ dài tối đa của cột maCTPXK (VARCHAR(20)). */
-    private static final int MA_CT_TOI_DA = 20;
-
-    /** Số dòng chi tiết hiện có của phiếu. */
-    private int demDong(Connection c, String maPXK) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM ChiTietPhieuXuatKho WHERE maPXK = ?")) {
-            ps.setString(1, maPXK);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
+    /** Số lớn nhất trong mã CTPXKnn hiện có (0 nếu chưa có). */
+    private int maxSoCT(Connection c) throws SQLException {
+        String sql = "SELECT MAX(TRY_CAST(SUBSTRING(maCTPXK, 6, 15) AS INT)) "
+                + "FROM ChiTietPhieuXuatKho WHERE maCTPXK LIKE 'CTPXK%'";
+        try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;   // NULL -> 0
         }
     }
 
-    /** Mã nhân viên lập phiếu (đọc cùng connection/transaction). */
-    private String layMaNhanVien(Connection c, String maPXK) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("SELECT maNhanVien FROM PhieuXuatKho WHERE maPXK = ?")) {
-            ps.setString(1, maPXK);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getString(1);
-            }
-        }
-        throw new SQLException("Không tìm thấy phiếu xuất " + maPXK + " để tạo mã chi tiết.");
-    }
-
-    /**
-     * Mã chi tiết = số dòng (2 chữ số) + mã phiếu + mã nhân viên lập phiếu.
-     * Ví dụ: dòng 1 của PXK003 do NV011 lập -> "01PXK003NV011".
-     */
-    private String taoMaCT(Connection c, String maPXK, int soDong) throws SQLException {
-        String ma = String.format("%02d", soDong) + maPXK + layMaNhanVien(c, maPXK);
-        if (ma.length() > MA_CT_TOI_DA) {
-            throw new SQLException("Mã chi tiết '" + ma + "' dài quá " + MA_CT_TOI_DA + " ký tự (cột maCTPXK).");
-        }
-        return ma;
+    private static String formatMaCT(int n) {
+        return String.format("CTPXK%02d", n);
     }
 
     private ChiTietPhieuXuatKho_entity mapRow(ResultSet rs) throws SQLException {

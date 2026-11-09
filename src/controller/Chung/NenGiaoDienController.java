@@ -48,10 +48,7 @@ public class NenGiaoDienController {
     // ==========================================================
     // 1. NẠP ẢNH NỀN
     // ==========================================================
-    /**
-     * Thứ tự tìm ảnh: classpath (/img/background.jpg) -> đường dẫn tương đối ->
-     * tuyệt đối.
-     */
+    /** Thứ tự tìm ảnh: classpath (/img/background.jpg) -> đường dẫn tương đối -> tuyệt đối. */
     public static synchronized BufferedImage taiAnhNen() {
         if (daThuTai) {
             return anhGoc;
@@ -98,10 +95,7 @@ public class NenGiaoDienController {
     // ==========================================================
     // 2. XỬ LÝ ẢNH THEO KÍCH THƯỚC PANEL
     // ==========================================================
-    /**
-     * Co giãn ảnh phủ kín (căn giữa, giữ tỉ lệ), tạo bản làm mờ và bản có lớp phủ
-     * trắng nhẹ.
-     */
+    /** Co giãn ảnh phủ kín (căn giữa, giữ tỉ lệ), tạo bản làm mờ và bản có lớp phủ trắng nhẹ. */
     public AnhNenDaXuLy taoAnhNen(int w, int h) {
         BufferedImage goc = taiAnhNen();
         if (goc == null || w <= 0 || h <= 0) {
@@ -171,9 +165,7 @@ public class NenGiaoDienController {
         return PhanLoaiNen.GIU_NGUYEN;
     }
 
-    /**
-     * Màu thẻ bán trong suốt dùng để tô nền thẻ (giữ màu gốc, độ đục DO_DUC_THE).
-     */
+    /** Màu thẻ bán trong suốt dùng để tô nền thẻ (giữ màu gốc, độ đục DO_DUC_THE). */
     public Color mauTheMo(Color bg) {
         return new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), RangBuocGiaoDien.DO_DUC_THE);
     }

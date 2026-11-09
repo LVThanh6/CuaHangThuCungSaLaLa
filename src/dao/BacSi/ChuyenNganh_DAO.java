@@ -16,16 +16,16 @@ public class ChuyenNganh_DAO {
     public List<ChuyenNganh_entity> getAll() throws SQLException {
         List<ChuyenNganh_entity> ds = new ArrayList<>();
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return ds;
+        if (con == null) return ds;
 
         String sql = "SELECT maChuyenNganh, tenChuyenNganh FROM ChuyenNganh ORDER BY tenChuyenNganh";
         try (Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 ds.add(new ChuyenNganh_entity(
-                        rs.getString("maChuyenNganh"),
-                        rs.getString("tenChuyenNganh")));
+                    rs.getString("maChuyenNganh"),
+                    rs.getString("tenChuyenNganh")
+                ));
             }
         }
         return ds;
@@ -33,12 +33,11 @@ public class ChuyenNganh_DAO {
 
     public String getMaTiepTheo() throws SQLException {
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return "CN001";
+        if (con == null) return "CN001";
 
         String sql = "SELECT ISNULL(MAX(CAST(SUBSTRING(maChuyenNganh, 3, LEN(maChuyenNganh)) AS INT)), 0) FROM ChuyenNganh WHERE maChuyenNganh LIKE 'CN%'";
         try (Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 int max = rs.getInt(1);
                 return String.format("CN%03d", max + 1);
@@ -48,11 +47,9 @@ public class ChuyenNganh_DAO {
     }
 
     public boolean them(String tenChuyenNganh) throws SQLException {
-        if (tenChuyenNganh == null || tenChuyenNganh.isBlank())
-            return false;
+        if (tenChuyenNganh == null || tenChuyenNganh.isBlank()) return false;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         String ma = getMaTiepTheo();
         String sql = "INSERT INTO ChuyenNganh (maChuyenNganh, tenChuyenNganh) VALUES (?, ?)";
@@ -64,11 +61,9 @@ public class ChuyenNganh_DAO {
     }
 
     public String getMaTheoTen(String tenChuyenNganh) throws SQLException {
-        if (tenChuyenNganh == null)
-            return null;
+        if (tenChuyenNganh == null) return null;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return null;
+        if (con == null) return null;
 
         String sql = "SELECT maChuyenNganh FROM ChuyenNganh WHERE tenChuyenNganh = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {

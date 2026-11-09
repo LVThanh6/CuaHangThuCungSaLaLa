@@ -30,23 +30,20 @@ public class NhaCungCapController {
 
     public OperationResult tao(SupplierInput input) {
         String error = validate(input);
-        if (error != null)
-            return new OperationResult(false, error);
+        if (error != null) return new OperationResult(false, error);
         boolean saved = nhaCungCapDao.createNhaCungCap(toEntity(input));
         return result(saved, "Không thể thêm nhà cung cấp. Kiểm tra dữ liệu hoặc kết nối CSDL.");
     }
 
     public OperationResult capNhat(SupplierInput input) {
         String error = validate(input);
-        if (error != null)
-            return new OperationResult(false, error);
+        if (error != null) return new OperationResult(false, error);
         boolean saved = nhaCungCapDao.updateNhaCungCap(toEntity(input));
         return result(saved, "Không thể cập nhật nhà cung cấp. Kiểm tra dữ liệu hoặc kết nối CSDL.");
     }
 
     public OperationResult xoa(String maNCC) {
-        if (maNCC == null || maNCC.isBlank())
-            return new OperationResult(false, "Mã nhà cung cấp không hợp lệ.");
+        if (maNCC == null || maNCC.isBlank()) return new OperationResult(false, "Mã nhà cung cấp không hợp lệ.");
         boolean deleted = nhaCungCapDao.deleteNhaCungCap(maNCC);
         return result(deleted, "Không thể xóa nhà cung cấp. Có thể nhà cung cấp đang được sử dụng.");
     }
@@ -80,17 +77,14 @@ public class NhaCungCapController {
     }
 
     private static String normalize(String value) {
-        if (value == null)
-            return "";
+        if (value == null) return "";
         return Normalizer.normalize(value.toLowerCase(Locale.forLanguageTag("vi-VN")).trim(),
                 Normalizer.Form.NFD).replaceAll("\\p{M}", "").replace('đ', 'd');
     }
 
     public static String validate(SupplierInput input) {
-        if (input == null || input.ma == null || input.ma.isBlank())
-            return "Mã nhà cung cấp không được để trống.";
-        if (input.ten == null || input.ten.isBlank())
-            return "Tên nhà cung cấp không được để trống.";
+        if (input == null || input.ma == null || input.ma.isBlank()) return "Mã nhà cung cấp không được để trống.";
+        if (input.ten == null || input.ten.isBlank()) return "Tên nhà cung cấp không được để trống.";
         return null;
     }
 
@@ -104,83 +98,35 @@ public class NhaCungCapController {
 
     public static final class Supplier {
         private final String code, name, address, phone, email;
-
         public Supplier(String code, String name, String address, String phone, String email) {
-            this.code = code;
-            this.name = name;
-            this.address = address;
-            this.phone = phone;
-            this.email = email;
+            this.code = code; this.name = name; this.address = address; this.phone = phone; this.email = email;
         }
-
-        public String getCode() {
-            return code;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getAddress() {
-            return address;
-        }
-
-        public String getPhone() {
-            return phone;
-        }
-
-        public String getEmail() {
-            return email;
-        }
+        public String getCode() { return code; }
+        public String getName() { return name; }
+        public String getAddress() { return address; }
+        public String getPhone() { return phone; }
+        public String getEmail() { return email; }
     }
 
     public static final class SupplierInput {
         private final String ma, ten, diaChi, sdt, email;
-
         public SupplierInput(String ma, String ten, String diaChi, String sdt, String email) {
-            this.ma = ma;
-            this.ten = ten;
-            this.diaChi = diaChi;
-            this.sdt = sdt;
-            this.email = email;
+            this.ma = ma; this.ten = ten; this.diaChi = diaChi; this.sdt = sdt; this.email = email;
         }
-
-        public String getMa() {
-            return ma;
-        }
-
-        public String getTen() {
-            return ten;
-        }
-
-        public String getDiaChi() {
-            return diaChi;
-        }
-
-        public String getSdt() {
-            return sdt;
-        }
-
-        public String getEmail() {
-            return email;
-        }
+        public String getMa() { return ma; }
+        public String getTen() { return ten; }
+        public String getDiaChi() { return diaChi; }
+        public String getSdt() { return sdt; }
+        public String getEmail() { return email; }
     }
 
     public static final class OperationResult {
         private final boolean successful;
         private final String error;
-
         private OperationResult(boolean successful, String error) {
-            this.successful = successful;
-            this.error = error;
+            this.successful = successful; this.error = error;
         }
-
-        public boolean isSuccessful() {
-            return successful;
-        }
-
-        public String getError() {
-            return error;
-        }
+        public boolean isSuccessful() { return successful; }
+        public String getError() { return error; }
     }
 }

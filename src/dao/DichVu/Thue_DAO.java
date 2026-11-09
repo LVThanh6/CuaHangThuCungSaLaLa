@@ -28,7 +28,7 @@ public class Thue_DAO {
             }
 
             try (PreparedStatement ps = con.prepareStatement(sql);
-                    ResultSet rs = ps.executeQuery()) {
+                 ResultSet rs = ps.executeQuery()) {
 
                 while (rs.next()) {
                     String maThue = rs.getString("maThue");
@@ -36,7 +36,8 @@ public class Thue_DAO {
                     double mucThue = rs.getDouble("mucThue");
 
                     Thue_entity thue = new Thue_entity(
-                            maThue, tenThue, mucThue);
+                            maThue, tenThue, mucThue
+                    );
 
                     dsThue.add(thue);
                 }
@@ -54,7 +55,7 @@ public class Thue_DAO {
      */
     public boolean createThue(Thue_entity thue) {
         String sql = "INSERT INTO Thue (maThue, tenThue, mucThue) "
-                + "VALUES (?, ?, ?)";
+                   + "VALUES (?, ?, ?)";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -109,8 +110,8 @@ public class Thue_DAO {
      */
     public boolean updateThue(Thue_entity thue) {
         String sql = "UPDATE Thue "
-                + "SET tenThue = ?, mucThue = ? "
-                + "WHERE maThue = ?";
+                   + "SET tenThue = ?, mucThue = ? "
+                   + "WHERE maThue = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -139,7 +140,7 @@ public class Thue_DAO {
      */
     public Thue_entity getThueTheoMa(String maThue) {
         String sql = "SELECT maThue, tenThue, mucThue "
-                + "FROM Thue WHERE maThue = ?";
+                   + "FROM Thue WHERE maThue = ?";
 
         try {
             Connection con = ConnectDB.getCon();

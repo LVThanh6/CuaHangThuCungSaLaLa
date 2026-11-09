@@ -14,14 +14,13 @@ public class NhanVien_DAO {
 
     public String getMaTiepTheo() throws SQLException {
         String sql = "SELECT ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(maNhanVien, 3, "
-                + "LEN(maNhanVien)))), 0) + 1 "
-                + "FROM NhanVien WHERE maNhanVien LIKE 'NV%'";
+                   + "LEN(maNhanVien)))), 0) + 1 "
+                   + "FROM NhanVien WHERE maNhanVien LIKE 'NV%'";
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return null;
+        if (con == null) return null;
 
         try (PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return String.format("NV%03d", rs.getInt(1));
             }
@@ -34,16 +33,15 @@ public class NhanVien_DAO {
 
         // Sử dụng LEFT JOIN để lấy trạng thái từ bảng TaiKhoan
         String sql = "SELECT nv.maNhanVien, nv.maTK, nv.hoTen, nv.chucVu, "
-                + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
-                + "tk.trangThai "
-                + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK";
+                   + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
+                   + "tk.trangThai "
+                   + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK";
 
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return dsNV;
+        if (con == null) return dsNV;
 
         try (PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 String maNhanVien = rs.getString("maNhanVien");
@@ -54,7 +52,8 @@ public class NhanVien_DAO {
                 String diaChi = rs.getString("diaChi");
 
                 Date ngay = rs.getDate("ngaySinh");
-                java.time.LocalDate ngaySinh = ngay != null ? ngay.toLocalDate() : null;
+                java.time.LocalDate ngaySinh =
+                        ngay != null ? ngay.toLocalDate() : null;
 
                 String gioiTinh = rs.getString("gioiTinh");
                 double luongCoBan = rs.getDouble("luongCoBan");
@@ -69,7 +68,8 @@ public class NhanVien_DAO {
 
                 NhanVien_entity nv = new NhanVien_entity(
                         maNhanVien, maTK != null ? new entity.TaiKhoan.TaiKhoan(maTK) : null, hoTen, chucVu,
-                        sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, trangThaiTK);
+                        sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, trangThaiTK
+                );
 
                 dsNV.add(nv);
             }
@@ -79,13 +79,12 @@ public class NhanVien_DAO {
 
     public boolean them(NhanVien_entity nv) throws SQLException {
         String sql = "INSERT INTO NhanVien "
-                + "(maNhanVien, maTK, hoTen, chucVu, sdt, "
-                + "diaChi, ngaySinh, gioiTinh, luongCoBan) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + "(maNhanVien, maTK, hoTen, chucVu, sdt, "
+                   + "diaChi, ngaySinh, gioiTinh, luongCoBan) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, nv.getMaNhanVien());
@@ -111,8 +110,7 @@ public class NhanVien_DAO {
     public boolean xoa(String maNhanVien) throws SQLException {
         String sql = "DELETE FROM NhanVien WHERE maNhanVien = ?";
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maNhanVien);
@@ -122,14 +120,13 @@ public class NhanVien_DAO {
 
     public boolean capNhat(NhanVien_entity nv) throws SQLException {
         String sql = "UPDATE NhanVien SET "
-                + "maTK = ?, hoTen = ?, chucVu = ?, sdt = ?, "
-                + "diaChi = ?, ngaySinh = ?, gioiTinh = ?, "
-                + "luongCoBan = ? "
-                + "WHERE maNhanVien = ?";
+                   + "maTK = ?, hoTen = ?, chucVu = ?, sdt = ?, "
+                   + "diaChi = ?, ngaySinh = ?, gioiTinh = ?, "
+                   + "luongCoBan = ? "
+                   + "WHERE maNhanVien = ?";
 
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, nv.getMaTK() != null ? nv.getMaTK().getMaTK() : null);
@@ -155,8 +152,7 @@ public class NhanVien_DAO {
     public boolean doiTrangThaiTaiKhoan(String maNhanVien, boolean hoatDong) throws SQLException {
         String sql = "UPDATE TaiKhoan SET trangThai = ? WHERE maTK = (SELECT maTK FROM NhanVien WHERE maNhanVien = ?)";
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setBoolean(1, hoatDong);
@@ -167,14 +163,13 @@ public class NhanVien_DAO {
 
     public NhanVien_entity getNhanVienTheoMa(String maNhanVien) throws SQLException {
         String sql = "SELECT nv.maNhanVien, nv.maTK, nv.hoTen, nv.chucVu, "
-                + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
-                + "tk.trangThai "
-                + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK "
-                + "WHERE nv.maNhanVien = ?";
+                   + "nv.sdt, nv.diaChi, nv.ngaySinh, nv.gioiTinh, nv.luongCoBan, "
+                   + "tk.trangThai "
+                   + "FROM NhanVien nv LEFT JOIN TaiKhoan tk ON nv.maTK = tk.maTK "
+                   + "WHERE nv.maNhanVien = ?";
 
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return null;
+        if (con == null) return null;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maNhanVien);
@@ -182,7 +177,8 @@ public class NhanVien_DAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Date ngay = rs.getDate("ngaySinh");
-                    java.time.LocalDate ngaySinh = ngay != null ? ngay.toLocalDate() : null;
+                    java.time.LocalDate ngaySinh =
+                            ngay != null ? ngay.toLocalDate() : null;
 
                     Boolean trangThaiTK = null;
                     if (rs.getString("maTK") != null) {
@@ -202,7 +198,8 @@ public class NhanVien_DAO {
                             ngaySinh,
                             rs.getString("gioiTinh"),
                             rs.getDouble("luongCoBan"),
-                            trangThaiTK);
+                            trangThaiTK
+                    );
                 }
             }
         }
@@ -214,15 +211,13 @@ public class NhanVien_DAO {
      */
     public double getSoGioLamViecCuaNhanVien(String maNhanVien, java.time.LocalDate tu, java.time.LocalDate den)
             throws SQLException {
-        if (maNhanVien == null || tu == null || den == null)
-            return 0;
+        if (maNhanVien == null || tu == null || den == null) return 0;
         String sql = "SELECT ROUND(ISNULL(SUM(DATEDIFF(MINUTE, gioBatDau, gioKetThuc) / 60.0), 0), 0) "
                 + "FROM LichLamViec WHERE maNhanVien = ? AND ngay >= ? AND ngay < ? "
                 + "AND gioBatDau IS NOT NULL AND gioKetThuc IS NOT NULL "
                 + "AND (trangThai = N'Hoàn thành' OR trangThai = N'Đã làm')";
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return 0;
+        if (con == null) return 0;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maNhanVien);
@@ -235,20 +230,17 @@ public class NhanVien_DAO {
     }
 
     /**
-     * Doanh thu dịch vụ do một nhân viên thực hiện trong khoảng ngày (dùng để tính
-     * hoa hồng).
+     * Doanh thu dịch vụ do một nhân viên thực hiện trong khoảng ngày (dùng để tính hoa hồng).
      */
     public double getDoanhThuDichVuCuaNhanVien(String maNhanVien, java.time.LocalDate tu, java.time.LocalDate den)
             throws SQLException {
-        if (maNhanVien == null || tu == null || den == null)
-            return 0;
+        if (maNhanVien == null || tu == null || den == null) return 0;
         String sql = "SELECT ISNULL(SUM(c.soLuong * c.donGia), 0) "
                 + "FROM ChiTietHoaDon c JOIN HoaDon h ON h.maHD = c.maHD "
                 + "WHERE c.maDV IS NOT NULL AND c.maNhanVien = ? "
                 + "AND h.ngayLap >= ? AND h.ngayLap < ?";
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return 0;
+        if (con == null) return 0;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maNhanVien);
