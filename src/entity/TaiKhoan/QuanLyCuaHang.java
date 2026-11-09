@@ -40,7 +40,8 @@ public class QuanLyCuaHang implements Serializable {
 
     public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
             String gioiTinh, double luongCoBan) {
-        this(maQuanLy, maTK != null ? new TaiKhoan(maTK) : null, hoTenQuanLy, sdt, diaChi, ngaySinh, gioiTinh, luongCoBan);
+        this(maQuanLy, maTK != null ? new TaiKhoan(maTK) : null, hoTenQuanLy, sdt, diaChi, ngaySinh, gioiTinh,
+                luongCoBan);
     }
 
     public String getMaQuanLy() {

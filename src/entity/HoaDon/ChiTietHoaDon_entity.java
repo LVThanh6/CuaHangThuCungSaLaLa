@@ -164,8 +164,10 @@ public class ChiTietHoaDon_entity {
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		ChiTietHoaDon_entity that = (ChiTietHoaDon_entity) o;
 		return soDong == that.soDong
 				&& Objects.equals(maHD == null ? null : maHD.getMaHD(), that.maHD == null ? null : that.maHD.getMaHD())

@@ -23,7 +23,8 @@ public class TaiKhoan implements Serializable {
         this.maTK = maTK;
     }
 
-    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, QuanLyCuaHang maQuanLy) {
+    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai,
+            QuanLyCuaHang maQuanLy) {
         this.maTK = maTK;
         this.tenDangNhap = tenDangNhap;
         this.matKhau = matKhau;
@@ -32,7 +33,8 @@ public class TaiKhoan implements Serializable {
         this.maQuanLy = maQuanLy;
     }
 
-    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai, String maQuanLy) {
+    public TaiKhoan(String maTK, String tenDangNhap, String matKhau, String vaiTro, boolean trangThai,
+            String maQuanLy) {
         this(maTK, tenDangNhap, matKhau, vaiTro, trangThai, maQuanLy != null ? new QuanLyCuaHang(maQuanLy) : null);
     }
 
@@ -90,8 +92,10 @@ public class TaiKhoan implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         TaiKhoan taiKhoan = (TaiKhoan) o;
         return Objects.equals(maTK, taiKhoan.maTK);
     }

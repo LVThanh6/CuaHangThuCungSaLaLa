@@ -16,8 +16,8 @@ public class DichVu_entity {
     }
 
     public DichVu_entity(String maDV, String tenDV, String moTa,
-                         double giaDV, LocalTime thoiGian,
-                         String trangThai) {
+            double giaDV, LocalTime thoiGian,
+            String trangThai) {
         this.maDV = maDV;
         this.tenDV = tenDV;
         this.moTa = moTa;

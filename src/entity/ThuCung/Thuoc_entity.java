@@ -22,22 +22,44 @@ public class Thuoc_entity {
         this.huongDanSuDung = huongDanSuDung;
     }
 
-    public String getMaThuoc() { return maThuoc; }
-    public void setMaThuoc(String maThuoc) { this.maThuoc = maThuoc; }
+    public String getMaThuoc() {
+        return maThuoc;
+    }
 
-    public String getTenThuoc() { return tenThuoc; }
-    public void setTenThuoc(String tenThuoc) { this.tenThuoc = tenThuoc; }
+    public void setMaThuoc(String maThuoc) {
+        this.maThuoc = maThuoc;
+    }
 
-    public String getDonViTinh() { return donViTinh; }
-    public void setDonViTinh(String donViTinh) { this.donViTinh = donViTinh; }
+    public String getTenThuoc() {
+        return tenThuoc;
+    }
 
-    public String getHuongDanSuDung() { return huongDanSuDung; }
-    public void setHuongDanSuDung(String huongDanSuDung) { this.huongDanSuDung = huongDanSuDung; }
+    public void setTenThuoc(String tenThuoc) {
+        this.tenThuoc = tenThuoc;
+    }
+
+    public String getDonViTinh() {
+        return donViTinh;
+    }
+
+    public void setDonViTinh(String donViTinh) {
+        this.donViTinh = donViTinh;
+    }
+
+    public String getHuongDanSuDung() {
+        return huongDanSuDung;
+    }
+
+    public void setHuongDanSuDung(String huongDanSuDung) {
+        this.huongDanSuDung = huongDanSuDung;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Thuoc_entity that = (Thuoc_entity) o;
         return Objects.equals(maThuoc, that.maThuoc);
     }

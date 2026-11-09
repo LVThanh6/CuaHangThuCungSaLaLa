@@ -35,10 +35,11 @@ import javax.swing.text.JTextComponent;
 
 /**
  * Gom toàn bộ phần giao diện liên quan đến ảnh nền của ứng dụng:
- *  - NenAnhPanel   : panel có ảnh nền phủ kín + thanh kính mờ (header).
- *  - TamNenNoiDung : tấm nền kem bán trong suốt phía sau vùng nội dung.
- *  - LamMoNen      : làm mờ/trong suốt các panel con để ảnh nền hiện lên.
- * Phần xử lý ảnh và phân loại màu nền nằm ở controller.Chung.NenGiaoDienController.
+ * - NenAnhPanel : panel có ảnh nền phủ kín + thanh kính mờ (header).
+ * - TamNenNoiDung : tấm nền kem bán trong suốt phía sau vùng nội dung.
+ * - LamMoNen : làm mờ/trong suốt các panel con để ảnh nền hiện lên.
+ * Phần xử lý ảnh và phân loại màu nền nằm ở
+ * controller.Chung.NenGiaoDienController.
  */
 public final class NenGiaoDienGUI {
 
@@ -49,7 +50,8 @@ public final class NenGiaoDienGUI {
     // NenAnhPanel
     // ======================================================================
     /**
-     * Panel có ảnh nền phủ kín (căn giữa, giữ đúng tỉ lệ ảnh) và một lớp phủ trắng nhẹ.
+     * Panel có ảnh nền phủ kín (căn giữa, giữ đúng tỉ lệ ảnh) và một lớp phủ trắng
+     * nhẹ.
      * Có thể chỉ định một "thanh mờ" (thường là header): vùng đó được vẽ lại bằng
      * phiên bản ảnh đã làm mờ + lớp phủ kem đậm hơn (hiệu ứng kính mờ).
      */
@@ -79,7 +81,10 @@ public final class NenGiaoDienGUI {
             return CONTROLLER.coAnhNen();
         }
 
-        /** Thành phần (con trực tiếp của panel này) sẽ được vẽ nền kính mờ, ví dụ header. */
+        /**
+         * Thành phần (con trực tiếp của panel này) sẽ được vẽ nền kính mờ, ví dụ
+         * header.
+         */
         public void setThanhMo(Component c) {
             this.thanhMo = c;
             repaint();
@@ -123,9 +128,11 @@ public final class NenGiaoDienGUI {
     // TamNenNoiDung
     // ======================================================================
     /**
-     * Vùng chứa nội dung: vẽ một "tấm nền" kem bán trong suốt ngay phía sau nội dung
+     * Vùng chứa nội dung: vẽ một "tấm nền" kem bán trong suốt ngay phía sau nội
+     * dung
      * để chữ luôn rõ nhưng ảnh vẫn thấp thoáng bên dưới.
-     * Mặc định (lề = 0) tấm nền phủ kín 100% vùng còn lại dưới header; nếu đặt lề > 0
+     * Mặc định (lề = 0) tấm nền phủ kín 100% vùng còn lại dưới header; nếu đặt lề >
+     * 0
      * thì tấm nền bo góc, có bóng và ảnh nền hiện ra như khung viền quanh mép.
      */
     public static class TamNenNoiDung extends JPanel {
@@ -184,13 +191,18 @@ public final class NenGiaoDienGUI {
     // ======================================================================
     /**
      * Làm "mờ" nền các màn hình con để ảnh nền của GiaoDienChinhGUI hiện lên:
-     *  - JPanel nền xám/xanh nhạt của trang (#F8FAFC, màu Panel mặc định) -> trong suốt hoàn toàn.
-     *  - JPanel nền trắng (thẻ/card) -> trắng bán trong suốt (độ đục: RangBuocGiaoDien.DO_DUC_THE).
-     *  - JScrollPane bọc panel -> viewport trong suốt (bảng JTable vẫn giữ nền đặc cho dễ đọc).
+     * - JPanel nền xám/xanh nhạt của trang (#F8FAFC, màu Panel mặc định) -> trong
+     * suốt hoàn toàn.
+     * - JPanel nền trắng (thẻ/card) -> trắng bán trong suốt (độ đục:
+     * RangBuocGiaoDien.DO_DUC_THE).
+     * - JScrollPane bọc panel -> viewport trong suốt (bảng JTable vẫn giữ nền đặc
+     * cho dễ đọc).
      * Các thành phần được thêm vào sau này cũng tự được xử lý.
      *
-     * Với header (apDungChoHeader): mọi panel nền trắng/xám nhạt đều trong suốt hoàn toàn,
-     * vì nền kính mờ đã được NenAnhPanel vẽ sẵn phía sau (tránh chồng nhiều lớp trắng).
+     * Với header (apDungChoHeader): mọi panel nền trắng/xám nhạt đều trong suốt
+     * hoàn toàn,
+     * vì nền kính mờ đã được NenAnhPanel vẽ sẵn phía sau (tránh chồng nhiều lớp
+     * trắng).
      */
     public static final class LamMoNen {
 
@@ -200,12 +212,17 @@ public final class NenGiaoDienGUI {
         private LamMoNen() {
         }
 
-        /** Dùng cho vùng nội dung: thẻ trắng -> trắng bán trong suốt, nền trang -> trong suốt. */
+        /**
+         * Dùng cho vùng nội dung: thẻ trắng -> trắng bán trong suốt, nền trang -> trong
+         * suốt.
+         */
         public static void apDung(Component c) {
             duyet(c, false);
         }
 
-        /** Dùng cho header: toàn bộ panel nền trắng/xám nhạt -> trong suốt hoàn toàn. */
+        /**
+         * Dùng cho header: toàn bộ panel nền trắng/xám nhạt -> trong suốt hoàn toàn.
+         */
         public static void apDungChoHeader(Component c) {
             duyet(c, true);
         }

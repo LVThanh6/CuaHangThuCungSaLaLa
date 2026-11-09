@@ -58,7 +58,7 @@ public class RangBuocGiaoDien {
     public static final Color MAU_DONG_XEN_KE = new Color(254, 254, 255);
     public static final Color MAU_LUOI_BANG = new Color(241, 245, 249);
     public static final Color MAU_LIEN_KET = new Color(14, 116, 101);
-    public static final Color MAU_CHU_BANG = new Color(30, 41, 59);        // Chữ trong ô bảng
+    public static final Color MAU_CHU_BANG = new Color(30, 41, 59); // Chữ trong ô bảng
     public static final Color MAU_CHU_TIEU_DE_BANG = new Color(100, 116, 139); // Chữ tiêu đề cột
     public static final int BANG_CAO_DONG = 42;
     public static final int BANG_CAO_TIEU_DE = 40;
@@ -120,8 +120,7 @@ public class RangBuocGiaoDien {
     // Đường dẫn tương đối (tính từ thư mục gốc project, nơi chạy chương trình)
     public static final String DUONG_DAN_ANH_NEN = "img/background.jpg";
     // Đường dẫn dự phòng
-    public static final String DUONG_DAN_ANH_NEN_TUYET_DOI =
-            "D:\\GitHub\\ProjectMini\\CuaHangThuCungSaLaLa\\img\\background.jpg";
+    public static final String DUONG_DAN_ANH_NEN_TUYET_DOI = "D:\\GitHub\\ProjectMini\\CuaHangThuCungSaLaLa\\img\\background.jpg";
     // Các độ đục bên dưới có giá trị 0-255: càng nhỏ càng trong suốt (ảnh càng rõ)
     // Lớp phủ trắng nhẹ trên toàn bộ ảnh nền (phần lề quanh nội dung)
     public static final int DO_DUC_LOP_PHU = 40;
@@ -132,7 +131,8 @@ public class RangBuocGiaoDien {
     // Các thẻ (card) trắng nằm trên tấm nền
     public static final int DO_DUC_THE = 200;
 
-    // Lề chừa quanh tấm nền nội dung (px). Để 0 = nội dung phủ kín 100% phần còn lại dưới header.
+    // Lề chừa quanh tấm nền nội dung (px). Để 0 = nội dung phủ kín 100% phần còn
+    // lại dưới header.
     // Muốn ảnh hiện thành khung viền quanh nội dung thì đặt lại, ví dụ 28 và 18.
     public static final int LE_NOI_DUNG_NGANG = 0;
     public static final int LE_NOI_DUNG_DOC = 0;

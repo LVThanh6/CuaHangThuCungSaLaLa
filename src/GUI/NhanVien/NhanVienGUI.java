@@ -203,13 +203,19 @@ public class NhanVienGUI extends JPanel {
         txtTim.setMaximumSize(new Dimension(400, 38));
         txtTim.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { apDungLoc(); }
+            public void insertUpdate(DocumentEvent e) {
+                apDungLoc();
+            }
 
             @Override
-            public void removeUpdate(DocumentEvent e) { apDungLoc(); }
+            public void removeUpdate(DocumentEvent e) {
+                apDungLoc();
+            }
 
             @Override
-            public void changedUpdate(DocumentEvent e) { apDungLoc(); }
+            public void changedUpdate(DocumentEvent e) {
+                apDungLoc();
+            }
         });
 
         String[] dsVaiTro = new String[CHUC_VU.length + 1];
@@ -341,12 +347,15 @@ public class NhanVienGUI extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int r = bang.rowAtPoint(e.getPoint());
-                if (r < 0) return;
-                if (e.getClickCount() == 2) moForm(model.tai(r), true);
+                if (r < 0)
+                    return;
+                if (e.getClickCount() == 2)
+                    moForm(model.tai(r), true);
             }
         });
         bang.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) capNhatNutHanhDong();
+            if (!e.getValueIsAdjusting())
+                capNhatNutHanhDong();
         });
         capNhatNutHanhDong();
 
@@ -483,13 +492,19 @@ public class NhanVienGUI extends JPanel {
     private void moForm(NhanVien_entity goc, boolean chiXem) {
         String maHienThi;
         if (goc == null) {
-            try { maHienThi = controller.taoMaMoi(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
+            try {
+                maHienThi = controller.taoMaMoi();
+            } catch (SQLException ex) {
+                baoLoi("Không thể tạo mã mới", ex);
+                return;
+            }
         } else {
             maHienThi = goc.getMaNhanVien();
         }
 
         Window cha = SwingUtilities.getWindowAncestor(this);
-        String tieuDe = goc == null ? "Thêm nhân viên mới" : (chiXem ? "Chi tiết hồ sơ nhân viên" : "Cập nhật hồ sơ nhân viên");
+        String tieuDe = goc == null ? "Thêm nhân viên mới"
+                : (chiXem ? "Chi tiết hồ sơ nhân viên" : "Cập nhật hồ sơ nhân viên");
         JDialog dlg = new JDialog(cha, tieuDe, Dialog.ModalityType.APPLICATION_MODAL);
 
         final boolean coTK = goc != null && goc.getMaTK() != null;
@@ -498,25 +513,30 @@ public class NhanVienGUI extends JPanel {
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getHoTen()));
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
         JTextField txtDiaChi = new JTextField(goc == null ? "" : nz(goc.getDiaChi()));
-        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null ? "" : NhanVienController.dinhDangNgay(goc.getNgaySinh()));
+        JTextField txtNgay = new JTextField(
+                goc == null || goc.getNgaySinh() == null ? "" : NhanVienController.dinhDangNgay(goc.getNgaySinh()));
         JComboBox<String> cbGT = new JComboBox<>(GIOI_TINH);
         JComboBox<String> cbChucVu = new JComboBox<>(CHUC_VU);
         JTextField txtLuong = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongCoBan()));
         JTextField txtTongLuong = new JTextField();
-        
+
         JComboBox<String> cbTT = coTK
                 ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.NGUNG.nhan })
                 : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
 
         if (goc != null) {
-            if (goc.getChucVu() != null) cbChucVu.setSelectedItem(goc.getChucVu());
-            if (goc.getGioiTinh() != null) cbGT.setSelectedItem(goc.getGioiTinh());
-            if (coTK) cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
+            if (goc.getChucVu() != null)
+                cbChucVu.setSelectedItem(goc.getChucVu());
+            if (goc.getGioiTinh() != null)
+                cbGT.setSelectedItem(goc.getGioiTinh());
+            if (coTK)
+                cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
-        
+
         try {
             double totalSalary = controller.tinhTongLuongThang(goc, LocalDate.now());
-            txtTongLuong.setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : NhanVienController.dinhDangTien(totalSalary));
+            txtTongLuong
+                    .setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : NhanVienController.dinhDangTien(totalSalary));
         } catch (SQLException ex) {
             txtTongLuong.setText("Không thể tính");
         }
@@ -531,13 +551,14 @@ public class NhanVienGUI extends JPanel {
         cbChucVu.addActionListener(e -> apDungLuong.run());
         apDungLuong.run();
 
-        JComponent[] fields = {txtMa, txtTen, cbChucVu, txtSdt, txtDiaChi, txtNgay, cbGT, txtLuong, txtTongLuong, cbTT};
+        JComponent[] fields = { txtMa, txtTen, cbChucVu, txtSdt, txtDiaChi, txtNgay, cbGT, txtLuong, txtTongLuong,
+                cbTT };
         for (JComponent f : fields) {
             f.setFont(RangBuocGiaoDien.fontDam(13));
             if (f instanceof JTextField) {
                 JTextField tf = (JTextField) f;
                 tf.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
+                        new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
                 if (chiXem || !tf.isEditable()) {
                     tf.setEditable(false);
                     tf.setBackground(new Color(248, 250, 252));
@@ -545,23 +566,25 @@ public class NhanVienGUI extends JPanel {
                 }
             }
         }
-        
+
         if (chiXem) {
-            cbChucVu.setEnabled(false); cbGT.setEnabled(false);
+            cbChucVu.setEnabled(false);
+            cbGT.setEnabled(false);
         }
 
         JPanel pnlForm = new JPanel(new GridLayout(0, 2, 24, 16));
         pnlForm.setBackground(Color.WHITE);
         pnlForm.setBorder(new EmptyBorder(24, 32, 16, 32));
 
-        String[] nhanLbl = { 
-            "Mã nhân viên", "Họ và tên (*)", 
-            "Số điện thoại (*)", "Ngày sinh (dd/MM/yyyy)", 
-            "Giới tính", "Địa chỉ", 
-            "Chức vụ", "Lương cơ bản (VNĐ)", 
-            "Trạng thái tài khoản", "Tổng lương tháng này"
+        String[] nhanLbl = {
+                "Mã nhân viên", "Họ và tên (*)",
+                "Số điện thoại (*)", "Ngày sinh (dd/MM/yyyy)",
+                "Giới tính", "Địa chỉ",
+                "Chức vụ", "Lương cơ bản (VNĐ)",
+                "Trạng thái tài khoản", "Tổng lương tháng này"
         };
-        JComponent[] nhanCmp = {txtMa, txtTen, txtSdt, txtNgay, cbGT, txtDiaChi, cbChucVu, txtLuong, cbTT, txtTongLuong};
+        JComponent[] nhanCmp = { txtMa, txtTen, txtSdt, txtNgay, cbGT, txtDiaChi, cbChucVu, txtLuong, cbTT,
+                txtTongLuong };
 
         for (int i = 0; i < nhanLbl.length; i++) {
             JPanel box = new JPanel(new BorderLayout(0, 6));
@@ -591,20 +614,28 @@ public class NhanVienGUI extends JPanel {
                         txtTen.getText(), txtSdt.getText(), txtDiaChi.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbChucVu.getSelectedItem(),
                         txtLuong.getText(), cbTT.getSelectedIndex() == 0);
-                if (!result.isThanhCong()) { lblLoi.setText(result.getThongBaoLoi()); return; }
-            } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
-            dlg.dispose(); taiLai();
+                if (!result.isThanhCong()) {
+                    lblLoi.setText(result.getThongBaoLoi());
+                    return;
+                }
+            } catch (SQLException ex) {
+                lblLoi.setText("Lỗi CSDL: " + ex.getMessage());
+                return;
+            }
+            dlg.dispose();
+            taiLai();
         });
 
         JPanel pnlLoi = new JPanel(new BorderLayout());
         pnlLoi.setBackground(Color.WHITE);
         pnlLoi.add(lblLoi, BorderLayout.CENTER);
-        
+
         JPanel nut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         nut.setBackground(Color.WHITE);
         nut.setBorder(new EmptyBorder(16, 32, 24, 32));
         nut.add(btnHuy);
-        if (!chiXem) nut.add(btnLuu);
+        if (!chiXem)
+            nut.add(btnLuu);
 
         JPanel pnlDuoi = new JPanel(new BorderLayout());
         pnlDuoi.setBackground(Color.WHITE);
@@ -655,7 +686,8 @@ public class NhanVienGUI extends JPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+        }
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Kiểm thử Quản lý nhân viên SALALA");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -675,13 +707,34 @@ public class NhanVienGUI extends JPanel {
             fireTableDataChanged();
         }
 
-        NhanVien_entity tai(int r) { return hang.get(r); }
+        NhanVien_entity tai(int r) {
+            return hang.get(r);
+        }
 
-        @Override public int getRowCount() { return hang.size(); }
-        @Override public int getColumnCount() { return cot.length; }
-        @Override public String getColumnName(int c) { return cot[c]; }
-        @Override public boolean isCellEditable(int r, int c) { return false; } 
-        @Override public Object getValueAt(int r, int c) { return hang.get(r); }
+        @Override
+        public int getRowCount() {
+            return hang.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return cot.length;
+        }
+
+        @Override
+        public String getColumnName(int c) {
+            return cot[c];
+        }
+
+        @Override
+        public boolean isCellEditable(int r, int c) {
+            return false;
+        }
+
+        @Override
+        public Object getValueAt(int r, int c) {
+            return hang.get(r);
+        }
     }
 
     private static Color nen(boolean chon) {
@@ -690,17 +743,24 @@ public class NhanVienGUI extends JPanel {
 
     private static String layChu(NhanVien_entity nv, int cot) {
         switch (cot) {
-            case 0: return nv.getMaNhanVien();
-            case 1: return nz(nv.getHoTen());
-            case 2: return nz(nv.getChucVu());
-            case 4: return NhanVienController.dinhDangNgay(nv.getNgaySinh());
-            case 5: return TrangThai.tuEntity(nv).nhan;
-            default: return "";
+            case 0:
+                return nv.getMaNhanVien();
+            case 1:
+                return nz(nv.getHoTen());
+            case 2:
+                return nz(nv.getChucVu());
+            case 4:
+                return NhanVienController.dinhDangNgay(nv.getNgaySinh());
+            case 5:
+                return TrangThai.tuEntity(nv).nhan;
+            default:
+                return "";
         }
     }
 
     private static class ChuRenderer extends JLabel implements TableCellRenderer {
         private final int cot;
+
         ChuRenderer(int cot) {
             this.cot = cot;
             setOpaque(true);
@@ -713,7 +773,8 @@ public class NhanVienGUI extends JPanel {
             setText(layChu((NhanVien_entity) v, cot));
             setBackground(nen(sel));
             setForeground(cot == 0 ? RangBuocGiaoDien.MAU_CHU_PHU : RangBuocGiaoDien.MAU_CHU_CHINH);
-            if (cot == 1) setFont(RangBuocGiaoDien.fontDam(13));
+            if (cot == 1)
+                setFont(RangBuocGiaoDien.fontDam(13));
             return this;
         }
     }
@@ -746,7 +807,7 @@ public class NhanVienGUI extends JPanel {
         }
     }
 
-  private class HeaderRenderer implements TableCellRenderer {
+    private class HeaderRenderer implements TableCellRenderer {
         private final JLabel lbl = new JLabel();
 
         HeaderRenderer() {

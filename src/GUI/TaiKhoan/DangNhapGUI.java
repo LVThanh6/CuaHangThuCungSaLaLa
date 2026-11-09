@@ -1,4 +1,5 @@
 package GUI.TaiKhoan;
+
 import controller.TaiKhoan.DangNhapController;
 import entity.TaiKhoan.TaiKhoan;
 
@@ -15,7 +16,8 @@ import java.awt.event.KeyEvent;
 
 /**
  * Giao diện Đăng nhập hệ thống SALALA Pet Shop.
- * Hỗ trợ xác thực bảo mật SHA-256 khớp CSDL SALALA, lưu Session và phân quyền 6 vai trò người dùng
+ * Hỗ trợ xác thực bảo mật SHA-256 khớp CSDL SALALA, lưu Session và phân quyền 6
+ * vai trò người dùng
  */
 public class DangNhapGUI extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -267,14 +269,14 @@ public class DangNhapGUI extends JFrame {
         form.add(btnDangNhap);
         form.add(Box.createVerticalStrut(16));
 
-        
         form.add(Box.createVerticalGlue());
 
         return form;
     }
 
     private JButton taoNutChonNhanh(String username, String label) {
-        JButton b = new JButton("<html><div style='text-align:center; white-space:nowrap;'><b>" + label + "</b><br><span style='font-size:10px; color:#0f766e;'>" + username + "</span></div></html>");
+        JButton b = new JButton("<html><div style='text-align:center; white-space:nowrap;'><b>" + label
+                + "</b><br><span style='font-size:10px; color:#0f766e;'>" + username + "</span></div></html>");
         b.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         b.setForeground(new Color(13, 148, 136));
         b.setBackground(new Color(240, 253, 250));
@@ -308,18 +310,19 @@ public class DangNhapGUI extends JFrame {
             if (result.isThanhCong()) {
                 lblThongBaoLoi.setText(" ");
                 TaiKhoan tk = result.getTaiKhoan();
-                
+
                 // Khuyến nghị đổi mật khẩu nếu đang dùng mật khẩu mặc định
                 if (controller.nenKhuyenNghiDoiMatKhau(password)) {
                     int luaChon = JOptionPane.showConfirmDialog(this,
-                            "Bạn đang đăng nhập bằng mật khẩu mặc định (" + DangNhapController.MAT_KHAU_MAC_DINH + ").\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
+                            "Bạn đang đăng nhập bằng mật khẩu mặc định (" + DangNhapController.MAT_KHAU_MAC_DINH
+                                    + ").\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
                             "Cảnh báo bảo mật",
-                            JOptionPane.YES_NO_OPTION, 
+                            JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE);
-                            
+
                     if (luaChon == JOptionPane.YES_OPTION) {
-                        ThongTinTaiKhoanGUI.DoiMatKhauDialog doiMkDialog =
-                                new ThongTinTaiKhoanGUI.DoiMatKhauDialog(this, tk);
+                        ThongTinTaiKhoanGUI.DoiMatKhauDialog doiMkDialog = new ThongTinTaiKhoanGUI.DoiMatKhauDialog(
+                                this, tk);
                         doiMkDialog.setVisible(true);
                     }
                 }
@@ -337,13 +340,16 @@ public class DangNhapGUI extends JFrame {
                 this.dispose();
             } else {
                 hienThiLoi(result.getThongBao());
-                if (result.getTruongLoi() == DangNhapController.TruongNhap.TEN_DANG_NHAP) txtTenDangNhap.requestFocus();
-                else if (result.getTruongLoi() == DangNhapController.TruongNhap.MAT_KHAU) txtMatKhau.requestFocus();
+                if (result.getTruongLoi() == DangNhapController.TruongNhap.TEN_DANG_NHAP)
+                    txtTenDangNhap.requestFocus();
+                else if (result.getTruongLoi() == DangNhapController.TruongNhap.MAT_KHAU)
+                    txtMatKhau.requestFocus();
             }
             btnDangNhap.setEnabled(true);
             btnDangNhap.setText("ĐĂNG NHẬP");
         });
     }
+
     private void hienThiLoi(String msg) {
         lblThongBaoLoi.setText(msg);
     }

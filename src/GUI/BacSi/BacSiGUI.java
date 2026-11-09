@@ -208,13 +208,19 @@ public class BacSiGUI extends JPanel {
         txtTim.setMaximumSize(new Dimension(400, 38));
         txtTim.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { apDungLoc(); }
+            public void insertUpdate(DocumentEvent e) {
+                apDungLoc();
+            }
 
             @Override
-            public void removeUpdate(DocumentEvent e) { apDungLoc(); }
+            public void removeUpdate(DocumentEvent e) {
+                apDungLoc();
+            }
 
             @Override
-            public void changedUpdate(DocumentEvent e) { apDungLoc(); }
+            public void changedUpdate(DocumentEvent e) {
+                apDungLoc();
+            }
         });
 
         cbChuyenNganh = new JComboBox<>();
@@ -372,7 +378,8 @@ public class BacSiGUI extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int r = bang.rowAtPoint(e.getPoint());
-                if (r < 0) return;
+                if (r < 0)
+                    return;
                 BacSi_entity bs = model.tai(r);
                 if (SwingUtilities.isRightMouseButton(e)) {
                     bang.setRowSelectionInterval(r, r);
@@ -383,7 +390,8 @@ public class BacSiGUI extends JPanel {
             }
         });
         bang.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) capNhatNutHanhDong();
+            if (!e.getValueIsAdjusting())
+                capNhatNutHanhDong();
         });
         capNhatNutHanhDong();
 
@@ -539,7 +547,12 @@ public class BacSiGUI extends JPanel {
     private void moForm(BacSi_entity goc, boolean chiXem) {
         String maHienThi;
         if (goc == null) {
-            try { maHienThi = controller.taoMaMoi(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
+            try {
+                maHienThi = controller.taoMaMoi();
+            } catch (SQLException ex) {
+                baoLoi("Không thể tạo mã mới", ex);
+                return;
+            }
         } else {
             maHienThi = goc.getMaBacSi();
         }
@@ -554,22 +567,26 @@ public class BacSiGUI extends JPanel {
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getHoTen()));
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
         JTextField txtEmail = new JTextField(goc == null ? "" : nz(goc.getEmail()));
-        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null ? "" : BacSiController.dinhDangNgay(goc.getNgaySinh()));
+        JTextField txtNgay = new JTextField(
+                goc == null || goc.getNgaySinh() == null ? "" : BacSiController.dinhDangNgay(goc.getNgaySinh()));
         JTextField txtLuongThang = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongThang()));
         JTextField txtSoCa = new JTextField(String.valueOf(goc == null ? 0 : goc.getSoCaKham()));
-        
+
         JComboBox<String> cbGT = new JComboBox<>(BacSiController.GIOI_TINH);
         JComboBox<String> cbCN = new JComboBox<>();
         taiDanhSachChuyenNganh(cbCN, false);
-        
+
         JComboBox<String> cbTT = coTK
                 ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.TAM_NGHI.nhan })
                 : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
 
         if (goc != null) {
-            if (goc.getGioiTinh() != null) cbGT.setSelectedItem(goc.getGioiTinh());
-            if (goc.getChuyenNganh() != null) cbCN.setSelectedItem(BacSiController.tenChuyenNganh(goc));
-            if (coTK) cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
+            if (goc.getGioiTinh() != null)
+                cbGT.setSelectedItem(goc.getGioiTinh());
+            if (goc.getChuyenNganh() != null)
+                cbCN.setSelectedItem(BacSiController.tenChuyenNganh(goc));
+            if (coTK)
+                cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
 
         txtMa.setEditable(false);
@@ -578,7 +595,8 @@ public class BacSiGUI extends JPanel {
 
         cbCN.addActionListener(e -> {
             if (!chiXem && THEM_CHUYEN_NGANH.equals(cbCN.getSelectedItem())) {
-                String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành", JOptionPane.QUESTION_MESSAGE);
+                String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành",
+                        JOptionPane.QUESTION_MESSAGE);
                 if (tenMoi != null && !tenMoi.isBlank()) {
                     try {
                         controller.themChuyenNganh(tenMoi);
@@ -588,17 +606,18 @@ public class BacSiGUI extends JPanel {
                         JOptionPane.showMessageDialog(dlg, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                         cbCN.setSelectedIndex(0);
                     }
-                } else cbCN.setSelectedIndex(0);
+                } else
+                    cbCN.setSelectedIndex(0);
             }
         });
 
-        JComponent[] fields = {txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT};
+        JComponent[] fields = { txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT };
         for (JComponent f : fields) {
             f.setFont(RangBuocGiaoDien.fontDam(13));
             if (f instanceof JTextField) {
                 JTextField tf = (JTextField) f;
                 tf.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
+                        new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
                 if (chiXem || !tf.isEditable()) {
                     tf.setEditable(false);
                     tf.setBackground(new Color(248, 250, 252));
@@ -606,23 +625,24 @@ public class BacSiGUI extends JPanel {
                 }
             }
         }
-        
+
         if (chiXem) {
-            cbGT.setEnabled(false); cbCN.setEnabled(false);
+            cbGT.setEnabled(false);
+            cbCN.setEnabled(false);
         }
 
         JPanel pnlForm = new JPanel(new GridLayout(0, 2, 24, 16));
         pnlForm.setBackground(Color.WHITE);
         pnlForm.setBorder(new EmptyBorder(24, 32, 16, 32));
 
-        String[] nhanLbl = { 
-            "Mã bác sĩ", "Họ và tên (*)", 
-            "Số điện thoại (*)", "Email", 
-            "Giới tính", "Ngày sinh (dd/MM/yyyy)", 
-            "Chuyên ngành", "Lương cơ bản (VNĐ)", 
-            "Trạng thái hoạt động", "Số ca khám tháng này"
+        String[] nhanLbl = {
+                "Mã bác sĩ", "Họ và tên (*)",
+                "Số điện thoại (*)", "Email",
+                "Giới tính", "Ngày sinh (dd/MM/yyyy)",
+                "Chuyên ngành", "Lương cơ bản (VNĐ)",
+                "Trạng thái hoạt động", "Số ca khám tháng này"
         };
-        JComponent[] nhanCmp = {txtMa, txtTen, txtSdt, txtEmail, cbGT, txtNgay, cbCN, txtLuongThang, cbTT, txtSoCa};
+        JComponent[] nhanCmp = { txtMa, txtTen, txtSdt, txtEmail, cbGT, txtNgay, cbCN, txtLuongThang, cbTT, txtSoCa };
 
         for (int i = 0; i < nhanLbl.length; i++) {
             JPanel box = new JPanel(new BorderLayout(0, 6));
@@ -652,10 +672,17 @@ public class BacSiGUI extends JPanel {
                         txtTen.getText(), txtSdt.getText(), txtEmail.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbCN.getSelectedItem(),
                         txtLuongThang.getText(), cbTT.getSelectedIndex() == 0);
-                if (!result.isThanhCong()) { lblLoi.setText(result.getThongBaoLoi()); return; }
-            } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
-            
-            dlg.dispose(); taiLai();
+                if (!result.isThanhCong()) {
+                    lblLoi.setText(result.getThongBaoLoi());
+                    return;
+                }
+            } catch (SQLException ex) {
+                lblLoi.setText("Lỗi CSDL: " + ex.getMessage());
+                return;
+            }
+
+            dlg.dispose();
+            taiLai();
         });
 
         JPanel pnlLoi = new JPanel(new BorderLayout());
@@ -666,7 +693,8 @@ public class BacSiGUI extends JPanel {
         nut.setBackground(Color.WHITE);
         nut.setBorder(new EmptyBorder(16, 32, 24, 32));
         nut.add(btnHuy);
-        if (!chiXem) nut.add(btnLuu);
+        if (!chiXem)
+            nut.add(btnLuu);
 
         JPanel pnlDuoi = new JPanel(new BorderLayout());
         pnlDuoi.setBackground(Color.WHITE);

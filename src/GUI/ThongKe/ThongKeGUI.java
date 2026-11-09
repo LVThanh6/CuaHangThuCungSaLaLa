@@ -40,8 +40,8 @@ public class ThongKeGUI extends JPanel {
     private final JSpinner ngayKetThuc = taoBoChonNgay(LocalDate.now());
     private final JComboBox<String> cboKhoangNhanh = new JComboBox<>(
             new String[] { "Tùy chọn", "Hôm nay", "7 ngày qua", "30 ngày qua", "Tháng này", "Năm nay" });
-    private final JComboBox<ThongKeController.DanhMuc> cboNhomChiSo =
-            new JComboBox<>(ThongKeController.DanhMuc.values());
+    private final JComboBox<ThongKeController.DanhMuc> cboNhomChiSo = new JComboBox<>(
+            ThongKeController.DanhMuc.values());
     private final JComboBox<ChiSo> cboChiSo = new JComboBox<>();
     private final List<ChiSo> tatCaChiSo = new java.util.ArrayList<>();
     private final JLabel lblGhiChuChiSo = new JLabel(" ");
@@ -199,7 +199,7 @@ public class ThongKeGUI extends JPanel {
         chonChiSo.add(cboNhomChiSo);
         chonChiSo.add(nhan);
         chonChiSo.add(cboChiSo);
-        // Ô tìm kiếm nhân viên 
+        // Ô tìm kiếm nhân viên
         panelTimNhanVien.setOpaque(false);
         JLabel nhanTim = new JLabel("Tìm nhân viên");
         nhanTim.setFont(RangBuocGiaoDien.fontDam(13));
@@ -262,11 +262,21 @@ public class ThongKeGUI extends JPanel {
         }
         ThongKeController.KhoangThoiGianNhanh khoangNhanhChon;
         switch (chon) {
-            case 1: khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.HOM_NAY; break;
-            case 2: khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BAY_NGAY_QUA; break;
-            case 3: khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BA_MUOI_NGAY_QUA; break;
-            case 4: khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.THANG_NAY; break;
-            default: khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.NAM_NAY; break;
+            case 1:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.HOM_NAY;
+                break;
+            case 2:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BAY_NGAY_QUA;
+                break;
+            case 3:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BA_MUOI_NGAY_QUA;
+                break;
+            case 4:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.THANG_NAY;
+                break;
+            default:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.NAM_NAY;
+                break;
         }
         ThongKeController.KhoangNgay khoangNgay = ThongKeController.layKhoangNhanh(khoangNhanhChon, LocalDate.now());
         datNgay(ngayBatDau, khoangNgay.getBatDau());
@@ -300,7 +310,8 @@ public class ThongKeGUI extends JPanel {
 
             @Override
             protected void done() {
-                if (yeuCau != maYeuCauDuLieu || isCancelled()) return;
+                if (yeuCau != maYeuCauDuLieu || isCancelled())
+                    return;
                 try {
                     ThongKeController.KetQuaTaiDuLieu ketQua = get();
                     if (!ketQua.isThanhCong()) {
@@ -361,7 +372,8 @@ public class ThongKeGUI extends JPanel {
     }
 
     private void capNhatKpiTheoNhom() {
-        if (duLieuThongKe == null) return;
+        if (duLieuThongKe == null)
+            return;
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
         dinhDang.setMaximumFractionDigits(0);
         double[] giaTri = {
@@ -413,7 +425,8 @@ public class ThongKeGUI extends JPanel {
         } else if (soDong == 0) {
             lblGhiChuChiSo.setText("Không tìm thấy nhân viên nào khớp với \"" + tuKhoa + "\".");
         } else {
-            modelBang.addRow(new Object[] { "Tổng cộng (" + soDong + " kết quả)", dinhDang.format(tongHienThi) + hauTo });
+            modelBang.addRow(
+                    new Object[] { "Tổng cộng (" + soDong + " kết quả)", dinhDang.format(tongHienThi) + hauTo });
         }
     }
 
@@ -518,7 +531,7 @@ public class ThongKeGUI extends JPanel {
         private final ThongKeController thongKeController;
 
         private DialogTaoBieuDo(Window cha, List<ChiSo> danhSachChiSo, ChiSo chiSoChon,
-                                LocalDate tu, LocalDate den, ThongKeController thongKeController) {
+                LocalDate tu, LocalDate den, ThongKeController thongKeController) {
             super(cha, "Tạo biểu đồ thống kê", ModalityType.APPLICATION_MODAL);
             this.thongKeController = thongKeController;
             ngayBatDau = taoBoChonNgay(tu);
@@ -648,10 +661,14 @@ public class ThongKeGUI extends JPanel {
 
         private int loaiBieuDo(int chiSo) {
             switch (chiSo) {
-                case 1: return BieuDoPanel.BIEU_DO_DUONG;
-                case 2: return BieuDoPanel.BIEU_DO_DIEM;
-                case 3: return BieuDoPanel.BIEU_DO_QUAT;
-                default: return BieuDoPanel.BIEU_DO_COT;
+                case 1:
+                    return BieuDoPanel.BIEU_DO_DUONG;
+                case 2:
+                    return BieuDoPanel.BIEU_DO_DIEM;
+                case 3:
+                    return BieuDoPanel.BIEU_DO_QUAT;
+                default:
+                    return BieuDoPanel.BIEU_DO_COT;
             }
         }
     }
@@ -666,13 +683,13 @@ public class ThongKeGUI extends JPanel {
             setSize(900, 600);
             setLocationRelativeTo(theCha);
             setLayout(new BorderLayout());
-            
+
             bieuDo = new BieuDoPanel();
             bieuDo.datDuLieu(chiSo.ten + " · " + DINH_DANG_NGAY.format(tu) + " – " + DINH_DANG_NGAY.format(den),
                     chiSo.nhan, chiSo.chuoi, chiSo.giaTri, chiSo.donVi);
             bieuDo.setLoaiBieuDo(loai);
             add(bieuDo, BorderLayout.CENTER);
-            
+
             JButton btnIn = new JButton("In biểu đồ");
             btnIn.addActionListener(suKien -> inBieuDo());
             JPanel thanhCongCu = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -685,7 +702,8 @@ public class ThongKeGUI extends JPanel {
             PrinterJob tienTrinhIn = PrinterJob.getPrinterJob();
             tienTrinhIn.setJobName(getTitle());
             tienTrinhIn.setPrintable((graphics, dinhDangTrang, chiSoTrang) -> {
-                if (chiSoTrang > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
+                if (chiSoTrang > 0)
+                    return java.awt.print.Printable.NO_SUCH_PAGE;
                 java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
                 g2.translate(dinhDangTrang.getImageableX(), dinhDangTrang.getImageableY());
                 double tyLe = Math.min(dinhDangTrang.getImageableWidth() / bieuDo.getWidth(),
@@ -708,7 +726,7 @@ public class ThongKeGUI extends JPanel {
     }
 }
 
-/** 
+/**
  * Lớp Giao diện hỗ trợ vẽ Biểu đồ
  */
 class BieuDoPanel extends JPanel {
@@ -777,7 +795,9 @@ class BieuDoPanel extends JPanel {
         repaint();
     }
 
-    public int getLoaiBieuDo() { return loaiBieuDo; }
+    public int getLoaiBieuDo() {
+        return loaiBieuDo;
+    }
 
     @Override
     protected void paintComponent(Graphics graphics) {
@@ -798,8 +818,10 @@ class BieuDoPanel extends JPanel {
             return;
         }
 
-        if (loaiBieuDo == BIEU_DO_QUAT) veBieuDoQuat(g2);
-        else veBieuDoTheoTruc(g2);
+        if (loaiBieuDo == BIEU_DO_QUAT)
+            veBieuDoQuat(g2);
+        else
+            veBieuDoTheoTruc(g2);
         g2.dispose();
     }
 
@@ -807,11 +829,13 @@ class BieuDoPanel extends JPanel {
         int le = 76, phai = 24, tren = tieuDe.isEmpty() ? 24 : 44;
         int day = hienChuGiai ? getHeight() - 62 : getHeight() - 34;
         int rong = getWidth() - le - phai, cao = day - tren;
-        if (rong <= 0 || cao <= 0) return;
+        if (rong <= 0 || cao <= 0)
+            return;
 
         double lonNhat = 0;
         for (double[] hang : giaTri) {
-            for (double mangGiaTri : hang) lonNhat = Math.max(lonNhat, mangGiaTri);
+            for (double mangGiaTri : hang)
+                lonNhat = Math.max(lonNhat, mangGiaTri);
         }
         double tran = mucTran(lonNhat);
         FontMetrics thuocDoChu = g2.getFontMetrics(RangBuocGiaoDien.fontThuong(11));
@@ -841,7 +865,8 @@ class BieuDoPanel extends JPanel {
                     double rongNhom = Math.min(khoangCach * 0.72, 72);
                     double rongCotChinh = rongNhom / soChuoi;
                     double viTriXCot = toaDoX - rongNhom / 2 + s * rongCotChinh;
-                    g2.fillRoundRect((int) viTriXCot, toaDoY, Math.max(1, (int) rongCotChinh - 2), Math.max(1, day - toaDoY), 5, 5);
+                    g2.fillRoundRect((int) viTriXCot, toaDoY, Math.max(1, (int) rongCotChinh - 2),
+                            Math.max(1, day - toaDoY), 5, 5);
                 } else if (loaiBieuDo == BIEU_DO_DUONG && i > 0) {
                     int toaDoXTruoc = (int) Math.round(le + khoangCach * (i - 0.5));
                     int toaDoYTruoc = day - (int) Math.round(giaTri[s][i - 1] / tran * cao);
@@ -867,13 +892,15 @@ class BieuDoPanel extends JPanel {
             int toaDoX = (int) Math.round(le + khoangCach * (i + 0.5));
             g2.drawString(chuoiNhan, toaDoX - g2.getFontMetrics().stringWidth(chuoiNhan) / 2, day + 18);
         }
-        if (hienChuGiai) veChuGiai(g2, getHeight() - 16);
+        if (hienChuGiai)
+            veChuGiai(g2, getHeight() - 16);
     }
 
     private void veBieuDoQuat(Graphics2D g2) {
         double[] mangGiaTri = giaTri[0];
         double tongGiaTri = 0;
-        for (double giaTriHienTai : mangGiaTri) tongGiaTri += Math.max(0, giaTriHienTai);
+        for (double giaTriHienTai : mangGiaTri)
+            tongGiaTri += Math.max(0, giaTriHienTai);
         if (tongGiaTri <= 0) {
             g2.setFont(RangBuocGiaoDien.fontThuong(13));
             g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
@@ -886,7 +913,8 @@ class BieuDoPanel extends JPanel {
         double gocBatDau = 90;
         for (int i = 0; i < mangGiaTri.length; i++) {
             double giaTriHienTai = Math.max(0, mangGiaTri[i]);
-            if (giaTriHienTai == 0) continue;
+            if (giaTriHienTai == 0)
+                continue;
             double gocChuyen = giaTriHienTai / tongGiaTri * 360;
             g2.setColor(BGC_MAU[i % BGC_MAU.length]);
             g2.fill(new Arc2D.Double(toaDoX, toaDoY, kichThuoc, kichThuoc, gocBatDau, gocChuyen, Arc2D.PIE));
@@ -912,7 +940,8 @@ class BieuDoPanel extends JPanel {
                     String.format("%.1f%%", Math.max(0, mangGiaTri[i]) * 100 / tongGiaTri) + ")";
             int rongChuToiDa = Math.max(1, rongCot - 22);
             FontMetrics thuocDoChu = g2.getFontMetrics();
-            while (!chuoiChu.isEmpty() && thuocDoChu.stringWidth(chuoiChu) > rongChuToiDa) chuoiChu = chuoiChu.substring(0, chuoiChu.length() - 1);
+            while (!chuoiChu.isEmpty() && thuocDoChu.stringWidth(chuoiChu) > rongChuToiDa)
+                chuoiChu = chuoiChu.substring(0, chuoiChu.length() - 1);
             g2.drawString(chuoiChu, viTriX + 20, viTriY);
         }
     }
@@ -930,7 +959,8 @@ class BieuDoPanel extends JPanel {
     }
 
     private static double mucTran(double lonNhat) {
-        if (lonNhat <= 0) return 1;
+        if (lonNhat <= 0)
+            return 1;
         double tho = lonNhat / 4;
         double coSo = Math.pow(10, Math.floor(Math.log10(tho)));
         double phanDu = tho / coSo;
