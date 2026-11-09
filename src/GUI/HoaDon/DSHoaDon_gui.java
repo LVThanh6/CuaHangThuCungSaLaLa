@@ -102,31 +102,30 @@ public class DSHoaDon_gui extends JPanel {
         thongTinTieuDe.add(lblTieuDe);
         thongTinTieuDe.add(Box.createVerticalStrut(4));
         thongTinTieuDe.add(lblMoTa);
-       
-//        JButton btnLapHoaDon = new JButton("Lập Hóa Đơn");
-//        btnLapHoaDon.setFont(new Font("Arial", Font.BOLD, 12));
-//        btnLapHoaDon.setForeground(Color.WHITE);
-//        btnLapHoaDon.setBackground(Color.decode("#0F766E"));
-//        btnLapHoaDon.setOpaque(true);
-//        btnLapHoaDon.setContentAreaFilled(true);
-//        btnLapHoaDon.setBorderPainted(false);
-//        btnLapHoaDon.setFocusPainted(false);
-//        btnLapHoaDon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-//        
-//     // ==================== NÚT LẬP HÓA ĐƠN ====================
-//        btnLapHoaDon.addActionListener(e -> {
-//            if (hanhDongLapHoaDon != null) {
-//                hanhDongLapHoaDon.run();
-//            } else {
-//                JOptionPane.showMessageDialog(this,
-//                        "Kết nối sang LapHoaDon_gui thất bại",
-//                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-//            }
-//        });
 
-        
+        // JButton btnLapHoaDon = new JButton("Lập Hóa Đơn");
+        // btnLapHoaDon.setFont(new Font("Arial", Font.BOLD, 12));
+        // btnLapHoaDon.setForeground(Color.WHITE);
+        // btnLapHoaDon.setBackground(Color.decode("#0F766E"));
+        // btnLapHoaDon.setOpaque(true);
+        // btnLapHoaDon.setContentAreaFilled(true);
+        // btnLapHoaDon.setBorderPainted(false);
+        // btnLapHoaDon.setFocusPainted(false);
+        // btnLapHoaDon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        //
+        // // ==================== NÚT LẬP HÓA ĐƠN ====================
+        // btnLapHoaDon.addActionListener(e -> {
+        // if (hanhDongLapHoaDon != null) {
+        // hanhDongLapHoaDon.run();
+        // } else {
+        // JOptionPane.showMessageDialog(this,
+        // "Kết nối sang LapHoaDon_gui thất bại",
+        // "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        // }
+        // });
+
         tieuDe.add(thongTinTieuDe, BorderLayout.CENTER);
-//        tieuDe.add(btnLapHoaDon, BorderLayout.EAST);
+        // tieuDe.add(btnLapHoaDon, BorderLayout.EAST);
 
         JPanel thongKe = new JPanel(new GridLayout(1, 3, 12, 0));
         thongKe.setOpaque(false);
@@ -313,12 +312,13 @@ public class DSHoaDon_gui extends JPanel {
         });
     }
 
-    //==================BẮT SỰ KIỆN LỌC,TÌM KIẾM==============
+    // ==================BẮT SỰ KIỆN LỌC,TÌM KIẾM==============
     private void caiDatSuKien() {
         txtTimKiem.addActionListener(e -> locDuLieu());
         cboTrangThai.addActionListener(e -> locDuLieu());
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) capNhatNutThaoTac();
+            if (!e.getValueIsAdjusting())
+                capNhatNutThaoTac();
         });
         capNhatNutThaoTac();
     }
@@ -335,7 +335,8 @@ public class DSHoaDon_gui extends JPanel {
             protected void done() {
                 try {
                     danhSach = get();
-                    if (danhSach == null) danhSach = new ArrayList<>();
+                    if (danhSach == null)
+                        danhSach = new ArrayList<>();
                     capNhatThongKe(danhSach);
                     hienThiBang(danhSach);
                 } catch (InterruptedException e) {
@@ -354,7 +355,8 @@ public class DSHoaDon_gui extends JPanel {
         };
         worker.execute();
     }
-//==================CẬP NHẬT THỐNG KÊ==================
+
+    // ==================CẬP NHẬT THỐNG KÊ==================
     private void capNhatThongKe(ArrayList<HoaDon_entity> ds) {
         DSHoaDonController.ThongKe thongKe = controller.thongKe(ds);
         lblTong.setText(String.valueOf(thongKe.getTongSo()));
@@ -362,8 +364,7 @@ public class DSHoaDon_gui extends JPanel {
         lblChuaThanhToan.setText(String.valueOf(thongKe.getChuaThanhToan()));
     }
 
-    
-    //====================Hiển thị table gui==================
+    // ====================Hiển thị table gui==================
     private void hienThiBang(ArrayList<HoaDon_entity> ds) {
         table.clearSelection();
         model.setRowCount(0);
@@ -376,11 +377,13 @@ public class DSHoaDon_gui extends JPanel {
 
     private void capNhatNutThaoTac() {
         boolean chonMot = table != null && table.getSelectedRowCount() == 1;
-        if (btnXem != null) btnXem.setEnabled(chonMot);
-        if (btnXoa != null) btnXoa.setEnabled(chonMot);
+        if (btnXem != null)
+            btnXem.setEnabled(chonMot);
+        if (btnXoa != null)
+            btnXoa.setEnabled(chonMot);
     }
 
-    //================LỌC DỮ LIỆU CHO TÌM KIẾM VÀ TRẠNG THÁI===========
+    // ================LỌC DỮ LIỆU CHO TÌM KIẾM VÀ TRẠNG THÁI===========
     private void locDuLieu() {
         String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
 
@@ -393,7 +396,8 @@ public class DSHoaDon_gui extends JPanel {
         ArrayList<HoaDon_entity> ketQua = controller.locDanhSach(danhSach, tuKhoa, trangThaiChon);
         hienThiBang(ketQua);
     }
-//====================XEM HÓA ĐƠN=================
+
+    // ====================XEM HÓA ĐƠN=================
     private void xemHoaDon() {
         int viewRow = table.getSelectedRow();
         if (viewRow < 0 || table.getSelectedRowCount() != 1) {
@@ -406,7 +410,7 @@ public class DSHoaDon_gui extends JPanel {
         int modelRow = table.convertRowIndexToModel(viewRow);
         String maHD = model.getValueAt(modelRow, 0).toString();
         ChiTietHoaDon_gui.hienThi(this, maHD, this);
-        
+
     }
 
     private void xoaHoaDon() {
@@ -424,7 +428,8 @@ public class DSHoaDon_gui extends JPanel {
                 "Bạn có chắc muốn xóa hóa đơn " + maHD
                         + " không?\nCác chi tiết của hóa đơn cũng sẽ bị xóa.",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (xacNhan != JOptionPane.YES_OPTION) return;
+        if (xacNhan != JOptionPane.YES_OPTION)
+            return;
 
         if (controller.xoaHoaDon(maHD)) {
             taiDuLieu();

@@ -15,11 +15,13 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 /**
- * Panel có ảnh nền phủ kín (căn giữa, giữ đúng tỉ lệ ảnh) và một lớp phủ trắng nhẹ.
+ * Panel có ảnh nền phủ kín (căn giữa, giữ đúng tỉ lệ ảnh) và một lớp phủ trắng
+ * nhẹ.
  * Có thể chỉ định một "thanh mờ" (thường là header): vùng đó được vẽ lại bằng
  * phiên bản ảnh đã làm mờ + lớp phủ kem đậm hơn (hiệu ứng kính mờ).
  *
- * Thứ tự tìm ảnh: classpath (/img/background.jpg) -> đường dẫn tương đối -> đường dẫn tuyệt đối.
+ * Thứ tự tìm ảnh: classpath (/img/background.jpg) -> đường dẫn tương đối ->
+ * đường dẫn tuyệt đối.
  * Ảnh được nạp một lần; ảnh đã co giãn/làm mờ được cache theo kích thước panel.
  */
 public class NenAnhPanel extends JPanel {
@@ -27,8 +29,8 @@ public class NenAnhPanel extends JPanel {
     private static BufferedImage anhGoc;
     private static boolean daThuTai = false;
 
-    private BufferedImage anhNen;   // ảnh phủ kín + lớp phủ nhẹ
-    private BufferedImage anhMo;    // ảnh phủ kín đã làm mờ
+    private BufferedImage anhNen; // ảnh phủ kín + lớp phủ nhẹ
+    private BufferedImage anhMo; // ảnh phủ kín đã làm mờ
     private int rongCache = -1;
     private int caoCache = -1;
 
@@ -50,7 +52,10 @@ public class NenAnhPanel extends JPanel {
         return anhGoc != null;
     }
 
-    /** Thành phần (con trực tiếp của panel này) sẽ được vẽ nền kính mờ, ví dụ header. */
+    /**
+     * Thành phần (con trực tiếp của panel này) sẽ được vẽ nền kính mờ, ví dụ
+     * header.
+     */
     public void setThanhMo(Component c) {
         this.thanhMo = c;
         repaint();

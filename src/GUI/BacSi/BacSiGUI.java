@@ -4,8 +4,6 @@ import GUI.Chung.RangBuocGiaoDien;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -27,19 +25,15 @@ import controller.BacSi.BacSiController.TrangThai;
 import entity.BacSi.ChuyenNganh_entity;
 import entity.BacSi.BacSi_entity;
 
-/**
- * Class BacSiGUI: Màn hình "Danh sách bác sĩ" kết nối CSDL SALALA.
- */
 public class BacSiGUI extends JPanel {
 
-    private static final String THEM_CHUYEN_NGANH = "+ Thêm chuyên ngành mới...";
+    private static final String THEM_CHUYEN_NGANH = "Thêm chuyên ngành mới...";
 
     private static final int COT_HO_TEN = BacSiController.COT_HO_TEN;
     private static final int COT_SO_CA = BacSiController.COT_SO_CA;
 
     private static final Color NEN_CHON = new Color(240, 250, 247);
     private static final Color NEN_HEADER = new Color(246, 248, 247);
-    private static final Color NEN_ICON = new Color(226, 244, 240);
     private static final Color MAU_DO = new Color(220, 38, 38);
 
     private final List<BacSi_entity> tatCa = new ArrayList<>();
@@ -116,7 +110,7 @@ public class BacSiGUI extends JPanel {
 
         panel.add(trai, BorderLayout.WEST);
 
-        JButton btnThem = new JButton("+   Thêm bác sĩ");
+        JButton btnThem = new JButton("Thêm bác sĩ");
         dinhDangNut(btnThem, true);
         btnThem.addActionListener(e -> moForm(null, false));
 
@@ -149,20 +143,19 @@ public class BacSiGUI extends JPanel {
         for (int i = 0; i < 4; i++) {
             lblSo[i] = new JLabel("0");
             lblMo[i] = new JLabel(" ");
-            hang.add(taoTheSoLieu(i, tieuDe[i], lblSo[i], lblMo[i]));
+            hang.add(taoTheSoLieu(tieuDe[i], lblSo[i], lblMo[i]));
         }
         lblMo[1].setText("Bác sĩ hoạt động");
         lblMo[2].setText("Nghỉ phép / tạm nghỉ");
         return hang;
     }
 
-    private JPanel taoTheSoLieu(int loaiIcon, String tieuDe, JLabel so, JLabel moTa) {
+    private JPanel taoTheSoLieu(String tieuDe, JLabel so, JLabel moTa) {
         JPanel the = new JPanel(new BorderLayout(14, 0));
         the.setBackground(Color.WHITE);
         the.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
                 new EmptyBorder(16, 16, 16, 16)));
-        the.add(new HuyHieuIcon(loaiIcon), BorderLayout.WEST);
 
         JLabel lblTieuDe = new JLabel(tieuDe);
         lblTieuDe.setFont(RangBuocGiaoDien.fontThuong(12));
@@ -354,10 +347,10 @@ public class BacSiGUI extends JPanel {
             bang.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
         }
 
-        for (int c = 0; c <= 6; c++) {
+        // Dùng chung ChuRenderer (văn bản thường)
+        for (int c = 0; c <= 7; c++) {
             bang.getColumnModel().getColumn(c).setCellRenderer(new ChuRenderer(c));
         }
-        bang.getColumnModel().getColumn(7).setCellRenderer(new TrangThaiRenderer());
 
         JTableHeader header = bang.getTableHeader();
         header.setReorderingAllowed(false);
@@ -388,7 +381,6 @@ public class BacSiGUI extends JPanel {
                 if (r < 0)
                     return;
                 BacSi_entity bs = model.tai(r);
-
                 if (SwingUtilities.isRightMouseButton(e)) {
                     bang.setRowSelectionInterval(r, r);
                     hienMenu(bs, bang, e.getX(), e.getY());
@@ -555,7 +547,12 @@ public class BacSiGUI extends JPanel {
     private void moForm(BacSi_entity goc, boolean chiXem) {
         String maHienThi;
         if (goc == null) {
-            try { maHienThi = controller.taoMaMoi(); } catch (SQLException ex) { baoLoi("Không thể tạo mã mới", ex); return; }
+            try {
+                maHienThi = controller.taoMaMoi();
+            } catch (SQLException ex) {
+                baoLoi("Không thể tạo mã mới", ex);
+                return;
+            }
         } else {
             maHienThi = goc.getMaBacSi();
         }
@@ -566,39 +563,40 @@ public class BacSiGUI extends JPanel {
 
         final boolean coTK = goc != null && goc.getMaTK() != null;
 
-        // Khởi tạo các Component
         JTextField txtMa = new JTextField(maHienThi);
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getHoTen()));
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
         JTextField txtEmail = new JTextField(goc == null ? "" : nz(goc.getEmail()));
-        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null ? "" : BacSiController.dinhDangNgay(goc.getNgaySinh()));
+        JTextField txtNgay = new JTextField(
+                goc == null || goc.getNgaySinh() == null ? "" : BacSiController.dinhDangNgay(goc.getNgaySinh()));
         JTextField txtLuongThang = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongThang()));
         JTextField txtSoCa = new JTextField(String.valueOf(goc == null ? 0 : goc.getSoCaKham()));
-        
+
         JComboBox<String> cbGT = new JComboBox<>(BacSiController.GIOI_TINH);
         JComboBox<String> cbCN = new JComboBox<>();
         taiDanhSachChuyenNganh(cbCN, false);
-        
+
         JComboBox<String> cbTT = coTK
                 ? new JComboBox<>(new String[] { TrangThai.DANG_LAM.nhan, TrangThai.TAM_NGHI.nhan })
                 : new JComboBox<>(new String[] { TrangThai.CHUA_TK.nhan });
 
-        // Nạp dữ liệu
         if (goc != null) {
-            if (goc.getGioiTinh() != null) cbGT.setSelectedItem(goc.getGioiTinh());
-            if (goc.getChuyenNganh() != null) cbCN.setSelectedItem(BacSiController.tenChuyenNganh(goc));
-            if (coTK) cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
+            if (goc.getGioiTinh() != null)
+                cbGT.setSelectedItem(goc.getGioiTinh());
+            if (goc.getChuyenNganh() != null)
+                cbCN.setSelectedItem(BacSiController.tenChuyenNganh(goc));
+            if (coTK)
+                cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
 
-        // Khóa các trường không cho sửa thủ công
         txtMa.setEditable(false);
         txtSoCa.setEditable(false);
         cbTT.setEnabled(coTK && !chiXem);
 
-        // Thêm chuyên ngành mới
         cbCN.addActionListener(e -> {
             if (!chiXem && THEM_CHUYEN_NGANH.equals(cbCN.getSelectedItem())) {
-                String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành", JOptionPane.QUESTION_MESSAGE);
+                String tenMoi = JOptionPane.showInputDialog(dlg, "Nhập tên chuyên ngành mới:", "Thêm chuyên ngành",
+                        JOptionPane.QUESTION_MESSAGE);
                 if (tenMoi != null && !tenMoi.isBlank()) {
                     try {
                         controller.themChuyenNganh(tenMoi);
@@ -608,18 +606,18 @@ public class BacSiGUI extends JPanel {
                         JOptionPane.showMessageDialog(dlg, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                         cbCN.setSelectedIndex(0);
                     }
-                } else cbCN.setSelectedIndex(0);
+                } else
+                    cbCN.setSelectedIndex(0);
             }
         });
 
-        // Định dạng style cho Form
-        JComponent[] fields = {txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT};
+        JComponent[] fields = { txtMa, txtTen, cbGT, txtSdt, cbCN, txtEmail, txtNgay, txtLuongThang, txtSoCa, cbTT };
         for (JComponent f : fields) {
             f.setFont(RangBuocGiaoDien.fontDam(13));
             if (f instanceof JTextField) {
                 JTextField tf = (JTextField) f;
                 tf.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
+                        new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(8, 12, 8, 12)));
                 if (chiXem || !tf.isEditable()) {
                     tf.setEditable(false);
                     tf.setBackground(new Color(248, 250, 252));
@@ -627,24 +625,24 @@ public class BacSiGUI extends JPanel {
                 }
             }
         }
-        
+
         if (chiXem) {
-            cbGT.setEnabled(false); cbCN.setEnabled(false);
+            cbGT.setEnabled(false);
+            cbCN.setEnabled(false);
         }
 
-        // Bố cục Form (Grid 2 Cột)
         JPanel pnlForm = new JPanel(new GridLayout(0, 2, 24, 16));
         pnlForm.setBackground(Color.WHITE);
         pnlForm.setBorder(new EmptyBorder(24, 32, 16, 32));
 
-        String[] nhanLbl = { 
-            "Mã bác sĩ", "Họ và tên (*)", 
-            "Số điện thoại (*)", "Email", 
-            "Giới tính", "Ngày sinh (dd/MM/yyyy)", 
-            "Chuyên ngành", "Lương cơ bản (VNĐ)", 
-            "Trạng thái hoạt động", "Số ca khám tháng này"
+        String[] nhanLbl = {
+                "Mã bác sĩ", "Họ và tên (*)",
+                "Số điện thoại (*)", "Email",
+                "Giới tính", "Ngày sinh (dd/MM/yyyy)",
+                "Chuyên ngành", "Lương cơ bản (VNĐ)",
+                "Trạng thái hoạt động", "Số ca khám tháng này"
         };
-        JComponent[] nhanCmp = {txtMa, txtTen, txtSdt, txtEmail, cbGT, txtNgay, cbCN, txtLuongThang, cbTT, txtSoCa};
+        JComponent[] nhanCmp = { txtMa, txtTen, txtSdt, txtEmail, cbGT, txtNgay, cbCN, txtLuongThang, cbTT, txtSoCa };
 
         for (int i = 0; i < nhanLbl.length; i++) {
             JPanel box = new JPanel(new BorderLayout(0, 6));
@@ -674,10 +672,17 @@ public class BacSiGUI extends JPanel {
                         txtTen.getText(), txtSdt.getText(), txtEmail.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbCN.getSelectedItem(),
                         txtLuongThang.getText(), cbTT.getSelectedIndex() == 0);
-                if (!result.isThanhCong()) { lblLoi.setText(result.getThongBaoLoi()); return; }
-            } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
-            
-            dlg.dispose(); taiLai();
+                if (!result.isThanhCong()) {
+                    lblLoi.setText(result.getThongBaoLoi());
+                    return;
+                }
+            } catch (SQLException ex) {
+                lblLoi.setText("Lỗi CSDL: " + ex.getMessage());
+                return;
+            }
+
+            dlg.dispose();
+            taiLai();
         });
 
         JPanel pnlLoi = new JPanel(new BorderLayout());
@@ -688,7 +693,8 @@ public class BacSiGUI extends JPanel {
         nut.setBackground(Color.WHITE);
         nut.setBorder(new EmptyBorder(16, 32, 24, 32));
         nut.add(btnHuy);
-        if (!chiXem) nut.add(btnLuu);
+        if (!chiXem)
+            nut.add(btnLuu);
 
         JPanel pnlDuoi = new JPanel(new BorderLayout());
         pnlDuoi.setBackground(Color.WHITE);
@@ -702,7 +708,7 @@ public class BacSiGUI extends JPanel {
         dlg.pack();
         dlg.setSize(750, dlg.getHeight() + 20);
         dlg.setResizable(false);
-        dlg.setLocationRelativeTo(null); // HIỂN THỊ GIỮA MÀN HÌNH
+        dlg.setLocationRelativeTo(null);
         dlg.setVisible(true);
     }
 
@@ -876,12 +882,6 @@ public class BacSiGUI extends JPanel {
         return chon ? NEN_CHON : Color.WHITE;
     }
 
-    private static void batKhuRang(Graphics2D g2) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-    }
-
     private static String layChu(BacSi_entity bs, int cot) {
         switch (cot) {
             case 0:
@@ -898,6 +898,8 @@ public class BacSiGUI extends JPanel {
                 return nz(bs.getEmail());
             case 6:
                 return String.valueOf(bs.getSoCaKham());
+            case 7:
+                return TrangThai.tuEntity(bs).nhan;
             default:
                 return "";
         }
@@ -922,58 +924,6 @@ public class BacSiGUI extends JPanel {
         }
     }
 
-    private static class TrangThaiRenderer extends JPanel implements TableCellRenderer {
-        private TrangThai tt = TrangThai.DANG_LAM;
-
-        TrangThaiRenderer() {
-            setOpaque(true);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            tt = TrangThai.tuEntity((BacSi_entity) v);
-            setBackground(nen(sel));
-            return this;
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            batKhuRang(g2);
-
-            Color nenPill, chu, cham;
-            switch (tt) {
-                case DANG_LAM:
-                    nenPill = new Color(209, 250, 229);
-                    chu = new Color(6, 95, 70);
-                    cham = new Color(16, 185, 129);
-                    break;
-                case CHUA_TK:
-                    nenPill = new Color(254, 243, 199);
-                    chu = new Color(146, 64, 14);
-                    cham = new Color(217, 119, 6);
-                    break;
-                default:
-                    nenPill = new Color(238, 241, 245);
-                    chu = new Color(71, 85, 105);
-                    cham = new Color(148, 163, 184);
-            }
-
-            g2.setFont(RangBuocGiaoDien.fontVua(11));
-            FontMetrics fm = g2.getFontMetrics();
-            int h = 22, w = 10 + 6 + 6 + fm.stringWidth(tt.nhan) + 10;
-            int x = 8, y = (getHeight() - h) / 2;
-            g2.setColor(nenPill);
-            g2.fill(new RoundRectangle2D.Double(x, y, w, h, h, h));
-            g2.setColor(cham);
-            g2.fill(new Ellipse2D.Double(x + 10, y + h / 2.0 - 3, 6, 6));
-            g2.setColor(chu);
-            g2.drawString(tt.nhan, x + 22, y + (h - fm.getHeight()) / 2 + fm.getAscent());
-            g2.dispose();
-        }
-    }
-
     private class HeaderRenderer implements TableCellRenderer {
         private final JLabel lbl = new JLabel();
 
@@ -988,92 +938,17 @@ public class BacSiGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String text = v == null ? "" : v.toString();
-            if (c == COT_HO_TEN || c == COT_SO_CA) {
-                text += (cotSapXep != c) ? "  ↕" : (sapXepTang ? "  ↑" : "  ↓");
-            }
             lbl.setText(text);
             return lbl;
         }
     }
 
     private static class OTimKiem extends JTextField {
-        private final String goiY;
-
         OTimKiem(String goiY) {
-            this.goiY = goiY;
             setFont(RangBuocGiaoDien.fontThuong(13));
             setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
-                    new EmptyBorder(6, 38, 6, 12)));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            batKhuRang(g2);
-            int cy = getHeight() / 2;
-
-            g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
-            g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.drawOval(13, cy - 7, 10, 10);
-            g2.drawLine(21, cy + 2, 25, cy + 6);
-
-            if (getText().isEmpty()) {
-                g2.setFont(getFont());
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(goiY, 38, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
-            }
-            g2.dispose();
-        }
-    }
-
-    private static class HuyHieuIcon extends JPanel {
-        private final int loai;
-
-        HuyHieuIcon(int loai) {
-            this.loai = loai;
-            setOpaque(false);
-            setPreferredSize(new Dimension(40, 40));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            batKhuRang(g2);
-            int cx = getWidth() / 2, cy = getHeight() / 2;
-            g2.setColor(NEN_ICON);
-            g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 12, 12));
-
-            g2.setColor(RangBuocGiaoDien.MAU_CHU_DAO);
-            g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            switch (loai) {
-                case 0:
-                    g2.drawArc(cx - 7, cy - 10, 14, 16, 180, 180);
-                    g2.drawLine(cx - 7, cy - 2, cx - 7, cy - 9);
-                    g2.drawLine(cx + 7, cy - 2, cx + 7, cy - 9);
-                    g2.drawLine(cx, cy + 6, cx + 4, cy + 8);
-                    g2.drawOval(cx + 2, cy + 5, 7, 7);
-                    break;
-                case 1:
-                    g2.drawOval(cx - 6, cy - 9, 7, 7);
-                    g2.drawArc(cx - 10, cy + 1, 14, 12, 0, 180);
-                    g2.drawLine(cx + 4, cy + 3, cx + 7, cy + 6);
-                    g2.drawLine(cx + 7, cy + 6, cx + 12, cy);
-                    break;
-                case 2:
-                    g2.drawOval(cx - 8, cy - 8, 16, 16);
-                    g2.drawLine(cx, cy, cx, cy - 5);
-                    g2.drawLine(cx, cy, cx + 4, cy + 2);
-                    break;
-                default:
-                    g2.drawRoundRect(cx - 7, cy - 8, 14, 17, 3, 3);
-                    g2.drawRect(cx - 3, cy - 10, 6, 4);
-                    g2.drawLine(cx - 3, cy + 1, cx - 1, cy + 3);
-                    g2.drawLine(cx - 1, cy + 3, cx + 3, cy - 2);
-            }
-            g2.dispose();
+                    new EmptyBorder(6, 12, 6, 12)));
         }
     }
 }

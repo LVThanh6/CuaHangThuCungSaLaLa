@@ -29,8 +29,7 @@ public class LichLamViec_entity {
             TRANG_THAI_VANG_MAT,
             TRANG_THAI_DI_TRE,
             TRANG_THAI_VE_SOM,
-            TRANG_THAI_DA_HUY
-    );
+            TRANG_THAI_DA_HUY);
 
     private String maLLV;
     private NhanVien_entity maNhanVien;
@@ -38,7 +37,7 @@ public class LichLamViec_entity {
     private String maNhanSu;
     private LoaiNhanSu loaiNhanSu = LoaiNhanSu.NHAN_VIEN;
     private String tenNhanSu; // Tên lấy từ phép JOIN (Không lưu CSDL)
-    private String vaiTro;    // Chức vụ lấy từ phép JOIN (Không lưu CSDL)
+    private String vaiTro; // Chức vụ lấy từ phép JOIN (Không lưu CSDL)
     private LocalDate ngay;
     private LocalTime gioBatDau;
     private LocalTime gioKetThuc;
@@ -52,7 +51,7 @@ public class LichLamViec_entity {
     }
 
     public LichLamViec_entity(String maLLV, NhanVien_entity maNhanVien, BacSi_entity maBacSi,
-                              LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc, String trangThai) {
+            LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc, String trangThai) {
         this.maLLV = maLLV;
         this.maNhanVien = maNhanVien;
         this.maBacSi = maBacSi;
@@ -73,15 +72,17 @@ public class LichLamViec_entity {
         this.trangThai = trangThai;
     }
 
-    public LichLamViec_entity(String maLLV, String maNhanSu, String tenNhanSu, String vaiTro, LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc, String trangThai) {
+    public LichLamViec_entity(String maLLV, String maNhanSu, String tenNhanSu, String vaiTro, LocalDate ngay,
+            LocalTime gioBatDau, LocalTime gioKetThuc, String trangThai) {
         this(maLLV, maNhanSu, tenNhanSu, vaiTro, ngay, gioBatDau, gioKetThuc, trangThai,
                 vaiTro != null && "Bác sĩ".equalsIgnoreCase(vaiTro)
-                        ? LoaiNhanSu.BAC_SI : LoaiNhanSu.NHAN_VIEN);
+                        ? LoaiNhanSu.BAC_SI
+                        : LoaiNhanSu.NHAN_VIEN);
     }
 
     public LichLamViec_entity(String maLLV, String maNhanSu, String tenNhanSu, String vaiTro,
-                              LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc,
-                              String trangThai, LoaiNhanSu loaiNhanSu) {
+            LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc,
+            String trangThai, LoaiNhanSu loaiNhanSu) {
         this.maLLV = maLLV;
         this.maNhanSu = maNhanSu;
         this.loaiNhanSu = loaiNhanSu != null ? loaiNhanSu : LoaiNhanSu.NHAN_VIEN;
@@ -101,8 +102,13 @@ public class LichLamViec_entity {
         }
     }
 
-    public String getMaLLV() { return maLLV; }
-    public void setMaLLV(String maLLV) { this.maLLV = maLLV; }
+    public String getMaLLV() {
+        return maLLV;
+    }
+
+    public void setMaLLV(String maLLV) {
+        this.maLLV = maLLV;
+    }
 
     public NhanVien_entity getMaNhanVien() {
         if (maNhanVien == null && maNhanSu != null && loaiNhanSu == LoaiNhanSu.NHAN_VIEN) {
@@ -118,8 +124,10 @@ public class LichLamViec_entity {
         if (maNhanVien != null) {
             this.maNhanSu = maNhanVien.getMaNhanVien();
             this.loaiNhanSu = LoaiNhanSu.NHAN_VIEN;
-            if (maNhanVien.getHoTen() != null) this.tenNhanSu = maNhanVien.getHoTen();
-            if (maNhanVien.getChucVu() != null) this.vaiTro = maNhanVien.getChucVu();
+            if (maNhanVien.getHoTen() != null)
+                this.tenNhanSu = maNhanVien.getHoTen();
+            if (maNhanVien.getChucVu() != null)
+                this.vaiTro = maNhanVien.getChucVu();
         }
     }
 
@@ -140,7 +148,8 @@ public class LichLamViec_entity {
         if (maBacSi != null) {
             this.maNhanSu = maBacSi.getMaBacSi();
             this.loaiNhanSu = LoaiNhanSu.BAC_SI;
-            if (maBacSi.getHoTen() != null) this.tenNhanSu = maBacSi.getHoTen();
+            if (maBacSi.getHoTen() != null)
+                this.tenNhanSu = maBacSi.getHoTen();
             this.vaiTro = "Bác sĩ";
         }
     }
@@ -149,7 +158,10 @@ public class LichLamViec_entity {
         this.setMaBacSi(maBS != null ? new BacSi_entity(maBS) : null);
     }
 
-    public String getMaNhanSu() { return maNhanSu; }
+    public String getMaNhanSu() {
+        return maNhanSu;
+    }
+
     public void setMaNhanSu(String maNhanSu) {
         this.maNhanSu = maNhanSu;
         if (this.loaiNhanSu == LoaiNhanSu.NHAN_VIEN) {
@@ -159,28 +171,61 @@ public class LichLamViec_entity {
         }
     }
 
-    public LoaiNhanSu getLoaiNhanSu() { return loaiNhanSu; }
+    public LoaiNhanSu getLoaiNhanSu() {
+        return loaiNhanSu;
+    }
+
     public void setLoaiNhanSu(LoaiNhanSu loaiNhanSu) {
         this.loaiNhanSu = loaiNhanSu != null ? loaiNhanSu : LoaiNhanSu.NHAN_VIEN;
     }
 
-    public String getTenNhanSu() { return tenNhanSu; }
-    public void setTenNhanSu(String tenNhanSu) { this.tenNhanSu = tenNhanSu; }
+    public String getTenNhanSu() {
+        return tenNhanSu;
+    }
 
-    public String getVaiTro() { return vaiTro; }
-    public void setVaiTro(String vaiTro) { this.vaiTro = vaiTro; }
+    public void setTenNhanSu(String tenNhanSu) {
+        this.tenNhanSu = tenNhanSu;
+    }
 
-    public LocalDate getNgay() { return ngay; }
-    public void setNgay(LocalDate ngay) { this.ngay = ngay; }
+    public String getVaiTro() {
+        return vaiTro;
+    }
 
-    public LocalTime getGioBatDau() { return gioBatDau; }
-    public void setGioBatDau(LocalTime gioBatDau) { this.gioBatDau = gioBatDau; }
+    public void setVaiTro(String vaiTro) {
+        this.vaiTro = vaiTro;
+    }
 
-    public LocalTime getGioKetThuc() { return gioKetThuc; }
-    public void setGioKetThuc(LocalTime gioKetThuc) { this.gioKetThuc = gioKetThuc; }
+    public LocalDate getNgay() {
+        return ngay;
+    }
 
-    public String getTrangThai() { return trangThai; }
-    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+    public void setNgay(LocalDate ngay) {
+        this.ngay = ngay;
+    }
+
+    public LocalTime getGioBatDau() {
+        return gioBatDau;
+    }
+
+    public void setGioBatDau(LocalTime gioBatDau) {
+        this.gioBatDau = gioBatDau;
+    }
+
+    public LocalTime getGioKetThuc() {
+        return gioKetThuc;
+    }
+
+    public void setGioKetThuc(LocalTime gioKetThuc) {
+        this.gioKetThuc = gioKetThuc;
+    }
+
+    public String getTrangThai() {
+        return trangThai;
+    }
+
+    public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai;
+    }
 
     public boolean coTheSuaLichTai(LocalDateTime thoiDiem) {
         if (ngay == null || gioBatDau == null || thoiDiem == null) {
@@ -188,7 +233,7 @@ public class LichLamViec_entity {
         }
         return ngay.isAfter(thoiDiem.toLocalDate())
                 || (ngay.isEqual(thoiDiem.toLocalDate())
-                && gioBatDau.isAfter(thoiDiem.toLocalTime()));
+                        && gioBatDau.isAfter(thoiDiem.toLocalTime()));
     }
 
     public boolean coTheCapNhatTrangThaiTrongNgay(LocalDate homNay) {
@@ -201,8 +246,10 @@ public class LichLamViec_entity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         LichLamViec_entity that = (LichLamViec_entity) o;
         return Objects.equals(maLLV, that.maLLV);
     }

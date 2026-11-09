@@ -16,7 +16,7 @@ public class NhaCungCap_entity {
 	public NhaCungCap_entity(String maNCC) {
 		this.maNCC = maNCC;
 	}
-	
+
 	public NhaCungCap_entity(String maNCC, String tenNCC, String diaChi, String sdt, String email) {
 		super();
 		this.maNCC = maNCC;
@@ -33,36 +33,45 @@ public class NhaCungCap_entity {
 	public void setMaNCC(String maNCC) {
 		this.maNCC = maNCC;
 	}
-	
+
 	public String getTenNCC() {
 		return tenNCC;
 	}
+
 	public void setTenNCC(String tenNCC) {
 		this.tenNCC = tenNCC;
 	}
+
 	public String getDiaChi() {
 		return diaChi;
 	}
+
 	public void setDiaChi(String diaChi) {
 		this.diaChi = diaChi;
 	}
+
 	public String getSdt() {
 		return sdt;
 	}
+
 	public void setSdt(String sdt) {
 		this.sdt = sdt;
 	}
+
 	public String getEmail() {
 		return email;
 	}
+
 	public void setEmail(String email) {
 		this.email = email;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		NhaCungCap_entity that = (NhaCungCap_entity) o;
 		return Objects.equals(maNCC, that.maNCC);
 	}

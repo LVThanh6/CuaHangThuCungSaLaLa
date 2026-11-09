@@ -9,7 +9,8 @@ import java.util.Locale;
 
 /**
  * Logic dùng chung cho bảng dữ liệu (tìm kiếm, xuất CSV) và header
- * (chuẩn hóa thông tin người dùng, chữ cái avatar). Không chứa thành phần giao diện.
+ * (chuẩn hóa thông tin người dùng, chữ cái avatar). Không chứa thành phần giao
+ * diện.
  */
 public class BangVaHeaderController {
 
@@ -45,17 +46,22 @@ public class BangVaHeaderController {
     // ==========================================================
     // BẢNG DỮ LIỆU: TÌM KIẾM
     // ==========================================================
-    /** Từ khóa thật sự dùng để lọc; trả về "" nếu ô còn placeholder hoặc để trống. */
+    /**
+     * Từ khóa thật sự dùng để lọc; trả về "" nếu ô còn placeholder hoặc để trống.
+     */
     public String layTuKhoaTimKiem(String noiDungOTim, String placeholder) {
-        if (noiDungOTim == null) return "";
+        if (noiDungOTim == null)
+            return "";
         String text = noiDungOTim.trim();
-        if (text.isEmpty() || text.equals(placeholder)) return "";
+        if (text.isEmpty() || text.equals(placeholder))
+            return "";
         return text;
     }
 
     /** Dòng khớp nếu có ít nhất một ô chứa từ khóa (không phân biệt hoa/thường). */
     public boolean khopTimKiem(String tuKhoa, Object[] giaTriCacCot) {
-        if (tuKhoa == null || tuKhoa.isEmpty()) return true;
+        if (tuKhoa == null || tuKhoa.isEmpty())
+            return true;
         String kw = tuKhoa.toLowerCase(Locale.ROOT);
         for (Object o : giaTriCacCot) {
             if (o != null && o.toString().toLowerCase(Locale.ROOT).contains(kw)) {

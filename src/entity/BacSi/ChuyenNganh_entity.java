@@ -36,8 +36,10 @@ public class ChuyenNganh_entity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ChuyenNganh_entity that = (ChuyenNganh_entity) o;
         return Objects.equals(maChuyenNganh, that.maChuyenNganh);
     }

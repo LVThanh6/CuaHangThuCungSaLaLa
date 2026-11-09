@@ -23,17 +23,17 @@ import controller.VatTu.NhaCungCapController.SupplierInput;
 public class NhaCungCapGUI extends JPanel {
 
     // ===== Mau sac =====
-    private static final Color BG          = new Color(0xF8FAFC);
-    private static final Color WHITE       = Color.WHITE;
-    private static final Color BORDER      = new Color(0xE5E7EB);
-    private static final Color TEXT_DARK   = new Color(0x111827);
-    private static final Color TEXT_GRAY   = new Color(0x6B7280);
-    private static final Color PRIMARY     = new Color(0x0F6B5A);
-    private static final Color PRIMARY_BG  = new Color(0xDDF3EE);
-    private static final Color GREEN       = new Color(0x047857);
-    private static final Color RED         = new Color(0xB91C1C);
-    private static final Color GREEN_BG    = new Color(0xDCFCE7);
-    private static final Color RED_BG      = new Color(0xFEE2E2);
+    private static final Color BG = new Color(0xF8FAFC);
+    private static final Color WHITE = Color.WHITE;
+    private static final Color BORDER = new Color(0xE5E7EB);
+    private static final Color TEXT_DARK = new Color(0x111827);
+    private static final Color TEXT_GRAY = new Color(0x6B7280);
+    private static final Color PRIMARY = new Color(0x0F6B5A);
+    private static final Color PRIMARY_BG = new Color(0xDDF3EE);
+    private static final Color GREEN = new Color(0x047857);
+    private static final Color RED = new Color(0xB91C1C);
+    private static final Color GREEN_BG = new Color(0xDCFCE7);
+    private static final Color RED_BG = new Color(0xFEE2E2);
 
     private static final String FONT = "Segoe UI";
 
@@ -92,7 +92,7 @@ public class NhaCungCapGUI extends JPanel {
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
         right.add(lblTongNCC);
-        RoundButton btnThem = new RoundButton("+ Them nha cung cap", PRIMARY, PRIMARY, WHITE);
+        RoundButton btnThem = new RoundButton("Thêm nhà cung cấp", PRIMARY, PRIMARY, WHITE);
         btnThem.addActionListener(e -> themNhaCungCap());
         right.add(btnThem);
 
@@ -124,9 +124,12 @@ public class NhaCungCapGUI extends JPanel {
         filterWrap.add(new JSeparator(), BorderLayout.SOUTH);
 
         // ---- bang ----
-        String[] cols = {"MA NCC", "TEN NHA CUNG CAP", "DIA CHI", "SO DIEN THOAI", "EMAIL", "THAO TAC"};
+        String[] cols = { "MA NCC", "TEN NHA CUNG CAP", "DIA CHI", "SO DIEN THOAI", "EMAIL", "THAO TAC" };
         model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         table = new JTable(model);
         table.setRowHeight(38);
@@ -152,13 +155,17 @@ public class NhaCungCapGUI extends JPanel {
 
         // renderer
         table.getColumnModel().getColumn(0).setCellRenderer(new TextRenderer(PRIMARY, Font.BOLD, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(1).setCellRenderer(new TextRenderer(TEXT_DARK, Font.BOLD, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(2).setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(3).setCellRenderer(new TextRenderer(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(4).setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(1)
+                .setCellRenderer(new TextRenderer(TEXT_DARK, Font.BOLD, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(2)
+                .setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(3)
+                .setCellRenderer(new TextRenderer(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(4)
+                .setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(5).setCellRenderer(new ActionRenderer());
 
-        int[] widths = {90, 220, 200, 130, 180, 120};
+        int[] widths = { 90, 220, 200, 130, 180, 120 };
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
@@ -169,7 +176,8 @@ public class NhaCungCapGUI extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 int row = table.rowAtPoint(e.getPoint());
                 int col = table.columnAtPoint(e.getPoint());
-                if (row < 0 || col != 5) return;
+                if (row < 0 || col != 5)
+                    return;
                 int modelRow = table.convertRowIndexToModel(row);
                 String maNCC = (String) model.getValueAt(modelRow, 0);
 
@@ -182,7 +190,8 @@ public class NhaCungCapGUI extends JPanel {
             }
         });
         table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            @Override public void mouseMoved(MouseEvent e) {
+            @Override
+            public void mouseMoved(MouseEvent e) {
                 int c = table.columnAtPoint(e.getPoint());
                 int r = table.rowAtPoint(e.getPoint());
                 boolean hand = c == 5 && r >= 0;
@@ -207,9 +216,9 @@ public class NhaCungCapGUI extends JPanel {
         model.setRowCount(0);
         ArrayList<Supplier> suppliers = new ArrayList<>(controller.taiDanhSach());
         for (Supplier supplier : suppliers) {
-            model.addRow(new Object[]{
-                supplier.getCode(), supplier.getName(), supplier.getAddress(),
-                supplier.getPhone(), supplier.getEmail(), ""
+            model.addRow(new Object[] {
+                    supplier.getCode(), supplier.getName(), supplier.getAddress(),
+                    supplier.getPhone(), supplier.getEmail(), ""
             });
         }
         lblTongNCC.setText(suppliers.size() + " nha cung cap");
@@ -223,7 +232,8 @@ public class NhaCungCapGUI extends JPanel {
         if (ncc != null) {
             OperationResult result = controller.tao(ncc);
             if (result.isSuccessful()) {
-                JOptionPane.showMessageDialog(this, "Them nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Them nha cung cap thanh cong!", "Thanh cong",
+                        JOptionPane.INFORMATION_MESSAGE);
                 loadData();
             } else {
                 JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -243,7 +253,8 @@ public class NhaCungCapGUI extends JPanel {
         if (updated != null) {
             OperationResult result = controller.capNhat(updated);
             if (result.isSuccessful()) {
-                JOptionPane.showMessageDialog(this, "Cap nhat nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Cap nhat nha cung cap thanh cong!", "Thanh cong",
+                        JOptionPane.INFORMATION_MESSAGE);
                 loadData();
             } else {
                 JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -254,13 +265,16 @@ public class NhaCungCapGUI extends JPanel {
     private void xoaNhaCungCap(int modelRow, String maNCC) {
         String tenNCC = (String) model.getValueAt(modelRow, 1);
         int ok = JOptionPane.showConfirmDialog(this,
-                "Ban co chac chan muon xoa nha cung cap \"" + tenNCC + "\" (Ma: " + maNCC + ")?\nThao tac nay khong the hoan tac.",
+                "Ban co chac chan muon xoa nha cung cap \"" + tenNCC + "\" (Ma: " + maNCC
+                        + ")?\nThao tac nay khong the hoan tac.",
                 "Xac nhan xoa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (ok != JOptionPane.YES_OPTION) return;
+        if (ok != JOptionPane.YES_OPTION)
+            return;
 
         OperationResult result = controller.xoa(maNCC);
         if (result.isSuccessful()) {
-            JOptionPane.showMessageDialog(this, "Da xoa nha cung cap thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Da xoa nha cung cap thanh cong!", "Thanh cong",
+                    JOptionPane.INFORMATION_MESSAGE);
             loadData();
         } else {
             JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -271,7 +285,7 @@ public class NhaCungCapGUI extends JPanel {
     // Hop thoai them / sua
     // =====================================================================
     private SupplierInput openEditor(SupplierInput src) {
-        final SupplierInput[] result = {null};
+        final SupplierInput[] result = { null };
         boolean isNew = (src == null);
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
@@ -385,7 +399,10 @@ public class NhaCungCapGUI extends JPanel {
     // Renderers
     // =====================================================================
     private static class HeaderRenderer extends DefaultTableCellRenderer {
-        HeaderRenderer() { setHorizontalAlignment(SwingConstants.LEFT); }
+        HeaderRenderer() {
+            setHorizontalAlignment(SwingConstants.LEFT);
+        }
+
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             super.getTableCellRendererComponent(t, v, false, false, r, c);
@@ -402,11 +419,13 @@ public class NhaCungCapGUI extends JPanel {
     private static class TextRenderer extends DefaultTableCellRenderer {
         private final Color color;
         private final int style;
+
         TextRenderer(Color color, int style, int align) {
             this.color = color;
             this.style = style;
             setHorizontalAlignment(align);
         }
+
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             super.getTableCellRendererComponent(t, v, sel, false, r, c);
@@ -419,11 +438,13 @@ public class NhaCungCapGUI extends JPanel {
 
     private static class ActionRenderer implements TableCellRenderer {
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
         ActionRenderer() {
             panel.setBorder(new EmptyBorder(11, 12, 0, 0));
             panel.add(link("Sua", PRIMARY));
             panel.add(link("Xoa", RED));
         }
+
         private static JLabel link(String text, Color color) {
             JLabel l = new JLabel(text);
             l.setFont(new Font(FONT, Font.BOLD, 12));
@@ -431,6 +452,7 @@ public class NhaCungCapGUI extends JPanel {
             l.setPreferredSize(new Dimension(46, 20));
             return l;
         }
+
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             panel.setOpaque(true);
@@ -445,11 +467,16 @@ public class NhaCungCapGUI extends JPanel {
     private static class RoundedPanel extends JPanel {
         private final int arc;
         private final Color fill, line;
+
         RoundedPanel(int arc, Color fill, Color line) {
-            this.arc = arc; this.fill = RangBuocGiaoDien.theMo(fill); this.line = line;
+            this.arc = arc;
+            this.fill = RangBuocGiaoDien.theMo(fill);
+            this.line = line;
             setOpaque(false);
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(fill);
@@ -463,9 +490,12 @@ public class NhaCungCapGUI extends JPanel {
 
     private static class RoundButton extends JButton {
         private final Color fill, line, fg;
+
         RoundButton(String text, Color fill, Color line, Color fg) {
             super(text);
-            this.fill = fill; this.line = line; this.fg = fg;
+            this.fill = fill;
+            this.line = line;
+            this.fg = fg;
             setContentAreaFilled(false);
             setBorderPainted(false);
             setFocusPainted(false);
@@ -475,7 +505,9 @@ public class NhaCungCapGUI extends JPanel {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(8, 16, 8, 16));
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(fill);
@@ -489,6 +521,7 @@ public class NhaCungCapGUI extends JPanel {
 
     private static class SearchField extends JTextField {
         private final String hint;
+
         SearchField(String hint) {
             this.hint = hint;
             setFont(new Font(FONT, Font.PLAIN, 12));
@@ -496,7 +529,9 @@ public class NhaCungCapGUI extends JPanel {
                     BorderFactory.createLineBorder(BORDER, 1, true),
                     new EmptyBorder(0, 28, 0, 8)));
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -517,10 +552,22 @@ public class NhaCungCapGUI extends JPanel {
 
     private static class SimpleDocListener implements javax.swing.event.DocumentListener {
         private final Runnable r;
-        SimpleDocListener(Runnable r) { this.r = r; }
-        public void insertUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
-        public void removeUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
-        public void changedUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
+
+        SimpleDocListener(Runnable r) {
+            this.r = r;
+        }
+
+        public void insertUpdate(javax.swing.event.DocumentEvent e) {
+            r.run();
+        }
+
+        public void removeUpdate(javax.swing.event.DocumentEvent e) {
+            r.run();
+        }
+
+        public void changedUpdate(javax.swing.event.DocumentEvent e) {
+            r.run();
+        }
     }
 
     // =====================================================================

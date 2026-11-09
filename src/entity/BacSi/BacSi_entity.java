@@ -27,18 +27,18 @@ public class BacSi_entity {
     }
 
     public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
-                        ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh) {
+            ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh) {
         this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
     }
 
     public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
-                        ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, int soCaKham, Boolean trangThaiTK) {
+            ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, int soCaKham, Boolean trangThaiTK) {
         this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, soCaKham, trangThaiTK);
     }
 
     public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
-                        ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
-                        int soCaKham, Boolean trangThaiTK) {
+            ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
+            int soCaKham, Boolean trangThaiTK) {
         super();
         this.maBacSi = maBacSi;
         this.maTK = maTK;
@@ -54,54 +54,115 @@ public class BacSi_entity {
     }
 
     public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
-                        String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
-                        int soCaKham, Boolean trangThaiTK) {
+            String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
+            int soCaKham, Boolean trangThaiTK) {
         this(maBacSi, maTK != null ? new TaiKhoan(maTK) : null, hoTen, gioiTinh, sdt,
-             chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null,
-             email, ngaySinh, luongThang, soCaKham, trangThaiTK);
+                chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null,
+                email, ngaySinh, luongThang, soCaKham, trangThaiTK);
     }
 
-    public String getMaBacSi() { return maBacSi; }
-    public void setMaBacSi(String maBacSi) { this.maBacSi = maBacSi; }
+    public String getMaBacSi() {
+        return maBacSi;
+    }
 
-    public TaiKhoan getMaTK() { return maTK; }
-    public void setMaTK(TaiKhoan maTK) { this.maTK = maTK; }
-    public void setMaTK(String maTK) { this.maTK = maTK != null ? new TaiKhoan(maTK) : null; }
+    public void setMaBacSi(String maBacSi) {
+        this.maBacSi = maBacSi;
+    }
 
-    public String getHoTen() { return hoTen; }
-    public void setHoTen(String hoTen) { this.hoTen = hoTen; }
+    public TaiKhoan getMaTK() {
+        return maTK;
+    }
 
-    public String getGioiTinh() { return gioiTinh; }
-    public void setGioiTinh(String gioiTinh) { this.gioiTinh = gioiTinh; }
+    public void setMaTK(TaiKhoan maTK) {
+        this.maTK = maTK;
+    }
 
-    public String getSdt() { return sdt; }
-    public void setSdt(String sdt) { this.sdt = sdt; }
+    public void setMaTK(String maTK) {
+        this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
+    }
 
-    public ChuyenNganh_entity getChuyenNganh() { return chuyenNganh; }
-    public void setChuyenNganh(ChuyenNganh_entity chuyenNganh) { this.chuyenNganh = chuyenNganh; }
+    public String getHoTen() {
+        return hoTen;
+    }
+
+    public void setHoTen(String hoTen) {
+        this.hoTen = hoTen;
+    }
+
+    public String getGioiTinh() {
+        return gioiTinh;
+    }
+
+    public void setGioiTinh(String gioiTinh) {
+        this.gioiTinh = gioiTinh;
+    }
+
+    public String getSdt() {
+        return sdt;
+    }
+
+    public void setSdt(String sdt) {
+        this.sdt = sdt;
+    }
+
+    public ChuyenNganh_entity getChuyenNganh() {
+        return chuyenNganh;
+    }
+
+    public void setChuyenNganh(ChuyenNganh_entity chuyenNganh) {
+        this.chuyenNganh = chuyenNganh;
+    }
+
     public void setChuyenNganh(String chuyenNganh) {
         this.chuyenNganh = chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null;
     }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getEmail() {
+        return email;
+    }
 
-    public LocalDate getNgaySinh() { return ngaySinh; }
-    public void setNgaySinh(LocalDate ngaySinh) { this.ngaySinh = ngaySinh; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public double getLuongThang() { return luongThang; }
-    public void setLuongThang(double luongThang) { this.luongThang = luongThang; }
+    public LocalDate getNgaySinh() {
+        return ngaySinh;
+    }
 
-    public int getSoCaKham() { return soCaKham; }
-    public void setSoCaKham(int soCaKham) { this.soCaKham = soCaKham; }
+    public void setNgaySinh(LocalDate ngaySinh) {
+        this.ngaySinh = ngaySinh;
+    }
 
-    public Boolean getTrangThaiTK() { return trangThaiTK; }
-    public void setTrangThaiTK(Boolean trangThaiTK) { this.trangThaiTK = trangThaiTK; }
+    public double getLuongThang() {
+        return luongThang;
+    }
+
+    public void setLuongThang(double luongThang) {
+        this.luongThang = luongThang;
+    }
+
+    public int getSoCaKham() {
+        return soCaKham;
+    }
+
+    public void setSoCaKham(int soCaKham) {
+        this.soCaKham = soCaKham;
+    }
+
+    public Boolean getTrangThaiTK() {
+        return trangThaiTK;
+    }
+
+    public void setTrangThaiTK(Boolean trangThaiTK) {
+        this.trangThaiTK = trangThaiTK;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         BacSi_entity that = (BacSi_entity) o;
         return Objects.equals(maBacSi, that.maBacSi);
     }
