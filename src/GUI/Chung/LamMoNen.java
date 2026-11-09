@@ -30,13 +30,18 @@ import javax.swing.text.JTextComponent;
 
 /**
  * Làm "mờ" nền các màn hình con để ảnh nền của GiaoDienChinhGUI hiện lên:
- *  - JPanel nền xám/xanh nhạt của trang (#F8FAFC, màu Panel mặc định) -> trong suốt hoàn toàn.
- *  - JPanel nền trắng (thẻ/card) -> trắng bán trong suốt (độ đục: RangBuocGiaoDien.DO_DUC_THE).
- *  - JScrollPane bọc panel -> viewport trong suốt (bảng JTable vẫn giữ nền đặc cho dễ đọc).
+ * - JPanel nền xám/xanh nhạt của trang (#F8FAFC, màu Panel mặc định) -> trong
+ * suốt hoàn toàn.
+ * - JPanel nền trắng (thẻ/card) -> trắng bán trong suốt (độ đục:
+ * RangBuocGiaoDien.DO_DUC_THE).
+ * - JScrollPane bọc panel -> viewport trong suốt (bảng JTable vẫn giữ nền đặc
+ * cho dễ đọc).
  * Các thành phần được thêm vào sau này cũng tự được xử lý.
  *
- * Với header (apDungChoHeader): mọi panel nền trắng/xám nhạt đều trong suốt hoàn toàn,
- * vì nền kính mờ đã được NenAnhPanel vẽ sẵn phía sau (tránh chồng nhiều lớp trắng).
+ * Với header (apDungChoHeader): mọi panel nền trắng/xám nhạt đều trong suốt
+ * hoàn toàn,
+ * vì nền kính mờ đã được NenAnhPanel vẽ sẵn phía sau (tránh chồng nhiều lớp
+ * trắng).
  */
 public final class LamMoNen {
 
@@ -45,12 +50,17 @@ public final class LamMoNen {
     private LamMoNen() {
     }
 
-    /** Dùng cho vùng nội dung: thẻ trắng -> trắng bán trong suốt, nền trang -> trong suốt. */
+    /**
+     * Dùng cho vùng nội dung: thẻ trắng -> trắng bán trong suốt, nền trang -> trong
+     * suốt.
+     */
     public static void apDung(Component c) {
         duyet(c, false);
     }
 
-    /** Dùng cho header: toàn bộ panel nền trắng/xám nhạt -> trong suốt hoàn toàn. */
+    /**
+     * Dùng cho header: toàn bộ panel nền trắng/xám nhạt -> trong suốt hoàn toàn.
+     */
     public static void apDungChoHeader(Component c) {
         duyet(c, true);
     }
@@ -95,7 +105,8 @@ public final class LamMoNen {
         if (laMauNenTrang(rgb) || laNenTrangXamNhat(bg)) {
             p.setOpaque(false);
         } else if (rgb == 0xFFFFFF || laTheMauNhat(bg)) {
-            // Thẻ trắng hoặc thẻ phủ màu rất nhạt (xanh mint...): giữ màu, chỉ làm bán trong suốt
+            // Thẻ trắng hoặc thẻ phủ màu rất nhạt (xanh mint...): giữ màu, chỉ làm bán
+            // trong suốt
             p.setOpaque(false);
             if (!cheDoHeader) {
                 p.setBorder(new VienNenMo(p.getBorder(),

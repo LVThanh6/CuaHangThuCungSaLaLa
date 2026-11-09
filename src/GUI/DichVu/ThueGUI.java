@@ -51,7 +51,7 @@ public class ThueGUI extends JPanel {
         trai.add(Box.createVerticalStrut(4));
         trai.add(lblTitle);
 
-        JButton btnThem = new JButton("+ Thêm thuế");
+        JButton btnThem = new JButton("Thêm thuế");
         dinhDangNut(btnThem, true);
         btnThem.addActionListener(e -> moForm(null));
 
@@ -73,13 +73,16 @@ public class ThueGUI extends JPanel {
             int row = table.getSelectedRow();
             if (row >= 0 && danhSach != null && row < danhSach.size()) {
                 Thue_entity thue = danhSach.get(row);
-                int kq = JOptionPane.showConfirmDialog(this, "Xóa loại thuế " + thue.getTenThue() + " (" + thue.getMaThue() + ")?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                int kq = JOptionPane.showConfirmDialog(this,
+                        "Xóa loại thuế " + thue.getTenThue() + " (" + thue.getMaThue() + ")?", "Xác nhận xóa",
+                        JOptionPane.YES_NO_OPTION);
                 if (kq == JOptionPane.YES_OPTION) {
                     if (controller.delete(thue.getMaThue())) {
                         JOptionPane.showMessageDialog(this, "Xóa thành công!");
                         taiLai();
                     } else {
-                        JOptionPane.showMessageDialog(this, "Không thể xóa thuế (có thể đang được sử dụng).", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Không thể xóa thuế (có thể đang được sử dụng).", "Lỗi",
+                                JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
@@ -140,7 +143,8 @@ public class ThueGUI extends JPanel {
 
     private void moForm(Thue_entity goc) {
         Window cha = SwingUtilities.getWindowAncestor(this);
-        JDialog dlg = new JDialog(cha, goc == null ? "Thêm loại thuế" : "Chỉnh sửa thuế", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dlg = new JDialog(cha, goc == null ? "Thêm loại thuế" : "Chỉnh sửa thuế",
+                Dialog.ModalityType.APPLICATION_MODAL);
         dlg.setSize(400, 280);
         dlg.setLocationRelativeTo(this);
 
@@ -153,7 +157,8 @@ public class ThueGUI extends JPanel {
         gc.insets = new Insets(0, 0, 8, 0);
 
         JTextField txtMa = new JTextField(goc == null ? "TX" + System.currentTimeMillis() % 100000 : goc.getMaThue());
-        if (goc != null) txtMa.setEditable(false);
+        if (goc != null)
+            txtMa.setEditable(false);
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getTenThue()));
         JTextField txtMuc = new JTextField(goc == null ? "10" : String.valueOf(goc.getMucThue()));
 
@@ -180,7 +185,8 @@ public class ThueGUI extends JPanel {
                     dlg.dispose();
                     taiLai(); // Load lại dữ liệu mới ngay lập tức
                 } else {
-                    JOptionPane.showMessageDialog(dlg, "Không thể lưu thuế vào CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dlg, "Không thể lưu thuế vào CSDL.", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);

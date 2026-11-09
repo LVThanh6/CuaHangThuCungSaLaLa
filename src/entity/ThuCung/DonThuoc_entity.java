@@ -38,56 +38,117 @@ public class DonThuoc_entity {
     public DonThuoc_entity(String maDonThuoc, ThuCung_entity maTC, BacSi_entity maBacSi, String maHSSK,
             LocalDateTime ngayKeDon, String ghiChu, String trangThai) {
         this(maDonThuoc, maTC, maBacSi,
-             maHSSK != null ? new HoSoSucKhoe_entity(maHSSK) : null,
-             ngayKeDon, ghiChu, trangThai);
+                maHSSK != null ? new HoSoSucKhoe_entity(maHSSK) : null,
+                ngayKeDon, ghiChu, trangThai);
     }
 
     public DonThuoc_entity(String maDonThuoc, String maTC, String maBacSi, String maHSSK,
             LocalDateTime ngayKeDon, String ghiChu, String trangThai) {
         this(maDonThuoc,
-             maTC != null ? new ThuCung_entity(maTC) : null,
-             maBacSi != null ? new BacSi_entity(maBacSi) : null,
-             maHSSK != null ? new HoSoSucKhoe_entity(maHSSK) : null,
-             ngayKeDon, ghiChu, trangThai);
+                maTC != null ? new ThuCung_entity(maTC) : null,
+                maBacSi != null ? new BacSi_entity(maBacSi) : null,
+                maHSSK != null ? new HoSoSucKhoe_entity(maHSSK) : null,
+                ngayKeDon, ghiChu, trangThai);
     }
 
-    public String getMaDonThuoc() { return maDonThuoc; }
-    public void setMaDonThuoc(String maDonThuoc) { this.maDonThuoc = maDonThuoc; }
+    public String getMaDonThuoc() {
+        return maDonThuoc;
+    }
 
-    public ThuCung_entity getMaTC() { return maTC; }
-    public void setMaTC(ThuCung_entity maTC) { this.maTC = maTC; }
-    public void setMaTC(String maTC) { this.maTC = maTC != null ? new ThuCung_entity(maTC) : null; }
+    public void setMaDonThuoc(String maDonThuoc) {
+        this.maDonThuoc = maDonThuoc;
+    }
 
-    public BacSi_entity getMaBacSi() { return maBacSi; }
-    public void setMaBacSi(BacSi_entity maBacSi) { this.maBacSi = maBacSi; }
-    public void setMaBacSi(String maBacSi) { this.maBacSi = maBacSi != null ? new BacSi_entity(maBacSi) : null; }
+    public ThuCung_entity getMaTC() {
+        return maTC;
+    }
 
-    public HoSoSucKhoe_entity getMaHSSK() { return maHSSK; }
-    public void setMaHSSK(HoSoSucKhoe_entity maHSSK) { this.maHSSK = maHSSK; }
-    public void setMaHSSK(String maHSSK) { this.maHSSK = maHSSK != null ? new HoSoSucKhoe_entity(maHSSK) : null; }
+    public void setMaTC(ThuCung_entity maTC) {
+        this.maTC = maTC;
+    }
 
-    public LocalDateTime getNgayKeDon() { return ngayKeDon; }
-    public void setNgayKeDon(LocalDateTime ngayKeDon) { this.ngayKeDon = ngayKeDon; }
+    public void setMaTC(String maTC) {
+        this.maTC = maTC != null ? new ThuCung_entity(maTC) : null;
+    }
 
-    public String getGhiChu() { return ghiChu; }
-    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+    public BacSi_entity getMaBacSi() {
+        return maBacSi;
+    }
 
-    public String getTrangThai() { return trangThai; }
-    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+    public void setMaBacSi(BacSi_entity maBacSi) {
+        this.maBacSi = maBacSi;
+    }
 
-    public String getTenThuCung() { return tenThuCung; }
-    public void setTenThuCung(String tenThuCung) { this.tenThuCung = tenThuCung; }
+    public void setMaBacSi(String maBacSi) {
+        this.maBacSi = maBacSi != null ? new BacSi_entity(maBacSi) : null;
+    }
 
-    public String getTenBacSi() { return tenBacSi; }
-    public void setTenBacSi(String tenBacSi) { this.tenBacSi = tenBacSi; }
+    public HoSoSucKhoe_entity getMaHSSK() {
+        return maHSSK;
+    }
 
-    public int getSoLoaiThuoc() { return soLoaiThuoc; }
-    public void setSoLoaiThuoc(int soLoaiThuoc) { this.soLoaiThuoc = soLoaiThuoc; }
+    public void setMaHSSK(HoSoSucKhoe_entity maHSSK) {
+        this.maHSSK = maHSSK;
+    }
+
+    public void setMaHSSK(String maHSSK) {
+        this.maHSSK = maHSSK != null ? new HoSoSucKhoe_entity(maHSSK) : null;
+    }
+
+    public LocalDateTime getNgayKeDon() {
+        return ngayKeDon;
+    }
+
+    public void setNgayKeDon(LocalDateTime ngayKeDon) {
+        this.ngayKeDon = ngayKeDon;
+    }
+
+    public String getGhiChu() {
+        return ghiChu;
+    }
+
+    public void setGhiChu(String ghiChu) {
+        this.ghiChu = ghiChu;
+    }
+
+    public String getTrangThai() {
+        return trangThai;
+    }
+
+    public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai;
+    }
+
+    public String getTenThuCung() {
+        return tenThuCung;
+    }
+
+    public void setTenThuCung(String tenThuCung) {
+        this.tenThuCung = tenThuCung;
+    }
+
+    public String getTenBacSi() {
+        return tenBacSi;
+    }
+
+    public void setTenBacSi(String tenBacSi) {
+        this.tenBacSi = tenBacSi;
+    }
+
+    public int getSoLoaiThuoc() {
+        return soLoaiThuoc;
+    }
+
+    public void setSoLoaiThuoc(int soLoaiThuoc) {
+        this.soLoaiThuoc = soLoaiThuoc;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         DonThuoc_entity that = (DonThuoc_entity) o;
         return Objects.equals(maDonThuoc, that.maDonThuoc);
     }

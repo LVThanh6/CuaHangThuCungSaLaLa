@@ -10,25 +10,25 @@ import java.util.Objects;
  * Entity HangThanhVien - tương ứng bảng QuanLyHangThanhVien trong CSDL SALALA.
  */
 public class HangThanhVien {
-    private String maHang;            // VARCHAR(20) PK
-    private KhachHang maKH;           // FK -> KhachHang(maKH)
-    private String tenHang;           // NVARCHAR(50) (Đồng, Bạc, Vàng, Kim cương)
-    private double chiTieuToiThieu;   // DECIMAL(18,2)
-    private Double chiTieuToiDa;      // DECIMAL(18,2) NULLABLE
-    private double mucGiamGia;        // DECIMAL(5,2)
-    private double diemTichLuy1Van;   // DECIMAL(4,1)
-    private String quyenLoi;          // NVARCHAR(500)
-    private double tongChiTieu;       // DECIMAL(18,2)
-    private int diemTichLuy;          // INT
+    private String maHang; // VARCHAR(20) PK
+    private KhachHang maKH; // FK -> KhachHang(maKH)
+    private String tenHang; // NVARCHAR(50) (Đồng, Bạc, Vàng, Kim cương)
+    private double chiTieuToiThieu; // DECIMAL(18,2)
+    private Double chiTieuToiDa; // DECIMAL(18,2) NULLABLE
+    private double mucGiamGia; // DECIMAL(5,2)
+    private double diemTichLuy1Van; // DECIMAL(4,1)
+    private String quyenLoi; // NVARCHAR(500)
+    private double tongChiTieu; // DECIMAL(18,2)
+    private int diemTichLuy; // INT
     private Timestamp ngayCapNhatHang;// DATETIME2
-    private String trangThai;         // NVARCHAR(50)
+    private String trangThai; // NVARCHAR(50)
 
     // Các trường mở rộng phục vụ hiển thị trên giao diện và báo cáo thống kê
     private String hoTenKhachHang;
     private String sdtKhachHang;
     private String emailKhachHang;
     private int soThuCung;
-    private int soLuongThanhVien;     // Dùng khi hiển thị 4 Card nhóm hạng
+    private int soLuongThanhVien; // Dùng khi hiển thị 4 Card nhóm hạng
     private List<String> danhSachQuyenLoi;
 
     // Constructors
@@ -43,11 +43,12 @@ public class HangThanhVien {
     }
 
     /**
-     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien (dùng KhachHang)
+     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien (dùng
+     * KhachHang)
      */
     public HangThanhVien(String maHang, KhachHang maKH, String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
-                        double mucGiamGia, double diemTichLuy1Van, String quyenLoi, double tongChiTieu,
-                        int diemTichLuy, Timestamp ngayCapNhatHang, String trangThai) {
+            double mucGiamGia, double diemTichLuy1Van, String quyenLoi, double tongChiTieu,
+            int diemTichLuy, Timestamp ngayCapNhatHang, String trangThai) {
         this.maHang = maHang;
         this.maKH = maKH;
         this.tenHang = tenHang;
@@ -63,20 +64,21 @@ public class HangThanhVien {
     }
 
     /**
-     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien (dùng String maKH tương thích)
+     * Constructor đầy đủ theo các cột trong bảng QuanLyHangThanhVien (dùng String
+     * maKH tương thích)
      */
     public HangThanhVien(String maHang, String maKH, String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
-                        double mucGiamGia, double diemTichLuy1Van, String quyenLoi, double tongChiTieu,
-                        int diemTichLuy, Timestamp ngayCapNhatHang, String trangThai) {
+            double mucGiamGia, double diemTichLuy1Van, String quyenLoi, double tongChiTieu,
+            int diemTichLuy, Timestamp ngayCapNhatHang, String trangThai) {
         this(maHang, maKH != null ? new KhachHang(maKH) : null, tenHang, chiTieuToiThieu, chiTieuToiDa,
-             mucGiamGia, diemTichLuy1Van, quyenLoi, tongChiTieu, diemTichLuy, ngayCapNhatHang, trangThai);
+                mucGiamGia, diemTichLuy1Van, quyenLoi, tongChiTieu, diemTichLuy, ngayCapNhatHang, trangThai);
     }
 
     /**
      * Constructor phục vụ hiển thị 4 Card nhóm hạng (Đồng, Bạc, Vàng, Kim cương)
      */
     public HangThanhVien(String tenHang, double chiTieuToiThieu, Double chiTieuToiDa, double mucGiamGia,
-                        double diemTichLuy1Van, String quyenLoi, int soLuongThanhVien, double tongChiTieu) {
+            double diemTichLuy1Van, String quyenLoi, int soLuongThanhVien, double tongChiTieu) {
         this.tenHang = tenHang;
         this.chiTieuToiThieu = chiTieuToiThieu;
         this.chiTieuToiDa = chiTieuToiDa;
@@ -267,8 +269,10 @@ public class HangThanhVien {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         HangThanhVien that = (HangThanhVien) o;
         return Objects.equals(maHang, that.maHang);
     }

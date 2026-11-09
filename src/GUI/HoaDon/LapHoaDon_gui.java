@@ -62,14 +62,11 @@ public class LapHoaDon_gui extends JPanel {
 
     // ==================== MÀU SẮC ====================
 
-    private static final Color MAU_CHU =
-            new Color(45, 55, 72);
+    private static final Color MAU_CHU = new Color(45, 55, 72);
 
-    private static final Color MAU_NEN =
-            new Color(248, 250, 252);
+    private static final Color MAU_NEN = new Color(248, 250, 252);
 
-    private static final Color MAU_XANH =
-            new Color(37, 99, 235);
+    private static final Color MAU_XANH = new Color(37, 99, 235);
 
     // ==================== CONSTRUCTOR ====================
 
@@ -131,18 +128,15 @@ public class LapHoaDon_gui extends JPanel {
 
         pnlNoiDung.add(
                 taoPanelThongTin(),
-                BorderLayout.NORTH
-        );
+                BorderLayout.NORTH);
 
         pnlNoiDung.add(
                 taoPanelChiTiet(),
-                BorderLayout.CENTER
-        );
+                BorderLayout.CENTER);
 
         pnlNoiDung.add(
                 taoPanelTongTien(),
-                BorderLayout.SOUTH
-        );
+                BorderLayout.SOUTH);
 
         add(pnlNoiDung, BorderLayout.CENTER);
     }
@@ -164,9 +158,7 @@ public class LapHoaDon_gui extends JPanel {
 
         txtNgayLap = new JTextField(
                 LocalDate.now().format(
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy")
-                )
-        );
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         txtNgayLap.setEditable(false);
 
         cboKhachHang = new JComboBox<>();
@@ -185,8 +177,7 @@ public class LapHoaDon_gui extends JPanel {
                     boolean cellHasFocus) {
 
                 super.getListCellRendererComponent(
-                        list, value, index, isSelected, cellHasFocus
-                );
+                        list, value, index, isSelected, cellHasFocus);
 
                 if (value instanceof KhachHang kh) {
                     setText(kh.getMaKH() + " - " + kh.getHoTen());
@@ -209,8 +200,7 @@ public class LapHoaDon_gui extends JPanel {
                     boolean cellHasFocus) {
 
                 super.getListCellRendererComponent(
-                        list, value, index, isSelected, cellHasFocus
-                );
+                        list, value, index, isSelected, cellHasFocus);
 
                 if (value instanceof ThuCung_entity tc) {
                     setText(tc.getMaTC() + " - " + tc.getTenTC());
@@ -233,16 +223,14 @@ public class LapHoaDon_gui extends JPanel {
                     boolean cellHasFocus) {
 
                 super.getListCellRendererComponent(
-                        list, value, index, isSelected, cellHasFocus
-                );
+                        list, value, index, isSelected, cellHasFocus);
 
                 if (value instanceof KhuyenMai_Entity km) {
                     setText(
                             km.getTenKM()
-                            + " - Giảm "
-                            + km.getMucKM()
-                            + "%"
-                    );
+                                    + " - Giảm "
+                                    + km.getMucKM()
+                                    + "%");
                 } else {
                     setText("-- Không áp dụng khuyến mãi --");
                 }
@@ -262,16 +250,14 @@ public class LapHoaDon_gui extends JPanel {
                     boolean cellHasFocus) {
 
                 super.getListCellRendererComponent(
-                        list, value, index, isSelected, cellHasFocus
-                );
+                        list, value, index, isSelected, cellHasFocus);
 
                 if (value instanceof Thue_entity thue) {
                     setText(
                             thue.getTenThue()
-                            + " - "
-                            + thue.getMucThue()
-                            + "%"
-                    );
+                                    + " - "
+                                    + thue.getMucThue()
+                                    + "%");
                 } else {
                     setText("-- Chọn thuế --");
                 }
@@ -289,55 +275,44 @@ public class LapHoaDon_gui extends JPanel {
 
         themTruong(
                 pnl, gbc, 0, 0,
-                "Mã hóa đơn", txtMaHD
-        );
+                "Mã hóa đơn", txtMaHD);
 
         themTruong(
                 pnl, gbc, 1, 0,
-                "Ngày lập", txtNgayLap
-        );
+                "Ngày lập", txtNgayLap);
 
         themTruong(
                 pnl, gbc, 0, 1,
-                "Khách hàng", cboKhachHang
-        );
+                "Khách hàng", cboKhachHang);
 
         themTruong(
                 pnl, gbc, 1, 1,
-                "Thú cưng", cboThuCung
-        );
+                "Thú cưng", cboThuCung);
 
         themTruong(
                 pnl, gbc, 0, 2,
-                "Khuyến mãi", cboKhuyenMai
-        );
+                "Khuyến mãi", cboKhuyenMai);
 
         themTruong(
                 pnl, gbc, 1, 2,
-                "Thuế", cboThue
-        );
+                "Thuế", cboThue);
 
         themTruong(
                 pnl, gbc, 0, 3,
-                "Nhân viên lập", txtNhanVien
-        );
+                "Nhân viên lập", txtNhanVien);
 
         themTruong(
                 pnl, gbc, 1, 3,
-                "Trạng thái", txtTrangThai
-        );
+                "Trạng thái", txtTrangThai);
 
         cboKhachHang.addActionListener(
-                e -> taiThuCungTheoKhachHang()
-        );
+                e -> taiThuCungTheoKhachHang());
 
         cboKhuyenMai.addActionListener(
-                e -> capNhatTongTien()
-        );
+                e -> capNhatTongTien());
 
         cboThue.addActionListener(
-                e -> capNhatTongTien()
-        );
+                e -> capNhatTongTien());
 
         return pnl;
     }
@@ -353,8 +328,7 @@ public class LapHoaDon_gui extends JPanel {
         pnlThem.setOpaque(false);
 
         cboLoai = new JComboBox<>(
-                new String[]{"Dịch vụ", "Vật tư"}
-        );
+                new String[] { "Dịch vụ", "Vật tư" });
 
         cboMatHang = new JComboBox<>();
         cboNguoiThucHien = new JComboBox<>();
@@ -371,7 +345,6 @@ public class LapHoaDon_gui extends JPanel {
         btnThem.setCursor(Cursor.getPredefinedCursor(
                 Cursor.HAND_CURSOR));
 
-        
         JButton btnXoa = new JButton("Xóa dòng");
         btnXoa.setFont(new Font("Arial", Font.BOLD, 12));
         btnXoa.setForeground(Color.WHITE);
@@ -381,7 +354,7 @@ public class LapHoaDon_gui extends JPanel {
         btnXoa.setBorderPainted(false);
         btnXoa.setFocusPainted(false);
         btnXoa.setCursor(Cursor.getPredefinedCursor(
-                Cursor.HAND_CURSOR));		
+                Cursor.HAND_CURSOR));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -419,15 +392,14 @@ public class LapHoaDon_gui extends JPanel {
         pnlThem.add(btnThem, gbc);
 
         model = new DefaultTableModel(
-                new Object[]{
-                    "Mã",
-                    "Tên",
-                    "Loại",
-                    "Đơn giá",
-                    "Số lượng",
-                    "Thành tiền"
-                }, 0
-        ) {
+                new Object[] {
+                        "Mã",
+                        "Tên",
+                        "Loại",
+                        "Đơn giá",
+                        "Số lượng",
+                        "Thành tiền"
+                }, 0) {
             @Override
             public boolean isCellEditable(
                     int row, int column) {
@@ -438,19 +410,16 @@ public class LapHoaDon_gui extends JPanel {
         tblChiTiet = new JTable(model);
         tblChiTiet.setRowHeight(30);
         tblChiTiet.setFont(
-                new Font("Arial", Font.PLAIN, 13)
-        );
+                new Font("Arial", Font.PLAIN, 13));
 
         tblChiTiet.getTableHeader().setFont(
-                new Font("Arial", Font.BOLD, 13)
-        );
+                new Font("Arial", Font.BOLD, 13));
 
         JScrollPane scroll = new JScrollPane(tblChiTiet);
         scroll.setPreferredSize(new Dimension(700, 220));
 
         JPanel pnlNut = new JPanel(
-                new FlowLayout(FlowLayout.RIGHT)
-        );
+                new FlowLayout(FlowLayout.RIGHT));
         pnlNut.setOpaque(false);
         pnlNut.add(btnXoa);
 
@@ -470,20 +439,16 @@ public class LapHoaDon_gui extends JPanel {
                     }
                     taiDanhSachMatHang();
                     taiDanhSachNguoiThucHien();
-                }
-        );
+                });
 
         cboMatHang.addActionListener(
-                e -> taiDanhSachNguoiThucHien()
-        );
+                e -> taiDanhSachNguoiThucHien());
 
         btnThem.addActionListener(
-                e -> themMatHang()
-        );
+                e -> themMatHang());
 
         btnXoa.addActionListener(
-                e -> xoaDong()
-        );
+                e -> xoaDong());
 
         return pnl;
     }
@@ -496,8 +461,7 @@ public class LapHoaDon_gui extends JPanel {
         pnl.setLayout(new BorderLayout(10, 10));
 
         JPanel pnlTien = new JPanel(
-                new GridLayout(4, 2, 10, 8)
-        );
+                new GridLayout(4, 2, 10, 8));
         pnlTien.setOpaque(false);
 
         lblTamTinh = new JLabel("0 đ");
@@ -506,8 +470,7 @@ public class LapHoaDon_gui extends JPanel {
         lblTongTien = new JLabel("0 đ");
 
         lblTongTien.setFont(
-                new Font("Arial", Font.BOLD, 21)
-        );
+                new Font("Arial", Font.BOLD, 21));
 
         lblTongTien.setForeground(MAU_XANH);
 
@@ -544,8 +507,7 @@ public class LapHoaDon_gui extends JPanel {
         btnLuu.setCursor(Cursor.getPredefinedCursor(
                 Cursor.HAND_CURSOR));
         JPanel pnlNut = new JPanel(
-                new FlowLayout(FlowLayout.RIGHT)
-        );
+                new FlowLayout(FlowLayout.RIGHT));
         pnlNut.setOpaque(false);
         pnlNut.add(btnLamMoi);
         pnlNut.add(btnLuu);
@@ -569,11 +531,8 @@ public class LapHoaDon_gui extends JPanel {
         pnl.setBorder(
                 BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(
-                                new Color(225, 230, 238)
-                        ),
-                        BorderFactory.createTitledBorder(tieuDe)
-                )
-        );
+                                new Color(225, 230, 238)),
+                        BorderFactory.createTitledBorder(tieuDe)));
 
         return pnl;
     }
@@ -620,8 +579,7 @@ public class LapHoaDon_gui extends JPanel {
         cboThuCung.removeAllItems();
         cboThuCung.addItem(null);
 
-        KhachHang kh =
-                (KhachHang) cboKhachHang.getSelectedItem();
+        KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
 
         if (kh == null) {
             return;
@@ -717,25 +675,22 @@ public class LapHoaDon_gui extends JPanel {
                     boolean cellHasFocus) {
 
                 super.getListCellRendererComponent(
-                        list, value, index, isSelected, cellHasFocus
-                );
+                        list, value, index, isSelected, cellHasFocus);
 
                 if (value instanceof DichVu_entity dv) {
 
                     setText(
                             dv.getMaDV()
-                            + " - " + dv.getTenDV()
-                            + " - " + dinhDangTien(dv.getGiaDV())
-                    );
+                                    + " - " + dv.getTenDV()
+                                    + " - " + dinhDangTien(dv.getGiaDV()));
 
                 } else if (value instanceof VatTu_entity vt) {
 
                     setText(
                             vt.getMaVT()
-                            + " - " + vt.getTenVT()
-                            + (vt.getMaThuoc() != null ? " (Thuốc)" : "")
-                            + " - " + dinhDangTien(vt.getGiaBanCoBan())
-                    );
+                                    + " - " + vt.getTenVT()
+                                    + (vt.getMaThuoc() != null ? " (Thuốc)" : "")
+                                    + " - " + dinhDangTien(vt.getGiaBanCoBan()));
 
                 } else {
                     setText("");
@@ -755,11 +710,11 @@ public class LapHoaDon_gui extends JPanel {
             chiTietKhaDung = controller.taiChiTietDonThuocKhaDung(
                     thuCung.getMaTC(), vatTu.getMaThuoc().getMaThuoc());
             for (PrescriptionOption option : chiTietKhaDung) {
-                    ChiTietDonThuoc_entity chiTiet = option.getChiTiet();
-                    luaChon.add(chiTiet.getMaDonThuoc() + " / " + chiTiet.getMaCTDT()
-                            + " - " + chiTiet.getTenThuoc() + " (còn "
-                            + option.getSoLuongConLai().stripTrailingZeros().toPlainString()
-                            + ")");
+                ChiTietDonThuoc_entity chiTiet = option.getChiTiet();
+                luaChon.add(chiTiet.getMaDonThuoc() + " / " + chiTiet.getMaCTDT()
+                        + " - " + chiTiet.getTenThuoc() + " (còn "
+                        + option.getSoLuongConLai().stripTrailingZeros().toPlainString()
+                        + ")");
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
@@ -867,9 +822,11 @@ public class LapHoaDon_gui extends JPanel {
 
         Object nguoiThucHien = cboNguoiThucHien.getSelectedItem();
         NhanVien_entity nhanVienThucHien = nguoiThucHien instanceof NhanVien_entity
-                ? (NhanVien_entity) nguoiThucHien : null;
+                ? (NhanVien_entity) nguoiThucHien
+                : null;
         BacSi_entity bacSiThucHien = nguoiThucHien instanceof BacSi_entity
-                ? (BacSi_entity) nguoiThucHien : null;
+                ? (BacSi_entity) nguoiThucHien
+                : null;
         line = controller.ganNguoiThucHien(line, nhanVienThucHien, bacSiThucHien);
 
         try {
@@ -889,7 +846,7 @@ public class LapHoaDon_gui extends JPanel {
                 model.setValueAt(
                         dinhDangTien(controller.tinhThanhTienDong(savedLine)), row, 5);
             } else {
-                model.addRow(new Object[]{
+                model.addRow(new Object[] {
                         savedLine.getMaHang(),
                         savedLine.getTenHang(),
                         controller.layTenLoaiMatHang(savedLine.getLoai()),
@@ -916,8 +873,7 @@ public class LapHoaDon_gui extends JPanel {
         if (row < 0) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Vui lòng chọn dòng cần xóa."
-            );
+                    "Vui lòng chọn dòng cần xóa.");
             return;
         }
 
@@ -954,11 +910,9 @@ public class LapHoaDon_gui extends JPanel {
 
     private void luuHoaDon() {
 
-        KhachHang kh =
-                (KhachHang) cboKhachHang.getSelectedItem();
+        KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
 
-        ThuCung_entity tc =
-                (ThuCung_entity) cboThuCung.getSelectedItem();
+        ThuCung_entity tc = (ThuCung_entity) cboThuCung.getSelectedItem();
 
         if (nhanVienDangNhap == null) {
             try {
@@ -976,7 +930,8 @@ public class LapHoaDon_gui extends JPanel {
             JOptionPane.showMessageDialog(this, validation.getMessage(),
                     validation == ValidationError.CHUA_CO_NHAN_VIEN ? "Lỗi" : "Thông báo",
                     validation == ValidationError.CHUA_CO_NHAN_VIEN
-                            ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+                            ? JOptionPane.ERROR_MESSAGE
+                            : JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -984,18 +939,15 @@ public class LapHoaDon_gui extends JPanel {
                 this,
                 "Bạn có chắc muốn lưu hóa đơn?",
                 "Xác nhận",
-                JOptionPane.YES_NO_OPTION
-        );
+                JOptionPane.YES_NO_OPTION);
 
         if (xacNhan != JOptionPane.YES_OPTION) {
             return;
         }
 
-        KhuyenMai_Entity km =
-                (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem();
+        KhuyenMai_Entity km = (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem();
 
-        Thue_entity thue =
-                (Thue_entity) cboThue.getSelectedItem();
+        Thue_entity thue = (Thue_entity) cboThue.getSelectedItem();
 
         String maHD = txtMaHD.getText().trim();
         InvoiceTotals totals;
@@ -1009,24 +961,23 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-            int luaChon = JOptionPane.showConfirmDialog(
-                    this,
-                    "Đã lưu hóa đơn " + maHD + " thành công!"
-                    + "\nTạm tính: " + dinhDangTien(totals.getTienHang())
-                    + "\nTiền giảm: " + dinhDangTien(totals.getTienGiam())
-                    + "\nTiền thuế: " + dinhDangTien(totals.getTienThue())
-                    + "\nTổng thanh toán: " + dinhDangTien(totals.getTongThanhToan())
-                    + "\n\nBạn có muốn mở xem / in hóa đơn ngay không?",
-                    "Lập hóa đơn thành công",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+        int luaChon = JOptionPane.showConfirmDialog(
+                this,
+                "Đã lưu hóa đơn " + maHD + " thành công!"
+                        + "\nTạm tính: " + dinhDangTien(totals.getTienHang())
+                        + "\nTiền giảm: " + dinhDangTien(totals.getTienGiam())
+                        + "\nTiền thuế: " + dinhDangTien(totals.getTienThue())
+                        + "\nTổng thanh toán: " + dinhDangTien(totals.getTongThanhToan())
+                        + "\n\nBạn có muốn mở xem / in hóa đơn ngay không?",
+                "Lập hóa đơn thành công",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE);
 
-            lamMoi();
+        lamMoi();
 
-            if (luaChon == JOptionPane.YES_OPTION) {
-                ChiTietHoaDon_gui.hienThi(this, maHD,null);
-            }
+        if (luaChon == JOptionPane.YES_OPTION) {
+            ChiTietHoaDon_gui.hienThi(this, maHD, null);
+        }
     }
 
     // ==================== LÀM MỚI ====================
@@ -1040,9 +991,7 @@ public class LapHoaDon_gui extends JPanel {
 
         txtNgayLap.setText(
                 LocalDate.now().format(
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy")
-                )
-        );
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
         txtSoLuong.setText("1");
 
@@ -1068,10 +1017,12 @@ public class LapHoaDon_gui extends JPanel {
             }
         }
     }
+
     // ==================== MÃ HÓA ĐƠN ====================
     private String phatSinhMaHD() {
         return controller.taoMaHoaDonTiepTheo();
     }
+
     // ==================== ĐỊNH DẠNG TIỀN ====================
     private String dinhDangTien(double tien) {
         return String.format("%,.0f đ", tien);

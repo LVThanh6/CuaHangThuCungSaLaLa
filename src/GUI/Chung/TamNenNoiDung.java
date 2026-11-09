@@ -10,9 +10,11 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Vùng chứa nội dung: vẽ một "tấm nền" kem bán trong suốt ngay phía sau nội dung
+ * Vùng chứa nội dung: vẽ một "tấm nền" kem bán trong suốt ngay phía sau nội
+ * dung
  * để chữ luôn rõ nhưng ảnh vẫn thấp thoáng bên dưới.
- * Mặc định (lề = 0) tấm nền phủ kín 100% vùng còn lại dưới header; nếu đặt lề > 0
+ * Mặc định (lề = 0) tấm nền phủ kín 100% vùng còn lại dưới header; nếu đặt lề >
+ * 0
  * thì tấm nền bo góc, có bóng và ảnh nền hiện ra như khung viền quanh mép.
  */
 public class TamNenNoiDung extends JPanel {

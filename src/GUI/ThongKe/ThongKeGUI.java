@@ -40,8 +40,8 @@ public class ThongKeGUI extends JPanel {
     private final JSpinner ngayKetThuc = taoBoChonNgay(LocalDate.now());
     private final JComboBox<String> cboKhoangNhanh = new JComboBox<>(
             new String[] { "Tùy chọn", "Hôm nay", "7 ngày qua", "30 ngày qua", "Tháng này", "Năm nay" });
-    private final JComboBox<ThongKeController.Category> cboNhomChiSo =
-            new JComboBox<>(ThongKeController.Category.values());
+    private final JComboBox<ThongKeController.DanhMuc> cboNhomChiSo = new JComboBox<>(
+            ThongKeController.DanhMuc.values());
     private final JComboBox<ChiSo> cboChiSo = new JComboBox<>();
     private final List<ChiSo> tatCaChiSo = new java.util.ArrayList<>();
     private final JLabel lblGhiChuChiSo = new JLabel(" ");
@@ -59,7 +59,7 @@ public class ThongKeGUI extends JPanel {
     private final JTable bangDuLieu = new JTable(modelBang);
     private final ThongKeController thongKeController = new ThongKeController();
     private int maYeuCauDuLieu;
-    private ThongKeController.ReportData duLieuThongKe;
+    private ThongKeController.DuLieuBaoCao duLieuThongKe;
 
     public ThongKeGUI() {
         khoiTaoGiaoDien();
@@ -113,22 +113,22 @@ public class ThongKeGUI extends JPanel {
         dieuKhien.add(ngayKetThuc);
 
         cboKhoangNhanh.setFont(RangBuocGiaoDien.fontThuong(12));
-        cboKhoangNhanh.addActionListener(e -> apDungKhoangNhanh());
+        cboKhoangNhanh.addActionListener(suKien -> apDungKhoangNhanh());
         dieuKhien.add(cboKhoangNhanh);
 
         JButton btnApDung = new JButton("Thống kê");
         btnApDung.setFont(RangBuocGiaoDien.fontDam(12));
         btnApDung.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnApDung.addActionListener(e -> apDungKhoangDaChon());
+        btnApDung.addActionListener(suKien -> apDungKhoangDaChon());
         dieuKhien.add(btnApDung);
 
-        JButton btnTaoBieuDo = new JButton("+ Tạo biểu đồ");
+        JButton btnTaoBieuDo = new JButton("Tạo biểu đồ");
         btnTaoBieuDo.setFont(RangBuocGiaoDien.fontDam(12));
         btnTaoBieuDo.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
         btnTaoBieuDo.setForeground(Color.BLACK);
         btnTaoBieuDo.setFocusPainted(false);
         btnTaoBieuDo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnTaoBieuDo.addActionListener(e -> moDialogTaoBieuDo());
+        btnTaoBieuDo.addActionListener(suKien -> moDialogTaoBieuDo());
         dieuKhien.add(btnTaoBieuDo);
         tong.add(dieuKhien, BorderLayout.EAST);
         return tong;
@@ -187,34 +187,34 @@ public class ThongKeGUI extends JPanel {
         nhom.setFont(RangBuocGiaoDien.fontDam(13));
         nhom.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         cboNhomChiSo.setFont(RangBuocGiaoDien.fontThuong(13));
-        cboNhomChiSo.addActionListener(e -> capNhatDanhSachChiSo(null));
+        cboNhomChiSo.addActionListener(suKien -> capNhatDanhSachChiSo(null));
         JLabel nhan = new JLabel("Chỉ số trong nhóm");
         nhan.setFont(RangBuocGiaoDien.fontDam(13));
         nhan.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         cboChiSo.setFont(RangBuocGiaoDien.fontThuong(13));
-        cboChiSo.addActionListener(e -> capNhatBangChiSoChon());
+        cboChiSo.addActionListener(suKien -> capNhatBangChiSoChon());
         lblGhiChuChiSo.setFont(RangBuocGiaoDien.fontThuong(12));
         lblGhiChuChiSo.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         chonChiSo.add(nhom);
         chonChiSo.add(cboNhomChiSo);
         chonChiSo.add(nhan);
         chonChiSo.add(cboChiSo);
-        // Ô tìm kiếm nhân viên (chỉ hiện ở nhóm Nhân sự)
+        // Ô tìm kiếm nhân viên
         panelTimNhanVien.setOpaque(false);
         JLabel nhanTim = new JLabel("Tìm nhân viên");
         nhanTim.setFont(RangBuocGiaoDien.fontDam(13));
         nhanTim.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         txtTimNhanVien.setFont(RangBuocGiaoDien.fontThuong(13));
         txtTimNhanVien.setToolTipText("Nhập tên, số điện thoại hoặc mã nhân viên");
-        txtTimNhanVien.addActionListener(e -> capNhatBangChiSoChon());
+        txtTimNhanVien.addActionListener(suKien -> capNhatBangChiSoChon());
         JButton btnTim = new JButton("Tìm kiếm");
         btnTim.setFont(RangBuocGiaoDien.fontDam(12));
         btnTim.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnTim.addActionListener(e -> capNhatBangChiSoChon());
+        btnTim.addActionListener(suKien -> capNhatBangChiSoChon());
         JButton btnXoaLoc = new JButton("Xóa lọc");
         btnXoaLoc.setFont(RangBuocGiaoDien.fontThuong(12));
         btnXoaLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnXoaLoc.addActionListener(e -> {
+        btnXoaLoc.addActionListener(suKien -> {
             txtTimNhanVien.setText("");
             capNhatBangChiSoChon();
         });
@@ -260,76 +260,87 @@ public class ThongKeGUI extends JPanel {
         if (chon == 0) {
             return;
         }
-        ThongKeController.QuickRange quickRange;
+        ThongKeController.KhoangThoiGianNhanh khoangNhanhChon;
         switch (chon) {
-            case 1: quickRange = ThongKeController.QuickRange.TODAY; break;
-            case 2: quickRange = ThongKeController.QuickRange.LAST_7_DAYS; break;
-            case 3: quickRange = ThongKeController.QuickRange.LAST_30_DAYS; break;
-            case 4: quickRange = ThongKeController.QuickRange.THIS_MONTH; break;
-            default: quickRange = ThongKeController.QuickRange.THIS_YEAR; break;
+            case 1:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.HOM_NAY;
+                break;
+            case 2:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BAY_NGAY_QUA;
+                break;
+            case 3:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BA_MUOI_NGAY_QUA;
+                break;
+            case 4:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.THANG_NAY;
+                break;
+            default:
+                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.NAM_NAY;
+                break;
         }
-        ThongKeController.DateRange range = ThongKeController.khoangNhanh(quickRange, LocalDate.now());
-        datNgay(ngayBatDau, range.getStart());
-        datNgay(ngayKetThuc, range.getEnd());
+        ThongKeController.KhoangNgay khoangNgay = ThongKeController.layKhoangNhanh(khoangNhanhChon, LocalDate.now());
+        datNgay(ngayBatDau, khoangNgay.getBatDau());
+        datNgay(ngayKetThuc, khoangNgay.getKetThuc());
         apDungKhoangDaChon();
     }
 
     private void apDungKhoangDaChon() {
         try {
             taiLaiDuLieu(docNgay(ngayBatDau), docNgay(ngayKetThuc));
-        } catch (IllegalArgumentException ex) {
-            hienLoi(ex.getMessage());
+        } catch (IllegalArgumentException loi) {
+            hienLoi(loi.getMessage());
         }
     }
 
     private void taiLaiDuLieu(LocalDate tu, LocalDate den) {
-        String loiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
-        if (loiKhoangNgay != null) {
-            hienLoi(loiKhoangNgay);
+        String thongBaoLoiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
+        if (thongBaoLoiKhoangNgay != null) {
+            hienLoi(thongBaoLoiKhoangNgay);
             return;
         }
         int yeuCau = ++maYeuCauDuLieu;
         lblTrangThai.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         lblTrangThai.setToolTipText(null);
         lblTrangThai.setText("Đang tải dữ liệu thống kê...");
-        new SwingWorker<ThongKeController.LoadResult, Void>() {
+        new SwingWorker<ThongKeController.KetQuaTaiDuLieu, Void>() {
             @Override
-            protected ThongKeController.LoadResult doInBackground() {
+            protected ThongKeController.KetQuaTaiDuLieu doInBackground() {
                 return thongKeController.taiDuLieu(tu, den);
             }
 
             @Override
             protected void done() {
-                if (yeuCau != maYeuCauDuLieu || isCancelled()) return;
+                if (yeuCau != maYeuCauDuLieu || isCancelled())
+                    return;
                 try {
-                    ThongKeController.LoadResult result = get();
-                    if (!result.isSuccess()) {
-                        hienLoi("Không thể tải dữ liệu thống kê: " + result.getErrorMessage());
+                    ThongKeController.KetQuaTaiDuLieu ketQua = get();
+                    if (!ketQua.isThanhCong()) {
+                        hienLoi("Không thể tải dữ liệu thống kê: " + ketQua.getThongBaoLoi());
                         return;
                     }
-                    capNhatDuLieu(result.getReport());
+                    capNhatDuLieu(ketQua.getBaoCao());
                     lblMoTa.setText("Từ " + DINH_DANG_NGAY.format(tu) + " đến " + DINH_DANG_NGAY.format(den)
                             + " · Dữ liệu " + ThongKeController.moTaNhomThoiGian(tu, den) + ".");
                     lblTrangThai.setText(" ");
-                } catch (InterruptedException ex) {
+                } catch (InterruptedException loi) {
                     Thread.currentThread().interrupt();
                     hienLoi("Đã gián đoạn khi tải dữ liệu thống kê.");
-                } catch (ExecutionException ex) {
-                    Throwable nguyenNhan = ex.getCause() == null ? ex : ex.getCause();
+                } catch (ExecutionException loi) {
+                    Throwable nguyenNhan = loi.getCause() == null ? loi : loi.getCause();
                     hienLoi("Không thể tải dữ liệu thống kê: " + nguyenNhan.getMessage());
                 }
             }
         }.execute();
     }
 
-    private void capNhatDuLieu(ThongKeController.ReportData duLieu) {
+    private void capNhatDuLieu(ThongKeController.DuLieuBaoCao duLieu) {
         duLieuThongKe = duLieu;
 
         ChiSo dangChon = (ChiSo) cboChiSo.getSelectedItem();
         String maDangChon = dangChon == null ? null : dangChon.ma;
         tatCaChiSo.clear();
-        for (ThongKeController.Indicator chiSo : duLieu.getIndicators()) {
-            tatCaChiSo.add(new ChiSo(chiSo));
+        for (ThongKeController.ChiSoBaoCao chiSoBaoCao : duLieu.getDanhSachChiSo()) {
+            tatCaChiSo.add(new ChiSo(chiSoBaoCao));
         }
         capNhatDanhSachChiSo(maDangChon);
         capNhatKpiTheoNhom();
@@ -337,9 +348,9 @@ public class ThongKeGUI extends JPanel {
 
     private void capNhatDanhSachChiSo(String maCanChon) {
         cboChiSo.removeAllItems();
-        ThongKeController.Category nhomChon = (ThongKeController.Category) cboNhomChiSo.getSelectedItem();
+        ThongKeController.DanhMuc nhomChon = (ThongKeController.DanhMuc) cboNhomChiSo.getSelectedItem();
         for (ChiSo chiSo : tatCaChiSo) {
-            if (nhomChon == ThongKeController.categoryFor(chiSo.ma, chiSo.ten)) {
+            if (nhomChon == ThongKeController.layDanhMucCho(chiSo.ma, chiSo.ten)) {
                 cboChiSo.addItem(chiSo);
             }
         }
@@ -361,16 +372,17 @@ public class ThongKeGUI extends JPanel {
     }
 
     private void capNhatKpiTheoNhom() {
-        if (duLieuThongKe == null) return;
+        if (duLieuThongKe == null)
+            return;
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
         dinhDang.setMaximumFractionDigits(0);
         double[] giaTri = {
-                duLieuThongKe.getTotalRevenue(),
-                duLieuThongKe.getInvoiceCount(),
-                duLieuThongKe.getItemsSold(),
-                duLieuThongKe.getGoodsRevenue(),
-                duLieuThongKe.getServiceRevenue(),
-                duLieuThongKe.getTotalPayroll()
+                duLieuThongKe.getTongDoanhThu(),
+                duLieuThongKe.getSoHoaDon(),
+                duLieuThongKe.getSoLuongBan(),
+                duLieuThongKe.getDoanhThuHangHoa(),
+                duLieuThongKe.getDoanhThuDichVu(),
+                duLieuThongKe.getTongLuong()
         };
         String[] hauTo = { "đ", "", "", "đ", "đ", "đ" };
         for (int i = 0; i < giaTri.length; i++) {
@@ -383,8 +395,7 @@ public class ThongKeGUI extends JPanel {
         ChiSo chiSo = (ChiSo) cboChiSo.getSelectedItem();
         modelBang.setRowCount(0);
 
-        // Ô tìm kiếm chỉ hiện ở nhóm Nhân sự (để tra nhanh khi tính lương)
-        boolean laNhomNhanSu = cboNhomChiSo.getSelectedItem() == ThongKeController.Category.NHAN_SU;
+        boolean laNhomNhanSu = cboNhomChiSo.getSelectedItem() == ThongKeController.DanhMuc.NHAN_SU;
         panelTimNhanVien.setVisible(laNhomNhanSu);
         String tuKhoa = laNhomNhanSu ? txtTimNhanVien.getText().trim() : "";
 
@@ -393,7 +404,7 @@ public class ThongKeGUI extends JPanel {
             return;
         }
         lblGhiChuChiSo.setText(chiSo.ghiChu);
-        boolean theoThoiGian = ThongKeController.isTimeSeries(chiSo.ma);
+        boolean theoThoiGian = ThongKeController.laChuoiThoiGian(chiSo.ma);
         modelBang.setColumnIdentifiers(new Object[] {
                 theoThoiGian ? "Thời gian" : "Danh mục", "Số liệu" });
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
@@ -414,7 +425,8 @@ public class ThongKeGUI extends JPanel {
         } else if (soDong == 0) {
             lblGhiChuChiSo.setText("Không tìm thấy nhân viên nào khớp với \"" + tuKhoa + "\".");
         } else {
-            modelBang.addRow(new Object[] { "Tổng cộng (" + soDong + " kết quả)", dinhDang.format(tongHienThi) + hauTo });
+            modelBang.addRow(
+                    new Object[] { "Tổng cộng (" + soDong + " kết quả)", dinhDang.format(tongHienThi) + hauTo });
         }
     }
 
@@ -434,8 +446,8 @@ public class ThongKeGUI extends JPanel {
         try {
             tu = docNgay(ngayBatDau);
             den = docNgay(ngayKetThuc);
-        } catch (IllegalArgumentException ex) {
-            hienLoi(ex.getMessage());
+        } catch (IllegalArgumentException loi) {
+            hienLoi(loi.getMessage());
             return;
         }
         List<ChiSo> dsChiSo = new java.util.ArrayList<>();
@@ -450,26 +462,26 @@ public class ThongKeGUI extends JPanel {
     }
 
     private static JSpinner taoBoChonNgay(LocalDate ngay) {
-        JSpinner spinner = new JSpinner(new SpinnerDateModel(
+        JSpinner conXoay = new JSpinner(new SpinnerDateModel(
                 Date.from(ngay.atStartOfDay(ZoneId.systemDefault()).toInstant()), null, null,
                 java.util.Calendar.DAY_OF_MONTH));
-        spinner.setEditor(new JSpinner.DateEditor(spinner, "dd/MM/yyyy"));
-        spinner.setPreferredSize(new Dimension(112, 30));
-        return spinner;
+        conXoay.setEditor(new JSpinner.DateEditor(conXoay, "dd/MM/yyyy"));
+        conXoay.setPreferredSize(new Dimension(112, 30));
+        return conXoay;
     }
 
-    private static LocalDate docNgay(JSpinner spinner) {
+    private static LocalDate docNgay(JSpinner conXoay) {
         try {
-            spinner.commitEdit();
-        } catch (java.text.ParseException ex) {
-            throw new IllegalArgumentException("Ngày nhập không hợp lệ. Hãy dùng định dạng dd/MM/yyyy.", ex);
+            conXoay.commitEdit();
+        } catch (java.text.ParseException loi) {
+            throw new IllegalArgumentException("Ngày nhập không hợp lệ. Hãy dùng định dạng dd/MM/yyyy.", loi);
         }
-        Date ngay = (Date) spinner.getValue();
+        Date ngay = (Date) conXoay.getValue();
         return ngay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    private static void datNgay(JSpinner spinner, LocalDate ngay) {
-        spinner.setValue(Date.from(ngay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+    private static void datNgay(JSpinner conXoay, LocalDate ngay) {
+        conXoay.setValue(Date.from(ngay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
     }
 
     private static class ChiSo {
@@ -483,20 +495,20 @@ public class ThongKeGUI extends JPanel {
         private final double[][] giaTri;
         private final double tong;
 
-        private ChiSo(ThongKeController.Indicator duLieu) {
-            ma = duLieu.getCode();
-            ten = duLieu.getName();
-            donVi = duLieu.getUnit();
-            hauTo = duLieu.getSuffix();
-            ghiChu = duLieu.getDescription();
-            tong = duLieu.getTotal();
-            nhan = duLieu.getLabels().toArray(new String[0]);
-            chuoi = duLieu.getSeries().toArray(new String[0]);
-            giaTri = new double[duLieu.getValues().size()][];
+        private ChiSo(ThongKeController.ChiSoBaoCao duLieu) {
+            ma = duLieu.getMa();
+            ten = duLieu.getTen();
+            donVi = duLieu.getDonVi();
+            hauTo = duLieu.getHauTo();
+            ghiChu = duLieu.getMoTa();
+            tong = duLieu.getTong();
+            nhan = duLieu.getNhan().toArray(new String[0]);
+            chuoi = duLieu.getChuoi().toArray(new String[0]);
+            giaTri = new double[duLieu.getGiaTri().size()][];
             for (int i = 0; i < giaTri.length; i++) {
-                giaTri[i] = new double[duLieu.getValues().get(i).size()];
+                giaTri[i] = new double[duLieu.getGiaTri().get(i).size()];
                 for (int j = 0; j < giaTri[i].length; j++) {
-                    giaTri[i][j] = duLieu.getValues().get(i).get(j);
+                    giaTri[i][j] = duLieu.getGiaTri().get(i).get(j);
                 }
             }
         }
@@ -519,7 +531,7 @@ public class ThongKeGUI extends JPanel {
         private final ThongKeController thongKeController;
 
         private DialogTaoBieuDo(Window cha, List<ChiSo> danhSachChiSo, ChiSo chiSoChon,
-                                LocalDate tu, LocalDate den, ThongKeController thongKeController) {
+                LocalDate tu, LocalDate den, ThongKeController thongKeController) {
             super(cha, "Tạo biểu đồ thống kê", ModalityType.APPLICATION_MODAL);
             this.thongKeController = thongKeController;
             ngayBatDau = taoBoChonNgay(tu);
@@ -547,8 +559,8 @@ public class ThongKeGUI extends JPanel {
             JPanel nut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
             nut.setBackground(new Color(248, 250, 252));
             JButton btnHuy = new JButton("Hủy");
-            btnHuy.addActionListener(e -> dispose());
-            btnTao.addActionListener(e -> taoBieuDo());
+            btnHuy.addActionListener(suKien -> dispose());
+            btnTao.addActionListener(suKien -> taoBieuDo());
             nut.add(btnHuy);
             nut.add(btnTao);
             add(nut, BorderLayout.SOUTH);
@@ -583,13 +595,13 @@ public class ThongKeGUI extends JPanel {
             try {
                 tu = docNgay(ngayBatDau);
                 den = docNgay(ngayKetThuc);
-            } catch (IllegalArgumentException ex) {
-                lblTrangThai.setText(ex.getMessage());
+            } catch (IllegalArgumentException loi) {
+                lblTrangThai.setText(loi.getMessage());
                 return;
             }
-            String loiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
-            if (loiKhoangNgay != null) {
-                lblTrangThai.setText(loiKhoangNgay);
+            String thongBaoLoiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
+            if (thongBaoLoiKhoangNgay != null) {
+                lblTrangThai.setText(thongBaoLoiKhoangNgay);
                 return;
             }
             ChiSo chiSoChon = (ChiSo) cboChiSo.getSelectedItem();
@@ -601,23 +613,23 @@ public class ThongKeGUI extends JPanel {
             lblTrangThai.setText("Đang nạp dữ liệu cho khoảng thời gian đã chọn...");
             String maChiSo = chiSoChon.ma;
             int loai = loaiBieuDo(cboLoai.getSelectedIndex());
-            new SwingWorker<ThongKeController.LoadResult, Void>() {
+            new SwingWorker<ThongKeController.KetQuaTaiDuLieu, Void>() {
                 @Override
-                protected ThongKeController.LoadResult doInBackground() {
+                protected ThongKeController.KetQuaTaiDuLieu doInBackground() {
                     return thongKeController.taiDuLieu(tu, den);
                 }
 
                 @Override
                 protected void done() {
                     try {
-                        ThongKeController.LoadResult result = get();
-                        if (!result.isSuccess()) {
-                            throw new IllegalStateException(result.getErrorMessage());
+                        ThongKeController.KetQuaTaiDuLieu ketQua = get();
+                        if (!ketQua.isThanhCong()) {
+                            throw new IllegalStateException(ketQua.getThongBaoLoi());
                         }
                         ChiSo chiSo = null;
-                        for (ThongKeController.Indicator ketQua : result.getReport().getIndicators()) {
-                            if (ketQua.getCode().equals(maChiSo)) {
-                                chiSo = new ChiSo(ketQua);
+                        for (ThongKeController.ChiSoBaoCao ketQuaBaoCao : ketQua.getBaoCao().getDanhSachChiSo()) {
+                            if (ketQuaBaoCao.getMa().equals(maChiSo)) {
+                                chiSo = new ChiSo(ketQuaBaoCao);
                                 break;
                             }
                         }
@@ -627,16 +639,16 @@ public class ThongKeGUI extends JPanel {
                         CuaSoBieuDo cuaSo = new CuaSoBieuDo(getOwner(), chiSo, loai, tu, den);
                         cuaSo.setVisible(true);
                         dispose();
-                    } catch (InterruptedException ex) {
+                    } catch (InterruptedException loi) {
                         Thread.currentThread().interrupt();
                         hienLoi("Đã gián đoạn khi nạp dữ liệu biểu đồ.");
-                    } catch (ExecutionException ex) {
-                        Throwable nguyenNhan = ex instanceof ExecutionException && ex.getCause() != null
-                                ? ex.getCause()
-                                : ex;
+                    } catch (ExecutionException loi) {
+                        Throwable nguyenNhan = loi instanceof ExecutionException && loi.getCause() != null
+                                ? loi.getCause()
+                                : loi;
                         hienLoi("Không thể tạo biểu đồ: " + nguyenNhan.getMessage());
-                    } catch (RuntimeException ex) {
-                        hienLoi("Không thể tạo biểu đồ: " + ex.getMessage());
+                    } catch (RuntimeException loi) {
+                        hienLoi("Không thể tạo biểu đồ: " + loi.getMessage());
                     }
                 }
             }.execute();
@@ -647,12 +659,16 @@ public class ThongKeGUI extends JPanel {
             btnTao.setEnabled(true);
         }
 
-        private int loaiBieuDo(int index) {
-            switch (index) {
-                case 1: return BieuDoPanel.BIEU_DO_DUONG;
-                case 2: return BieuDoPanel.BIEU_DO_DIEM;
-                case 3: return BieuDoPanel.BIEU_DO_QUAT;
-                default: return BieuDoPanel.BIEU_DO_COT;
+        private int loaiBieuDo(int chiSo) {
+            switch (chiSo) {
+                case 1:
+                    return BieuDoPanel.BIEU_DO_DUONG;
+                case 2:
+                    return BieuDoPanel.BIEU_DO_DIEM;
+                case 3:
+                    return BieuDoPanel.BIEU_DO_QUAT;
+                default:
+                    return BieuDoPanel.BIEU_DO_COT;
             }
         }
     }
@@ -661,21 +677,21 @@ public class ThongKeGUI extends JPanel {
         private static final long serialVersionUID = 1L;
         private final BieuDoPanel bieuDo;
 
-        private CuaSoBieuDo(Window owner, ChiSo chiSo, int loai, LocalDate tu, LocalDate den) {
-            super(owner, "Biểu đồ: " + chiSo.ten, ModalityType.MODELESS);
+        private CuaSoBieuDo(Window theCha, ChiSo chiSo, int loai, LocalDate tu, LocalDate den) {
+            super(theCha, "Biểu đồ: " + chiSo.ten, ModalityType.MODELESS);
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
             setSize(900, 600);
-            setLocationRelativeTo(owner);
+            setLocationRelativeTo(theCha);
             setLayout(new BorderLayout());
-            
+
             bieuDo = new BieuDoPanel();
             bieuDo.datDuLieu(chiSo.ten + " · " + DINH_DANG_NGAY.format(tu) + " – " + DINH_DANG_NGAY.format(den),
                     chiSo.nhan, chiSo.chuoi, chiSo.giaTri, chiSo.donVi);
             bieuDo.setLoaiBieuDo(loai);
             add(bieuDo, BorderLayout.CENTER);
-            
+
             JButton btnIn = new JButton("In biểu đồ");
-            btnIn.addActionListener(e -> inBieuDo());
+            btnIn.addActionListener(suKien -> inBieuDo());
             JPanel thanhCongCu = new JPanel(new FlowLayout(FlowLayout.RIGHT));
             thanhCongCu.setBackground(Color.WHITE);
             thanhCongCu.add(btnIn);
@@ -683,25 +699,26 @@ public class ThongKeGUI extends JPanel {
         }
 
         private void inBieuDo() {
-            PrinterJob job = PrinterJob.getPrinterJob();
-            job.setJobName(getTitle());
-            job.setPrintable((graphics, pageFormat, pageIndex) -> {
-                if (pageIndex > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
+            PrinterJob tienTrinhIn = PrinterJob.getPrinterJob();
+            tienTrinhIn.setJobName(getTitle());
+            tienTrinhIn.setPrintable((graphics, dinhDangTrang, chiSoTrang) -> {
+                if (chiSoTrang > 0)
+                    return java.awt.print.Printable.NO_SUCH_PAGE;
                 java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-                g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
-                double scale = Math.min(pageFormat.getImageableWidth() / bieuDo.getWidth(),
-                        pageFormat.getImageableHeight() / bieuDo.getHeight());
-                g2.scale(scale, scale);
+                g2.translate(dinhDangTrang.getImageableX(), dinhDangTrang.getImageableY());
+                double tyLe = Math.min(dinhDangTrang.getImageableWidth() / bieuDo.getWidth(),
+                        dinhDangTrang.getImageableHeight() / bieuDo.getHeight());
+                g2.scale(tyLe, tyLe);
                 bieuDo.printAll(g2);
                 g2.dispose();
                 return java.awt.print.Printable.PAGE_EXISTS;
             });
-            if (job.printDialog()) {
+            if (tienTrinhIn.printDialog()) {
                 try {
-                    job.print();
-                } catch (PrinterException ex) {
+                    tienTrinhIn.print();
+                } catch (PrinterException loi) {
                     JOptionPane.showMessageDialog(this,
-                            "Không thể in biểu đồ: " + ex.getMessage(), "Lỗi in",
+                            "Không thể in biểu đồ: " + loi.getMessage(), "Lỗi in",
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -709,8 +726,8 @@ public class ThongKeGUI extends JPanel {
     }
 }
 
-/** 
- * Lớp Giao diện hỗ trợ vẽ Biểu đồ (Nhúng trực tiếp vào ThongKeGUI) 
+/**
+ * Lớp Giao diện hỗ trợ vẽ Biểu đồ
  */
 class BieuDoPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -720,7 +737,7 @@ class BieuDoPanel extends JPanel {
     public static final int BIEU_DO_DIEM = 3;
     public static final int BIEU_DO_QUAT = 4;
 
-    private static final Color[] MAU = {
+    private static final Color[] BGC_MAU = {
             new Color(13, 148, 136), new Color(14, 165, 233),
             new Color(245, 158, 11), new Color(139, 92, 246),
             new Color(236, 72, 153), new Color(16, 185, 129)
@@ -778,12 +795,14 @@ class BieuDoPanel extends JPanel {
         repaint();
     }
 
-    public int getLoaiBieuDo() { return loaiBieuDo; }
+    public int getLoaiBieuDo() {
+        return loaiBieuDo;
+    }
 
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g.create();
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        Graphics2D g2 = (Graphics2D) graphics.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         if (!tieuDe.isEmpty()) {
@@ -799,8 +818,10 @@ class BieuDoPanel extends JPanel {
             return;
         }
 
-        if (loaiBieuDo == BIEU_DO_QUAT) veBieuDoQuat(g2);
-        else veBieuDoTheoTruc(g2);
+        if (loaiBieuDo == BIEU_DO_QUAT)
+            veBieuDoQuat(g2);
+        else
+            veBieuDoTheoTruc(g2);
         g2.dispose();
     }
 
@@ -808,145 +829,153 @@ class BieuDoPanel extends JPanel {
         int le = 76, phai = 24, tren = tieuDe.isEmpty() ? 24 : 44;
         int day = hienChuGiai ? getHeight() - 62 : getHeight() - 34;
         int rong = getWidth() - le - phai, cao = day - tren;
-        if (rong <= 0 || cao <= 0) return;
+        if (rong <= 0 || cao <= 0)
+            return;
 
-        double max = 0;
+        double lonNhat = 0;
         for (double[] hang : giaTri) {
-            for (double value : hang) max = Math.max(max, value);
+            for (double mangGiaTri : hang)
+                lonNhat = Math.max(lonNhat, mangGiaTri);
         }
-        double tran = mucTran(max);
-        FontMetrics fm = g2.getFontMetrics(RangBuocGiaoDien.fontThuong(11));
+        double tran = mucTran(lonNhat);
+        FontMetrics thuocDoChu = g2.getFontMetrics(RangBuocGiaoDien.fontThuong(11));
         g2.setFont(RangBuocGiaoDien.fontThuong(11));
         for (int i = 0; i <= 4; i++) {
-            int y = day - cao * i / 4;
+            int toaDoY = day - cao * i / 4;
             if (i > 0 && hienLuoi) {
                 g2.setColor(new Color(226, 232, 240));
-                g2.drawLine(le, y, le + rong, y);
+                g2.drawLine(le, toaDoY, le + rong, toaDoY);
             }
-            String text = dinhDangSo.format(tran * i / 4);
+            String chuoiChu = dinhDangSo.format(tran * i / 4);
             g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
-            g2.drawString(text, le - fm.stringWidth(text) - 8, y + fm.getAscent() / 2);
+            g2.drawString(chuoiChu, le - thuocDoChu.stringWidth(chuoiChu) - 8, toaDoY + thuocDoChu.getAscent() / 2);
         }
         g2.setColor(new Color(203, 213, 225));
         g2.drawLine(le, day, le + rong, day);
 
-        int count = nhan.length, soChuoi = giaTri.length;
-        double slot = rong / (double) count;
+        int soNhan = nhan.length, soChuoi = giaTri.length;
+        double khoangCach = rong / (double) soNhan;
         for (int s = 0; s < soChuoi; s++) {
-            g2.setColor(MAU[s % MAU.length]);
+            g2.setColor(BGC_MAU[s % BGC_MAU.length]);
             g2.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            for (int i = 0; i < count; i++) {
-                int x = (int) Math.round(le + slot * (i + 0.5));
-                int y = day - (int) Math.round(giaTri[s][i] / tran * cao);
+            for (int i = 0; i < soNhan; i++) {
+                int toaDoX = (int) Math.round(le + khoangCach * (i + 0.5));
+                int toaDoY = day - (int) Math.round(giaTri[s][i] / tran * cao);
                 if (loaiBieuDo == BIEU_DO_COT) {
-                    double groupWidth = Math.min(slot * 0.72, 72);
-                    double barWidth = groupWidth / soChuoi;
-                    double xBar = x - groupWidth / 2 + s * barWidth;
-                    g2.fillRoundRect((int) xBar, y, Math.max(1, (int) barWidth - 2), Math.max(1, day - y), 5, 5);
+                    double rongNhom = Math.min(khoangCach * 0.72, 72);
+                    double rongCotChinh = rongNhom / soChuoi;
+                    double viTriXCot = toaDoX - rongNhom / 2 + s * rongCotChinh;
+                    g2.fillRoundRect((int) viTriXCot, toaDoY, Math.max(1, (int) rongCotChinh - 2),
+                            Math.max(1, day - toaDoY), 5, 5);
                 } else if (loaiBieuDo == BIEU_DO_DUONG && i > 0) {
-                    int prevX = (int) Math.round(le + slot * (i - 0.5));
-                    int prevY = day - (int) Math.round(giaTri[s][i - 1] / tran * cao);
-                    g2.drawLine(prevX, prevY, x, y);
+                    int toaDoXTruoc = (int) Math.round(le + khoangCach * (i - 0.5));
+                    int toaDoYTruoc = day - (int) Math.round(giaTri[s][i - 1] / tran * cao);
+                    g2.drawLine(toaDoXTruoc, toaDoYTruoc, toaDoX, toaDoY);
                 }
                 if (loaiBieuDo == BIEU_DO_DIEM || loaiBieuDo == BIEU_DO_DUONG) {
-                    g2.fill(new Ellipse2D.Double(x - 4, y - 4, 8, 8));
+                    g2.fill(new Ellipse2D.Double(toaDoX - 4, toaDoY - 4, 8, 8));
                 }
                 if (hienNhan) {
-                    String label = dinhDangSo.format(giaTri[s][i]) + (donVi.isEmpty() ? "" : " " + donVi);
+                    String chuoiNhan = dinhDangSo.format(giaTri[s][i]) + (donVi.isEmpty() ? "" : " " + donVi);
                     g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
-                    g2.drawString(label, x - g2.getFontMetrics().stringWidth(label) / 2, y - 8);
-                    g2.setColor(MAU[s % MAU.length]);
+                    g2.drawString(chuoiNhan, toaDoX - g2.getFontMetrics().stringWidth(chuoiNhan) / 2, toaDoY - 8);
+                    g2.setColor(BGC_MAU[s % BGC_MAU.length]);
                 }
             }
         }
 
         g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
-        int maxLabels = Math.max(1, rong / 90);
-        int stride = Math.max(1, (int) Math.ceil(count / (double) maxLabels));
-        for (int i = 0; i < count; i += stride) {
-            String label = nhan[i];
-            int x = (int) Math.round(le + slot * (i + 0.5));
-            g2.drawString(label, x - g2.getFontMetrics().stringWidth(label) / 2, day + 18);
+        int soNhanToiDa = Math.max(1, rong / 90);
+        int buocNhay = Math.max(1, (int) Math.ceil(soNhan / (double) soNhanToiDa));
+        for (int i = 0; i < soNhan; i += buocNhay) {
+            String chuoiNhan = nhan[i];
+            int toaDoX = (int) Math.round(le + khoangCach * (i + 0.5));
+            g2.drawString(chuoiNhan, toaDoX - g2.getFontMetrics().stringWidth(chuoiNhan) / 2, day + 18);
         }
-        if (hienChuGiai) veChuGiai(g2, getHeight() - 16);
+        if (hienChuGiai)
+            veChuGiai(g2, getHeight() - 16);
     }
 
     private void veBieuDoQuat(Graphics2D g2) {
-        double[] values = giaTri[0];
-        double total = 0;
-        for (double value : values) total += Math.max(0, value);
-        if (total <= 0) {
+        double[] mangGiaTri = giaTri[0];
+        double tongGiaTri = 0;
+        for (double giaTriHienTai : mangGiaTri)
+            tongGiaTri += Math.max(0, giaTriHienTai);
+        if (tongGiaTri <= 0) {
             g2.setFont(RangBuocGiaoDien.fontThuong(13));
             g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
             g2.drawString("Không có giá trị dương để vẽ biểu đồ quạt.", 20, 54);
             return;
         }
 
-        int size = Math.max(1, Math.min(getHeight() - 100, getWidth() / 2 - 80));
-        int x = 24, y = Math.max(42, (getHeight() - size) / 2);
-        double start = 90;
-        for (int i = 0; i < values.length; i++) {
-            double value = Math.max(0, values[i]);
-            if (value == 0) continue;
-            double angle = value / total * 360;
-            g2.setColor(MAU[i % MAU.length]);
-            g2.fill(new Arc2D.Double(x, y, size, size, start, angle, Arc2D.PIE));
+        int kichThuoc = Math.max(1, Math.min(getHeight() - 100, getWidth() / 2 - 80));
+        int toaDoX = 24, toaDoY = Math.max(42, (getHeight() - kichThuoc) / 2);
+        double gocBatDau = 90;
+        for (int i = 0; i < mangGiaTri.length; i++) {
+            double giaTriHienTai = Math.max(0, mangGiaTri[i]);
+            if (giaTriHienTai == 0)
+                continue;
+            double gocChuyen = giaTriHienTai / tongGiaTri * 360;
+            g2.setColor(BGC_MAU[i % BGC_MAU.length]);
+            g2.fill(new Arc2D.Double(toaDoX, toaDoY, kichThuoc, kichThuoc, gocBatDau, gocChuyen, Arc2D.PIE));
             g2.setColor(Color.WHITE);
             g2.setStroke(new BasicStroke(2f));
-            g2.draw(new Arc2D.Double(x, y, size, size, start, angle, Arc2D.PIE));
-            start += angle;
+            g2.draw(new Arc2D.Double(toaDoX, toaDoY, kichThuoc, kichThuoc, gocBatDau, gocChuyen, Arc2D.PIE));
+            gocBatDau += gocChuyen;
         }
 
-        int xChuGiai = x + size + 22, yChuGiai = Math.max(52, y + 16);
-        int chieuRongConLai = Math.max(1, getWidth() - xChuGiai - 12);
+        int toaDoXChuGiai = toaDoX + kichThuoc + 22, toaDoYChuGiai = Math.max(52, toaDoY + 16);
+        int chieuRongConLai = Math.max(1, getWidth() - toaDoXChuGiai - 12);
         int soHangToiDa = Math.max(1, (getHeight() - 88) / 24);
         int soCot = (nhan.length + soHangToiDa - 1) / soHangToiDa;
         int rongCot = Math.max(1, chieuRongConLai / soCot);
         g2.setFont(RangBuocGiaoDien.fontThuong(12));
         for (int i = 0; i < nhan.length; i++) {
             int cot = i / soHangToiDa, hang = i % soHangToiDa;
-            int viTriX = xChuGiai + cot * rongCot, viTriY = yChuGiai + hang * 24;
-            g2.setColor(MAU[i % MAU.length]);
+            int viTriX = toaDoXChuGiai + cot * rongCot, viTriY = toaDoYChuGiai + hang * 24;
+            g2.setColor(BGC_MAU[i % BGC_MAU.length]);
             g2.fillRoundRect(viTriX, viTriY - 10, 12, 12, 4, 4);
             g2.setColor(RangBuocGiaoDien.MAU_CHU_CHINH);
-            String text = nhan[i] + ": " + dinhDangSo.format(values[i]) + " (" +
-                    String.format("%.1f%%", Math.max(0, values[i]) * 100 / total) + ")";
-            int maxTextWidth = Math.max(1, rongCot - 22);
-            FontMetrics fm = g2.getFontMetrics();
-            while (!text.isEmpty() && fm.stringWidth(text) > maxTextWidth) text = text.substring(0, text.length() - 1);
-            g2.drawString(text, viTriX + 20, viTriY);
+            String chuoiChu = nhan[i] + ": " + dinhDangSo.format(mangGiaTri[i]) + " (" +
+                    String.format("%.1f%%", Math.max(0, mangGiaTri[i]) * 100 / tongGiaTri) + ")";
+            int rongChuToiDa = Math.max(1, rongCot - 22);
+            FontMetrics thuocDoChu = g2.getFontMetrics();
+            while (!chuoiChu.isEmpty() && thuocDoChu.stringWidth(chuoiChu) > rongChuToiDa)
+                chuoiChu = chuoiChu.substring(0, chuoiChu.length() - 1);
+            g2.drawString(chuoiChu, viTriX + 20, viTriY);
         }
     }
 
-    private void veChuGiai(Graphics2D g2, int y) {
+    private void veChuGiai(Graphics2D g2, int toaDoY) {
         g2.setFont(RangBuocGiaoDien.fontThuong(11));
-        int x = 20;
+        int toaDoX = 20;
         for (int i = 0; i < chuoi.length; i++) {
-            g2.setColor(MAU[i % MAU.length]);
-            g2.fillRoundRect(x, y - 9, 10, 10, 3, 3);
+            g2.setColor(BGC_MAU[i % BGC_MAU.length]);
+            g2.fillRoundRect(toaDoX, toaDoY - 9, 10, 10, 3, 3);
             g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
-            g2.drawString(chuoi[i], x + 15, y);
-            x += 28 + g2.getFontMetrics().stringWidth(chuoi[i]);
+            g2.drawString(chuoi[i], toaDoX + 15, toaDoY);
+            toaDoX += 28 + g2.getFontMetrics().stringWidth(chuoi[i]);
         }
     }
 
-    private static double mucTran(double max) {
-        if (max <= 0) return 1;
-        double raw = max / 4;
-        double base = Math.pow(10, Math.floor(Math.log10(raw)));
-        double fraction = raw / base;
-        double step = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
-        return step * base * 4;
+    private static double mucTran(double lonNhat) {
+        if (lonNhat <= 0)
+            return 1;
+        double tho = lonNhat / 4;
+        double coSo = Math.pow(10, Math.floor(Math.log10(tho)));
+        double phanDu = tho / coSo;
+        double buocNhay = phanDu <= 1 ? 1 : phanDu <= 2 ? 2 : phanDu <= 5 ? 5 : 10;
+        return buocNhay * coSo * 4;
     }
 
-    public BufferedImage xuatHinhAnh(int width, int height) {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = image.createGraphics();
+    public BufferedImage xuatHinhAnh(int rongAnh, int caoAnh) {
+        BufferedImage hinhAnh = new BufferedImage(rongAnh, caoAnh, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = hinhAnh.createGraphics();
         g2.setColor(getBackground());
-        g2.fillRect(0, 0, width, height);
-        setSize(width, height);
+        g2.fillRect(0, 0, rongAnh, caoAnh);
+        setSize(rongAnh, caoAnh);
         paint(g2);
         g2.dispose();
-        return image;
+        return hinhAnh;
     }
 }

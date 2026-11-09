@@ -4,21 +4,24 @@ import java.util.Objects;
 
 /**
  * Entity "Chi tiết phiếu xuất kho" - SALALA Pet Shop.
- * Bảng thật: ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong)  -- khóa chính maCTPXK.
- * donGia, tenVT, donVi KHÔNG nằm trong bảng; lấy bằng JOIN với VatTu (giaNhap, tenVT)
+ * Bảng thật: ChiTietPhieuXuatKho(maCTPXK, maPXK, maVT, soLuong) -- khóa chính
+ * maCTPXK.
+ * donGia, tenVT, donVi KHÔNG nằm trong bảng; lấy bằng JOIN với VatTu (giaNhap,
+ * tenVT)
  * và Thuoc (donViTinh) để hiển thị. donGia = VatTu.giaNhap hiện tại.
  */
 public class ChiTietPhieuXuatKho_entity {
 
-    private String maCTPXK;      // khóa chính = số dòng + maPXK + maNhanVien (DAO tự sinh)
+
     private PhieuXuatKho_entity maPhieu;
     private VatTu_entity maVT;
-    private String tenVT = "";   // chỉ để hiển thị (JOIN VatTu)
-    private String donVi = "";   // chỉ để hiển thị (JOIN Thuoc.donViTinh)
+    private String tenVT = ""; // chỉ để hiển thị (JOIN VatTu)
+    private String donVi = ""; // chỉ để hiển thị (JOIN Thuoc.donViTinh)
     private int soLuong;
-    private long donGia;         // chỉ để hiển thị (VatTu.giaNhap)
+    private long donGia; // chỉ để hiển thị (VatTu.giaNhap)
 
-    public ChiTietPhieuXuatKho_entity() {}
+    public ChiTietPhieuXuatKho_entity() {
+    }
 
     public ChiTietPhieuXuatKho_entity(PhieuXuatKho_entity maPhieu, VatTu_entity maVT) {
         this.maPhieu = maPhieu;
@@ -27,7 +30,7 @@ public class ChiTietPhieuXuatKho_entity {
 
     public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT) {
         this(maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null,
-             maVT != null ? new VatTu_entity(maVT) : null);
+                maVT != null ? new VatTu_entity(maVT) : null);
     }
 
     public ChiTietPhieuXuatKho_entity(PhieuXuatKho_entity maPhieu, VatTu_entity maVT, int soLuong, long donGia) {
@@ -39,54 +42,95 @@ public class ChiTietPhieuXuatKho_entity {
 
     public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT, int soLuong, long donGia) {
         this(maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null,
-             maVT != null ? new VatTu_entity(maVT) : null,
-             soLuong, donGia);
+                maVT != null ? new VatTu_entity(maVT) : null,
+                soLuong, donGia);
     }
 
     public ChiTietPhieuXuatKho_entity(PhieuXuatKho_entity maPhieu, VatTu_entity maVT, String tenVT, String donVi,
-                                      int soLuong, long donGia) {
+            int soLuong, long donGia) {
         this(maPhieu, maVT, soLuong, donGia);
         this.tenVT = tenVT;
         this.donVi = donVi;
     }
 
     public ChiTietPhieuXuatKho_entity(String maPhieu, String maVT, String tenVT, String donVi,
-                                      int soLuong, long donGia) {
+            int soLuong, long donGia) {
         this(maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null,
-             maVT != null ? new VatTu_entity(maVT) : null,
-             tenVT, donVi, soLuong, donGia);
+                maVT != null ? new VatTu_entity(maVT) : null,
+                tenVT, donVi, soLuong, donGia);
     }
 
     // ===== Getter / Setter =====
-    public String getMaCTPXK() { return maCTPXK; }
-    public void setMaCTPXK(String maCTPXK) { this.maCTPXK = maCTPXK; }
+    public String getMaCTPXK() {
+        return maCTPXK;
+    }
 
-    public PhieuXuatKho_entity getMaPhieu() { return maPhieu; }
-    public void setMaPhieu(PhieuXuatKho_entity maPhieu) { this.maPhieu = maPhieu; }
+    public void setMaCTPXK(String maCTPXK) {
+        this.maCTPXK = maCTPXK;
+    }
+
+    public PhieuXuatKho_entity getMaPhieu() {
+        return maPhieu;
+    }
+
+    public void setMaPhieu(PhieuXuatKho_entity maPhieu) {
+        this.maPhieu = maPhieu;
+    }
+
     public void setMaPhieu(String maPhieu) {
         this.maPhieu = maPhieu != null ? new PhieuXuatKho_entity(maPhieu) : null;
     }
 
-    public VatTu_entity getMaVT() { return maVT; }
-    public void setMaVT(VatTu_entity maVT) { this.maVT = maVT; }
+    public VatTu_entity getMaVT() {
+        return maVT;
+    }
+
+    public void setMaVT(VatTu_entity maVT) {
+        this.maVT = maVT;
+    }
+
     public void setMaVT(String maVT) {
         this.maVT = maVT != null ? new VatTu_entity(maVT) : null;
     }
 
-    public String getTenVT() { return tenVT; }
-    public void setTenVT(String tenVT) { this.tenVT = tenVT; }
+    public String getTenVT() {
+        return tenVT;
+    }
 
-    public String getDonVi() { return donVi; }
-    public void setDonVi(String donVi) { this.donVi = donVi; }
+    public void setTenVT(String tenVT) {
+        this.tenVT = tenVT;
+    }
 
-    public int getSoLuong() { return soLuong; }
-    public void setSoLuong(int soLuong) { this.soLuong = soLuong; }
+    public String getDonVi() {
+        return donVi;
+    }
 
-    public long getDonGia() { return donGia; }
-    public void setDonGia(long donGia) { this.donGia = donGia; }
+    public void setDonVi(String donVi) {
+        this.donVi = donVi;
+    }
 
-    /** Thành tiền = số lượng x đơn giá (ép long trước khi nhân để tránh tràn int). */
-    public long getThanhTien() { return (long) soLuong * donGia; }
+    public int getSoLuong() {
+        return soLuong;
+    }
+
+    public void setSoLuong(int soLuong) {
+        this.soLuong = soLuong;
+    }
+
+    public long getDonGia() {
+        return donGia;
+    }
+
+    public void setDonGia(long donGia) {
+        this.donGia = donGia;
+    }
+
+    /**
+     * Thành tiền = số lượng x đơn giá (ép long trước khi nhân để tránh tràn int).
+     */
+    public long getThanhTien() {
+        return (long) soLuong * donGia;
+    }
 
     // ===== Chuyển đổi với lớp lồng PhieuXuatKho_entity.ChiTiet =====
     public PhieuXuatKho_entity.ChiTiet toChiTiet() {
@@ -104,16 +148,23 @@ public class ChiTietPhieuXuatKho_entity {
         return x;
     }
 
-    @Override public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ChiTietPhieuXuatKho_entity)) return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof ChiTietPhieuXuatKho_entity))
+            return false;
         ChiTietPhieuXuatKho_entity x = (ChiTietPhieuXuatKho_entity) o;
         return Objects.equals(maPhieu, x.maPhieu) && Objects.equals(maVT, x.maVT);
     }
 
-    @Override public int hashCode() { return Objects.hash(maPhieu, maVT); }
+    @Override
+    public int hashCode() {
+        return Objects.hash(maPhieu, maVT);
+    }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return (maPhieu != null ? maPhieu.getMaPhieu() : "") + " - "
                 + (maVT != null ? maVT.getMaVT() : "") + " x" + soLuong;
     }

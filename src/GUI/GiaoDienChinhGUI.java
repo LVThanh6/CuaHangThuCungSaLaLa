@@ -192,7 +192,7 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
 
     private void xuLyChonMenuCon(String tenTab, String tenMenuCon) {
         this.tabHienTai = tenTab;
-        hienThiNoiDungMacDinh("Đang xem: " + tenTab + " ➔ " + tenMenuCon);
+        hienThiNoiDungMacDinh("Đang xem: " + tenTab + " - " + tenMenuCon);
 
         hienThiManHinh(dieuHuongController.layManHinhChoMenuCon(tenMenuCon));
     }
@@ -348,8 +348,9 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     public void hienThiPhieuNhapKho() {
         // PhieuNhapKhoGUI yêu cầu 2 tham số: (onLapPhieuXuat, onTonKhoThayDoi)
         setNoiDung(new PhieuNhapKhoGUI(
-            () -> hienThiPhieuXuatKho(), // Điều hướng sang màn hình Lập phiếu xuất khi bấm nút trên giao diện
-            null // onTonKhoThayDoi: Để null vì khi chuyển tab Vật Tư, dữ liệu sẽ tự động load lại từ CSDL
+                () -> hienThiPhieuXuatKho(), // Điều hướng sang màn hình Lập phiếu xuất khi bấm nút trên giao diện
+                null // onTonKhoThayDoi: Để null vì khi chuyển tab Vật Tư, dữ liệu sẽ tự động load
+                     // lại từ CSDL
         ));
     }
 

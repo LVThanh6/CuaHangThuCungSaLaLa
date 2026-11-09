@@ -149,8 +149,10 @@ public class HoaDon_entity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         HoaDon_entity that = (HoaDon_entity) o;
         return Objects.equals(maHD, that.maHD);
     }

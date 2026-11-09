@@ -11,7 +11,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
- * Lớp PanelQuanLyMau: Tích hợp TableMau cùng thanh tìm kiếm, bộ lọc và nút xuất file.
+ * Lớp PanelQuanLyMau: Tích hợp TableMau cùng thanh tìm kiếm, bộ lọc và nút xuất
+ * file.
  */
 public class QuanLyTable extends JPanel {
 
@@ -40,9 +41,8 @@ public class QuanLyTable extends JPanel {
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtTimKiem.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-        
+                BorderFactory.createEmptyBorder(0, 12, 0, 12)));
+
         // Hiệu ứng Placeholder cho ô tìm kiếm
         txtTimKiem.setText(placeholderTimKiem);
         txtTimKiem.setForeground(new Color(148, 163, 184));
@@ -53,6 +53,7 @@ public class QuanLyTable extends JPanel {
                     txtTimKiem.setForeground(new Color(30, 41, 59));
                 }
             }
+
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (txtTimKiem.getText().isEmpty()) {
                     txtTimKiem.setText(placeholderTimKiem);
@@ -65,7 +66,8 @@ public class QuanLyTable extends JPanel {
         // Các ComboBox bộ lọc truyền vào
         if (danhSachBoLoc != null) {
             for (String boLocTitle : danhSachBoLoc) {
-                JComboBox<String> cb = new JComboBox<>(new String[]{boLocTitle, "Tất cả", "Lựa chọn 1", "Lựa chọn 2"});
+                JComboBox<String> cb = new JComboBox<>(
+                        new String[] { boLocTitle, "Tất cả", "Lựa chọn 1", "Lựa chọn 2" });
                 cb.setPreferredSize(new Dimension(170, 38));
                 cb.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 cb.setBackground(Color.WHITE);
@@ -95,7 +97,7 @@ public class QuanLyTable extends JPanel {
         // 2. KHUNG CHỨA BẢNG DỮ LIỆU Ở GIỮA
         bangDuLieu = new TableMau(tenCot, duLieu);
         model = (DefaultTableModel) bangDuLieu.getModel();
-        
+
         // Hỗ trợ lọc tìm kiếm tự động trên bảng
         rowSorter = new TableRowSorter<>(model);
         bangDuLieu.setRowSorter(rowSorter);
@@ -242,7 +244,8 @@ public class QuanLyTable extends JPanel {
 
             setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
                 @Override
-                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                        boolean hasFocus, int row, int column) {
                     Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                     if (c instanceof JLabel) {
                         JLabel label = (JLabel) c;
@@ -261,7 +264,8 @@ public class QuanLyTable extends JPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Quản Lý Nhân Viên - SALALA Pet Shop");
@@ -270,26 +274,25 @@ public class QuanLyTable extends JPanel {
             frame.setLocationRelativeTo(null);
 
             // Dữ liệu mẫu chuẩn
-            String[] tieuDe = {"Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái"};
+            String[] tieuDe = { "Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái" };
             Object[][] duLieu = {
-                {"NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc"},
-                {"NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc"},
-                {"NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc"},
-                {"NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc"},
-                {"NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ"},
-                {"NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc"}
+                    { "NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc" },
+                    { "NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc" },
+                    { "NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc" },
+                    { "NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc" },
+                    { "NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ" },
+                    { "NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc" }
             };
 
             // Tiêu đề các bộ lọc thả xuống
-            String[] danhSachBoLoc = {"Vai trò: Tất cả", "Trạng thái: Tất cả"};
+            String[] danhSachBoLoc = { "Vai trò: Tất cả", "Trạng thái: Tất cả" };
 
             // Khởi tạo Panel quản lý hoàn chỉnh
             QuanLyTable panel = new QuanLyTable(
-                    tieuDe, 
-                    duLieu, 
-                    "Tìm theo tên, mã nhân viên, số điện thoại...", 
-                    danhSachBoLoc
-            );
+                    tieuDe,
+                    duLieu,
+                    "Tìm theo tên, mã nhân viên, số điện thoại...",
+                    danhSachBoLoc);
 
             frame.add(panel);
             frame.setVisible(true);
