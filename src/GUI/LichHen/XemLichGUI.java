@@ -180,11 +180,11 @@ public class XemLichGUI extends JPanel {
         panelThongKe = new JPanel(new GridLayout(1, 4, KHOANG_CACH, 0));
         panelThongKe.setOpaque(false);
 
-        theLichHomNay = new TheThongKe("[Hôm nay]", "Lịch khám hôm nay", "0",
+        theLichHomNay = new TheThongKe(null, "Lịch khám hôm nay", "0",
                 "Ngày " + DINH_DANG_NGAY.format(LocalDate.now()));
-        theChoKham = new TheThongKe("[Chờ khám]", "Chờ khám", "0", "Chưa tiếp nhận");
-        theDangKham = new TheThongKe("[Đang khám]", "Đang khám", "0", "Đang xử lý");
-        theDaKhamDaHuy = new TheThongKe("[Tổng kết]", "Đã khám / đã hủy", "0 / 0", "Trong hôm nay");
+        theChoKham = new TheThongKe(null, "Chờ khám", "0", "Chưa tiếp nhận");
+        theDangKham = new TheThongKe(null, "Đang khám", "0", "Đang xử lý");
+        theDaKhamDaHuy = new TheThongKe(null, "Đã khám / đã hủy", "0 / 0", "Trong hôm nay");
 
         panelThongKe.add(theLichHomNay);
         panelThongKe.add(theChoKham);
