@@ -142,13 +142,19 @@ public class DichVuController {
     }
 
     private static String categoryFor(String name) {
-        if (name == null) return "Dịch vụ chung";
+        if (name == null)
+            return "Dịch vụ chung";
         String lower = name.toLowerCase();
-        if (lower.contains("tắm")) return "Tắm & Vệ sinh";
-        if (lower.contains("cắt") || lower.contains("tỉa") || lower.contains("lông")) return "Cắt tỉa & Tạo kiểu";
-        if (lower.contains("tiêm") || lower.contains("phòng") || lower.contains("dại")) return "Tiêm phòng";
-        if (lower.contains("khám") || lower.contains("chẩn đoán")) return "Khám bệnh";
-        if (lower.contains("răng") || lower.contains("tai") || lower.contains("móng")) return "Chăm sóc sức khỏe";
+        if (lower.contains("tắm"))
+            return "Tắm & Vệ sinh";
+        if (lower.contains("cắt") || lower.contains("tỉa") || lower.contains("lông"))
+            return "Cắt tỉa & Tạo kiểu";
+        if (lower.contains("tiêm") || lower.contains("phòng") || lower.contains("dại"))
+            return "Tiêm phòng";
+        if (lower.contains("khám") || lower.contains("chẩn đoán"))
+            return "Khám bệnh";
+        if (lower.contains("răng") || lower.contains("tai") || lower.contains("móng"))
+            return "Chăm sóc sức khỏe";
         return "Dịch vụ chung";
     }
 

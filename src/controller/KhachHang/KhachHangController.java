@@ -221,7 +221,9 @@ public class KhachHangController {
         return "Chỉnh sửa thông tin - " + maKH;
     }
 
-    public enum InputField { CODE, NAME, PHONE, EMAIL }
+    public enum InputField {
+        CODE, NAME, PHONE, EMAIL
+    }
 
     public static final class KetQuaXuLyKhachHang {
         private final boolean thanhCong;
@@ -236,10 +238,21 @@ public class KhachHangController {
             this.thongBao = thongBao;
         }
 
-        public boolean isThanhCong() { return thanhCong; }
-        public boolean isLoiNhapLieu() { return loiNhapLieu; }
-        public InputField getTruongLoi() { return truongLoi; }
-        public String getThongBao() { return thongBao; }
+        public boolean isThanhCong() {
+            return thanhCong;
+        }
+
+        public boolean isLoiNhapLieu() {
+            return loiNhapLieu;
+        }
+
+        public InputField getTruongLoi() {
+            return truongLoi;
+        }
+
+        public String getThongBao() {
+            return thongBao;
+        }
     }
 
     public static final class KetQuaXoaKhachHang {
@@ -253,9 +266,17 @@ public class KhachHangController {
             this.thongBao = thongBao;
         }
 
-        public boolean isThanhCong() { return thanhCong; }
-        public boolean isBiRangBuoc() { return biRangBuoc; }
-        public String getThongBao() { return thongBao; }
+        public boolean isThanhCong() {
+            return thanhCong;
+        }
+
+        public boolean isBiRangBuoc() {
+            return biRangBuoc;
+        }
+
+        public String getThongBao() {
+            return thongBao;
+        }
     }
 
     public static final class CustomerStatistics {
@@ -275,11 +296,25 @@ public class KhachHangController {
                     : "0.0 thú cưng / khách";
         }
 
-        public String layChuoiTongKhachHang() { return String.valueOf(tongKhachHang); }
-        public String layChuoiKhachHangMoi() { return String.valueOf(khachHangMoi); }
-        public String layChuoiTongThuCung() { return String.valueOf(tongThuCung); }
-        public String layChuoiThanhVienVang() { return String.valueOf(thanhVienVangTroLen); }
-        public String layChuoiMoTaThuCung() { return chuoiMoTaThuCungTrungBinh; }
+        public String layChuoiTongKhachHang() {
+            return String.valueOf(tongKhachHang);
+        }
+
+        public String layChuoiKhachHangMoi() {
+            return String.valueOf(khachHangMoi);
+        }
+
+        public String layChuoiTongThuCung() {
+            return String.valueOf(tongThuCung);
+        }
+
+        public String layChuoiThanhVienVang() {
+            return String.valueOf(thanhVienVangTroLen);
+        }
+
+        public String layChuoiMoTaThuCung() {
+            return chuoiMoTaThuCungTrungBinh;
+        }
     }
 
     public static final class CustomerDetails {
@@ -326,7 +361,8 @@ public class KhachHangController {
 
         public String layDiaChiHienThi() {
             return (customer != null && customer.getDiaChi() != null && !customer.getDiaChi().trim().isEmpty())
-                    ? customer.getDiaChi() : "Chưa cập nhật";
+                    ? customer.getDiaChi()
+                    : "Chưa cập nhật";
         }
 
         public String layTieuDeDialogChiTiet() {

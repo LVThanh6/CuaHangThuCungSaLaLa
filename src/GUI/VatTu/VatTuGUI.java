@@ -38,12 +38,6 @@ public class VatTuGUI extends JPanel {
             "Thuốc điều trị"
     };
 
-    private static final Color NEN_CHON = new Color(240, 250, 247);
-    private static final Color NEN_HEADER = new Color(246, 248, 247);
-    private static final Color NEN_ICON = new Color(226, 244, 240);
-    private static final Color MAU_DO = new Color(220, 38, 38);
-    private static final Color MAU_XANH_LA = new Color(16, 185, 129);
-    private static final Color MAU_CAM = new Color(245, 158, 11);
 
     private static final Locale VN = Locale.forLanguageTag("vi-VN");
 
@@ -107,7 +101,7 @@ public class VatTuGUI extends JPanel {
 
     private JComponent taoHangSoLieu() {
         String[] tieuDe = { "TỔNG DANH MỤC", "TỒN ĐỦ", "SẮP HẾT TỒN", "HẾT TỒN" };
-        Color[] mauChu = { RangBuocGiaoDien.MAU_CHU_CHINH, MAU_XANH_LA, MAU_CAM, MAU_DO };
+        Color[] mauChu = { RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_PHU, RangBuocGiaoDien.MAU_CHU_CHINH };
 
         JPanel hang = new JPanel(new GridLayout(1, 4, 16, 0));
         hang.setOpaque(false);
@@ -122,7 +116,7 @@ public class VatTuGUI extends JPanel {
     private JPanel taoTheSoLieu(String tieuDe, JLabel lblSo, Color mau) {
         JPanel the = new JPanel();
         the.setLayout(new BoxLayout(the, BoxLayout.Y_AXIS));
-        the.setBackground(Color.WHITE);
+        the.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         the.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
                 new EmptyBorder(16, 16, 16, 16)));
@@ -150,7 +144,7 @@ public class VatTuGUI extends JPanel {
 
     private JComponent taoTheDanhSach() {
         JPanel the = new JPanel(new BorderLayout());
-        the.setBackground(Color.WHITE);
+        the.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         the.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true));
 
         JPanel thanhTren = new JPanel(new BorderLayout());
@@ -197,7 +191,7 @@ public class VatTuGUI extends JPanel {
 
         JButton btnLamMoi = new JButton("Làm mới");
         btnLamMoi.setFont(RangBuocGiaoDien.fontThuong(13));
-        btnLamMoi.setBackground(Color.WHITE);
+        btnLamMoi.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         btnLamMoi.setFocusPainted(false);
         btnLamMoi.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLamMoi.setPreferredSize(new Dimension(100, 38));
@@ -213,9 +207,9 @@ public class VatTuGUI extends JPanel {
         bar.add(btnLamMoi);
         bar.add(Box.createHorizontalGlue());
 
-        JButton btnThem = taoNut("+ Thêm vật tư", MAU_XANH_LA, Color.BLACK, MAU_XANH_LA, 130);
-        JButton btnSua = taoNut("Sửa", Color.BLACK, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 80);
-        JButton btnXoa = taoNut("Xóa", Color.BLACK, MAU_DO, MAU_DO, 80);
+        JButton btnThem = taoNut("+ Thêm vật tư", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_CHU_DAO, 130);
+        JButton btnSua = taoNut("Sửa", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 80);
+        JButton btnXoa = taoNut("Xóa", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 80);
         btnThem.addActionListener(e -> themVatTu());
         btnSua.addActionListener(e -> suaVatTu());
         btnXoa.addActionListener(e -> xoaVatTu());
@@ -229,12 +223,22 @@ public class VatTuGUI extends JPanel {
     }
 
     private JButton taoNut(String chu, Color nen, Color mauChu, Color vien, int rong) {
-        JButton b = new JButton(chu);
+        // Tự vẽ nền để không bị L&F hệ thống / LamMoNen làm trắng hoặc trong suốt
+        JButton b = new JButton(chu) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(nen);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        b.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         b.setFont(RangBuocGiaoDien.fontDam(13));
-        b.setBackground(nen);
         b.setForeground(mauChu);
-        b.setOpaque(true);
-        b.setContentAreaFilled(true);
+        b.setOpaque(false);
+        b.setContentAreaFilled(false);
         b.setFocusPainted(false);
         b.setBorder(new LineBorder(vien, 1, true));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -251,7 +255,7 @@ public class VatTuGUI extends JPanel {
         bang.setShowHorizontalLines(true);
         bang.setGridColor(RangBuocGiaoDien.MAU_DUONG_VIEN);
         bang.setIntercellSpacing(new Dimension(0, 1));
-        bang.setSelectionBackground(NEN_CHON);
+        bang.setSelectionBackground(RangBuocGiaoDien.MAU_DUONG_VIEN);
         bang.setSelectionForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         bang.setFont(RangBuocGiaoDien.fontThuong(13));
         bang.setFillsViewportHeight(true);
@@ -305,7 +309,7 @@ public class VatTuGUI extends JPanel {
 
         JScrollPane sp = new JScrollPane(bang);
         sp.setBorder(new MatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
-        sp.getViewport().setBackground(Color.WHITE);
+        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         sp.getVerticalScrollBar().setUnitIncrement(16);
         return sp;
     }
@@ -458,7 +462,8 @@ public class VatTuGUI extends JPanel {
 
         JTextField txtMa = new JTextField(sua ? cu.getMa() : controller.taoMaMoi(), 22);
         txtMa.setEditable(false); // mã tự phát sinh (VT + STT), không cho nhập tay
-        txtMa.setBackground(NEN_HEADER);
+        txtMa.setBackground(RangBuocGiaoDien.MAU_DUONG_VIEN);   // ô chỉ đọc: nền khác ô nhập
+        txtMa.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         JTextField txtTen = new JTextField(sua ? cu.getTen() : "", 22);
 
         JComboBox<String> cbNcc = new JComboBox<>();
@@ -489,6 +494,8 @@ public class VatTuGUI extends JPanel {
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(new EmptyBorder(16, 20, 8, 20));
+        form.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        txtMaThuoc.setDisabledTextColor(RangBuocGiaoDien.MAU_CHU_PHU);
         GridBagConstraints gc = new GridBagConstraints();
         gc.insets = new Insets(6, 4, 6, 4);
         gc.anchor = GridBagConstraints.WEST;
@@ -499,17 +506,28 @@ public class VatTuGUI extends JPanel {
         for (int i = 0; i < nhan.length; i++) {
             JLabel l = new JLabel(nhan[i]);
             l.setFont(RangBuocGiaoDien.fontThuong(13));
+            l.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
             oNhap[i].setFont(RangBuocGiaoDien.fontThuong(13));
+            if (oNhap[i] != txtMa) {
+                oNhap[i].setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+                oNhap[i].setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+            }
+            if (oNhap[i] instanceof JTextField) {
+                oNhap[i].setBorder(BorderFactory.createCompoundBorder(
+                        new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
+                        new EmptyBorder(5, 8, 5, 8)));
+            }
             gc.gridx = 0; gc.gridy = i; gc.fill = GridBagConstraints.NONE; gc.weightx = 0;
             form.add(l, gc);
             gc.gridx = 1; gc.fill = GridBagConstraints.HORIZONTAL; gc.weightx = 1;
             form.add(oNhap[i], gc);
         }
 
-        JButton btnLuu = taoNut("Lưu", MAU_XANH_LA, Color.BLACK, MAU_XANH_LA, 90);
-        JButton btnHuy = taoNut("Hủy", Color.BLACK, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 90);
+        JButton btnLuu = taoNut("Lưu", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_CHU_DAO, 90);
+        JButton btnHuy = taoNut("Hủy", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_CHU_CHINH, RangBuocGiaoDien.MAU_DUONG_VIEN, 90);
         JPanel chan = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
         chan.setBorder(new EmptyBorder(0, 12, 8, 12));
+        chan.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         chan.add(btnHuy);
         chan.add(btnLuu);
 
@@ -560,6 +578,7 @@ public class VatTuGUI extends JPanel {
 
         dlg.getRootPane().setDefaultButton(btnLuu);
         dlg.getContentPane().setLayout(new BorderLayout());
+        dlg.getContentPane().setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         dlg.getContentPane().add(form, BorderLayout.CENTER);
         dlg.getContentPane().add(chan, BorderLayout.SOUTH);
         dlg.pack();
@@ -576,9 +595,11 @@ public class VatTuGUI extends JPanel {
 
     // --- Các hàm phục vụ phiếu nhập / xuất ---
     
+// --- Các hàm phục vụ phiếu nhập / xuất (Đã ủy quyền sang Controller) ---
+    
     public int getTonKho(String ma) {
         try {
-            return controller.tonKho(ma, tatCa);
+            return controller.layTonKho(ma, tatCa);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
             return 0;
@@ -586,16 +607,12 @@ public class VatTuGUI extends JPanel {
     }
 
     public java.util.List<Object[]> getDanhSachVatTu() {
-        java.util.List<Object[]> rows = new java.util.ArrayList<>();
-        for (CatalogItem item : controller.danhMucVatTu(tatCa)) {
-            rows.add(new Object[]{item.getCode(), item.getName(), item.getUnit(), item.getPurchasePrice()});
-        }
-        return rows;
+        return controller.layDanhSachDanhMucVatTu(tatCa);
     }
 
     public void tangTon(String ma, int soLuong) {
         try {
-            controller.capNhatTon(ma, soLuong, tatCa);
+            controller.tangSoLuongTon(ma, soLuong, tatCa);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
             return;
@@ -622,7 +639,7 @@ public class VatTuGUI extends JPanel {
         @Override public Object getValueAt(int r, int c) { return hang.get(r); }
     }
 
-    private static Color nen(boolean chon) { return chon ? NEN_CHON : Color.WHITE; }
+    private static Color nen(boolean chon) { return chon ? RangBuocGiaoDien.MAU_DUONG_VIEN : RangBuocGiaoDien.MAU_NEN_TRANG; }
 
     private static void batKhuRang(Graphics2D g2) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -665,7 +682,7 @@ public class VatTuGUI extends JPanel {
                  setFont(RangBuocGiaoDien.fontDam(13));
             } else if (cot == 3) {
                  int ton = vt.getTonKho();
-                 setForeground(ton <= 0 ? MAU_DO : (ton <= 30 ? MAU_CAM : RangBuocGiaoDien.MAU_CHU_CHINH));
+                 setForeground(ton <= 0 ? RangBuocGiaoDien.MAU_CHU_CHINH : (ton <= 30 ? RangBuocGiaoDien.MAU_CHU_PHU : RangBuocGiaoDien.MAU_CHU_DAO));
                  setFont(RangBuocGiaoDien.fontDam(13));
             } else {
                  setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
@@ -693,22 +710,19 @@ public class VatTuGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             batKhuRang(g2);
 
-            Color nenPill, chu, cham;
+            Color nenPill = RangBuocGiaoDien.MAU_DUONG_VIEN, chu, cham;
             switch (tt) {
                 case CON_HANG:
-                    nenPill = new Color(209, 250, 229);
-                    chu = new Color(6, 95, 70);
-                    cham = new Color(16, 185, 129);
+                    chu = RangBuocGiaoDien.MAU_CHU_DAO;
+                    cham = RangBuocGiaoDien.MAU_CHU_DAO;
                     break;
                 case SAP_HET:
-                    nenPill = new Color(254, 243, 199);
-                    chu = new Color(180, 83, 9);
-                    cham = new Color(245, 158, 11);
+                    chu = RangBuocGiaoDien.MAU_CHU_PHU;
+                    cham = RangBuocGiaoDien.MAU_CHU_PHU;
                     break;
                 default: // HET_TON
-                    nenPill = new Color(254, 226, 226);
-                    chu = new Color(185, 28, 28);
-                    cham = new Color(239, 68, 68);
+                    chu = RangBuocGiaoDien.MAU_CHU_CHINH;
+                    cham = RangBuocGiaoDien.MAU_CHU_CHINH;
             }
 
             Font f = RangBuocGiaoDien.fontVua(11);
@@ -731,7 +745,7 @@ public class VatTuGUI extends JPanel {
 
         HeaderRenderer() {
             lbl.setOpaque(true);
-            lbl.setBackground(NEN_HEADER);
+            lbl.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
             lbl.setFont(RangBuocGiaoDien.fontDam(12));
             lbl.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
             lbl.setBorder(new EmptyBorder(0, 8, 0, 8));

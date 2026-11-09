@@ -285,11 +285,13 @@ public class ThongKe_DAO {
 
     /**
      * Tổng lương nhân sự trong kỳ: lương nhân viên theo chức vụ + hoa hồng dịch vụ,
-     * cộng lương tháng bác sĩ phân bổ theo kỳ và hoa hồng 10%. Quản lý chưa tính lương.
+     * cộng lương tháng bác sĩ phân bổ theo kỳ và hoa hồng 10%. Quản lý chưa tính
+     * lương.
      */
     private ChiSoThongKe tongLuongNhanSu(Connection con, LocalDate tu, LocalDate den) throws SQLException {
         ChiSoThongKe chiSo = new ChiSoThongKe(MA_TONG_LUONG, "Tiền lương nhân sự dự tính",
-                "VNĐ", "đ", "Tổng lương toàn kỳ = (Số giờ làm việc × Lương giờ cho NV bán hàng & dịch vụ) + (Lương tháng cố định phân bổ theo ngày cho NV quản lý kho & quản lý) + (Lương tháng phân bổ cho bác sĩ) + 5% hoa hồng dịch vụ nhân viên + 10% hoa hồng bác sĩ.");
+                "VNĐ", "đ",
+                "Tổng lương toàn kỳ = (Số giờ làm việc × Lương giờ cho NV bán hàng & dịch vụ) + (Lương tháng cố định phân bổ theo ngày cho NV quản lý kho & quản lý) + (Lương tháng phân bổ cho bác sĩ) + 5% hoa hồng dịch vụ nhân viên + 10% hoa hồng bác sĩ.");
         chiSo.chuoi.add("Tiền lương");
 
         double tong = 0;
@@ -302,7 +304,8 @@ public class ThongKe_DAO {
 
     private ChiSoThongKe luongTheoNhanVien(Connection con, LocalDate tu, LocalDate den) throws SQLException {
         ChiSoThongKe chiSo = new ChiSoThongKe(MA_LUONG_NHAN_VIEN, "Chi tiết lương từng nhân sự",
-                "VNĐ", "đ", "Bảng kê lương cơ bản (lương giờ theo ca hoàn thành / lương tháng phân bổ) và hoa hồng dịch vụ (5% NV dịch vụ, 10% bác sĩ) của từng nhân sự. Các ca làm việc không hoàn thành bị loại bỏ và không tính lương.");
+                "VNĐ", "đ",
+                "Bảng kê lương cơ bản (lương giờ theo ca hoàn thành / lương tháng phân bổ) và hoa hồng dịch vụ (5% NV dịch vụ, 10% bác sĩ) của từng nhân sự. Các ca làm việc không hoàn thành bị loại bỏ và không tính lương.");
         chiSo.chuoi.add("Tiền lương");
 
         for (NguoiLaoDong nld : layDanhSachNguoiLaoDong(con, tu, den)) {
@@ -349,7 +352,8 @@ public class ThongKe_DAO {
                         nld.hoaHong = doanhThuDichVuNhanVien(con, ma, tu, den) * 0.05;
                     }
                     String phanHoaHong = nld.hoaHong > 0 ? " + HH " + dinhDangTien(nld.hoaHong) : "";
-                    nld.moTaChiTiet = soGio + "h làm (lương " + dinhDangTien(nld.luongCoBan) + phanHoaHong + ", trừ ca không hoàn thành)";
+                    nld.moTaChiTiet = soGio + "h làm (lương " + dinhDangTien(nld.luongCoBan) + phanHoaHong
+                            + ", trừ ca không hoàn thành)";
                 } else {
                     nld.luongCoBan = phanBoTheoKy(luongCoBanGoc, tu, den);
                     nld.moTaChiTiet = "Lương tháng phân bổ (" + dinhDangTien(nld.luongCoBan) + ")";

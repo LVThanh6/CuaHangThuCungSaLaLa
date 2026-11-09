@@ -42,9 +42,12 @@ public class KhuyenMaiController {
 
     public Status status(KhuyenMai_Entity promotion) {
         LocalDate today = LocalDate.now();
-        if (promotion.getNgayKetThuc() != null && promotion.getNgayKetThuc().isBefore(today)) return Status.EXPIRED;
-        if (PAUSED.contains(promotion.getMaKM())) return Status.PAUSED;
-        if (promotion.getNgayBatDau() != null && promotion.getNgayBatDau().isAfter(today)) return Status.UPCOMING;
+        if (promotion.getNgayKetThuc() != null && promotion.getNgayKetThuc().isBefore(today))
+            return Status.EXPIRED;
+        if (PAUSED.contains(promotion.getMaKM()))
+            return Status.PAUSED;
+        if (promotion.getNgayBatDau() != null && promotion.getNgayBatDau().isAfter(today))
+            return Status.UPCOMING;
         return Status.ACTIVE;
     }
 
@@ -97,17 +100,21 @@ public class KhuyenMaiController {
     public List<KhuyenMai_Entity> filter(List<KhuyenMai_Entity> promotions, String keyword, int statusIndex,
             LocalDate from, LocalDate to) {
         String normalizedKeyword = keyword.trim().toLowerCase();
-        Status[] statuses = {null, Status.ACTIVE, Status.UPCOMING, Status.PAUSED, Status.EXPIRED};
+        Status[] statuses = { null, Status.ACTIVE, Status.UPCOMING, Status.PAUSED, Status.EXPIRED };
         List<KhuyenMai_Entity> filtered = new ArrayList<>();
         for (KhuyenMai_Entity promotion : promotions) {
             if (!normalizedKeyword.isEmpty()
                     && !safe(promotion.getMaKM()).toLowerCase().contains(normalizedKeyword)
-                    && !safe(promotion.getTenKM()).toLowerCase().contains(normalizedKeyword)) continue;
-            if (statusIndex > 0 && status(promotion) != statuses[statusIndex]) continue;
+                    && !safe(promotion.getTenKM()).toLowerCase().contains(normalizedKeyword))
+                continue;
+            if (statusIndex > 0 && status(promotion) != statuses[statusIndex])
+                continue;
             if (from != null && promotion.getNgayKetThuc() != null
-                    && promotion.getNgayKetThuc().isBefore(from)) continue;
+                    && promotion.getNgayKetThuc().isBefore(from))
+                continue;
             if (to != null && promotion.getNgayBatDau() != null
-                    && promotion.getNgayBatDau().isAfter(to)) continue;
+                    && promotion.getNgayBatDau().isAfter(to))
+                continue;
             filtered.add(promotion);
         }
         return filtered;
@@ -126,7 +133,8 @@ public class KhuyenMaiController {
                     break;
                 case UPCOMING:
                     if (promotion.getNgayBatDau() == null
-                            || !promotion.getNgayBatDau().isAfter(today.plusDays(30))) upcoming++;
+                            || !promotion.getNgayBatDau().isAfter(today.plusDays(30)))
+                        upcoming++;
                     break;
                 case PAUSED:
                     paused++;
@@ -145,8 +153,10 @@ public class KhuyenMaiController {
             String endText, String condition, List<KhuyenMai_Entity> existing, boolean update) {
         String normalizedCode = code.trim();
         String normalizedName = name.trim();
-        if (normalizedCode.isEmpty()) throw new IllegalArgumentException("Mã khuyến mãi không được để trống!");
-        if (normalizedName.isEmpty()) throw new IllegalArgumentException("Tên khuyến mãi không được để trống!");
+        if (normalizedCode.isEmpty())
+            throw new IllegalArgumentException("Mã khuyến mãi không được để trống!");
+        if (normalizedName.isEmpty())
+            throw new IllegalArgumentException("Tên khuyến mãi không được để trống!");
 
         double amount;
         LocalDate start;
@@ -190,7 +200,8 @@ public class KhuyenMaiController {
 
     public String toCsv(List<KhuyenMai_Entity> promotions) {
         StringBuilder csv = new StringBuilder("\uFEFF");
-        csv.append("Mã khuyến mãi,Tên khuyến mãi,Mức giảm,Loại giảm,Ngày bắt đầu,Ngày kết thúc,Điều kiện,Trạng thái\r\n");
+        csv.append(
+                "Mã khuyến mãi,Tên khuyến mãi,Mức giảm,Loại giảm,Ngày bắt đầu,Ngày kết thúc,Điều kiện,Trạng thái\r\n");
         for (KhuyenMai_Entity promotion : promotions) {
             csv.append(csv(promotion.getMaKM())).append(',')
                     .append(csv(promotion.getTenKM())).append(',')

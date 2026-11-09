@@ -19,12 +19,11 @@ import entity.HoaDon.HoaDon_entity;
 public class DSHoaDonController {
     private final HoaDon_Dao hoaDonDao;
 
-    private static final DateTimeFormatter DMY =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private static final String[] TIEU_DE_CSV = {
-        "Mã Hóa Đơn", "Ngày Lập", "Trạng Thái", "Mã Khách Hàng",
-        "Mã Nhân Viên", "Mã Khuyến Mãi", "Mã Thuế", "Mã Thanh Toán"
+            "Mã Hóa Đơn", "Ngày Lập", "Trạng Thái", "Mã Khách Hàng",
+            "Mã Nhân Viên", "Mã Khuyến Mãi", "Mã Thuế", "Mã Thanh Toán"
     };
 
     public DSHoaDonController() {
@@ -46,8 +45,7 @@ public class DSHoaDonController {
             String tuKhoa,
             String trangThai) {
 
-        String tuKhoaChuanHoa =
-                tuKhoa == null ? "" : tuKhoa.trim().toLowerCase();
+        String tuKhoaChuanHoa = tuKhoa == null ? "" : tuKhoa.trim().toLowerCase();
 
         ArrayList<HoaDon_entity> ketQua = new ArrayList<>();
 
@@ -61,7 +59,8 @@ public class DSHoaDonController {
             }
 
             String maHD = hoaDon.getMaHD() == null
-                    ? "" : hoaDon.getMaHD().toLowerCase();
+                    ? ""
+                    : hoaDon.getMaHD().toLowerCase();
 
             if (!maHD.contains(tuKhoaChuanHoa)) {
                 continue;
@@ -114,7 +113,7 @@ public class DSHoaDonController {
     private boolean laDaThanhToan(String trangThai) {
         return trangThai != null
                 && (trangThai.equalsIgnoreCase("Đã thanh toán")
-                || trangThai.equalsIgnoreCase("Paid"));
+                        || trangThai.equalsIgnoreCase("Paid"));
     }
 
     // Xóa hóa đơn thông qua DAO.
@@ -131,14 +130,14 @@ public class DSHoaDonController {
      */
     public Object[] taoDongHienThi(HoaDon_entity hd) {
         return new Object[] {
-            hd.getMaHD(),
-            hd.getNgayLap() == null ? "" : hd.getNgayLap().format(DMY),
-            hd.getTrangThai(),
-            layMa(hd.getMaKH()),
-            layMa(hd.getMaNhanVien()),
-            layMa(hd.getMaKM()),
-            layMa(hd.getMaThue()),
-            layMa(hd.getMaThanhToan())
+                hd.getMaHD(),
+                hd.getNgayLap() == null ? "" : hd.getNgayLap().format(DMY),
+                hd.getTrangThai(),
+                layMa(hd.getMaKH()),
+                layMa(hd.getMaNhanVien()),
+                layMa(hd.getMaKM()),
+                layMa(hd.getMaThue()),
+                layMa(hd.getMaThanhToan())
         };
     }
 
@@ -153,8 +152,8 @@ public class DSHoaDonController {
         }
 
         String[] cacGetter = {
-            "getMaKH", "getMaNhanVien", "getMaKM", "getMaThue",
-            "getMaThanhToan", "getMaNCC", "getMaDV", "getMaVT", "getMa"
+                "getMaKH", "getMaNhanVien", "getMaKM", "getMaThue",
+                "getMaThanhToan", "getMaNCC", "getMaDV", "getMaVT", "getMa"
         };
 
         for (String tenGetter : cacGetter) {

@@ -130,7 +130,8 @@ public class NavigationController {
         String[] tabs;
         switch (vaiTro) {
             case ADMIN:
-                tabs = new String[] { "Nhân viên", "Bác sĩ", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch", "Dịch vụ" };
+                tabs = new String[] { "Nhân viên", "Bác sĩ", "Thú cưng", "Khách hàng", "Hóa đơn", "Vật tư", "Lịch",
+                        "Dịch vụ" };
                 menu.put("Nhân viên", new String[] { "Danh sách nhân viên", "Thống kê", "Quản lý tài khoản" });
                 menu.put("Bác sĩ", new String[] { "Danh sách bác sĩ" });
                 menu.put("Thú cưng", new String[] { "Hồ sơ thú cưng", "Đơn Thuốc", "Lịch sử khám" });
@@ -186,17 +187,28 @@ public class NavigationController {
             return ManHinh.MAC_DINH;
         }
         switch (tenTab) {
-            case "Nhân viên": return ManHinh.NHAN_VIEN;
-            case "Bác sĩ": return ManHinh.BAC_SI;
-            case "Thú cưng": return ManHinh.HO_SO_THU_CUNG;
-            case "Khách hàng": return ManHinh.KHACH_HANG;
-            case "Hóa đơn": return ManHinh.DANH_SACH_HOA_DON;
-            case "Vật tư": return ManHinh.VAT_TU;
-            case "Lịch": return ManHinh.LICH_HEN;
-            case "Dịch vụ": return ManHinh.DICH_VU;
-            case "Thống kê": return ManHinh.THONG_KE;
-            case "Quản lý tài khoản": return ManHinh.QUAN_LY_TAI_KHOAN;
-            default: return ManHinh.MAC_DINH;
+            case "Nhân viên":
+                return ManHinh.NHAN_VIEN;
+            case "Bác sĩ":
+                return ManHinh.BAC_SI;
+            case "Thú cưng":
+                return ManHinh.HO_SO_THU_CUNG;
+            case "Khách hàng":
+                return ManHinh.KHACH_HANG;
+            case "Hóa đơn":
+                return ManHinh.DANH_SACH_HOA_DON;
+            case "Vật tư":
+                return ManHinh.VAT_TU;
+            case "Lịch":
+                return ManHinh.LICH_HEN;
+            case "Dịch vụ":
+                return ManHinh.DICH_VU;
+            case "Thống kê":
+                return ManHinh.THONG_KE;
+            case "Quản lý tài khoản":
+                return ManHinh.QUAN_LY_TAI_KHOAN;
+            default:
+                return ManHinh.MAC_DINH;
         }
     }
 
@@ -205,29 +217,51 @@ public class NavigationController {
             return ManHinh.MAC_DINH;
         }
         switch (tenMenuCon) {
-            case "Danh sách nhân viên": return ManHinh.NHAN_VIEN;
-            case "Danh sách bác sĩ": return ManHinh.BAC_SI;
-            case "Thống kê": return ManHinh.THONG_KE;
-            case "Quản lý tài khoản": return ManHinh.QUAN_LY_TAI_KHOAN;
-            case "Hồ sơ thú cưng": return ManHinh.HO_SO_THU_CUNG;
-            case "Đơn Thuốc": return ManHinh.DON_THUOC;
-            case "Lịch sử khám": return ManHinh.LICH_SU_KHAM;
-            case "Danh sách khách hàng": return ManHinh.KHACH_HANG;
+            case "Danh sách nhân viên":
+                return ManHinh.NHAN_VIEN;
+            case "Danh sách bác sĩ":
+                return ManHinh.BAC_SI;
+            case "Thống kê":
+                return ManHinh.THONG_KE;
+            case "Quản lý tài khoản":
+                return ManHinh.QUAN_LY_TAI_KHOAN;
+            case "Hồ sơ thú cưng":
+                return ManHinh.HO_SO_THU_CUNG;
+            case "Đơn Thuốc":
+                return ManHinh.DON_THUOC;
+            case "Lịch sử khám":
+                return ManHinh.LICH_SU_KHAM;
+            case "Danh sách khách hàng":
+                return ManHinh.KHACH_HANG;
             case "Quản lý hạng thành viên":
-            case "Thẻ thành viên": return ManHinh.HANG_THANH_VIEN;
-            case "Tạo hóa đơn mới": return ManHinh.TAO_HOA_DON;
-            case "Danh sách hóa đơn": return ManHinh.DANH_SACH_HOA_DON;
-            case "Vật tư": return ManHinh.VAT_TU;
-            case "Nhà cung cấp": return ManHinh.NHA_CUNG_CAP;
-            case "Phiếu nhập kho": return ManHinh.PHIEU_NHAP_KHO;
-            case "Phiếu xuất kho": return ManHinh.PHIEU_XUAT_KHO;
-            case "Bảng giá dịch vụ": return ManHinh.DICH_VU;
-            case "Khuyến mãi": return ManHinh.KHUYEN_MAI;
-            case "Thuế": return ManHinh.THUE;
-            case "Lịch hẹn (Khám)": return ManHinh.LICH_HEN;
-            case "Đặt lịch mới": return ManHinh.DAT_LICH;
-            case "Lịch làm việc": return ManHinh.LICH_LAM_VIEC;
-            default: return ManHinh.MAC_DINH;
+            case "Thẻ thành viên":
+                return ManHinh.HANG_THANH_VIEN;
+            case "Tạo hóa đơn mới":
+                return ManHinh.TAO_HOA_DON;
+            case "Danh sách hóa đơn":
+                return ManHinh.DANH_SACH_HOA_DON;
+            case "Vật tư":
+                return ManHinh.VAT_TU;
+            case "Nhà cung cấp":
+                return ManHinh.NHA_CUNG_CAP;
+            case "Phiếu nhập kho":
+                return ManHinh.PHIEU_NHAP_KHO;
+            case "Phiếu xuất kho":
+                return ManHinh.PHIEU_XUAT_KHO;
+            case "Bảng giá dịch vụ":
+                return ManHinh.DICH_VU;
+            case "Khuyến mãi":
+                return ManHinh.KHUYEN_MAI;
+            case "Thuế":
+                return ManHinh.THUE;
+            case "Lịch hẹn (Khám)":
+                return ManHinh.LICH_HEN;
+            case "Đặt lịch mới":
+                return ManHinh.DAT_LICH;
+            case "Lịch làm việc":
+                return ManHinh.LICH_LAM_VIEC;
+            default:
+                return ManHinh.MAC_DINH;
         }
     }
 

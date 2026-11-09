@@ -21,8 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 public class XemLichController {
-    private static final DateTimeFormatter DATE_TIME_FORMAT =
-            DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private final LichHen_DAO lichHenDao;
     private final NhanVien_DAO nhanVienDao;
     private final DichVu_DAO dichVuDao;
@@ -57,7 +56,8 @@ public class XemLichController {
             String trangThaiChon, LocalDate tuNgay, LocalDate denNgay) {
         List<LichHen_entity> ketQua = new ArrayList<>();
         for (LichHen_entity lich : danhSach) {
-            if (lich == null) continue;
+            if (lich == null)
+                continue;
             String maNhanVien = lich.getNhanVien() == null ? "" : lich.getNhanVien().getMaNhanVien();
             String trangThai = lich.getTrangThai() == null ? "" : lich.getTrangThai();
             LocalDate ngay = lich.getNgayGio() == null ? null : lich.getNgayGio().toLocalDate();
@@ -67,7 +67,8 @@ public class XemLichController {
                     || trangThaiChon.equals(trangThai);
             boolean locNgay = (tuNgay == null || (ngay != null && !ngay.isBefore(tuNgay)))
                     && (denNgay == null || (ngay != null && !ngay.isAfter(denNgay)));
-            if (locNhanVien && locTrangThai && locNgay) ketQua.add(lich);
+            if (locNhanVien && locTrangThai && locNgay)
+                ketQua.add(lich);
         }
         return ketQua;
     }
@@ -79,12 +80,17 @@ public class XemLichController {
         int daKham = 0;
         int daHuy = 0;
         for (LichHen_entity lich : danhSach) {
-            if (lich.getNgayGio() == null || !lich.getNgayGio().toLocalDate().equals(homNay)) continue;
+            if (lich.getNgayGio() == null || !lich.getNgayGio().toLocalDate().equals(homNay))
+                continue;
             tong++;
-            if ("Chờ khám".equalsIgnoreCase(lich.getTrangThai())) choKham++;
-            else if ("Đang khám".equalsIgnoreCase(lich.getTrangThai())) dangKham++;
-            else if ("Đã khám".equalsIgnoreCase(lich.getTrangThai())) daKham++;
-            else if ("Đã hủy".equalsIgnoreCase(lich.getTrangThai())) daHuy++;
+            if ("Chờ khám".equalsIgnoreCase(lich.getTrangThai()))
+                choKham++;
+            else if ("Đang khám".equalsIgnoreCase(lich.getTrangThai()))
+                dangKham++;
+            else if ("Đã khám".equalsIgnoreCase(lich.getTrangThai()))
+                daKham++;
+            else if ("Đã hủy".equalsIgnoreCase(lich.getTrangThai()))
+                daHuy++;
         }
         return new ThongKe(tong, choKham, dangKham, daKham, daHuy);
     }
@@ -108,7 +114,8 @@ public class XemLichController {
 
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
-            if (i > 0) writer.write(',');
+            if (i > 0)
+                writer.write(',');
             writer.write("\"" + values[i].replace("\"", "\"\"") + "\"");
         }
         writer.newLine();
@@ -124,7 +131,8 @@ public class XemLichController {
     }
 
     private LocalDate parseNgay(String text) {
-        if (text == null || text.trim().isEmpty()) return null;
+        if (text == null || text.trim().isEmpty())
+            return null;
         try {
             return LocalDate.parse(text.trim(), DateTimeFormatter.ofPattern("dd/MM/uuuu"));
         } catch (DateTimeParseException e) {
@@ -158,8 +166,10 @@ public class XemLichController {
 
     public KetQuaHuyLich huy(String maLichHen) {
         LichHen_entity lich = lichHenDao.getLichHenTheoMa(maLichHen);
-        if (lich == null) return KetQuaHuyLich.KHONG_TIM_THAY;
-        if ("Đã hủy".equalsIgnoreCase(lich.getTrangThai())) return KetQuaHuyLich.DA_HUY;
+        if (lich == null)
+            return KetQuaHuyLich.KHONG_TIM_THAY;
+        if ("Đã hủy".equalsIgnoreCase(lich.getTrangThai()))
+            return KetQuaHuyLich.DA_HUY;
         lich.setTrangThai("Đã hủy");
         return lichHenDao.updateLichHen(lich) ? KetQuaHuyLich.THANH_CONG : KetQuaHuyLich.THAT_BAI;
     }
@@ -171,6 +181,7 @@ public class XemLichController {
     public static final class DuLieuManHinh {
         public final List<LichHen_entity> lichHen;
         public final List<NhanVien_entity> nhanVien;
+
         public DuLieuManHinh(List<LichHen_entity> lichHen, List<NhanVien_entity> nhanVien) {
             this.lichHen = lichHen;
             this.nhanVien = nhanVien;
@@ -185,6 +196,7 @@ public class XemLichController {
         public final DichVu_entity dichVu;
         public final String trangThai;
         public final String ghiChu;
+
         public ThongTinCapNhat(String ngayGio, NhanVien_entity nhanVien, String lyDo, String loaiHen,
                 DichVu_entity dichVu, String trangThai, String ghiChu) {
             this.ngayGio = ngayGio;
@@ -203,6 +215,7 @@ public class XemLichController {
         public final int dangKham;
         public final int daKham;
         public final int daHuy;
+
         public ThongKe(int tong, int choKham, int dangKham, int daKham, int daHuy) {
             this.tong = tong;
             this.choKham = choKham;
@@ -215,6 +228,7 @@ public class XemLichController {
     public static final class KhoangNgay {
         public final LocalDate tuNgay;
         public final LocalDate denNgay;
+
         private KhoangNgay(LocalDate tuNgay, LocalDate denNgay) {
             this.tuNgay = tuNgay;
             this.denNgay = denNgay;

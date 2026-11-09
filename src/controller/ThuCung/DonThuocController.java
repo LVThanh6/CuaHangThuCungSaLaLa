@@ -38,8 +38,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class DonThuocController {
-    private static final DateTimeFormatter DATE_TIME_FORMAT =
-            DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private final DonThuoc_DAO donThuocDao;
     private final ChiTietDonThuoc_DAO chiTietDao;
     private final HoSoSucKhoe_DAO hoSoDao;
@@ -162,14 +161,16 @@ public class DonThuocController {
             LocalDate ngay = don.getNgayKeDon() == null ? null : don.getNgayKeDon().toLocalDate();
             boolean matchedKeyword = keyword.isEmpty()
                     || value(don.getMaDonThuoc()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || value(don.getMaHSSK() == null ? null : don.getMaHSSK().getMaHSSK()).toLowerCase(Locale.ROOT).contains(keyword)
+                    || value(don.getMaHSSK() == null ? null : don.getMaHSSK().getMaHSSK()).toLowerCase(Locale.ROOT)
+                            .contains(keyword)
                     || value(don.getTenThuCung()).toLowerCase(Locale.ROOT).contains(keyword)
                     || value(don.getTenBacSi()).toLowerCase(Locale.ROOT).contains(keyword);
             boolean matchedStatus = trangThai == null || trangThai.startsWith("Trạng thái:")
                     || trangThai.equals(don.getTrangThai());
             boolean matchedDate = (tu == null || (ngay != null && !ngay.isBefore(tu)))
                     && (den == null || (ngay != null && !ngay.isAfter(den)));
-            if (matchedKeyword && matchedStatus && matchedDate) ketQua.add(don);
+            if (matchedKeyword && matchedStatus && matchedDate)
+                ketQua.add(don);
         }
         return ketQua;
     }
@@ -179,8 +180,10 @@ public class DonThuocController {
         int choLay = 0;
         int loaiThuoc = 0;
         for (DonThuoc_entity don : danhSach) {
-            if ("Đã cấp thuốc".equals(don.getTrangThai()) || "Hoàn thành".equals(don.getTrangThai())) daCap++;
-            else if ("Chờ lấy thuốc".equals(don.getTrangThai())) choLay++;
+            if ("Đã cấp thuốc".equals(don.getTrangThai()) || "Hoàn thành".equals(don.getTrangThai()))
+                daCap++;
+            else if ("Chờ lấy thuốc".equals(don.getTrangThai()))
+                choLay++;
             loaiThuoc += don.getSoLoaiThuoc();
         }
         return new ThongKe(danhSach.size(), daCap, choLay, loaiThuoc);
@@ -206,7 +209,8 @@ public class DonThuocController {
 
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
-            if (i > 0) writer.write(',');
+            if (i > 0)
+                writer.write(',');
             writer.write("\"" + values[i].replace("\"", "\"\"") + "\"");
         }
         writer.newLine();
@@ -222,7 +226,8 @@ public class DonThuocController {
     }
 
     private LocalDate parseNgay(String text) {
-        if (text == null || text.trim().isEmpty()) return null;
+        if (text == null || text.trim().isEmpty())
+            return null;
         try {
             return LocalDate.parse(text.trim(), DateTimeFormatter.ofPattern("dd/MM/uuuu"));
         } catch (DateTimeParseException e) {
@@ -232,7 +237,8 @@ public class DonThuocController {
 
     public KetQuaXuatThuoc xuatVaTaoHoaDon(String maDon, NhanVien_entity nhanVien) throws SQLException {
         DonThuoc_entity don = donThuocDao.getDonThuocTheoMa(maDon);
-        if (don == null) throw new IllegalArgumentException("Không tìm thấy thông tin đơn thuốc " + maDon);
+        if (don == null)
+            throw new IllegalArgumentException("Không tìm thấy thông tin đơn thuốc " + maDon);
         List<ChiTietDonThuoc_entity> chiTietList = donThuocDao.getChiTietDonThuoc(maDon);
         if (chiTietList == null || chiTietList.isEmpty()) {
             throw new IllegalArgumentException("Đơn thuốc này không có chi tiết thuốc nào!");
@@ -242,13 +248,15 @@ public class DonThuocController {
         if (thuCung == null || thuCung.getMaKH() == null) {
             throw new IllegalArgumentException("Không tìm thấy thông tin Thú cưng / Khách hàng để tạo hóa đơn!");
         }
-        if (nhanVien == null) throw new IllegalArgumentException("Không xác định được nhân viên đang đăng nhập!");
+        if (nhanVien == null)
+            throw new IllegalArgumentException("Không xác định được nhân viên đang đăng nhập!");
 
         HoaDon_Dao hoaDonDao = new HoaDon_Dao();
         ChiTietHoaDon_DAO chiTietHoaDonDao = new ChiTietHoaDon_DAO();
         VatTu_DAO vatTuDao = new VatTu_DAO();
         Connection connection = ConnectDB.getCon();
-        if (connection == null) throw new SQLException("Không thể kết nối cơ sở dữ liệu!");
+        if (connection == null)
+            throw new SQLException("Không thể kết nối cơ sở dữ liệu!");
         try (Connection con = connection) {
             try {
                 con.setAutoCommit(false);
@@ -263,16 +271,19 @@ public class DonThuocController {
                 double tongTien = 0;
                 for (ChiTietDonThuoc_entity chiTietDon : chiTietList) {
                     String maThuoc = chiTietDon.getMaThuoc() == null
-                            ? null : chiTietDon.getMaThuoc().getMaThuoc();
+                            ? null
+                            : chiTietDon.getMaThuoc().getMaThuoc();
                     VatTu_entity vatTu = vatTuDao.getVatTuTheoMaThuoc(maThuoc);
-                    if (vatTu == null) vatTu = vatTuDao.getVatTuTheoMa(maThuoc);
+                    if (vatTu == null)
+                        vatTu = vatTuDao.getVatTuTheoMa(maThuoc);
                     if (vatTu == null) {
                         throw new SQLException("Không tìm thấy mặt hàng trong kho cho thuốc: "
                                 + chiTietDon.getTenThuoc() + " (Mã: " + maThuoc + ")");
                     }
                     double donGia = vatTu.getGiaBanCoBan();
                     int soLuong = chiTietDon.getSoLuong().intValue();
-                    if (soLuong <= 0) soLuong = 1;
+                    if (soLuong <= 0)
+                        soLuong = 1;
                     ChiTietHoaDon_entity dongHoaDon = new ChiTietHoaDon_entity(soDong++, hoaDon,
                             null, vatTu, nhanVien, null, soLuong, donGia);
                     dongHoaDon.setMaCTDT(chiTietDon.getMaCTDT());
@@ -306,6 +317,7 @@ public class DonThuocController {
         public final List<ThuCung_entity> thuCung;
         public final List<BacSi_entity> bacSi;
         public final List<Thuoc_entity> thuoc;
+
         public DuLieuForm(List<HoSoSucKhoe_entity> hoSo, List<ThuCung_entity> thuCung,
                 List<BacSi_entity> bacSi, List<Thuoc_entity> thuoc) {
             this.hoSo = hoSo;
@@ -323,6 +335,7 @@ public class DonThuocController {
         public final String ghiChu;
         public final String trangThai;
         public final List<ChiTietDonThuoc_entity> chiTiet;
+
         public ThongTinDonThuoc(String maDonThuoc, boolean donMoi, HoSoSucKhoe_entity hoSo,
                 String ngayKeDon, String ghiChu, String trangThai, List<ChiTietDonThuoc_entity> chiTiet) {
             this.maDonThuoc = maDonThuoc;
@@ -340,6 +353,7 @@ public class DonThuocController {
         public final int daCap;
         public final int choLay;
         public final int loaiThuoc;
+
         public ThongKe(int tong, int daCap, int choLay, int loaiThuoc) {
             this.tong = tong;
             this.daCap = daCap;
@@ -351,6 +365,7 @@ public class DonThuocController {
     public static final class KhoangNgay {
         public final LocalDate tuNgay;
         public final LocalDate denNgay;
+
         private KhoangNgay(LocalDate tuNgay, LocalDate denNgay) {
             this.tuNgay = tuNgay;
             this.denNgay = denNgay;
@@ -361,6 +376,7 @@ public class DonThuocController {
         public final String maHoaDon;
         public final String tenThuCung;
         public final double tongTien;
+
         public KetQuaXuatThuoc(String maHoaDon, String tenThuCung, double tongTien) {
             this.maHoaDon = maHoaDon;
             this.tenThuCung = tenThuCung;

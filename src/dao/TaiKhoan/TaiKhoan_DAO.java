@@ -25,17 +25,20 @@ public class TaiKhoan_DAO {
     // =========================================================================
     /**
      * Băm mật khẩu theo chuẩn SHA-256 và trả về chuỗi Hex chữ hoa (64 ký tự).
-     * Khớp 100% với hàm SQL Server: CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'matkhau'), 2)
+     * Khớp 100% với hàm SQL Server: CONVERT(VARCHAR(64), HASHBYTES('SHA2_256',
+     * 'matkhau'), 2)
      */
     public static String hashPassword(String plainPassword) {
-        if (plainPassword == null) return "";
+        if (plainPassword == null)
+            return "";
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(plainPassword.getBytes(StandardCharsets.UTF_8));
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1)
+                    hexString.append('0');
                 hexString.append(hex);
             }
             return hexString.toString().toUpperCase();
@@ -54,7 +57,8 @@ public class TaiKhoan_DAO {
         private String tenNguoiDung;
         private String maDoiTuong;
 
-        public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan taiKhoan, String tenNguoiDung, String maDoiTuong) {
+        public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan taiKhoan, String tenNguoiDung,
+                String maDoiTuong) {
             this.thanhCong = thanhCong;
             this.thongBao = thongBao;
             this.taiKhoan = taiKhoan;
@@ -62,11 +66,25 @@ public class TaiKhoan_DAO {
             this.maDoiTuong = maDoiTuong;
         }
 
-        public boolean isThanhCong() { return thanhCong; }
-        public String getThongBao() { return thongBao; }
-        public TaiKhoan getTaiKhoan() { return taiKhoan; }
-        public String getTenNguoiDung() { return tenNguoiDung; }
-        public String getMaDoiTuong() { return maDoiTuong; }
+        public boolean isThanhCong() {
+            return thanhCong;
+        }
+
+        public String getThongBao() {
+            return thongBao;
+        }
+
+        public TaiKhoan getTaiKhoan() {
+            return taiKhoan;
+        }
+
+        public String getTenNguoiDung() {
+            return tenNguoiDung;
+        }
+
+        public String getMaDoiTuong() {
+            return maDoiTuong;
+        }
     }
 
     /**
@@ -102,7 +120,8 @@ public class TaiKhoan_DAO {
                     }
 
                     if (!trangThai) {
-                        return new KetQuaDangNhap(false, "Tài khoản này đang bị khóa. Vui lòng liên hệ Quản lý!", null, null, null);
+                        return new KetQuaDangNhap(false, "Tài khoản này đang bị khóa. Vui lòng liên hệ Quản lý!", null,
+                                null, null);
                     }
 
                     TaiKhoan tk = new TaiKhoan(
@@ -111,8 +130,7 @@ public class TaiKhoan_DAO {
                             dbMatKhau,
                             rs.getString("vaiTro"),
                             trangThai,
-                            rs.getString("maQuanLy")
-                    );
+                            rs.getString("maQuanLy"));
 
                     // Truy vấn họ tên thực tế của chủ sở hữu tài khoản
                     String[] ttNguoiDung = getThongTinChuSoHuu(tk.getMaTK());
@@ -132,11 +150,13 @@ public class TaiKhoan_DAO {
 
     /**
      * Lấy họ tên và mã đối tượng (QL, NV, BS) của tài khoản
+     * 
      * @return String[2] = { hoTen, maDoiTuong }
      */
     public String[] getThongTinChuSoHuu(String maTK) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null || maTK == null) return new String[]{"Người dùng", ""};
+        if (con == null || maTK == null)
+            return new String[] { "Người dùng", "" };
 
         // 1. Kiểm tra trong QuanLyCuaHang
         String sqlQL = "SELECT maQuanLy, hoTenQuanLy FROM QuanLyCuaHang WHERE maTK = ?";
@@ -144,10 +164,11 @@ public class TaiKhoan_DAO {
             ps.setString(1, maTK);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new String[]{rs.getString("hoTenQuanLy"), rs.getString("maQuanLy")};
+                    return new String[] { rs.getString("hoTenQuanLy"), rs.getString("maQuanLy") };
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
 
         // 2. Kiểm tra trong NhanVien
         String sqlNV = "SELECT maNhanVien, hoTen FROM NhanVien WHERE maTK = ?";
@@ -155,10 +176,11 @@ public class TaiKhoan_DAO {
             ps.setString(1, maTK);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new String[]{rs.getString("hoTen"), rs.getString("maNhanVien")};
+                    return new String[] { rs.getString("hoTen"), rs.getString("maNhanVien") };
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
 
         // 3. Kiểm tra trong BacSyThuY
         String sqlBS = "SELECT maBacSi, hoTen FROM BacSyThuY WHERE maTK = ?";
@@ -166,12 +188,13 @@ public class TaiKhoan_DAO {
             ps.setString(1, maTK);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new String[]{rs.getString("hoTen"), rs.getString("maBacSi")};
+                    return new String[] { rs.getString("hoTen"), rs.getString("maBacSi") };
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
 
-        return new String[]{"Người dùng", ""};
+        return new String[] { "Người dùng", "" };
     }
 
     // =========================================================================
@@ -189,8 +212,8 @@ public class TaiKhoan_DAO {
         private String sdtNguoiDung;
 
         public TaiKhoanChiTiet(String maTK, String tenDangNhap, String vaiTro, boolean trangThai,
-                               String maQuanLy, String tenQuanLy, String hoTenNguoiDung,
-                               String maDoiTuong, String sdtNguoiDung) {
+                String maQuanLy, String tenQuanLy, String hoTenNguoiDung,
+                String maDoiTuong, String sdtNguoiDung) {
             this.maTK = maTK;
             this.tenDangNhap = tenDangNhap;
             this.vaiTro = vaiTro;
@@ -202,15 +225,41 @@ public class TaiKhoan_DAO {
             this.sdtNguoiDung = sdtNguoiDung;
         }
 
-        public String getMaTK() { return maTK; }
-        public String getTenDangNhap() { return tenDangNhap; }
-        public String getVaiTro() { return vaiTro; }
-        public boolean isTrangThai() { return trangThai; }
-        public String getMaQuanLy() { return maQuanLy; }
-        public String getTenQuanLy() { return tenQuanLy; }
-        public String getHoTenNguoiDung() { return hoTenNguoiDung; }
-        public String getMaDoiTuong() { return maDoiTuong; }
-        public String getSdtNguoiDung() { return sdtNguoiDung; }
+        public String getMaTK() {
+            return maTK;
+        }
+
+        public String getTenDangNhap() {
+            return tenDangNhap;
+        }
+
+        public String getVaiTro() {
+            return vaiTro;
+        }
+
+        public boolean isTrangThai() {
+            return trangThai;
+        }
+
+        public String getMaQuanLy() {
+            return maQuanLy;
+        }
+
+        public String getTenQuanLy() {
+            return tenQuanLy;
+        }
+
+        public String getHoTenNguoiDung() {
+            return hoTenNguoiDung;
+        }
+
+        public String getMaDoiTuong() {
+            return maDoiTuong;
+        }
+
+        public String getSdtNguoiDung() {
+            return sdtNguoiDung;
+        }
     }
 
     /**
@@ -219,7 +268,8 @@ public class TaiKhoan_DAO {
     public List<TaiKhoanChiTiet> getAllTaiKhoanChiTiet() {
         List<TaiKhoanChiTiet> list = new ArrayList<>();
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return list;
+        if (con == null)
+            return list;
 
         String sql = "SELECT tk.maTK, tk.tenDangNhap, tk.vaiTro, tk.trangThai, tk.maQuanLy, " +
                 "ql.hoTenQuanLy AS tenQuanLy, " +
@@ -234,7 +284,7 @@ public class TaiKhoan_DAO {
                 "ORDER BY tk.maTK ASC";
 
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 list.add(new TaiKhoanChiTiet(
                         rs.getString("maTK"),
@@ -245,8 +295,7 @@ public class TaiKhoan_DAO {
                         rs.getString("tenQuanLy"),
                         rs.getString("hoTenNguoiDung"),
                         rs.getString("maDoiTuong"),
-                        rs.getString("sdtNguoiDung")
-                ));
+                        rs.getString("sdtNguoiDung")));
             }
         } catch (SQLException e) {
             System.err.println("Lỗi lấy danh sách tài khoản: " + e.getMessage());
@@ -262,7 +311,8 @@ public class TaiKhoan_DAO {
      */
     public boolean themTaiKhoan(TaiKhoan tk, String loaiDoiTuong, String maDoiTuong) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String hashed = hashPassword(tk.getMatKhau());
         String sql = "INSERT INTO TaiKhoan (maTK, tenDangNhap, matKhau, vaiTro, trangThai, maQuanLy) VALUES (?, ?, ?, ?, ?, ?)";
@@ -309,7 +359,11 @@ public class TaiKhoan_DAO {
             return true;
         } catch (SQLException e) {
             System.err.println("Lỗi thêm tài khoản: " + e.getMessage());
-            try { con.rollback(); con.setAutoCommit(true); } catch (SQLException ignored) {}
+            try {
+                con.rollback();
+                con.setAutoCommit(true);
+            } catch (SQLException ignored) {
+            }
             return false;
         }
     }
@@ -319,7 +373,8 @@ public class TaiKhoan_DAO {
      */
     public boolean capNhatTaiKhoan(TaiKhoan tk) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "UPDATE TaiKhoan SET vaiTro = ?, trangThai = ?, maQuanLy = ? WHERE maTK = ?";
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -344,7 +399,8 @@ public class TaiKhoan_DAO {
      */
     public boolean doiMatKhau(String maTK, String matKhauMoi) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String hashed = hashPassword(matKhauMoi);
         String sql = "UPDATE TaiKhoan SET matKhau = ? WHERE maTK = ?";
@@ -363,7 +419,8 @@ public class TaiKhoan_DAO {
      */
     public boolean datTrangThaiTaiKhoan(String maTK, boolean trangThai) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "UPDATE TaiKhoan SET trangThai = ? WHERE maTK = ?";
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -381,7 +438,8 @@ public class TaiKhoan_DAO {
      */
     public boolean xoaTaiKhoan(String maTK) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         try {
             con.setAutoCommit(false);
@@ -405,7 +463,11 @@ public class TaiKhoan_DAO {
             }
         } catch (SQLException e) {
             System.err.println("Lỗi xóa tài khoản: " + e.getMessage());
-            try { con.rollback(); con.setAutoCommit(true); } catch (SQLException ignored) {}
+            try {
+                con.rollback();
+                con.setAutoCommit(true);
+            } catch (SQLException ignored) {
+            }
             return false;
         }
     }
@@ -418,17 +480,19 @@ public class TaiKhoan_DAO {
         if (con != null) {
             String sql = "SELECT TOP 1 maTK FROM TaiKhoan ORDER BY maTK DESC";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     String lastMa = rs.getString(1);
                     if (lastMa != null && lastMa.startsWith("TK")) {
                         try {
                             int num = Integer.parseInt(lastMa.substring(2));
                             return String.format("TK%03d", num + 1);
-                        } catch (NumberFormatException ignored) {}
+                        } catch (NumberFormatException ignored) {
+                        }
                     }
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
         }
         return "TK046";
     }
@@ -438,7 +502,8 @@ public class TaiKhoan_DAO {
      */
     public boolean isTenDangNhapTonTai(String tenDangNhap, String maTKBoQua) {
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "SELECT COUNT(*) FROM TaiKhoan WHERE tenDangNhap = ?" +
                 (maTKBoQua != null ? " AND maTK <> ?" : "");
@@ -452,7 +517,8 @@ public class TaiKhoan_DAO {
                     return rs.getInt(1) > 0;
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         return false;
     }
 
@@ -462,18 +528,20 @@ public class TaiKhoan_DAO {
     public List<Map<String, String>> getDanhSachQuanLy() {
         List<Map<String, String>> list = new ArrayList<>();
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return list;
+        if (con == null)
+            return list;
 
         String sql = "SELECT maQuanLy, hoTenQuanLy FROM QuanLyCuaHang ORDER BY maQuanLy ASC";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 Map<String, String> m = new HashMap<>();
                 m.put("maQuanLy", rs.getString("maQuanLy"));
                 m.put("hoTen", rs.getString("hoTenQuanLy"));
                 list.add(m);
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         return list;
     }
 
@@ -483,11 +551,12 @@ public class TaiKhoan_DAO {
     public List<Map<String, String>> getNhanVienChuaCoTaiKhoan() {
         List<Map<String, String>> list = new ArrayList<>();
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return list;
+        if (con == null)
+            return list;
 
         String sql = "SELECT maNhanVien, hoTen, chucVu FROM NhanVien WHERE maTK IS NULL ORDER BY maNhanVien ASC";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 Map<String, String> m = new HashMap<>();
                 m.put("ma", rs.getString("maNhanVien"));
@@ -496,7 +565,8 @@ public class TaiKhoan_DAO {
                 m.put("loai", "NhanVien");
                 list.add(m);
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         return list;
     }
 
@@ -506,11 +576,12 @@ public class TaiKhoan_DAO {
     public List<Map<String, String>> getBacSiChuaCoTaiKhoan() {
         List<Map<String, String>> list = new ArrayList<>();
         Connection con = ConnectDB.getInstance().getConnection();
-        if (con == null) return list;
+        if (con == null)
+            return list;
 
         String sql = "SELECT maBacSi, hoTen, tenChuyenNganh FROM BacSyThuY WHERE maTK IS NULL ORDER BY maBacSi ASC";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 Map<String, String> m = new HashMap<>();
                 m.put("ma", rs.getString("maBacSi"));
@@ -519,7 +590,8 @@ public class TaiKhoan_DAO {
                 m.put("loai", "BacSy");
                 list.add(m);
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         return list;
     }
 }
