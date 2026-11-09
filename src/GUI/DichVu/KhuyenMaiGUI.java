@@ -1,7 +1,7 @@
 package GUI.DichVu;
 
-import controller.KhuyenMaiController;
-import controller.KhuyenMaiController.Status;
+import controller.DichVu.KhuyenMaiController;
+import controller.DichVu.KhuyenMaiController.Status;
 import entity.DichVu.KhuyenMai_Entity;
 
 import javax.swing.*;

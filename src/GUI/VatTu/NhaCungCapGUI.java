@@ -11,10 +11,10 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
-import controller.NhaCungCapController;
-import controller.NhaCungCapController.OperationResult;
-import controller.NhaCungCapController.Supplier;
-import controller.NhaCungCapController.SupplierInput;
+import controller.VatTu.NhaCungCapController;
+import controller.VatTu.NhaCungCapController.OperationResult;
+import controller.VatTu.NhaCungCapController.Supplier;
+import controller.VatTu.NhaCungCapController.SupplierInput;
 
 /**
  * Giao dien "Quan ly Nha cung cap" - SALALA Pet Shop.

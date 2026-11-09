@@ -2,7 +2,7 @@ package GUI.LichHen;
 
 import GUI.Chung.TableMau;
 import GUI.Chung.RangBuocGiaoDien;
-import controller.XemLichController;
+import controller.LichHen.XemLichController;
 import entity.DichVu.DichVu_entity;
 import entity.LichHen.LichHen_entity;
 import entity.NhanVien.NhanVien_entity;

@@ -1,10 +1,10 @@
 package GUI.KhachHang;
 
-import controller.KhachHangController;
-import controller.KhachHangController.CustomerDetails;
-import controller.KhachHangController.CustomerStatistics;
-import controller.KhachHangController.KetQuaXoaKhachHang;
-import controller.KhachHangController.KetQuaXuLyKhachHang;
+import controller.KhachHang.KhachHangController;
+import controller.KhachHang.KhachHangController.CustomerDetails;
+import controller.KhachHang.KhachHangController.CustomerStatistics;
+import controller.KhachHang.KhachHangController.KetQuaXoaKhachHang;
+import controller.KhachHang.KhachHangController.KetQuaXuLyKhachHang;
 import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.QuanLyTable;

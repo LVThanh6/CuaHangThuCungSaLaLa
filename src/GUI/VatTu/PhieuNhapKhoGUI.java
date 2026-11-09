@@ -1,12 +1,12 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.PhieuNhapKhoController;
-import controller.PhieuNhapKhoController.Dong;
-import controller.PhieuNhapKhoController.CatalogItem;
-import controller.PhieuNhapKhoController.Filter;
-import controller.PhieuNhapKhoController.Phieu;
-import controller.PhieuNhapKhoController.TrangThai;
+import controller.VatTu.PhieuNhapKhoController;
+import controller.VatTu.PhieuNhapKhoController.Dong;
+import controller.VatTu.PhieuNhapKhoController.CatalogItem;
+import controller.VatTu.PhieuNhapKhoController.Filter;
+import controller.VatTu.PhieuNhapKhoController.Phieu;
+import controller.VatTu.PhieuNhapKhoController.TrangThai;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

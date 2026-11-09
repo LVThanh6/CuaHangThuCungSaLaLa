@@ -1,7 +1,7 @@
 package GUI.HoaDon;
 
 import entity.HoaDon.HoaDon_entity;
-import controller.DSHoaDonController;
+import controller.HoaDon.DSHoaDonController;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

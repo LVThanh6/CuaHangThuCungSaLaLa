@@ -1,5 +1,5 @@
 package GUI.TaiKhoan;
-import controller.DangNhapController;
+import controller.TaiKhoan.DangNhapController;
 import entity.TaiKhoan.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
@@ -205,7 +205,7 @@ public class DangNhapGUI extends JFrame {
         form.add(lblPass);
         form.add(Box.createVerticalStrut(6));
 
-        txtMatKhau = new JPasswordField("123456");
+        txtMatKhau = new JPasswordField(DangNhapController.MAT_KHAU_MAC_DINH);
         txtMatKhau.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         txtMatKhau.setPreferredSize(new Dimension(300, 38));
         txtMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -287,17 +287,14 @@ public class DangNhapGUI extends JFrame {
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.addActionListener(e -> {
             txtTenDangNhap.setText(username);
-            txtMatKhau.setText("123456");
+            txtMatKhau.setText(DangNhapController.MAT_KHAU_MAC_DINH);
             lblThongBaoLoi.setText(" ");
         });
         return b;
     }
 
     // ==========================================
-    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
-    // ==========================================
- // ==========================================
-    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION
+    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION (nghiệp vụ nằm ở DangNhapController)
     // ==========================================
     private void xuLyDangNhap() {
         String username = txtTenDangNhap.getText().trim();
@@ -312,21 +309,20 @@ public class DangNhapGUI extends JFrame {
                 lblThongBaoLoi.setText(" ");
                 TaiKhoan tk = result.getTaiKhoan();
                 
-                // --- THÊM LOGIC KIỂM TRA MẬT KHẨU LẦN ĐẦU TẠI ĐÂY ---
-                if (password.equals("123456")) {
+                // Khuyến nghị đổi mật khẩu nếu đang dùng mật khẩu mặc định
+                if (controller.nenKhuyenNghiDoiMatKhau(password)) {
                     int luaChon = JOptionPane.showConfirmDialog(this,
-                            "Bạn đang đăng nhập bằng mật khẩu mặc định (123456).\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
+                            "Bạn đang đăng nhập bằng mật khẩu mặc định (" + DangNhapController.MAT_KHAU_MAC_DINH + ").\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
                             "Cảnh báo bảo mật",
                             JOptionPane.YES_NO_OPTION, 
                             JOptionPane.WARNING_MESSAGE);
                             
                     if (luaChon == JOptionPane.YES_OPTION) {
-                        // Gọi dialog đổi mật khẩu đã được định nghĩa sẵn
-                        DoiMatKhauDialog doiMkDialog = new DoiMatKhauDialog(this, tk);
+                        ThongTinTaiKhoanGUI.DoiMatKhauDialog doiMkDialog =
+                                new ThongTinTaiKhoanGUI.DoiMatKhauDialog(this, tk);
                         doiMkDialog.setVisible(true);
                     }
                 }
-                // ----------------------------------------------------
 
                 String tenHienThi = result.getTenNguoiDung();
                 String vaiTro = tk.getVaiTro();
@@ -341,8 +337,8 @@ public class DangNhapGUI extends JFrame {
                 this.dispose();
             } else {
                 hienThiLoi(result.getThongBao());
-                if (username.isEmpty()) txtTenDangNhap.requestFocus();
-                else if (password.isEmpty()) txtMatKhau.requestFocus();
+                if (result.getTruongLoi() == DangNhapController.TruongNhap.TEN_DANG_NHAP) txtTenDangNhap.requestFocus();
+                else if (result.getTruongLoi() == DangNhapController.TruongNhap.MAT_KHAU) txtMatKhau.requestFocus();
             }
             btnDangNhap.setEnabled(true);
             btnDangNhap.setText("ĐĂNG NHẬP");
@@ -365,8 +361,7 @@ public class DangNhapGUI extends JFrame {
         }
 
         SwingUtilities.invokeLater(() -> {
-            connectDB.ConnectDB.getInstance().connect();
-            if (connectDB.ConnectDB.getInstance().getConnection() == null) {
+            if (!new DangNhapController().ketNoiCoSoDuLieu()) {
                 JOptionPane.showMessageDialog(null, "Không thể kết nối cơ sở dữ liệu SALALA.",
                         "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
             }

@@ -23,8 +23,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import controller.NhanVienController;
-import controller.NhanVienController.TrangThai;
+import controller.NhanVien.NhanVienController;
+import controller.NhanVien.NhanVienController.TrangThai;
 import entity.NhanVien.NhanVien_entity;
 
 public class NhanVienGUI extends JPanel {

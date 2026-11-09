@@ -22,8 +22,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import controller.BacSiController;
-import controller.BacSiController.TrangThai;
+import controller.BacSi.BacSiController;
+import controller.BacSi.BacSiController.TrangThai;
 import entity.BacSi.ChuyenNganh_entity;
 import entity.BacSi.BacSi_entity;
 

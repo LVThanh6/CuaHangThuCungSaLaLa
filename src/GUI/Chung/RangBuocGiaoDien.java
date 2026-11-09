@@ -58,6 +58,10 @@ public class RangBuocGiaoDien {
     public static final Color MAU_DONG_XEN_KE = new Color(254, 254, 255);
     public static final Color MAU_LUOI_BANG = new Color(241, 245, 249);
     public static final Color MAU_LIEN_KET = new Color(14, 116, 101);
+    public static final Color MAU_CHU_BANG = new Color(30, 41, 59);        // Chữ trong ô bảng
+    public static final Color MAU_CHU_TIEU_DE_BANG = new Color(100, 116, 139); // Chữ tiêu đề cột
+    public static final int BANG_CAO_DONG = 42;
+    public static final int BANG_CAO_TIEU_DE = 40;
 
     // Màu Huy Hiệu Trạng Thái
     public static final Color MAU_THANH_CONG_NEN = new Color(220, 252, 231);

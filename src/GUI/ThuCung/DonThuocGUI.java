@@ -6,7 +6,7 @@ import GUI.GiaoDienChinhGUI;
 import GUI.ThuCung.HoSoThuCungGUI.NutBoTron;
 import GUI.ThuCung.HoSoThuCungGUI.OTimKiemGoiY;
 import GUI.ThuCung.HoSoThuCungGUI.PanelBoTron;
-import controller.DonThuocController;
+import controller.ThuCung.DonThuocController;
 import entity.BacSi.BacSi_entity;
 import entity.ThuCung.ChiTietDonThuoc_entity;
 import entity.ThuCung.DonThuoc_entity;

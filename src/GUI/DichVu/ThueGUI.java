@@ -2,7 +2,7 @@ package GUI.DichVu;
 
 import GUI.Chung.RangBuocGiaoDien;
 import entity.DichVu.Thue_entity;
-import controller.ThueController;
+import controller.DichVu.ThueController;
 
 import java.awt.*;
 import java.util.List;

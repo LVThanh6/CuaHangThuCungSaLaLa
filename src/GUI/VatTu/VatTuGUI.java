@@ -1,11 +1,11 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.VatTuController;
-import controller.VatTuController.CatalogItem;
-import controller.VatTuController.InventorySummary;
-import controller.VatTuController.SupplierOption;
-import controller.VatTuController.VatTuInput;
+import controller.VatTu.VatTuController;
+import controller.VatTu.VatTuController.CatalogItem;
+import controller.VatTu.VatTuController.InventorySummary;
+import controller.VatTu.VatTuController.SupplierOption;
+import controller.VatTu.VatTuController.VatTuInput;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;

@@ -1,7 +1,7 @@
 package GUI.ThongKe;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.ThongKeController;
+import controller.ThongKe.ThongKeController;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -45,6 +45,8 @@ public class ThongKeGUI extends JPanel {
     private final JComboBox<ChiSo> cboChiSo = new JComboBox<>();
     private final List<ChiSo> tatCaChiSo = new java.util.ArrayList<>();
     private final JLabel lblGhiChuChiSo = new JLabel(" ");
+    private final JTextField txtTimNhanVien = new JTextField(22);
+    private final JPanel panelTimNhanVien = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
     private final DefaultTableModel modelBang = new DefaultTableModel(
             new Object[] { "Thời gian / Danh mục", "Số liệu" }, 0) {
         private static final long serialVersionUID = 1L;
@@ -197,9 +199,43 @@ public class ThongKeGUI extends JPanel {
         chonChiSo.add(cboNhomChiSo);
         chonChiSo.add(nhan);
         chonChiSo.add(cboChiSo);
+        // Ô tìm kiếm nhân viên (chỉ hiện ở nhóm Nhân sự)
+        panelTimNhanVien.setOpaque(false);
+        JLabel nhanTim = new JLabel("Tìm nhân viên");
+        nhanTim.setFont(RangBuocGiaoDien.fontDam(13));
+        nhanTim.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        txtTimNhanVien.setFont(RangBuocGiaoDien.fontThuong(13));
+        txtTimNhanVien.setToolTipText("Nhập tên, số điện thoại hoặc mã nhân viên");
+        txtTimNhanVien.addActionListener(e -> capNhatBangChiSoChon());
+        JButton btnTim = new JButton("Tìm kiếm");
+        btnTim.setFont(RangBuocGiaoDien.fontDam(12));
+        btnTim.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnTim.addActionListener(e -> capNhatBangChiSoChon());
+        JButton btnXoaLoc = new JButton("Xóa lọc");
+        btnXoaLoc.setFont(RangBuocGiaoDien.fontThuong(12));
+        btnXoaLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnXoaLoc.addActionListener(e -> {
+            txtTimNhanVien.setText("");
+            capNhatBangChiSoChon();
+        });
+        JLabel goiY = new JLabel("(theo tên, SĐT hoặc mã nhân viên)");
+        goiY.setFont(RangBuocGiaoDien.fontThuong(12));
+        goiY.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        panelTimNhanVien.add(nhanTim);
+        panelTimNhanVien.add(txtTimNhanVien);
+        panelTimNhanVien.add(btnTim);
+        panelTimNhanVien.add(btnXoaLoc);
+        panelTimNhanVien.add(goiY);
+        panelTimNhanVien.setVisible(false);
+
+        JPanel phanChon = new JPanel(new BorderLayout(0, 8));
+        phanChon.setOpaque(false);
+        phanChon.add(chonChiSo, BorderLayout.NORTH);
+        phanChon.add(panelTimNhanVien, BorderLayout.CENTER);
+
         JPanel dauBang = new JPanel(new BorderLayout(0, 6));
         dauBang.setOpaque(false);
-        dauBang.add(chonChiSo, BorderLayout.NORTH);
+        dauBang.add(phanChon, BorderLayout.NORTH);
         dauBang.add(lblGhiChuChiSo, BorderLayout.SOUTH);
         tong.add(dauBang, BorderLayout.NORTH);
 
@@ -303,7 +339,7 @@ public class ThongKeGUI extends JPanel {
         cboChiSo.removeAllItems();
         ThongKeController.Category nhomChon = (ThongKeController.Category) cboNhomChiSo.getSelectedItem();
         for (ChiSo chiSo : tatCaChiSo) {
-            if (nhomChon == ThongKeController.categoryFor(chiSo.ma)) {
+            if (nhomChon == ThongKeController.categoryFor(chiSo.ma, chiSo.ten)) {
                 cboChiSo.addItem(chiSo);
             }
         }
@@ -346,6 +382,12 @@ public class ThongKeGUI extends JPanel {
     private void capNhatBangChiSoChon() {
         ChiSo chiSo = (ChiSo) cboChiSo.getSelectedItem();
         modelBang.setRowCount(0);
+
+        // Ô tìm kiếm chỉ hiện ở nhóm Nhân sự (để tra nhanh khi tính lương)
+        boolean laNhomNhanSu = cboNhomChiSo.getSelectedItem() == ThongKeController.Category.NHAN_SU;
+        panelTimNhanVien.setVisible(laNhomNhanSu);
+        String tuKhoa = laNhomNhanSu ? txtTimNhanVien.getText().trim() : "";
+
         if (chiSo == null || chiSo.nhan.length == 0 || chiSo.giaTri.length == 0) {
             lblGhiChuChiSo.setText("Chưa có dữ liệu cho chỉ số này.");
             return;
@@ -356,14 +398,24 @@ public class ThongKeGUI extends JPanel {
                 theoThoiGian ? "Thời gian" : "Danh mục", "Số liệu" });
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
         dinhDang.setMaximumFractionDigits(0);
+        String hauTo = chiSo.hauTo.isEmpty() ? "" : " " + chiSo.hauTo;
+        double tongHienThi = 0;
+        int soDong = 0;
         for (int i = 0; i < chiSo.nhan.length; i++) {
-            String giaTri = dinhDang.format(chiSo.giaTri[0][i]);
-            if (!chiSo.hauTo.isEmpty()) {
-                giaTri += " " + chiSo.hauTo;
+            if (!tuKhoa.isEmpty() && !thongKeController.khopTuKhoaNhanVien(tuKhoa, chiSo.nhan[i])) {
+                continue;
             }
-            modelBang.addRow(new Object[] { chiSo.nhan[i], giaTri });
+            modelBang.addRow(new Object[] { chiSo.nhan[i], dinhDang.format(chiSo.giaTri[0][i]) + hauTo });
+            tongHienThi += chiSo.giaTri[0][i];
+            soDong++;
         }
-        modelBang.addRow(new Object[] { "Tổng cộng", dinhDang.format(chiSo.tong) + " " + chiSo.hauTo });
+        if (tuKhoa.isEmpty()) {
+            modelBang.addRow(new Object[] { "Tổng cộng", dinhDang.format(chiSo.tong) + hauTo });
+        } else if (soDong == 0) {
+            lblGhiChuChiSo.setText("Không tìm thấy nhân viên nào khớp với \"" + tuKhoa + "\".");
+        } else {
+            modelBang.addRow(new Object[] { "Tổng cộng (" + soDong + " kết quả)", dinhDang.format(tongHienThi) + hauTo });
+        }
     }
 
     private void hienLoi(String loi) {

@@ -1,7 +1,7 @@
 package GUI.LichHen;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.DatLichMoiController;
+import controller.LichHen.DatLichMoiController;
 import entity.DichVu.DichVu_entity;
 import entity.ThuCung.HoSoSucKhoe_entity;
 import entity.KhachHang.KhachHang;

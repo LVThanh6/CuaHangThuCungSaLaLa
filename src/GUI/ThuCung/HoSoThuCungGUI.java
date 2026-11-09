@@ -3,7 +3,7 @@ package GUI.ThuCung;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 import GUI.GiaoDienChinhGUI;
-import controller.HoSoThuCungController;
+import controller.ThuCung.HoSoThuCungController;
 import entity.KhachHang.KhachHang;
 import entity.ThuCung.ThuCung_entity;
 import java.awt.*;
