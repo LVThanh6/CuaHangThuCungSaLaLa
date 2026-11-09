@@ -1,12 +1,11 @@
 package dao.TaiKhoan;
 
+
 import entity.TaiKhoan.TaiKhoan;
 
 /**
- * Lớp Session quản lý phiên làm việc của người dùng hiện tại sau khi đăng nhập
- * thành công.
- * Cung cấp thông tin (Tài khoản, Tên, Vai trò, Mã đối tượng QL/NV/BS) cho toàn
- * bộ
+ * Lớp Session quản lý phiên làm việc của người dùng hiện tại sau khi đăng nhập thành công.
+ * Cung cấp thông tin (Tài khoản, Tên, Vai trò, Mã đối tượng QL/NV/BS) cho toàn bộ 
  * các chức năng khác trong hệ thống SALALA Pet Shop.
  */
 public class DangNhap_DAO {
@@ -17,9 +16,8 @@ public class DangNhap_DAO {
 
     /**
      * Thiết lập thông tin phiên đăng nhập
-     * 
-     * @param tk   Tài khoản vừa đăng nhập thành công
-     * @param ten  Tên hiển thị của người dùng (Họ và tên thực tế)
+     * @param tk Tài khoản vừa đăng nhập thành công
+     * @param ten Tên hiển thị của người dùng (Họ và tên thực tế)
      * @param maDT Mã đối tượng tham chiếu trong CSDL (Ví dụ: NV001, BS002, QL01)
      */
     public static void dangNhap(TaiKhoan tk, String ten, String maDT) {
@@ -49,7 +47,7 @@ public class DangNhap_DAO {
     // ==========================================
     // GETTERS ĐỂ CÁC MÀN HÌNH KHÁC TRUY XUẤT
     // ==========================================
-
+    
     public static TaiKhoan getTaiKhoanHienTai() {
         return taiKhoanHienTai;
     }

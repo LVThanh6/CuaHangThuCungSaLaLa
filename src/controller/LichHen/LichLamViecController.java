@@ -70,8 +70,7 @@ public class LichLamViecController {
 
     public void luu(NhanSuLichLamViec_entity nhanSu, LocalDate ngay, String gioBatDauText,
             String gioKetThucText, LichLamViec_entity lichHienTai) throws SQLException {
-        if (nhanSu == null)
-            throw new IllegalArgumentException("Vui lòng chọn nhân viên hoặc bác sĩ.");
+        if (nhanSu == null) throw new IllegalArgumentException("Vui lòng chọn nhân viên hoặc bác sĩ.");
         LocalTime gioBatDau;
         LocalTime gioKetThuc;
         try {
@@ -91,10 +90,8 @@ public class LichLamViecController {
                 themMoi ? LichLamViec_entity.TRANG_THAI_CHUA_LAM : lichHienTai.getTrangThai(),
                 nhanSu.getLoaiNhanSu());
         boolean daLuu = themMoi ? dao.themLich(lich) : dao.capNhatLich(lich);
-        if (!daLuu)
-            throw new IllegalStateException(themMoi
-                    ? "Không thể tạo lịch làm việc."
-                    : "Không thể cập nhật lịch làm việc.");
+        if (!daLuu) throw new IllegalStateException(themMoi
+                ? "Không thể tạo lịch làm việc." : "Không thể cập nhật lịch làm việc.");
     }
 
     public boolean coTheThem(LocalDate ngay, LocalDate homNay) {
@@ -112,7 +109,6 @@ public class LichLamViecController {
     public static final class DuLieuLich {
         public final List<LichLamViec_entity> danhSach;
         public final Map<LocalDate, Integer> soLichTheoNgay;
-
         public DuLieuLich(List<LichLamViec_entity> danhSach, Map<LocalDate, Integer> soLichTheoNgay) {
             this.danhSach = danhSach;
             this.soLichTheoNgay = soLichTheoNgay;
@@ -122,7 +118,6 @@ public class LichLamViecController {
     public static final class KhoangNgay {
         public final LocalDate tuNgay;
         public final LocalDate denNgayExclusive;
-
         private KhoangNgay(LocalDate tuNgay, LocalDate denNgayExclusive) {
             this.tuNgay = tuNgay;
             this.denNgayExclusive = denNgayExclusive;

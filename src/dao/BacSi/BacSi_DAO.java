@@ -36,14 +36,12 @@ public class BacSi_DAO {
      */
     public List<LichLamViecDong> getLichLamViec(String maBacSi, LocalDate tu, LocalDate den) throws SQLException {
         List<LichLamViecDong> ds = new ArrayList<>();
-        if (maBacSi == null || maBacSi.isBlank() || tu == null || den == null)
-            return ds;
+        if (maBacSi == null || maBacSi.isBlank() || tu == null || den == null) return ds;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return ds;
+        if (con == null) return ds;
 
         String sql = "SELECT ngay, gioBatDau, gioKetThuc, trangThai FROM LichLamViec " +
-                "WHERE maBacSi = ? AND ngay >= ? AND ngay < ? ORDER BY ngay, gioBatDau";
+                     "WHERE maBacSi = ? AND ngay >= ? AND ngay < ? ORDER BY ngay, gioBatDau";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maBacSi.trim());
             ps.setDate(2, Date.valueOf(tu));
@@ -54,10 +52,10 @@ public class BacSi_DAO {
                     java.sql.Time b = rs.getTime("gioBatDau");
                     java.sql.Time k = rs.getTime("gioKetThuc");
                     ds.add(new LichLamViecDong(
-                            n != null ? n.toLocalDate() : null,
-                            b != null ? b.toLocalTime() : null,
-                            k != null ? k.toLocalTime() : null,
-                            rs.getString("trangThai")));
+                        n != null ? n.toLocalDate() : null,
+                        b != null ? b.toLocalTime() : null,
+                        k != null ? k.toLocalTime() : null,
+                        rs.getString("trangThai")));
                 }
             }
         }
@@ -65,27 +63,24 @@ public class BacSi_DAO {
     }
 
     /**
-     * Lấy toàn bộ danh sách bác sĩ kèm trạng thái tài khoản và tổng số ca khám
-     * tháng hiện tại
+     * Lấy toàn bộ danh sách bác sĩ kèm trạng thái tài khoản và tổng số ca khám tháng hiện tại
      */
     public List<BacSi_entity> getAll() throws SQLException {
         List<BacSi_entity> ds = new ArrayList<>();
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return ds;
+        if (con == null) return ds;
 
-        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, cn.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, "
-                +
-                "tk.trangThai AS trangThaiTK, " +
-                "(SELECT COUNT(*) FROM HoSoSucKhoe h WHERE h.maBacSi = bs.maBacSi " +
-                " AND MONTH(h.ngayKham) = MONTH(GETDATE()) AND YEAR(h.ngayKham) = YEAR(GETDATE())) AS soCaKham " +
-                "FROM BacSyThuY bs " +
-                "LEFT JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
-                "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
-                "ORDER BY bs.maBacSi ASC";
+        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, cn.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, " +
+                     "tk.trangThai AS trangThaiTK, " +
+                     "(SELECT COUNT(*) FROM HoSoSucKhoe h WHERE h.maBacSi = bs.maBacSi " +
+                     " AND MONTH(h.ngayKham) = MONTH(GETDATE()) AND YEAR(h.ngayKham) = YEAR(GETDATE())) AS soCaKham " +
+                     "FROM BacSyThuY bs " +
+                     "LEFT JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
+                     "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
+                     "ORDER BY bs.maBacSi ASC";
 
         try (PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Date nsSQL = rs.getDate("ngaySinh");
                 LocalDate ngaySinh = nsSQL != null ? nsSQL.toLocalDate() : null;
@@ -96,17 +91,18 @@ public class BacSi_DAO {
                 }
 
                 BacSi_entity bs = new BacSi_entity(
-                        rs.getString("maBacSi"),
-                        rs.getString("maTK"),
-                        rs.getString("hoTen"),
-                        rs.getString("gioiTinh"),
-                        rs.getString("sdt"),
-                        rs.getString("tenChuyenNganh"),
-                        rs.getString("email"),
-                        ngaySinh,
-                        rs.getDouble("luongThang"),
-                        rs.getInt("soCaKham"),
-                        trangThaiTK);
+                    rs.getString("maBacSi"),
+                    rs.getString("maTK"),
+                    rs.getString("hoTen"),
+                    rs.getString("gioiTinh"),
+                    rs.getString("sdt"),
+                    rs.getString("tenChuyenNganh"),
+                    rs.getString("email"),
+                    ngaySinh,
+                    rs.getDouble("luongThang"),
+                    rs.getInt("soCaKham"),
+                    trangThaiTK
+                );
                 ds.add(bs);
             }
         }
@@ -117,19 +113,16 @@ public class BacSi_DAO {
      * Lấy thông tin một bác sĩ theo mã (nhanh, không cần đếm ca khám toàn hệ thống)
      */
     public BacSi_entity getBacSiTheoMa(String maBacSi) throws SQLException {
-        if (maBacSi == null || maBacSi.isBlank())
-            return null;
+        if (maBacSi == null || maBacSi.isBlank()) return null;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return null;
+        if (con == null) return null;
 
-        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, cn.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, "
-                +
-                "tk.trangThai AS trangThaiTK " +
-                "FROM BacSyThuY bs " +
-                "LEFT JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
-                "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
-                "WHERE bs.maBacSi = ?";
+        String sql = "SELECT bs.maBacSi, bs.maTK, bs.hoTen, bs.gioiTinh, bs.sdt, cn.tenChuyenNganh, bs.email, bs.ngaySinh, bs.luongThang, " +
+                     "tk.trangThai AS trangThaiTK " +
+                     "FROM BacSyThuY bs " +
+                     "LEFT JOIN ChuyenNganh cn ON cn.maChuyenNganh = bs.maChuyenNganh " +
+                     "LEFT JOIN TaiKhoan tk ON bs.maTK = tk.maTK " +
+                     "WHERE bs.maBacSi = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maBacSi.trim());
@@ -142,17 +135,18 @@ public class BacSi_DAO {
                         trangThaiTK = rs.getBoolean("trangThaiTK");
                     }
                     return new BacSi_entity(
-                            rs.getString("maBacSi"),
-                            rs.getString("maTK"),
-                            rs.getString("hoTen"),
-                            rs.getString("gioiTinh"),
-                            rs.getString("sdt"),
-                            rs.getString("tenChuyenNganh"),
-                            rs.getString("email"),
-                            ngaySinh,
-                            rs.getDouble("luongThang"),
-                            0,
-                            trangThaiTK);
+                        rs.getString("maBacSi"),
+                        rs.getString("maTK"),
+                        rs.getString("hoTen"),
+                        rs.getString("gioiTinh"),
+                        rs.getString("sdt"),
+                        rs.getString("tenChuyenNganh"),
+                        rs.getString("email"),
+                        ngaySinh,
+                        rs.getDouble("luongThang"),
+                        0,
+                        trangThaiTK
+                    );
                 }
             }
         }
@@ -164,12 +158,11 @@ public class BacSi_DAO {
      */
     public int getTongNhanVien() throws SQLException {
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return 0;
+        if (con == null) return 0;
 
         String sql = "SELECT COUNT(*) FROM NhanVien";
         try (Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -182,12 +175,11 @@ public class BacSi_DAO {
      */
     public String getMaTiepTheo() throws SQLException {
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return "BS001";
+        if (con == null) return "BS001";
 
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maBacSi, 3, LEN(maBacSi)) AS INT)), 0) FROM BacSyThuY WHERE maBacSi LIKE 'BS%'";
         try (Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 int max = rs.getInt(1);
                 return String.format("BS%03d", max + 1);
@@ -200,11 +192,9 @@ public class BacSi_DAO {
      * Thêm bác sĩ mới vào CSDL
      */
     public boolean them(BacSi_entity bs) throws SQLException {
-        if (bs == null || bs.getMaBacSi() == null)
-            return false;
+        if (bs == null || bs.getMaBacSi() == null) return false;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
         String tenCN = bs.getChuyenNganh() != null ? bs.getChuyenNganh().getTenChuyenNganh() : null;
@@ -214,9 +204,8 @@ public class BacSi_DAO {
             maCN = cnDao.getMaTheoTen(tenCN);
         }
 
-        String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, maChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang) "
-                +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO BacSyThuY (maBacSi, maTK, maChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, bs.getMaBacSi());
             String maTK = bs.getMaTK() != null ? bs.getMaTK().getMaTK() : null;
@@ -249,11 +238,9 @@ public class BacSi_DAO {
      * Cập nhật thông tin bác sĩ
      */
     public boolean capNhat(BacSi_entity bs) throws SQLException {
-        if (bs == null || bs.getMaBacSi() == null)
-            return false;
+        if (bs == null || bs.getMaBacSi() == null) return false;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         ChuyenNganh_DAO cnDao = new ChuyenNganh_DAO();
         String tenCN = bs.getChuyenNganh() != null ? bs.getChuyenNganh().getTenChuyenNganh() : null;
@@ -264,7 +251,7 @@ public class BacSi_DAO {
         }
 
         String sql = "UPDATE BacSyThuY SET maChuyenNganh = ?, hoTen = ?, gioiTinh = ?, " +
-                "sdt = ?, email = ?, ngaySinh = ?, luongThang = ? WHERE maBacSi = ?";
+                     "sdt = ?, email = ?, ngaySinh = ?, luongThang = ? WHERE maBacSi = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             if (maCN != null) {
                 ps.setString(1, maCN);
@@ -291,11 +278,9 @@ public class BacSi_DAO {
      * Xóa bác sĩ theo mã
      */
     public boolean xoa(String maBacSi) throws SQLException {
-        if (maBacSi == null || maBacSi.isBlank())
-            return false;
+        if (maBacSi == null || maBacSi.isBlank()) return false;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         String sql = "DELETE FROM BacSyThuY WHERE maBacSi = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -308,11 +293,9 @@ public class BacSi_DAO {
      * Đổi trạng thái tài khoản của bác sĩ (Hoạt động / Tạm nghỉ)
      */
     public boolean doiTrangThaiTaiKhoan(String maBacSi, boolean trangThai) throws SQLException {
-        if (maBacSi == null || maBacSi.isBlank())
-            return false;
+        if (maBacSi == null || maBacSi.isBlank()) return false;
         Connection con = ConnectDB.getCon();
-        if (con == null)
-            return false;
+        if (con == null) return false;
 
         String sql = "UPDATE TaiKhoan SET trangThai = ? WHERE maTK = (SELECT maTK FROM BacSyThuY WHERE maBacSi = ?)";
         try (PreparedStatement ps = con.prepareStatement(sql)) {

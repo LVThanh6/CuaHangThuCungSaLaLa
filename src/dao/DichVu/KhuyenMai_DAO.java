@@ -20,7 +20,7 @@ public class KhuyenMai_DAO {
         ArrayList<KhuyenMai_Entity> dsKM = new ArrayList<>();
 
         String sql = "SELECT maKM, tenKM, mucKM, ngayBatDau, "
-                + "ngayKetThuc, dieuKien FROM KhuyenMai";
+                   + "ngayKetThuc, dieuKien FROM KhuyenMai";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -30,7 +30,7 @@ public class KhuyenMai_DAO {
             }
 
             try (PreparedStatement ps = con.prepareStatement(sql);
-                    ResultSet rs = ps.executeQuery()) {
+                 ResultSet rs = ps.executeQuery()) {
 
                 while (rs.next()) {
                     String maKM = rs.getString("maKM");
@@ -40,15 +40,18 @@ public class KhuyenMai_DAO {
                     Date ngayBD = rs.getDate("ngayBatDau");
                     Date ngayKT = rs.getDate("ngayKetThuc");
 
-                    java.time.LocalDate ngayBatDau = ngayBD != null ? ngayBD.toLocalDate() : null;
+                    java.time.LocalDate ngayBatDau =
+                            ngayBD != null ? ngayBD.toLocalDate() : null;
 
-                    java.time.LocalDate ngayKetThuc = ngayKT != null ? ngayKT.toLocalDate() : null;
+                    java.time.LocalDate ngayKetThuc =
+                            ngayKT != null ? ngayKT.toLocalDate() : null;
 
                     String dieuKien = rs.getString("dieuKien");
 
                     KhuyenMai_Entity km = new KhuyenMai_Entity(
                             maKM, tenKM, mucKM,
-                            ngayBatDau, ngayKetThuc, dieuKien);
+                            ngayBatDau, ngayKetThuc, dieuKien
+                    );
 
                     dsKM.add(km);
                 }
@@ -66,8 +69,8 @@ public class KhuyenMai_DAO {
      */
     public boolean createKhuyenMai(KhuyenMai_Entity km) {
         String sql = "INSERT INTO KhuyenMai "
-                + "(maKM, tenKM, mucKM, ngayBatDau, ngayKetThuc, dieuKien) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                   + "(maKM, tenKM, mucKM, ngayBatDau, ngayKetThuc, dieuKien) "
+                   + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -136,9 +139,9 @@ public class KhuyenMai_DAO {
      */
     public boolean updateKhuyenMai(KhuyenMai_Entity km) {
         String sql = "UPDATE KhuyenMai "
-                + "SET tenKM = ?, mucKM = ?, ngayBatDau = ?, "
-                + "ngayKetThuc = ?, dieuKien = ? "
-                + "WHERE maKM = ?";
+                   + "SET tenKM = ?, mucKM = ?, ngayBatDau = ?, "
+                   + "ngayKetThuc = ?, dieuKien = ? "
+                   + "WHERE maKM = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -181,8 +184,8 @@ public class KhuyenMai_DAO {
      */
     public KhuyenMai_Entity getKhuyenMaiTheoMa(String maKM) {
         String sql = "SELECT maKM, tenKM, mucKM, ngayBatDau, "
-                + "ngayKetThuc, dieuKien "
-                + "FROM KhuyenMai WHERE maKM = ?";
+                   + "ngayKetThuc, dieuKien "
+                   + "FROM KhuyenMai WHERE maKM = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -199,9 +202,11 @@ public class KhuyenMai_DAO {
                         Date ngayBD = rs.getDate("ngayBatDau");
                         Date ngayKT = rs.getDate("ngayKetThuc");
 
-                        java.time.LocalDate ngayBatDau = ngayBD != null ? ngayBD.toLocalDate() : null;
+                        java.time.LocalDate ngayBatDau =
+                                ngayBD != null ? ngayBD.toLocalDate() : null;
 
-                        java.time.LocalDate ngayKetThuc = ngayKT != null ? ngayKT.toLocalDate() : null;
+                        java.time.LocalDate ngayKetThuc =
+                                ngayKT != null ? ngayKT.toLocalDate() : null;
 
                         return new KhuyenMai_Entity(
                                 rs.getString("maKM"),
@@ -209,7 +214,8 @@ public class KhuyenMai_DAO {
                                 rs.getDouble("mucKM"),
                                 ngayBatDau,
                                 ngayKetThuc,
-                                rs.getString("dieuKien"));
+                                rs.getString("dieuKien")
+                        );
                     }
                 }
             }

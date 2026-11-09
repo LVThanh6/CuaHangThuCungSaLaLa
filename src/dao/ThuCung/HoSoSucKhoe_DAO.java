@@ -22,8 +22,8 @@ public class HoSoSucKhoe_DAO {
     public List<HoSoSucKhoe_entity> getAllHoSoSucKhoe() throws SQLException {
         List<HoSoSucKhoe_entity> danhSach = new ArrayList<>();
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "ORDER BY h.ngayKham DESC, h.maHSSK");
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "ORDER BY h.ngayKham DESC, h.maHSSK");
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 danhSach.add(mapHoSo(rs));
             }
@@ -33,12 +33,10 @@ public class HoSoSucKhoe_DAO {
 
     public List<HoSoSucKhoe_entity> getHoSoSucKhoeTheoMaTC(String maTC) throws SQLException {
         List<HoSoSucKhoe_entity> danhSach = new ArrayList<>();
-        if (maTC == null || maTC.isBlank())
-            return danhSach;
+        if (maTC == null || maTC.isBlank()) return danhSach;
 
         try (Connection con = ketNoi();
-                PreparedStatement ps = con
-                        .prepareStatement(SELECT_COLUMNS + "WHERE h.maTC = ? ORDER BY h.ngayKham DESC, h.maHSSK")) {
+             PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "WHERE h.maTC = ? ORDER BY h.ngayKham DESC, h.maHSSK")) {
             ps.setString(1, maTC.trim());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -50,10 +48,9 @@ public class HoSoSucKhoe_DAO {
     }
 
     public HoSoSucKhoe_entity getHoSoSucKhoeTheoMa(String maHSSK) throws SQLException {
-        if (maHSSK == null || maHSSK.isBlank())
-            return null;
+        if (maHSSK == null || maHSSK.isBlank()) return null;
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "WHERE h.maHSSK = ?")) {
+             PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "WHERE h.maHSSK = ?")) {
             ps.setString(1, maHSSK.trim());
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapHoSo(rs) : null;
@@ -63,10 +60,9 @@ public class HoSoSucKhoe_DAO {
 
     public String getMaTiepTheo() throws SQLException {
         try (Connection con = ketNoi();
-                PreparedStatement ps = con
-                        .prepareStatement("SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maHSSK, 3, 18) AS INT)), 0) "
-                                + "FROM HoSoSucKhoe WHERE maHSSK LIKE 'HS%'");
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement("SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maHSSK, 3, 18) AS INT)), 0) "
+                     + "FROM HoSoSucKhoe WHERE maHSSK LIKE 'HS%'");
+             ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return String.format("HS%03d", rs.getInt(1) + 1);
             }
@@ -75,8 +71,7 @@ public class HoSoSucKhoe_DAO {
     }
 
     public boolean createHoSoSucKhoe(HoSoSucKhoe_entity hoSo) throws SQLException {
-        if (hoSo == null)
-            return false;
+        if (hoSo == null) return false;
         String sql = "INSERT INTO HoSoSucKhoe (maHSSK, maTC, maBacSi, ngayKham, trieuChung, chuanDoan, canNang) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = ketNoi(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -86,8 +81,7 @@ public class HoSoSucKhoe_DAO {
     }
 
     public boolean updateHoSoSucKhoe(HoSoSucKhoe_entity hoSo) throws SQLException {
-        if (hoSo == null)
-            return false;
+        if (hoSo == null) return false;
         String sql = "UPDATE HoSoSucKhoe SET maTC = ?, maBacSi = ?, ngayKham = ?, trieuChung = ?, "
                 + "chuanDoan = ?, canNang = ? WHERE maHSSK = ?";
         try (Connection con = ketNoi(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -107,10 +101,9 @@ public class HoSoSucKhoe_DAO {
     }
 
     public boolean deleteHoSoSucKhoe(String maHSSK) throws SQLException {
-        if (maHSSK == null || maHSSK.isBlank())
-            return false;
+        if (maHSSK == null || maHSSK.isBlank()) return false;
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement("DELETE FROM HoSoSucKhoe WHERE maHSSK = ?")) {
+             PreparedStatement ps = con.prepareStatement("DELETE FROM HoSoSucKhoe WHERE maHSSK = ?")) {
             ps.setString(1, maHSSK.trim());
             return ps.executeUpdate() == 1;
         }

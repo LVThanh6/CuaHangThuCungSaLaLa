@@ -37,7 +37,20 @@ import java.util.function.Supplier;
 public class PhieuNhapKhoGUI extends JPanel {
 
     // ===== Màu sắc =====
-
+    private static final Color BG = new Color(0xF8FAFC);
+    private static final Color WHITE = Color.WHITE;
+    private static final Color BORDER = new Color(0xE5E7EB);
+    private static final Color TEXT_DARK = new Color(0x111827);
+    private static final Color TEXT_GRAY = new Color(0x6B7280);
+    private static final Color PRIMARY = new Color(0x0F6B5A);
+    private static final Color PRIMARY_BG = new Color(0xE6F7F3);
+    private static final Color GREEN = new Color(0x047857);
+    private static final Color ORANGE = new Color(0xC2410C);
+    private static final Color RED = new Color(0xB91C1C);
+    private static final Color GREEN_BG = new Color(0xDCFCE7);
+    private static final Color ORANGE_BG = new Color(0xFEF3C7);
+    private static final Color RED_BG = new Color(0xFEE2E2);
+    private static final Color GRAY_BG = new Color(0xF3F4F6);
 
     private static final String FONT = "Segoe UI";
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -86,7 +99,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         this.onTonKhoThayDoi = onTonKhoThayDoi;
 
         setLayout(new BorderLayout(0, 14));
-        setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        setBackground(BG);
         setBorder(new EmptyBorder(16, 24, 24, 24));
 
         add(createHeader(), BorderLayout.NORTH);
@@ -121,10 +134,10 @@ public class PhieuNhapKhoGUI extends JPanel {
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         JLabel t = new JLabel("Phiếu nhập kho");
         t.setFont(new Font(FONT, Font.BOLD, 18));
-        t.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        t.setForeground(TEXT_DARK);
         JLabel s = new JLabel("Tạo mới, xem, sửa và xác nhận phiếu nhập kho cho vật tư");
         s.setFont(new Font(FONT, Font.PLAIN, 12));
-        s.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        s.setForeground(TEXT_GRAY);
         t.setAlignmentX(LEFT_ALIGNMENT);
         s.setAlignmentX(LEFT_ALIGNMENT);
         left.add(t);
@@ -133,7 +146,8 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
-
+        RoundButton btnLap = new RoundButton("Lập phiếu nhập", PRIMARY, PRIMARY, WHITE);
+        RoundButton btnXuat = new RoundButton("Lập phiếu xuất", WHITE, PRIMARY, PRIMARY);
         btnLap.addActionListener(e -> lapPhieu());
         btnXuat.addActionListener(e -> {
             if (onLapPhieuXuat != null)
@@ -151,7 +165,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     // Khung bảng danh sách phiếu nhập
     // =====================================================================
     private JComponent createTablePanel() {
-        RoundedPanel box = new RoundedPanel(12, RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_DUONG_VIEN);
+        RoundedPanel box = new RoundedPanel(12, WHITE, BORDER);
         box.setLayout(new BorderLayout());
 
         // Thanh lọc
@@ -161,7 +175,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         txtSearch.setFont(new Font(FONT, Font.PLAIN, 12));
         txtSearch.getDocument().addDocumentListener(new SimpleDocListener(() -> reload(true)));
 
-        btnDate = new RoundButton("Ngày lập: Tất cả", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
+        btnDate = new RoundButton("Ngày lập: Tất cả", WHITE, BORDER, TEXT_DARK);
         btnDate.setFont(new Font(FONT, Font.PLAIN, 12));
         btnDate.setPreferredSize(new Dimension(230, 34));
         btnDate.addActionListener(e -> showDateFilter());
@@ -169,7 +183,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         cboTrangThai = new JComboBox<>(new String[] {
                 "Trạng thái: Tất cả", "Trạng thái: Chờ xác nhận", "Trạng thái: Đã xác nhận", "Trạng thái: Đã hủy" });
         cboTrangThai.setFont(new Font(FONT, Font.PLAIN, 12));
-        cboTrangThai.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        cboTrangThai.setBackground(WHITE);
         cboTrangThai.setPreferredSize(new Dimension(180, 34));
         cboTrangThai.addActionListener(e -> reload(true));
 
@@ -179,7 +193,9 @@ public class PhieuNhapKhoGUI extends JPanel {
         filterLeft.add(btnDate);
         filterLeft.add(cboTrangThai);
 
-
+        RoundButton btnXem = new RoundButton("Xem", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnSua = new RoundButton("Sửa", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnExport = new RoundButton("Xuất danh sách", WHITE, BORDER, TEXT_DARK);
 
         btnXem.addActionListener(e -> {
             int sel = table.getSelectedRow();
@@ -233,10 +249,10 @@ public class PhieuNhapKhoGUI extends JPanel {
         table.setFont(new Font(FONT, Font.PLAIN, 12));
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
-        table.setGridColor(RangBuocGiaoDien.MAU_DUONG_VIEN);
+        table.setGridColor(new Color(0xF0F1F3));
         table.setIntercellSpacing(new Dimension(0, 1));
-        table.setSelectionBackground(RangBuocGiaoDien.MAU_DUONG_VIEN);
-        table.setSelectionForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        table.setSelectionBackground(new Color(0xE8F5F2));
+        table.setSelectionForeground(TEXT_DARK);
         table.setFillsViewportHeight(true);
         table.setFocusable(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -246,7 +262,17 @@ public class PhieuNhapKhoGUI extends JPanel {
         h.setPreferredSize(new Dimension(0, 36));
         h.setDefaultRenderer(new HeaderRenderer(4, 5));
 
-
+        table.getColumnModel().getColumn(0).setCellRenderer(new Cell(PRIMARY, Font.BOLD, SwingConstants.LEFT, false));
+        table.getColumnModel().getColumn(1)
+                .setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT, false));
+        table.getColumnModel().getColumn(2)
+                .setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT, false));
+        table.getColumnModel().getColumn(3)
+                .setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT, false));
+        table.getColumnModel().getColumn(4)
+                .setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.RIGHT, false));
+        table.getColumnModel().getColumn(5)
+                .setCellRenderer(new Cell(TEXT_DARK, Font.PLAIN, SwingConstants.RIGHT, true));
         table.getColumnModel().getColumn(6).setCellRenderer(new StatusRenderer());
         int[] widths = { 100, 100, 130, 220, 120, 120, 120 };
         for (int i = 0; i < widths.length; i++) {
@@ -254,17 +280,17 @@ public class PhieuNhapKhoGUI extends JPanel {
         }
 
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
-        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        sp.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER));
+        sp.getViewport().setBackground(WHITE);
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
         // Thông tin bên dưới bảng
         lblShowing = new JLabel();
         lblShowing.setFont(new Font(FONT, Font.PLAIN, 12));
-        lblShowing.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        lblShowing.setForeground(TEXT_GRAY);
         JLabel note = new JLabel("Tồn kho chỉ được cập nhật sau khi xác nhận phiếu nhập.");
         note.setFont(new Font(FONT, Font.PLAIN, 11));
-        note.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        note.setForeground(TEXT_GRAY);
         JPanel chanTrai = new JPanel();
         chanTrai.setOpaque(false);
         chanTrai.setLayout(new BoxLayout(chanTrai, BoxLayout.Y_AXIS));
@@ -277,7 +303,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         JPanel chan = new JPanel(new BorderLayout());
         chan.setOpaque(false);
         chan.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
+                BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER),
                 new EmptyBorder(10, 16, 10, 12)));
         chan.add(chanTrai, BorderLayout.WEST);
 
@@ -403,7 +429,7 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel content = new JPanel(new BorderLayout(0, 10));
         content.setBorder(new EmptyBorder(16, 20, 16, 20));
-        content.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        content.setBackground(WHITE);
 
         JPanel info = new JPanel(new GridLayout(2, 2, 16, 8));
         info.setOpaque(false);
@@ -432,16 +458,16 @@ public class PhieuNhapKhoGUI extends JPanel {
         JLabel lblSum = new JLabel("Tổng số lượng: " + PhieuNhapKhoController.tongSoLuong(p)
                 + "    Tổng giá trị: " + MONEY.format(PhieuNhapKhoController.tongTien(p)) + " đ");
         lblSum.setFont(new Font(FONT, Font.BOLD, 13));
-        lblSum.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        lblSum.setForeground(PRIMARY);
         bottom.add(lblSum, BorderLayout.WEST);
 
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
         btnBar.setOpaque(false);
 
-        RoundButton btnXN = new RoundButton("Xác nhận & Cập nhật tồn", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_TRANG);
-        RoundButton btnHuyP = new RoundButton("Hủy phiếu", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
-        RoundButton btnIn = new RoundButton("In / Xuất", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
-        RoundButton btnDong = new RoundButton("Đóng", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
+        RoundButton btnXN = new RoundButton("Xác nhận & Cập nhật tồn", PRIMARY, PRIMARY, WHITE);
+        RoundButton btnHuyP = new RoundButton("Hủy phiếu", WHITE, new Color(0xFCA5A5), RED);
+        RoundButton btnIn = new RoundButton("In / Xuất", WHITE, BORDER, TEXT_DARK);
+        RoundButton btnDong = new RoundButton("Đóng", WHITE, BORDER, TEXT_DARK);
 
         boolean cho = p.tt == TrangThai.CHO_XAC_NHAN;
         btnXN.setEnabled(cho);
@@ -511,10 +537,10 @@ public class PhieuNhapKhoGUI extends JPanel {
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         JLabel l = new JLabel(label);
         l.setFont(new Font(FONT, Font.PLAIN, 11));
-        l.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        l.setForeground(TEXT_GRAY);
         JLabel v = new JLabel(value);
         v.setFont(new Font(FONT, Font.BOLD, 12));
-        v.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        v.setForeground(TEXT_DARK);
         p.add(l);
         p.add(Box.createVerticalStrut(2));
         p.add(v);
@@ -569,7 +595,7 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(new EmptyBorder(12, 14, 6, 14));
-        form.setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+        form.setBackground(WHITE);
         addFormRow(form, 0, "Số phiếu", txtSo);
         addFormRow(form, 1, "Ngày lập (dd/MM/yyyy)", txtNgay);
         addFormRow(form, 2, "Nhân viên lập", cboNV);
@@ -665,8 +691,8 @@ public class PhieuNhapKhoGUI extends JPanel {
         mid.add(addBar, BorderLayout.NORTH);
         mid.add(new JScrollPane(t), BorderLayout.CENTER);
 
-        JButton btnLuu = new RoundButton(src == null ? "Lập phiếu" : "Lưu thay đổi", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_TRANG);
-        JButton btnHuy = new RoundButton("Hủy", RangBuocGiaoDien.MAU_NEN_TRANG, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
+        JButton btnLuu = new RoundButton(src == null ? "Lập phiếu" : "Lưu thay đổi", PRIMARY, PRIMARY, WHITE);
+        JButton btnHuy = new RoundButton("Hủy", WHITE, BORDER, TEXT_DARK);
         btnHuy.addActionListener(e -> d.dispose());
         btnLuu.addActionListener(e -> {
             if (t.isEditing())
@@ -839,10 +865,10 @@ public class PhieuNhapKhoGUI extends JPanel {
             super.getTableCellRendererComponent(t, v, false, false, r, c);
             setHorizontalAlignment(phai.contains(c) ? SwingConstants.RIGHT : SwingConstants.LEFT);
             setFont(new Font(FONT, Font.BOLD, 10));
-            setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-            setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
+            setForeground(TEXT_GRAY);
+            setBackground(new Color(0xF9FAFB));
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
                     new EmptyBorder(0, 12, 0, 12)));
             return this;
         }
@@ -888,7 +914,13 @@ public class PhieuNhapKhoGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String s = v == null ? "" : v.toString();
-
+            badge.setText(s);
+            if ("Đã xác nhận".equals(s))
+                badge.setColors(GREEN_BG, GREEN);
+            else if ("Đã hủy".equals(s))
+                badge.setColors(RED_BG, RED);
+            else
+                badge.setColors(ORANGE_BG, ORANGE);
             panel.setOpaque(true);
             panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
             return panel;
@@ -896,6 +928,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     private static class Badge extends JLabel {
+        private Color bg = ORANGE_BG;
 
         Badge() {
             setOpaque(false);
@@ -940,7 +973,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         @Override
         public void setEnabled(boolean b) {
             super.setEnabled(b);
-            setForeground(b ? fg : RangBuocGiaoDien.MAU_CHU_PHU);
+            setForeground(b ? fg : new Color(0x9CA3AF));
             setCursor(Cursor.getPredefinedCursor(b ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
         }
 
@@ -949,9 +982,9 @@ public class PhieuNhapKhoGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             boolean en = isEnabled();
-            g2.setColor(en ? fill : RangBuocGiaoDien.MAU_NEN_TRANG);
+            g2.setColor(en ? fill : GRAY_BG);
             g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
-            g2.setColor(en ? line : RangBuocGiaoDien.MAU_DUONG_VIEN);
+            g2.setColor(en ? line : BORDER);
             g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
             g2.dispose();
             super.paintComponent(g);

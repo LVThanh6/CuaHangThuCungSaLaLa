@@ -217,16 +217,14 @@ public class HangThanhVienController {
         }
         String min = String.format(Locale.US, "%.0f", tier.getChiTieuToiThieu());
         String max = tier.getChiTieuToiDa() != null
-                ? String.format(Locale.US, "%.0f", tier.getChiTieuToiDa())
-                : "";
+                ? String.format(Locale.US, "%.0f", tier.getChiTieuToiDa()) : "";
         String discount = String.format(Locale.US, "%.1f", tier.getMucGiamGia());
         String points = String.format(Locale.US, "%.1f", tier.getDiemTichLuy1Van());
         String benefits = tier.getQuyenLoi() != null ? tier.getQuyenLoi() : "";
         return new TierPolicyFormData(min, max, discount, points, benefits);
     }
 
-    public KetQuaCapNhatChinhSach xuLyCapNhatChinhSach(String tenHang, String minText, String maxText,
-            String giamGiaText,
+    public KetQuaCapNhatChinhSach xuLyCapNhatChinhSach(String tenHang, String minText, String maxText, String giamGiaText,
             String diemText, String quyenLoi) {
         Double minimum = chuyenChuoiSangSo(minText);
         if (minimum == null || minimum < 0) {
@@ -237,8 +235,7 @@ public class HangThanhVienController {
         if (maxText != null && !maxText.trim().isEmpty()) {
             maximum = chuyenChuoiSangSo(maxText);
             if (maximum == null) {
-                return new KetQuaCapNhatChinhSach(false, true, PolicyField.MAXIMUM,
-                        "Chi tiêu tối đa phải là số hợp lệ!");
+                return new KetQuaCapNhatChinhSach(false, true, PolicyField.MAXIMUM, "Chi tiêu tối đa phải là số hợp lệ!");
             }
             if (maximum <= minimum) {
                 return new KetQuaCapNhatChinhSach(false, true, PolicyField.MAXIMUM,
@@ -262,8 +259,7 @@ public class HangThanhVienController {
         if (saved) {
             String thongBao = "Đã lưu chính sách hạng \"" + tenHang + "\" thành công vào database SALALA!\n" +
                     "- Chi tiêu: từ " + String.format(Locale.US, "%,.0f ₫", minimum).replace(',', '.')
-                    + (maximum != null ? " đến " + String.format(Locale.US, "%,.0f ₫", maximum).replace(',', '.')
-                            : " trở lên")
+                    + (maximum != null ? " đến " + String.format(Locale.US, "%,.0f ₫", maximum).replace(',', '.') : " trở lên")
                     + "\n" +
                     "- Giảm giá: " + discount + "% | Điểm/10.000₫: " + points;
             return new KetQuaCapNhatChinhSach(true, false, null, thongBao);
@@ -273,8 +269,7 @@ public class HangThanhVienController {
         }
     }
 
-    public KetQuaChuyenHang xuLyChuyenHang(String maHang, String maKH, String hoTen, String hangHienTai,
-            String hangMoi) {
+    public KetQuaChuyenHang xuLyChuyenHang(String maHang, String maKH, String hoTen, String hangHienTai, String hangMoi) {
         if (hangMoi == null || hangMoi.equals(hangHienTai)) {
             return new KetQuaChuyenHang(false, false, "Hạng thành viên không thay đổi.");
         }
@@ -302,8 +297,7 @@ public class HangThanhVienController {
     }
 
     private static Double chuyenChuoiSangSo(String text) {
-        if (text == null)
-            return null;
+        if (text == null) return null;
         try {
             return Double.parseDouble(text.trim().replace(".", "").replace(",", ""));
         } catch (Exception ex) {
@@ -387,9 +381,7 @@ public class HangThanhVienController {
         return String.format(Locale.US, "%,.0f ₫", giaTri).replace(',', '.');
     }
 
-    public enum PolicyField {
-        MINIMUM, MAXIMUM, DISCOUNT, POINTS
-    }
+    public enum PolicyField { MINIMUM, MAXIMUM, DISCOUNT, POINTS }
 
     public static final class ThongTinDongThanhVien {
         private final String maHang;
@@ -402,17 +394,9 @@ public class HangThanhVienController {
             this.hoTen = hoTen;
         }
 
-        public String getMaHang() {
-            return maHang;
-        }
-
-        public String getMaKH() {
-            return maKH;
-        }
-
-        public String getHoTen() {
-            return hoTen;
-        }
+        public String getMaHang() { return maHang; }
+        public String getMaKH() { return maKH; }
+        public String getHoTen() { return hoTen; }
     }
 
     public static final class KetQuaChuyenHang {
@@ -426,17 +410,9 @@ public class HangThanhVienController {
             this.thongBao = thongBao;
         }
 
-        public boolean isThanhCong() {
-            return thanhCong;
-        }
-
-        public boolean isCoThayDoi() {
-            return coThayDoi;
-        }
-
-        public String getThongBao() {
-            return thongBao;
-        }
+        public boolean isThanhCong() { return thanhCong; }
+        public boolean isCoThayDoi() { return coThayDoi; }
+        public String getThongBao() { return thongBao; }
     }
 
     public static final class KetQuaCapNhatChinhSach {
@@ -452,21 +428,10 @@ public class HangThanhVienController {
             this.thongBao = thongBao;
         }
 
-        public boolean isThanhCong() {
-            return thanhCong;
-        }
-
-        public boolean isLoiNhapLieu() {
-            return loiNhapLieu;
-        }
-
-        public PolicyField getTruongLoi() {
-            return truongLoi;
-        }
-
-        public String getThongBao() {
-            return thongBao;
-        }
+        public boolean isThanhCong() { return thanhCong; }
+        public boolean isLoiNhapLieu() { return loiNhapLieu; }
+        public PolicyField getTruongLoi() { return truongLoi; }
+        public String getThongBao() { return thongBao; }
     }
 
     public static final class KetQuaPhanHang {
@@ -480,17 +445,9 @@ public class HangThanhVienController {
             this.thongBao = thongBao;
         }
 
-        public boolean isThanhCong() {
-            return thanhCong;
-        }
-
-        public boolean isDanhSachRong() {
-            return danhSachRong;
-        }
-
-        public String getThongBao() {
-            return thongBao;
-        }
+        public boolean isThanhCong() { return thanhCong; }
+        public boolean isDanhSachRong() { return danhSachRong; }
+        public String getThongBao() { return thongBao; }
     }
 
     public static final class Dashboard {

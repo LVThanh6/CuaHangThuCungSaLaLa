@@ -20,19 +20,20 @@ public class LichLamViec_DAO {
 
     private static volatile boolean daKiemTraCauTrucBang = false;
 
-    private static final String SQL_LICH = "SELECT * FROM ("
-            + "SELECT l.maLLV, l.maNhanVien AS maNhanSu, nv.hoTen AS ten, "
-            + "nv.chucVu AS vaiTro, l.ngay, l.gioBatDau, l.gioKetThuc, "
-            + "l.trangThai, CAST('NHAN_VIEN' AS VARCHAR(20)) AS loaiNhanSu "
-            + "FROM LichLamViec l JOIN NhanVien nv ON nv.maNhanVien = l.maNhanVien "
-            + "WHERE l.maNhanVien IS NOT NULL "
-            + "UNION ALL "
-            + "SELECT l.maLLV, l.maBacSi AS maNhanSu, bs.hoTen AS ten, "
-            + "N'Bác sĩ' AS vaiTro, l.ngay, l.gioBatDau, l.gioKetThuc, "
-            + "l.trangThai, CAST('BAC_SI' AS VARCHAR(20)) AS loaiNhanSu "
-            + "FROM LichLamViec l JOIN BacSyThuY bs ON bs.maBacSi = l.maBacSi "
-            + "WHERE l.maBacSi IS NOT NULL"
-            + ") AS lich ";
+    private static final String SQL_LICH =
+            "SELECT * FROM ("
+                    + "SELECT l.maLLV, l.maNhanVien AS maNhanSu, nv.hoTen AS ten, "
+                    + "nv.chucVu AS vaiTro, l.ngay, l.gioBatDau, l.gioKetThuc, "
+                    + "l.trangThai, CAST('NHAN_VIEN' AS VARCHAR(20)) AS loaiNhanSu "
+                    + "FROM LichLamViec l JOIN NhanVien nv ON nv.maNhanVien = l.maNhanVien "
+                    + "WHERE l.maNhanVien IS NOT NULL "
+                    + "UNION ALL "
+                    + "SELECT l.maLLV, l.maBacSi AS maNhanSu, bs.hoTen AS ten, "
+                    + "N'Bác sĩ' AS vaiTro, l.ngay, l.gioBatDau, l.gioKetThuc, "
+                    + "l.trangThai, CAST('BAC_SI' AS VARCHAR(20)) AS loaiNhanSu "
+                    + "FROM LichLamViec l JOIN BacSyThuY bs ON bs.maBacSi = l.maBacSi "
+                    + "WHERE l.maBacSi IS NOT NULL"
+                    + ") AS lich ";
 
     public int capNhatTrangThaiTuDongQuaNgay() throws SQLException {
         String sql = "UPDATE LichLamViec SET trangThai = N'Hoàn thành' "
@@ -40,7 +41,7 @@ public class LichLamViec_DAO {
                 + "AND (trangThai IS NULL OR trangThai NOT IN (N'Hoàn thành', N'Đã hủy', N'Vắng mặt'))";
 
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             return ps.executeUpdate();
         }
     }
@@ -63,7 +64,7 @@ public class LichLamViec_DAO {
         List<LichLamViec_entity> danhSach = new ArrayList<>();
 
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(tuNgay));
             ps.setDate(2, Date.valueOf(denNgayExclusive));
 
@@ -82,7 +83,8 @@ public class LichLamViec_DAO {
                             gioBatDau != null ? gioBatDau.toLocalTime() : null,
                             gioKetThuc != null ? gioKetThuc.toLocalTime() : null,
                             rs.getString("trangThai"),
-                            LichLamViec_entity.LoaiNhanSu.valueOf(rs.getString("loaiNhanSu"))));
+                            LichLamViec_entity.LoaiNhanSu.valueOf(rs.getString("loaiNhanSu"))
+                    ));
                 }
             }
         }
@@ -99,7 +101,7 @@ public class LichLamViec_DAO {
         Map<LocalDate, Integer> soLichTheoNgay = new LinkedHashMap<>();
 
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(tuNgay));
             ps.setDate(2, Date.valueOf(denNgayExclusive));
 
@@ -126,14 +128,15 @@ public class LichLamViec_DAO {
         List<NhanSuLichLamViec_entity> danhSach = new ArrayList<>();
 
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 danhSach.add(new NhanSuLichLamViec_entity(
                         rs.getString("maNhanSu"),
                         rs.getString("tenNhanSu"),
                         rs.getString("vaiTro"),
-                        LichLamViec_entity.LoaiNhanSu.valueOf(rs.getString("loaiNhanSu"))));
+                        LichLamViec_entity.LoaiNhanSu.valueOf(rs.getString("loaiNhanSu"))
+                ));
             }
         }
         return danhSach;
@@ -219,7 +222,7 @@ public class LichLamViec_DAO {
         String sql = "UPDATE LichLamViec SET trangThai = ? "
                 + "WHERE maLLV = ? AND ngay = CAST(GETDATE() AS DATE)";
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, trangThai);
             ps.setString(2, maLLV.trim());
             if (ps.executeUpdate() == 0) {
@@ -243,7 +246,7 @@ public class LichLamViec_DAO {
                 + "(ngay = CAST(GETDATE() AS DATE) "
                 + "AND gioBatDau > CAST(GETDATE() AS TIME)))";
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maLLV.trim());
             if (ps.executeUpdate() == 0) {
                 throw new IllegalStateException("Lịch đã đến giờ bắt đầu hoặc đã bị khóa.");
@@ -256,8 +259,8 @@ public class LichLamViec_DAO {
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maLLV, 4, LEN(maLLV)) AS INT)), 0) "
                 + "FROM LichLamViec WHERE maLLV LIKE 'LLV%'";
         try (Connection con = moKetNoi();
-                PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return String.format("LLV%04d", rs.getInt(1) + 1);
             }
@@ -266,14 +269,11 @@ public class LichLamViec_DAO {
     }
 
     /**
-     * Tự động kiểm tra và đảm bảo bảng LichLamViec có đầy đủ cột maBacSi và ràng
-     * buộc cần thiết.
-     * Tự động vá (Self-healing) để ứng dụng không bao giờ bị lỗi Invalid column
-     * name 'maBacSi'.
+     * Tự động kiểm tra và đảm bảo bảng LichLamViec có đầy đủ cột maBacSi và ràng buộc cần thiết.
+     * Tự động vá (Self-healing) để ứng dụng không bao giờ bị lỗi Invalid column name 'maBacSi'.
      */
     private static synchronized void damBaoCauTrucBang(Connection con) {
-        if (daKiemTraCauTrucBang || con == null)
-            return;
+        if (daKiemTraCauTrucBang || con == null) return;
         try {
             java.sql.DatabaseMetaData meta = con.getMetaData();
             try (ResultSet rs = meta.getColumns(null, null, "LichLamViec", "maBacSi")) {
@@ -282,10 +282,8 @@ public class LichLamViec_DAO {
                         st.executeUpdate("ALTER TABLE LichLamViec ALTER COLUMN maNhanVien VARCHAR(20) NULL");
                         st.executeUpdate("ALTER TABLE LichLamViec ADD maBacSi VARCHAR(20) NULL");
                         try {
-                            st.executeUpdate(
-                                    "ALTER TABLE LichLamViec ADD CONSTRAINT FK_LichLamViec_BacSi FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi)");
-                        } catch (Exception ignored) {
-                        }
+                            st.executeUpdate("ALTER TABLE LichLamViec ADD CONSTRAINT FK_LichLamViec_BacSi FOREIGN KEY (maBacSi) REFERENCES BacSyThuY(maBacSi)");
+                        } catch (Exception ignored) {}
                     }
                 }
             }
@@ -344,8 +342,7 @@ public class LichLamViec_DAO {
     private static void kiemTraKhongTrungCa(Connection con, LichLamViec_entity lich, String maLLV)
             throws SQLException {
         String cotNhanSu = lich.getLoaiNhanSu() == LichLamViec_entity.LoaiNhanSu.BAC_SI
-                ? "maBacSi"
-                : "maNhanVien";
+                ? "maBacSi" : "maNhanVien";
         String sql = "SELECT TOP 1 maLLV FROM LichLamViec WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE " + cotNhanSu + " = ? AND ngay = ? "
                 + "AND (trangThai IS NULL OR trangThai <> N'Đã hủy') "

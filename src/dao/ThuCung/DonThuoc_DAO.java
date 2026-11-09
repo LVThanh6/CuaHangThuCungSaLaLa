@@ -22,8 +22,8 @@ public class DonThuoc_DAO {
     public List<DonThuoc_entity> getAllDonThuoc() throws SQLException {
         List<DonThuoc_entity> danhSach = new java.util.ArrayList<>();
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "ORDER BY d.ngayKeDon DESC, d.maDonThuoc");
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "ORDER BY d.ngayKeDon DESC, d.maDonThuoc");
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 danhSach.add(mapDonThuoc(rs));
             }
@@ -34,8 +34,8 @@ public class DonThuoc_DAO {
     public List<DonThuoc_entity> getDonThuocTheoMaTC(String maTC) throws SQLException {
         List<DonThuoc_entity> danhSach = new java.util.ArrayList<>();
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement(
-                        SELECT_COLUMNS + "WHERE d.maTC = ? ORDER BY d.ngayKeDon DESC, d.maDonThuoc")) {
+             PreparedStatement ps = con.prepareStatement(
+                     SELECT_COLUMNS + "WHERE d.maTC = ? ORDER BY d.ngayKeDon DESC, d.maDonThuoc")) {
             ps.setString(1, maTC);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -48,7 +48,7 @@ public class DonThuoc_DAO {
 
     public DonThuoc_entity getDonThuocTheoMa(String maDonThuoc) throws SQLException {
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "WHERE d.maDonThuoc = ?")) {
+             PreparedStatement ps = con.prepareStatement(SELECT_COLUMNS + "WHERE d.maDonThuoc = ?")) {
             ps.setString(1, maDonThuoc);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapDonThuoc(rs) : null;
@@ -60,8 +60,8 @@ public class DonThuoc_DAO {
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maDonThuoc, 3, 18) AS INT)), 0) "
                 + "FROM DonThuoc WHERE maDonThuoc LIKE 'DT%'";
         try (Connection con = ketNoi();
-                PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return String.format("DT%03d", rs.getInt(1) + 1);
             }
@@ -205,8 +205,7 @@ public class DonThuoc_DAO {
                 || donThuoc.getMaTC() == null || donThuoc.getMaBacSi() == null
                 || donThuoc.getMaHSSK() == null || donThuoc.getNgayKeDon() == null
                 || donThuoc.getTrangThai() == null || donThuoc.getTrangThai().trim().isEmpty()) {
-            // Đã fix lỗi: Gỡ bỏ ràng buộc cứng "Chờ lấy thuốc" và "Đã cấp thuốc", cho phép
-            // các trạng thái khác (như "Hoàn thành") được thêm/sửa/load bình thường.
+            // Đã fix lỗi: Gỡ bỏ ràng buộc cứng "Chờ lấy thuốc" và "Đã cấp thuốc", cho phép các trạng thái khác (như "Hoàn thành") được thêm/sửa/load bình thường.
             throw new IllegalArgumentException("Đơn thuốc phải có ngày kê và trạng thái không được để trống.");
         }
         if (chiTiet == null || chiTiet.isEmpty()) {
@@ -240,8 +239,8 @@ public class DonThuoc_DAO {
         }
         return con;
     }
-
-    // Thêm hàm cập nhật nhanh trạng thái đơn thuốc
+    
+ // Thêm hàm cập nhật nhanh trạng thái đơn thuốc
     public boolean capNhatTrangThai(String maDonThuoc, String trangThaiMoi) throws SQLException {
         String sql = "UPDATE DonThuoc SET trangThai = ? WHERE maDonThuoc = ?";
         try (Connection con = ketNoi(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -250,5 +249,5 @@ public class DonThuoc_DAO {
             return ps.executeUpdate() > 0;
         }
     }
-
+    
 }

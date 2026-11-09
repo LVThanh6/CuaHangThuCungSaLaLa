@@ -25,7 +25,8 @@ import java.util.Locale;
 import java.util.Set;
 
 public class LichSuKhamController {
-    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
+    private static final DateTimeFormatter DATE_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private final HoSoSucKhoe_DAO hoSoDao;
     private final ThuCung_DAO thuCungDao;
     private final BacSi_DAO bacSiDao;
@@ -116,8 +117,7 @@ public class LichSuKhamController {
             LocalDate ngay = hoSo.getNgayKham() == null ? null : hoSo.getNgayKham().toLocalDate();
             boolean matchedKeyword = keyword.isEmpty()
                     || giaTri(hoSo.getMaHSSK()).toLowerCase(Locale.ROOT).contains(keyword)
-                    || giaTri(hoSo.getMaTC() == null ? null : hoSo.getMaTC().getMaTC()).toLowerCase(Locale.ROOT)
-                            .contains(keyword)
+                    || giaTri(hoSo.getMaTC() == null ? null : hoSo.getMaTC().getMaTC()).toLowerCase(Locale.ROOT).contains(keyword)
                     || giaTri(hoSo.getTenThuCung()).toLowerCase(Locale.ROOT).contains(keyword)
                     || giaTri(hoSo.getChuHo()).toLowerCase(Locale.ROOT).contains(keyword)
                     || giaTri(hoSo.getTrieuChung()).toLowerCase(Locale.ROOT).contains(keyword)
@@ -142,14 +142,11 @@ public class LichSuKhamController {
         for (HoSoSucKhoe_entity hoSo : danhSach) {
             if (hoSo.getNgayKham() != null) {
                 LocalDate ngayKham = hoSo.getNgayKham().toLocalDate();
-                if (ngayKham.equals(ngayHienTai))
-                    ngay++;
+                if (ngayKham.equals(ngayHienTai)) ngay++;
                 if (ngayKham.getYear() == ngayHienTai.getYear()
-                        && ngayKham.getMonth() == ngayHienTai.getMonth())
-                    thang++;
+                        && ngayKham.getMonth() == ngayHienTai.getMonth()) thang++;
             }
-            if (hoSo.getMaBacSi() != null)
-                bacSi.add(hoSo.getMaBacSi().getMaBacSi());
+            if (hoSo.getMaBacSi() != null) bacSi.add(hoSo.getMaBacSi().getMaBacSi());
         }
         return new ThongKe(danhSach.size(), ngay, thang, bacSi.size());
     }
@@ -174,8 +171,7 @@ public class LichSuKhamController {
 
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
-            if (i > 0)
-                writer.write(',');
+            if (i > 0) writer.write(',');
             writer.write("\"" + values[i].replace("\"", "\"\"") + "\"");
         }
         writer.newLine();
@@ -191,8 +187,7 @@ public class LichSuKhamController {
     }
 
     private LocalDate parseNgay(String text) {
-        if (text == null || text.trim().isEmpty())
-            return null;
+        if (text == null || text.trim().isEmpty()) return null;
         try {
             return LocalDate.parse(text.trim(), DateTimeFormatter.ofPattern("dd/MM/uuuu"));
         } catch (DateTimeParseException e) {
@@ -207,7 +202,6 @@ public class LichSuKhamController {
     public static final class DuLieuManHinh {
         public final List<HoSoSucKhoe_entity> hoSo;
         public final List<BacSi_entity> bacSi;
-
         public DuLieuManHinh(List<HoSoSucKhoe_entity> hoSo, List<BacSi_entity> bacSi) {
             this.hoSo = hoSo;
             this.bacSi = bacSi;
@@ -223,7 +217,6 @@ public class LichSuKhamController {
         public final String trieuChung;
         public final String chuanDoan;
         public final String canNang;
-
         public ThongTinHoSo(String maHoSo, boolean maHoSoMoi, ThuCung_entity thuCung,
                 BacSi_entity bacSi, String ngayKham, String trieuChung, String chuanDoan, String canNang) {
             this.maHoSo = maHoSo;
@@ -242,7 +235,6 @@ public class LichSuKhamController {
         public final int homNay;
         public final int thangNay;
         public final int soBacSi;
-
         public ThongKe(int tongLuot, int homNay, int thangNay, int soBacSi) {
             this.tongLuot = tongLuot;
             this.homNay = homNay;
@@ -254,7 +246,6 @@ public class LichSuKhamController {
     public static final class KhoangNgay {
         public final LocalDate tuNgay;
         public final LocalDate denNgay;
-
         private KhoangNgay(LocalDate tuNgay, LocalDate denNgay) {
             this.tuNgay = tuNgay;
             this.denNgay = denNgay;

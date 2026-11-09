@@ -20,35 +20,29 @@ import java.util.Map;
 /**
  * DAO "Phiếu nhập kho" - khớp với SALALA_Database.sql:
  *
- * PhieuNhapKho(maPNK, ngayNhap DATETIME2, ghiChu, trangThai, maNhanVien, maNCC)
- * ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong)
- * VatTu(maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap,
- * maThuoc)
- * Thuoc(maThuoc, tenThuoc, donViTinh, ...) -- đơn vị của vật tư lấy từ đây (nếu
- * vật tư là thuốc)
- * NhaCungCap(maNCC, tenNCC, ...), NhanVien(maNhanVien, hoTen, ...)
+ *   PhieuNhapKho(maPNK, ngayNhap DATETIME2, ghiChu, trangThai, maNhanVien, maNCC)
+ *   ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong)
+ *   VatTu(maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc)
+ *   Thuoc(maThuoc, tenThuoc, donViTinh, ...)   -- đơn vị của vật tư lấy từ đây (nếu vật tư là thuốc)
+ *   NhaCungCap(maNCC, tenNCC, ...), NhanVien(maNhanVien, hoTen, ...)
  *
- * Mã phiếu: PNK001, PNK002, ... ; mã dòng chi tiết: CTPNK01, CTPNK02, ...
- * (giống dữ liệu mẫu).
+ * Mã phiếu: PNK001, PNK002, ... ; mã dòng chi tiết: CTPNK01, CTPNK02, ... (giống dữ liệu mẫu).
  */
 public class PhieuNhapKho_DAO {
 
     private static final String PREFIX_PNK = "PNK";
     private static final String PREFIX_CT = "CTPNK";
 
-    /**
-     * Truy vấn chi tiết dùng chung: tên vật tư + đơn vị (Thuoc.donViTinh, rỗng nếu
-     * không phải thuốc).
-     */
-    private static final String SELECT_CHI_TIET = "SELECT c.maPNK, c.maVT, v.tenVT, COALESCE(t.donViTinh, N'') AS donVi, c.soLuong, c.donGia "
+    /** Truy vấn chi tiết dùng chung: tên vật tư + đơn vị (Thuoc.donViTinh, rỗng nếu không phải thuốc). */
+    private static final String SELECT_CHI_TIET =
+            "SELECT c.maPNK, c.maVT, v.tenVT, COALESCE(t.donViTinh, N'') AS donVi, c.soLuong, c.donGia "
             + "FROM ChiTietPhieuNhapKho c "
             + "JOIN VatTu v ON c.maVT = v.maVT "
             + "LEFT JOIN Thuoc t ON v.maThuoc = t.maThuoc ";
 
     private Connection conn() throws SQLException {
         Connection c = ConnectDB.getInstance().getConnection();
-        if (c == null)
-            throw new SQLException("Không kết nối được CSDL SALALA.");
+        if (c == null) throw new SQLException("Không kết nối được CSDL SALALA.");
         return c;
     }
 
@@ -64,12 +58,11 @@ public class PhieuNhapKho_DAO {
         try {
             Connection c = conn();
             try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-                while (rs.next())
-                    ds.add(mapPhieu(rs));
+                while (rs.next()) ds.add(mapPhieu(rs));
             }
             Map<String, List<ChiTiet>> theoPhieu = new HashMap<>();
             try (PreparedStatement ps = c.prepareStatement(SELECT_CHI_TIET + "ORDER BY c.maCTPNK");
-                    ResultSet rs = ps.executeQuery()) {
+                 ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     theoPhieu.computeIfAbsent(rs.getString("maPNK"), k -> new ArrayList<>())
                             .add(mapChiTiet(rs));
@@ -111,8 +104,7 @@ public class PhieuNhapKho_DAO {
                 SELECT_CHI_TIET + "WHERE c.maPNK = ? ORDER BY c.maCTPNK")) {
             ps.setString(1, maPNK);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next())
-                    ds.add(mapChiTiet(rs));
+                while (rs.next()) ds.add(mapChiTiet(rs));
             }
         }
         return ds;
@@ -124,8 +116,7 @@ public class PhieuNhapKho_DAO {
                 + "FROM PhieuNhapKho WHERE maPNK LIKE '" + PREFIX_PNK + "%'";
         int next = 1;
         try (PreparedStatement ps = conn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            if (rs.next())
-                next = rs.getInt(1) + 1; // MAX = NULL -> getInt = 0 -> next = 1
+            if (rs.next()) next = rs.getInt(1) + 1;   // MAX = NULL -> getInt = 0 -> next = 1
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -153,8 +144,8 @@ public class PhieuNhapKho_DAO {
                 + "FROM VatTu v LEFT JOIN Thuoc t ON v.maThuoc = t.maThuoc ORDER BY v.maVT";
         try (PreparedStatement ps = conn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                ds.add(new Object[] { rs.getString("maVT"), rs.getString("tenVT"),
-                        rs.getString("donVi"), rs.getLong("giaNhap") });
+                ds.add(new Object[]{rs.getString("maVT"), rs.getString("tenVT"),
+                        rs.getString("donVi"), rs.getLong("giaNhap")});
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -165,8 +156,7 @@ public class PhieuNhapKho_DAO {
     private List<String[]> queryPairs(String sql) {
         List<String[]> ds = new ArrayList<>();
         try (PreparedStatement ps = conn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next())
-                ds.add(new String[] { rs.getString(1), rs.getString(2) });
+            while (rs.next()) ds.add(new String[]{rs.getString(1), rs.getString(2)});
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -206,10 +196,7 @@ public class PhieuNhapKho_DAO {
         }
     }
 
-    /**
-     * Sửa phiếu (chỉ khi đang Chờ xác nhận): cập nhật header và thay toàn bộ chi
-     * tiết.
-     */
+    /** Sửa phiếu (chỉ khi đang Chờ xác nhận): cập nhật header và thay toàn bộ chi tiết. */
     public boolean update(PhieuNhapKho_entity p) {
         Connection c = null;
         try {
@@ -226,10 +213,7 @@ public class PhieuNhapKho_DAO {
                 ps.setString(5, TrangThai.CHO_XAC_NHAN.getText());
                 n = ps.executeUpdate();
             }
-            if (n == 0) {
-                c.rollback();
-                return false;
-            }
+            if (n == 0) { c.rollback(); return false; }
 
             try (PreparedStatement ps = c.prepareStatement("DELETE FROM ChiTietPhieuNhapKho WHERE maPNK=?")) {
                 ps.setString(1, p.getMaPNK());
@@ -252,8 +236,7 @@ public class PhieuNhapKho_DAO {
     // ===================================================================
 
     /**
-     * Xác nhận phiếu: chuyển trạng thái sang Đã xác nhận và cộng số lượng vào
-     * VatTu.soLuongTon
+     * Xác nhận phiếu: chuyển trạng thái sang Đã xác nhận và cộng số lượng vào VatTu.soLuongTon
      * (cùng 1 transaction). Chỉ thực hiện khi phiếu đang Chờ xác nhận.
      */
     public boolean xacNhan(String maPNK) {
@@ -270,10 +253,7 @@ public class PhieuNhapKho_DAO {
                 ps.setString(3, TrangThai.CHO_XAC_NHAN.getText());
                 n = ps.executeUpdate();
             }
-            if (n == 0) {
-                c.rollback();
-                return false;
-            }
+            if (n == 0) { c.rollback(); return false; }
 
             String upd = "UPDATE VatTu SET soLuongTon = soLuongTon + "
                     + "(SELECT SUM(soLuong) FROM ChiTietPhieuNhapKho WHERE maPNK=? AND maVT=VatTu.maVT) "
@@ -312,13 +292,9 @@ public class PhieuNhapKho_DAO {
     // Hàm hỗ trợ
     // ===================================================================
 
-    /**
-     * Chèn các dòng chi tiết của phiếu; sinh maCTPNK liên tục từ số lớn nhất hiện
-     * có.
-     */
+    /** Chèn các dòng chi tiết của phiếu; sinh maCTPNK liên tục từ số lớn nhất hiện có. */
     private void insertChiTiet(Connection c, PhieuNhapKho_entity p) throws SQLException {
-        if (p.getChiTiet() == null || p.getChiTiet().isEmpty())
-            return;
+        if (p.getChiTiet() == null || p.getChiTiet().isEmpty()) return;
         int next = nextChiTietSeq(c);
         String sql = "INSERT INTO ChiTietPhieuNhapKho(maCTPNK, maPNK, maVT, donGia, soLuong) VALUES (?,?,?,?,?)";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -367,18 +343,10 @@ public class PhieuNhapKho_DAO {
     }
 
     private void rollback(Connection c) {
-        try {
-            if (c != null)
-                c.rollback();
-        } catch (SQLException ignored) {
-        }
+        try { if (c != null) c.rollback(); } catch (SQLException ignored) { }
     }
 
     private void resetAutoCommit(Connection c) {
-        try {
-            if (c != null)
-                c.setAutoCommit(true);
-        } catch (SQLException ignored) {
-        }
+        try { if (c != null) c.setAutoCommit(true); } catch (SQLException ignored) { }
     }
 }
