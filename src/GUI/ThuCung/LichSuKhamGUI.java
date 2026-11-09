@@ -441,11 +441,7 @@ public class LichSuKhamGUI extends JPanel {
         try {
             List<ThuCung_entity> thuCungList = controller.taiThuCung();
             List<BacSi_entity> bacSiList = controller.taiBacSi();
-            if (thuCungList.isEmpty() || bacSiList.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Cần có thú cưng và bác sĩ trước khi tạo lượt khám.",
-                        "Thiếu dữ liệu liên quan", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+            
             JTextField txtMa = new JTextField(hoSoHienTai == null
                     ? controller.maTiepTheo() : hoSoHienTai.getMaHSSK());
             txtMa.setEditable(false);

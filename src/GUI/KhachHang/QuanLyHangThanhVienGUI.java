@@ -2,15 +2,13 @@ package GUI.KhachHang;
 
 import controller.HangThanhVienController;
 import controller.HangThanhVienController.Dashboard;
-import controller.HangThanhVienController.PolicyField;
-import controller.HangThanhVienController.PolicyInputException;
-import controller.HangThanhVienController.PolicyResult;
-import controller.KhachHangController;
+import controller.HangThanhVienController.KetQuaCapNhatChinhSach;
+import controller.HangThanhVienController.KetQuaChuyenHang;
+import controller.HangThanhVienController.KetQuaPhanHang;
+import controller.HangThanhVienController.ThongTinDongThanhVien;
+import controller.HangThanhVienController.TierCardModel;
+import controller.HangThanhVienController.TierPolicyFormData;
 import controller.KhachHangController.CustomerDetails;
-import controller.KhachHangController.InvoiceRow;
-import controller.KhachHangController.PetRow;
-import entity.KhachHang.HangThanhVien;
-import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 
 import javax.swing.*;
@@ -24,7 +22,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
@@ -63,9 +60,6 @@ public class QuanLyHangThanhVienGUI extends JPanel {
     private JScrollPane scrollDanhSachHang;
 
     private final HangThanhVienController controller = new HangThanhVienController();
-    private final KhachHangController khachHangController = new KhachHangController();
-
-    private SimpleDateFormat sdfNgay = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     // =========================================================================
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
@@ -131,8 +125,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelTrai.add(lblMoTa);
         panelTieuDe.add(panelTrai, BorderLayout.WEST);
 
-        // Nút "Thêm hạng" - Nút phẳng tiêu chuẩn, nền màu chủ đạo, chữ trắng, không
-        // icon, không animation
+        // Nút "Thêm hạng" - Nút phẳng tiêu chuẩn, nền màu chủ đạo, chữ trắng, không icon, không animation
         btnThemHang = new JButton("Thêm hạng");
         btnThemHang.setFont(RangBuocGiaoDien.fontDam(13));
         btnThemHang.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
@@ -213,64 +206,22 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Nạp dữ liệu thực tế từ database SALALA và cập nhật giao diện
      */
     public void capNhatThongKe() {
-        // 1. Thống kê số liệu trên các thẻ đầu trang
-        Dashboard dashboard = controller.getDashboard();
-        int tongKH = dashboard.memberCount;
-        int soNangHang = dashboard.recentUpgrades;
-        double tongChiTieu = dashboard.totalSpending;
-        double tongGiamGia = dashboard.totalDiscount;
-
-        String strChiTieu = tongChiTieu >= 1_000_000
-                ? String.format("%.1f tr", tongChiTieu / 1_000_000)
-                : String.format("%,.0f ₫", tongChiTieu);
-        String strGiamGia = tongGiamGia >= 1_000_000
-                ? String.format("%.1f tr", tongGiamGia / 1_000_000)
-                : String.format("%,.0f ₫", tongGiamGia);
+        Dashboard dashboard = controller.layThongKeTongQuan();
 
         if (lblValTongKH != null)
-            lblValTongKH.setText(String.valueOf(tongKH));
+            lblValTongKH.setText(dashboard.layChuoiTongThanhVien());
         if (lblValNangHang != null)
-            lblValNangHang.setText(String.valueOf(soNangHang));
+            lblValNangHang.setText(dashboard.layChuoiSoNangHangGanDay());
         if (lblValGiamGia != null)
-            lblValGiamGia.setText(strGiamGia);
+            lblValGiamGia.setText(dashboard.layGiamGiaDinhDang());
         if (lblValChiTieu != null)
-            lblValChiTieu.setText(strChiTieu);
+            lblValChiTieu.setText(dashboard.layChiTieuDinhDang());
 
-        // 2. Tải và vẽ 4 thẻ hạng thành viên
         panelDanhSachHang.removeAll();
-        List<HangThanhVien> dsHang = dashboard.tiers;
+        List<TierCardModel> cards = controller.layDanhSachTheHang(dashboard);
 
-        Color[] mauTops = {
-                new Color(245, 158, 11), // Đồng: Amber
-                new Color(100, 116, 139), // Bạc: Slate
-                new Color(217, 119, 6), // Vàng: Amber đậm / Gold
-                new Color(2, 132, 199) // Kim cương: Sky blue
-        };
-        Color[] mauNens = {
-                new Color(254, 243, 199),
-                new Color(241, 245, 249),
-                new Color(254, 240, 138),
-                new Color(224, 242, 254)
-        };
-
-        for (int i = 0; i < dsHang.size(); i++) {
-            HangThanhVien h = dsHang.get(i);
-            int soLuong = h.getSoLuongThanhVien();
-            double tiLe = tongKH > 0 ? (soLuong * 100.0 / tongKH) : 0.0;
-
-            String dieuKien = HangThanhVienController.formatSpendingRange(
-                    h.getChiTieuToiThieu(), h.getChiTieuToiDa());
-            String strGiam = String.format("%.0f%%", h.getMucGiamGia());
-            String strSoKhach = soLuong + " khách hàng";
-            String strTiLe = String.format("%.1f%% tổng khách", tiLe);
-
-            List<String> qlList = h.getDanhSachQuyenLoi();
-            String[] arrQL = qlList.toArray(new String[0]);
-
-            Color mauTop = i < mauTops.length ? mauTops[i] : new Color(79, 70, 229);
-            Color mauNen = i < mauNens.length ? mauNens[i] : new Color(243, 244, 246);
-
-            JPanel the = taoTheHang(h.getTenHang(), dieuKien, strGiam, strSoKhach, strTiLe, arrQL, mauTop, mauNen);
+        for (TierCardModel card : cards) {
+            JPanel the = taoTheHang(card);
             panelDanhSachHang.add(the);
         }
 
@@ -278,11 +229,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelDanhSachHang.repaint();
     }
 
-    private JPanel taoTheHang(
-            String tenHang, String dieuKienChiTieu,
-            String mucGiamGia, String soKhachHang, String tiLeKhachHang,
-            String[] danhSachQuyenLoi, Color mauVienTop, Color mauNenNhe) {
-
+    private JPanel taoTheHang(TierCardModel card) {
         JPanel the = new JPanel();
         the.setLayout(new BoxLayout(the, BoxLayout.Y_AXIS));
         the.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
@@ -291,17 +238,17 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         // 1. Thanh viền màu ở đỉnh thẻ
         JPanel thanhMauTop = new JPanel();
-        thanhMauTop.setBackground(mauVienTop);
+        thanhMauTop.setBackground(card.mauVienTop);
         thanhMauTop.setPreferredSize(new Dimension(0, 4));
         thanhMauTop.setMaximumSize(new Dimension(Integer.MAX_VALUE, 4));
         the.add(thanhMauTop);
 
         // 2. Khối Header của thẻ (Tên hạng + Badge Đang áp dụng)
         JPanel panelHeaderThe = new JPanel(new BorderLayout());
-        panelHeaderThe.setBackground(mauNenNhe);
+        panelHeaderThe.setBackground(card.mauNenNhe);
         panelHeaderThe.setBorder(new EmptyBorder(16, 16, 10, 16));
 
-        JLabel lblTenHang = new JLabel(tenHang);
+        JLabel lblTenHang = new JLabel(card.tenHang);
         lblTenHang.setFont(RangBuocGiaoDien.fontDam(18));
         lblTenHang.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
@@ -320,10 +267,10 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         // 3. Khối điều kiện chi tiêu
         JPanel panelDieuKien = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        panelDieuKien.setBackground(mauNenNhe);
+        panelDieuKien.setBackground(card.mauNenNhe);
         panelDieuKien.setBorder(new EmptyBorder(0, 16, 14, 16));
 
-        JLabel lblDieuKien = new JLabel(dieuKienChiTieu);
+        JLabel lblDieuKien = new JLabel(card.dieuKienChiTieu);
         lblDieuKien.setFont(RangBuocGiaoDien.fontThuong(12));
         lblDieuKien.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         panelDieuKien.add(lblDieuKien);
@@ -346,7 +293,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         lblTieuDeGiamGia.setFont(RangBuocGiaoDien.fontThuong(11));
         lblTieuDeGiamGia.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
-        JLabel lblPhanTram = new JLabel(mucGiamGia);
+        JLabel lblPhanTram = new JLabel(card.mucGiamGia);
         lblPhanTram.setFont(RangBuocGiaoDien.fontDam(20));
         lblPhanTram.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
 
@@ -363,11 +310,11 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
                 BorderFactory.createEmptyBorder(10, 12, 10, 12)));
 
-        JLabel lblSoKhach = new JLabel(soKhachHang);
+        JLabel lblSoKhach = new JLabel(card.soKhachHang);
         lblSoKhach.setFont(RangBuocGiaoDien.fontDam(14));
         lblSoKhach.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
-        JLabel lblTiLe = new JLabel(tiLeKhachHang);
+        JLabel lblTiLe = new JLabel(card.tiLeKhachHang);
         lblTiLe.setFont(RangBuocGiaoDien.fontThuong(11));
         lblTiLe.setForeground(RangBuocGiaoDien.MAU_CHU_GOI_Y);
 
@@ -395,7 +342,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelQuyenLoi.add(lblTieuDeQuyenLoi);
         panelQuyenLoi.add(Box.createRigidArea(new Dimension(0, 8)));
 
-        for (String ql : danhSachQuyenLoi) {
+        for (String ql : card.danhSachQuyenLoi) {
             JPanel dongQuyenLoi = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 2));
             dongQuyenLoi.setOpaque(false);
 
@@ -429,7 +376,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_VIEN_CHU_DAO, 1),
                 BorderFactory.createEmptyBorder(6, 14, 6, 14)));
         btnXemDanhSach.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnXemDanhSach.addActionListener(e -> hienThiDialogDanhSachTheoHang(tenHang));
+        btnXemDanhSach.addActionListener(e -> hienThiDialogDanhSachTheoHang(card.tenHang));
 
         panelBottomThe.add(btnXemDanhSach);
         the.add(panelBottomThe);
@@ -438,7 +385,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         the.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                hienThiDialogDanhSachTheoHang(tenHang);
+                hienThiDialogDanhSachTheoHang(card.tenHang);
             }
         });
 
@@ -458,10 +405,11 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Vàng / Kim cương)
      */
     private void hienThiDialogDanhSachTheoHang(String tenHang) {
-        List<HangThanhVien> dsThanhVien = controller.getMembersByTier(tenHang);
+        Object[][] duLieu = controller.taiDuLieuBangThanhVien(tenHang);
+        String[] cot = controller.layDanhSachCotThanhVien();
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                "Danh Sách Thành Viên - Hạng " + tenHang + " (" + dsThanhVien.size() + " thành viên)", true);
+                controller.layTieuDeDialogDanhSachThanhVien(tenHang, duLieu.length), true);
         dialog.setSize(950, 560);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
@@ -470,7 +418,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelTop.setBackground(Color.WHITE);
         panelTop.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        JLabel lblTitle = new JLabel("Nhóm khách hàng đạt Hạng " + tenHang + " (Từ bảng QuanLyHangThanhVien)");
+        JLabel lblTitle = new JLabel(controller.layTieuDeNhomKhachHang(tenHang));
         lblTitle.setFont(RangBuocGiaoDien.fontDam(16));
         lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         panelTop.add(lblTitle, BorderLayout.WEST);
@@ -492,23 +440,6 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
         dialog.add(panelTop, BorderLayout.NORTH);
 
-        // Bảng dữ liệu từ CSDL
-        String[] cot = { "Mã hạng", "Mã KH", "Họ và tên", "Số điện thoại", "Email", "Số thú cưng", "Tổng chi tiêu",
-                "Điểm tích lũy", "Ngày cập nhật" };
-        Object[][] duLieu = new Object[dsThanhVien.size()][9];
-        for (int i = 0; i < dsThanhVien.size(); i++) {
-            HangThanhVien h = dsThanhVien.get(i);
-            duLieu[i][0] = h.getMaHang();
-            duLieu[i][1] = h.getMaKH() != null ? h.getMaKH().getMaKH() : "";
-            duLieu[i][2] = h.getHoTenKhachHang();
-            duLieu[i][3] = h.getSdtKhachHang();
-            duLieu[i][4] = h.getEmailKhachHang();
-            duLieu[i][5] = h.getSoThuCung() + " bé";
-            duLieu[i][6] = String.format("%,.0f ₫", h.getTongChiTieu()).replace(',', '.');
-            duLieu[i][7] = h.getDiemTichLuy() + " điểm";
-            duLieu[i][8] = h.getNgayCapNhatHang() != null ? sdfNgay.format(h.getNgayCapNhatHang()) : "-";
-        }
-
         DefaultTableModel model = new DefaultTableModel(duLieu, cot) {
             @Override
             public boolean isCellEditable(int r, int c) {
@@ -525,8 +456,8 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         // Căn phải cho chi tiêu và điểm
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-        table.getColumnModel().getColumn(6).setCellRenderer(rightRenderer);
-        table.getColumnModel().getColumn(7).setCellRenderer(rightRenderer);
+        table.getColumnModel().getColumn(controller.layViTriCotChiTieuThanhVien()).setCellRenderer(rightRenderer);
+        table.getColumnModel().getColumn(controller.layViTriCotDiemTichLuy()).setCellRenderer(rightRenderer);
 
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
@@ -539,8 +470,8 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                     int row = table.getSelectedRow();
                     if (row >= 0) {
                         int modelRow = table.convertRowIndexToModel(row);
-                        String maKH = table.getModel().getValueAt(modelRow, 1).toString();
-                        hienThiDialogXemChiTietKhachHang(maKH);
+                        ThongTinDongThanhVien tt = controller.trichXuatThongTinDong(table.getModel(), modelRow);
+                        hienThiDialogXemChiTietKhachHang(tt.getMaKH());
                     }
                 }
             }
@@ -549,12 +480,8 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         txtLoc.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                String kw = txtLoc.getText().trim();
-                if (kw.isEmpty()) {
-                    sorter.setRowFilter(null);
-                } else {
-                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + kw));
-                }
+                String regex = controller.taoRegexTimKiem(txtLoc.getText());
+                sorter.setRowFilter(regex == null ? null : RowFilter.regexFilter(regex));
             }
         });
 
@@ -592,16 +519,14 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         btnChuyenHang.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row < 0) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng chọn khách hàng cần chuyển hạng trong bảng!",
+                JOptionPane.showMessageDialog(dialog, controller.layThongBaoChuaChonKhachHangChuyenHang(),
                         "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             int modelRow = table.convertRowIndexToModel(row);
-            String maHang = table.getModel().getValueAt(modelRow, 0).toString();
-            String maKH = table.getModel().getValueAt(modelRow, 1).toString();
-            String hoTen = table.getModel().getValueAt(modelRow, 2).toString();
+            ThongTinDongThanhVien tt = controller.trichXuatThongTinDong(table.getModel(), modelRow);
 
-            hienThiDialogChuyenHang(dialog, maHang, maKH, hoTen, tenHang);
+            hienThiDialogChuyenHang(dialog, tt.getMaHang(), tt.getMaKH(), tt.getHoTen(), tenHang);
         });
 
         JButton btnDong = new JButton("Đóng");
@@ -623,12 +548,12 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Hộp thoại chuyển nhanh hạng cho một thành viên
      */
     private void hienThiDialogChuyenHang(JDialog parent, String maHang, String maKH, String hoTen, String hangHienTai) {
-        String[] cacHang = { "Đồng", "Bạc", "Vàng", "Kim cương" };
+        String[] cacHang = controller.layDanhSachTenHang();
         JComboBox<String> cbo = new JComboBox<>(cacHang);
         cbo.setSelectedItem(hangHienTai);
 
         JPanel panel = new JPanel(new GridLayout(3, 1, 6, 8));
-        panel.add(new JLabel("Khách hàng: " + hoTen + " (" + maKH + ")"));
+        panel.add(new JLabel(controller.layNhanKhachHangChuyenHang(hoTen, maKH)));
         panel.add(new JLabel("Chọn hạng thành viên mới:"));
         panel.add(cbo);
 
@@ -636,17 +561,15 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                 JOptionPane.PLAIN_MESSAGE);
         if (opt == JOptionPane.OK_OPTION) {
             String hangMoi = (String) cbo.getSelectedItem();
-            if (hangMoi != null && !hangMoi.equals(hangHienTai)) {
-                boolean updated = controller.assignTier(maHang, maKH, hangMoi);
-                if (updated) {
-                    JOptionPane.showMessageDialog(parent,
-                            "Chuyển khách hàng " + hoTen + " sang hạng " + hangMoi + " thành công!",
+            KetQuaChuyenHang ketQua = controller.xuLyChuyenHang(maHang, maKH, hoTen, hangHienTai, hangMoi);
+            if (ketQua.isCoThayDoi()) {
+                if (ketQua.isThanhCong()) {
+                    JOptionPane.showMessageDialog(parent, ketQua.getThongBao(),
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     parent.dispose();
                     capNhatThongKe();
                 } else {
-                    JOptionPane.showMessageDialog(parent,
-                            "Không thể cập nhật hạng thành viên. Vui lòng kiểm tra kết nối!",
+                    JOptionPane.showMessageDialog(parent, ketQua.getThongBao(),
                             "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -657,13 +580,12 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Hộp thoại xem chi tiết hồ sơ khách hàng ngay từ màn hình Hạng thành viên
      */
     private void hienThiDialogXemChiTietKhachHang(String maKH) {
-        CustomerDetails details = khachHangController.getDetails(maKH);
+        CustomerDetails details = controller.layChiTietKhachHang(maKH);
         if (details == null)
             return;
-        KhachHang kh = details.customer;
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                "Hồ Sơ Chi Tiết Khách Hàng - " + maKH, true);
+                details.layTieuDeDialogChiTiet(), true);
         dialog.setSize(680, 540);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
@@ -679,21 +601,15 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
                 " Thông tin cá nhân ", 0, 0, RangBuocGiaoDien.fontDam(13), RangBuocGiaoDien.MAU_CHU_DAO));
 
-        panelInfo.add(new JLabel("Mã KH: " + kh.getMaKH()));
-        panelInfo.add(new JLabel("Họ tên: " + kh.getHoTen()));
-        panelInfo.add(new JLabel("Điện thoại: " + kh.getSdt()));
-        panelInfo.add(new JLabel("Email: " + kh.getEmail()));
-        panelInfo.add(new JLabel("Địa chỉ: " + (kh.getDiaChi() != null ? kh.getDiaChi() : "Chưa cập nhật")));
+        panelInfo.add(new JLabel(details.layThongTinMaKH()));
+        panelInfo.add(new JLabel(details.layThongTinHoTen()));
+        panelInfo.add(new JLabel(details.layThongTinSDT()));
+        panelInfo.add(new JLabel(details.layThongTinEmail()));
+        panelInfo.add(new JLabel(details.layThongTinDiaChi()));
         panelBody.add(panelInfo);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        String[] cotThuCung = { "Mã TC", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh", "Đặc điểm" };
-        Object[][] dataTC = new Object[details.pets.size()][6];
-        for (int i = 0; i < details.pets.size(); i++) {
-            PetRow pet = details.pets.get(i);
-            dataTC[i] = new Object[] {pet.code, pet.name, pet.species, pet.gender, pet.birthDate, pet.traits};
-        }
-        JTable tableTC = new JTable(new DefaultTableModel(dataTC, cotThuCung) {
+        JTable tableTC = new JTable(new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -704,22 +620,12 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         scrollTC.setPreferredSize(new Dimension(0, 110));
         scrollTC.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Thú cưng sở hữu (" + details.pets.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                details.layTieuDeThuCung(), 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollTC);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        String[] cotHoaDon = { "Mã HĐ", "Ngày lập", "Trạng thái", "Số tiền (₫)", "Hình thức" };
-        Object[][] dataHD = new Object[details.invoices.size()][5];
-        for (int i = 0; i < details.invoices.size(); i++) {
-            InvoiceRow invoice = details.invoices.get(i);
-            dataHD[i][0] = invoice.code;
-            dataHD[i][1] = invoice.date;
-            dataHD[i][2] = invoice.status;
-            dataHD[i][3] = String.format("%,.0f ₫", invoice.amount).replace(',', '.');
-            dataHD[i][4] = invoice.paymentMethod;
-        }
-        JTable tableHD = new JTable(new DefaultTableModel(dataHD, cotHoaDon) {
+        JTable tableHD = new JTable(new DefaultTableModel(details.layDuLieuBangHoaDon(), CustomerDetails.COT_HOA_DON) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -730,7 +636,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         scrollHD.setPreferredSize(new Dimension(0, 120));
         scrollHD.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Lịch sử hóa đơn giao dịch (" + details.invoices.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                details.layTieuDeHoaDon(), 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollHD);
 
@@ -769,7 +675,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         tabChinhSach.setBackground(Color.WHITE);
         tabChinhSach.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        String[] dsTenHang = { "Đồng", "Bạc", "Vàng", "Kim cương" };
+        String[] dsTenHang = controller.layDanhSachTenHang();
         JComboBox<String> cboTenHang = new JComboBox<>(dsTenHang);
         cboTenHang.setPreferredSize(new Dimension(0, 36));
         cboTenHang.setFont(RangBuocGiaoDien.fontVua(13));
@@ -785,18 +691,12 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         // Hàm nạp thông tin hạng vào form khi chọn ComboBox
         Runnable napThongTinHang = () -> {
             String selected = (String) cboTenHang.getSelectedItem();
-            List<HangThanhVien> dsHang = controller.getAllTiers();
-            for (HangThanhVien h : dsHang) {
-                if (h.getTenHang().equalsIgnoreCase(selected)) {
-                    txtChiTieuMin.setText(String.format("%.0f", h.getChiTieuToiThieu()));
-                    txtChiTieuMax
-                            .setText(h.getChiTieuToiDa() != null ? String.format("%.0f", h.getChiTieuToiDa()) : "");
-                    txtGiamGia.setText(String.format("%.1f", h.getMucGiamGia()));
-                    txtDiemTichLuy1Van.setText(String.format("%.1f", h.getDiemTichLuy1Van()));
-                    txtQuyenLoi.setText(h.getQuyenLoi() != null ? h.getQuyenLoi() : "");
-                    break;
-                }
-            }
+            TierPolicyFormData form = controller.layDuLieuFormChinhSach(selected);
+            txtChiTieuMin.setText(form.chiTieuMin);
+            txtChiTieuMax.setText(form.chiTieuMax);
+            txtGiamGia.setText(form.mucGiamGia);
+            txtDiemTichLuy1Van.setText(form.diemTichLuy1Van);
+            txtQuyenLoi.setText(form.quyenLoi);
         };
         napThongTinHang.run();
         cboTenHang.addActionListener(e -> napThongTinHang.run());
@@ -829,12 +729,12 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         tabPhanHang.setBackground(Color.WHITE);
         tabPhanHang.setBorder(new EmptyBorder(16, 20, 16, 20));
 
-        List<KhachHang> dsKH = controller.getCustomers();
+        List<String> dsKH = controller.layDanhSachHienThiKhachHang();
         JComboBox<String> cboKhachHang = new JComboBox<>();
         cboKhachHang.setPreferredSize(new Dimension(0, 36));
         cboKhachHang.setFont(RangBuocGiaoDien.fontThuong(13));
-        for (KhachHang kh : dsKH) {
-            cboKhachHang.addItem(kh.getMaKH() + " - " + kh.getHoTen());
+        for (String khInfo : dsKH) {
+            cboKhachHang.addItem(khInfo);
         }
 
         JComboBox<String> cboHangMoi = new JComboBox<>(dsTenHang);
@@ -881,60 +781,53 @@ public class QuanLyHangThanhVienGUI extends JPanel {
             if (selectedTab == 0) {
                 // Lưu chính sách hạng
                 String ten = (String) cboTenHang.getSelectedItem();
-                String minStr = txtChiTieuMin.getText().trim();
-                String maxStr = txtChiTieuMax.getText().trim();
-                String giamStr = txtGiamGia.getText().trim();
-                String diemStr = txtDiemTichLuy1Van.getText().trim();
-                String ql = txtQuyenLoi.getText().trim();
+                String minStr = txtChiTieuMin.getText();
+                String maxStr = txtChiTieuMax.getText();
+                String giamStr = txtGiamGia.getText();
+                String diemStr = txtDiemTichLuy1Van.getText();
+                String ql = txtQuyenLoi.getText();
 
-                try {
-                    PolicyResult result = controller.updatePolicy(ten, minStr, maxStr, giamStr, diemStr, ql);
-                    if (result.saved) {
-                    JOptionPane.showMessageDialog(this,
-                            "Đã lưu chính sách hạng \"" + ten + "\" thành công vào database SALALA!\n" +
-                                    "- Chi tiêu: từ " + String.format("%,.0f ₫", result.minimumSpend)
-                                    + (result.maximumSpend != null ? " đến " + String.format("%,.0f ₫", result.maximumSpend) : " trở lên")
-                                    + "\n" +
-                                    "- Giảm giá: " + result.discount + "% | Điểm/10.000₫: " + result.pointsPerTenThousand,
+                KetQuaCapNhatChinhSach kq = controller.xuLyCapNhatChinhSach(
+                        ten, minStr, maxStr, giamStr, diemStr, ql);
+                if (kq.isThanhCong()) {
+                    JOptionPane.showMessageDialog(this, kq.getThongBao(),
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     capNhatThongKe();
                     dialog.dispose();
-                    } else {
-                        JOptionPane.showMessageDialog(dialog, "Không thể cập nhật chính sách hạng. Vui lòng thử lại!",
-                                "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (PolicyInputException ex) {
-                    JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Lỗi định dạng",
+                } else if (kq.isLoiNhapLieu()) {
+                    JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Lỗi định dạng",
                             JOptionPane.WARNING_MESSAGE);
-                    switch (ex.getField()) {
+                    switch (kq.getTruongLoi()) {
                         case MINIMUM: txtChiTieuMin.requestFocus(); break;
                         case MAXIMUM: txtChiTieuMax.requestFocus(); break;
                         case DISCOUNT: txtGiamGia.requestFocus(); break;
                         case POINTS: txtDiemTichLuy1Van.requestFocus(); break;
-                        default: throw new IllegalStateException("Unknown policy field", ex);
+                        default: break;
                     }
+                } else {
+                    JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 }
 
             } else {
                 // Phân hạng khách hàng
-                if (cboKhachHang.getItemCount() == 0) {
-                    JOptionPane.showMessageDialog(dialog, "Không có khách hàng nào trong hệ thống!", "Thông báo",
+                String khSelected = (String) cboKhachHang.getSelectedItem();
+                String tenHangMoi = (String) cboHangMoi.getSelectedItem();
+
+                KetQuaPhanHang kq = controller.xuLyPhanHangKhachHang(
+                        cboKhachHang.getItemCount(), khSelected, tenHangMoi);
+                if (kq.isDanhSachRong()) {
+                    JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Thông báo",
                             JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                String khSelected = (String) cboKhachHang.getSelectedItem();
-                String maKH = khSelected.split(" - ")[0].trim();
-                String tenHangMoi = (String) cboHangMoi.getSelectedItem();
-
-                boolean ok = controller.assignOrCreateTier(maKH, tenHangMoi);
-                if (ok) {
-                    JOptionPane.showMessageDialog(this,
-                            "Phân khách hàng " + khSelected + " sang hạng " + tenHangMoi + " thành công!",
+                if (kq.isThanhCong()) {
+                    JOptionPane.showMessageDialog(this, kq.getThongBao(),
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     capNhatThongKe();
                     dialog.dispose();
                 } else {
-                    JOptionPane.showMessageDialog(dialog, "Không thể lưu phân hạng. Vui lòng thử lại!", "Lỗi",
+                    JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Lỗi",
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
