@@ -1,7 +1,7 @@
 package GUI.DichVu;
 
-import controller.DichVuController;
-import controller.DichVuController.DichVuData;
+import controller.DichVu.DichVuController;
+import controller.DichVu.DichVuController.DichVuData;
 
 import java.awt.*;
 import java.awt.event.*;

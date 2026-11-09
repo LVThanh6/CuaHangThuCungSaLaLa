@@ -19,13 +19,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import controller.LapHoaDonController;
-import controller.LapHoaDonController.InvoiceInput;
-import controller.LapHoaDonController.InvoiceLine;
-import controller.LapHoaDonController.InvoiceTotals;
-import controller.LapHoaDonController.LoaiMatHang;
-import controller.LapHoaDonController.PrescriptionOption;
-import controller.LapHoaDonController.ValidationError;
+import controller.HoaDon.LapHoaDonController;
+import controller.HoaDon.LapHoaDonController.InvoiceInput;
+import controller.HoaDon.LapHoaDonController.InvoiceLine;
+import controller.HoaDon.LapHoaDonController.InvoiceTotals;
+import controller.HoaDon.LapHoaDonController.LoaiMatHang;
+import controller.HoaDon.LapHoaDonController.PrescriptionOption;
+import controller.HoaDon.LapHoaDonController.ValidationError;
 
 public class LapHoaDon_gui extends JPanel {
 

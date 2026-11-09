@@ -1,14 +1,14 @@
 package GUI.KhachHang;
 
-import controller.HangThanhVienController;
-import controller.HangThanhVienController.Dashboard;
-import controller.HangThanhVienController.KetQuaCapNhatChinhSach;
-import controller.HangThanhVienController.KetQuaChuyenHang;
-import controller.HangThanhVienController.KetQuaPhanHang;
-import controller.HangThanhVienController.ThongTinDongThanhVien;
-import controller.HangThanhVienController.TierCardModel;
-import controller.HangThanhVienController.TierPolicyFormData;
-import controller.KhachHangController.CustomerDetails;
+import controller.KhachHang.HangThanhVienController;
+import controller.KhachHang.HangThanhVienController.Dashboard;
+import controller.KhachHang.HangThanhVienController.KetQuaCapNhatChinhSach;
+import controller.KhachHang.HangThanhVienController.KetQuaChuyenHang;
+import controller.KhachHang.HangThanhVienController.KetQuaPhanHang;
+import controller.KhachHang.HangThanhVienController.ThongTinDongThanhVien;
+import controller.KhachHang.HangThanhVienController.TierCardModel;
+import controller.KhachHang.HangThanhVienController.TierPolicyFormData;
+import controller.KhachHang.KhachHangController.CustomerDetails;
 import GUI.Chung.RangBuocGiaoDien;
 
 import javax.swing.*;

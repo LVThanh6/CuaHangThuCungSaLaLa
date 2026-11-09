@@ -26,8 +26,8 @@ import GUI.ThongKe.ThongKeGUI;
 import GUI.ThuCung.DonThuocGUI;
 import GUI.ThuCung.HoSoThuCungGUI;
 import GUI.ThuCung.LichSuKhamGUI;
-import GUI.TaiKhoan.QuanLyTaiKhoanGUI;
-import controller.NavigationController;
+import GUI.TaiKhoan.ThongTinTaiKhoanGUI;
+import controller.Chung.NavigationController;
 import GUI.VatTu.NhaCungCapGUI;
 import GUI.VatTu.PhieuNhapKhoGUI;
 import GUI.VatTu.PhieuXuatKhoGUI;
@@ -322,7 +322,7 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     }
 
     public void hienThiQuanLyTaiKhoan() {
-        setNoiDung(new QuanLyTaiKhoanGUI());
+        setNoiDung(new ThongTinTaiKhoanGUI());
     }
 
     public void hienThiHoSoThuCung() {

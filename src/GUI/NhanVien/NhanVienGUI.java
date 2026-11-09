@@ -8,18 +8,11 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.sql.SQLException;
-import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.ResolverStyle;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -30,47 +23,24 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import controller.NhanVienController;
+import controller.NhanVien.NhanVienController;
+import controller.NhanVien.NhanVienController.TrangThai;
 import entity.NhanVien.NhanVien_entity;
 
 public class NhanVienGUI extends JPanel {
 
-    public enum TrangThai {
-        DANG_LAM("Đang làm việc"),
-        NGUNG("Ngừng hoạt động"),
-        CHUA_TK("Chưa có tài khoản");
-
-        public final String nhan;
-
-        TrangThai(String nhan) {
-            this.nhan = nhan;
-        }
-
-        public static TrangThai tuEntity(NhanVien_entity nv) {
-            Boolean tk = nv.getTrangThaiTK();
-            if (tk == null)
-                return CHUA_TK;
-            return tk ? DANG_LAM : NGUNG;
-        }
-    }
-
-    private static final String[] CHUC_VU = {
-            "Nhân viên bán hàng", "Nhân viên dịch vụ", "Nhân viên quản lý kho", "Quản lý"
-    };
-    private static final String[] GIOI_TINH = { "Nam", "Nữ" };
+    private static final String[] CHUC_VU = NhanVienController.CHUC_VU;
+    private static final String[] GIOI_TINH = NhanVienController.GIOI_TINH;
 
     private static final Color NEN_CHON = new Color(240, 250, 247);
     private static final Color NEN_HEADER = new Color(246, 248, 247);
     private static final Color NEN_ICON = new Color(226, 244, 240);
     private static final Color MAU_DO = new Color(220, 38, 38);
 
-    private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu")
-            .withResolverStyle(ResolverStyle.STRICT);
     private static final Locale VN = Locale.forLanguageTag("vi-VN");
 
     private final List<NhanVien_entity> tatCa = new ArrayList<>();
     private final List<NhanVien_entity> daLoc = new ArrayList<>();
-    private final Set<String> daChon = new HashSet<>();
     private final NhanVienController controller = new NhanVienController();
     private Boolean sapXepTang = null;
 
@@ -90,7 +60,6 @@ public class NhanVienGUI extends JPanel {
     public void datDanhSach(List<NhanVien_entity> ds) {
         tatCa.clear();
         tatCa.addAll(ds);
-        daChon.clear();
         lamMoi();
     }
 
@@ -141,8 +110,13 @@ public class NhanVienGUI extends JPanel {
         dinhDangNut(btnThem, true);
         btnThem.addActionListener(e -> moForm(null, false));
 
-        JPanel phai = new JPanel(new GridBagLayout());
+        JButton btnLamMoi = new JButton("Làm mới");
+        dinhDangNut(btnLamMoi, false);
+        btnLamMoi.addActionListener(e -> taiLai());
+
+        JPanel phai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         phai.setOpaque(false);
+        phai.add(btnLamMoi);
         phai.add(btnThem);
         panel.add(phai, BorderLayout.EAST);
         return panel;
@@ -237,17 +211,17 @@ public class NhanVienGUI extends JPanel {
         txtTim.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                locTuDau();
+                apDungLoc();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                locTuDau();
+                apDungLoc();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                locTuDau();
+                apDungLoc();
             }
         });
 
@@ -267,7 +241,7 @@ public class NhanVienGUI extends JPanel {
             cb.setFont(RangBuocGiaoDien.fontThuong(13));
             cb.setMaximumSize(new Dimension(230, 38));
             cb.setPreferredSize(new Dimension(220, 38));
-            cb.addActionListener(e -> locTuDau());
+            cb.addActionListener(e -> apDungLoc());
         }
 
         JButton btnXuat = new JButton("Xuất danh sách");
@@ -411,10 +385,6 @@ public class NhanVienGUI extends JPanel {
         return chan;
     }
 
-    private void locTuDau() {
-        apDungLoc();
-    }
-
     private void lamMoi() {
         capNhatSoLieu();
         apDungLoc();
@@ -444,29 +414,7 @@ public class NhanVienGUI extends JPanel {
         model.datHang(daLoc);
         lblHienThi.setText(tong == 0
                 ? "Không có nhân viên phù hợp"
-                : "Hiển thị tất cả " + tong + " nhân viên");
-        bang.getTableHeader().repaint();
-    }
-
-    private boolean tatCaTrangDuocChon() {
-        if (model.hang.isEmpty())
-            return false;
-        for (NhanVien_entity nv : model.hang) {
-            if (!daChon.contains(nv.getMaNhanVien()))
-                return false;
-        }
-        return true;
-    }
-
-    private void chonTatCaTrang() {
-        boolean tatCaDaChon = tatCaTrangDuocChon();
-        for (NhanVien_entity nv : model.hang) {
-            if (tatCaDaChon)
-                daChon.remove(nv.getMaNhanVien());
-            else
-                daChon.add(nv.getMaNhanVien());
-        }
-        model.fireTableDataChanged();
+                : "Hiển thị " + tong + " / " + tatCa.size() + " nhân viên");
         bang.getTableHeader().repaint();
     }
 
@@ -539,20 +487,10 @@ public class NhanVienGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Không thể xóa nhân viên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            daChon.remove(nv.getMaNhanVien());
             taiLai();
         } catch (SQLException ex) {
             baoLoi("Không thể xóa nhân viên", ex);
         }
-    }
-
-    private static String dinhDangSdt(String s) {
-        if (s == null)
-            return "";
-        String so = s.replaceAll("\\D", "");
-        if (so.length() == 10)
-            return so.substring(0, 4) + " " + so.substring(4, 7) + " " + so.substring(7);
-        return s;
     }
 
     private void moForm(NhanVien_entity goc, boolean chiXem) {
@@ -574,10 +512,10 @@ public class NhanVienGUI extends JPanel {
         JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getHoTen()));
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
         JTextField txtDiaChi = new JTextField(goc == null ? "" : nz(goc.getDiaChi()));
-        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(goc.getNgaySinh()));
+        JTextField txtNgay = new JTextField(goc == null || goc.getNgaySinh() == null ? "" : NhanVienController.dinhDangNgay(goc.getNgaySinh()));
         JComboBox<String> cbGT = new JComboBox<>(GIOI_TINH);
         JComboBox<String> cbChucVu = new JComboBox<>(CHUC_VU);
-        JTextField txtLuong = new JTextField(goc == null ? "45000" : String.format("%.0f", goc.getLuongCoBan()));
+        JTextField txtLuong = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongCoBan()));
         JTextField txtTongLuong = new JTextField();
         
         JComboBox<String> cbTT = coTK
@@ -593,7 +531,7 @@ public class NhanVienGUI extends JPanel {
         
         try {
             double totalSalary = controller.tinhTongLuongThang(goc, LocalDate.now());
-            txtTongLuong.setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : dinhDangTien(totalSalary));
+            txtTongLuong.setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : NhanVienController.dinhDangTien(totalSalary));
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Không thể tính tổng lương tháng: " + ex.getMessage(),
                     "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
@@ -605,13 +543,8 @@ public class NhanVienGUI extends JPanel {
 
         // Xử lý lương tự động theo chức vụ
         Runnable apDungLuong = () -> {
-            String chucVu = (String) cbChucVu.getSelectedItem();
-            if (goc == null) {
-                if ("Nhân viên bán hàng".equals(chucVu)) txtLuong.setText("45000");
-                else if ("Nhân viên dịch vụ".equals(chucVu)) txtLuong.setText("60000");
-                else if ("Nhân viên quản lý kho".equals(chucVu)) txtLuong.setText("13500000");
-                else if ("Quản lý".equals(chucVu)) txtLuong.setText("15000000");
-            }
+            if (goc == null)
+                txtLuong.setText(String.valueOf(NhanVienController.luongMacDinh((String) cbChucVu.getSelectedItem())));
         };
         cbChucVu.addActionListener(e -> apDungLuong.run());
         apDungLuong.run();
@@ -674,11 +607,10 @@ public class NhanVienGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                boolean capNhatTrangThai = coTK && (cbTT.getSelectedIndex() == 0) != Boolean.TRUE.equals(goc.getTrangThaiTK());
                 NhanVienController.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
                         txtTen.getText(), txtSdt.getText(), txtDiaChi.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbChucVu.getSelectedItem(),
-                        txtLuong.getText(), capNhatTrangThai, cbTT.getSelectedIndex() == 0);
+                        txtLuong.getText(), cbTT.getSelectedIndex() == 0);
                 if (!result.isThanhCong()) { lblLoi.setText(result.getThongBaoLoi()); return; }
             } catch (SQLException ex) { lblLoi.setText("Lỗi CSDL: " + ex.getMessage()); return; }
             dlg.dispose(); taiLai();
@@ -710,20 +642,13 @@ public class NhanVienGUI extends JPanel {
         dlg.setVisible(true);
     }
 
-    /**
-     * Tổng lương nhận trong tháng hiện tại tính đến hôm nay:
-     * lương chức vụ phân bổ theo số ngày đã qua trong tháng + hoa hồng 5% dịch vụ
-     * (nhân viên dịch vụ). Quản lý chưa tính lương.
-     */
     private void xuatCsv() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new File("danh_sach_nhan_vien.csv"));
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
-
-        String csv = controller.taoNoiDungCsv(daLoc);
         try {
-            Files.write(fc.getSelectedFile().toPath(), csv.getBytes(StandardCharsets.UTF_8));
+            controller.ghiCsv(fc.getSelectedFile(), daLoc);
             JOptionPane.showMessageDialog(this, "Đã xuất " + daLoc.size() + " nhân viên.",
                     "Xuất danh sách", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -737,10 +662,6 @@ public class NhanVienGUI extends JPanel {
             List<NhanVien_entity> ds = controller.taiDanhSach();
             tatCa.clear();
             tatCa.addAll(ds);
-            Set<String> maHienCo = new HashSet<>();
-            for (NhanVien_entity nv : tatCa)
-                maHienCo.add(nv.getMaNhanVien());
-            daChon.retainAll(maHienCo);
         } catch (SQLException ex) {
             baoLoi("Không thể tải danh sách nhân viên", ex);
         }
@@ -751,8 +672,22 @@ public class NhanVienGUI extends JPanel {
         return s == null ? "" : s;
     }
 
-    private static String dinhDangTien(double so) {
-        return NumberFormat.getInstance(VN).format(so) + " ₫";
+    /** Chạy riêng màn hình này để kiểm thử (thay cho main của QuanLyNhanVienGUI cũ). */
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                | UnsupportedLookAndFeelException ex) {
+            // giữ giao diện mặc định
+        }
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Kiểm thử Quản lý nhân viên SALALA");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1280, 720);
+            frame.setLocationRelativeTo(null);
+            frame.add(new NhanVienGUI());
+            frame.setVisible(true);
+        });
     }
 
     private class BangModel extends AbstractTableModel {
@@ -797,7 +732,7 @@ public class NhanVienGUI extends JPanel {
         switch (cot) {
             case 0: return nv.getMaNhanVien();
             case 2: return nz(nv.getChucVu());
-            case 4: return nv.getNgaySinh() == null ? "" : DINH_DANG_NGAY.format(nv.getNgaySinh());
+            case 4: return NhanVienController.dinhDangNgay(nv.getNgaySinh());
             default: return "";
         }
     }
@@ -902,7 +837,7 @@ public class NhanVienGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             NhanVien_entity nv = (NhanVien_entity) v;
-            lblSdt.setText(dinhDangSdt(nv.getSdt()));
+            lblSdt.setText(NhanVienController.dinhDangSdt(nv.getSdt()));
             lblDiaChi.setText(nz(nv.getDiaChi()));
             lblDiaChi.setToolTipText(nz(nv.getDiaChi()));
             setBackground(nen(sel));

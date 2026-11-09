@@ -11,9 +11,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import controller.NavigationController;
+import controller.Chung.NavigationController;
 import GUI.GiaoDienChinhGUI;
-import GUI.TaiKhoan.ThongTinTaiKhoanDialog;
+import GUI.TaiKhoan.ThongTinTaiKhoanGUI;
 
 public class HeaderGUI extends JPanel {
 
@@ -187,7 +187,7 @@ public class HeaderGUI extends JPanel {
         itemThongTin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         itemThongTin.addActionListener(e -> {
             Frame frame = (Frame) SwingUtilities.getWindowAncestor(this);
-            ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanDialog(
+            ThongTinTaiKhoanGUI.ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanGUI.ThongTinTaiKhoanDialog(
                     frame, controller.getTaiKhoanHienTai(), controller.getTenNguoiDungHienTai());
             dlg.setVisible(true);
         });

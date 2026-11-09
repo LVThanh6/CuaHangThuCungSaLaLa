@@ -6,7 +6,7 @@ import GUI.Chung.NenAnhPanel;
 
 import GUI.Chung.TamNenNoiDung;
 
-import controller.ChiTietHoaDonController;
+import controller.HoaDon.ChiTietHoaDonController;
 
 import entity.HoaDon.ChiTietHoaDon_entity;
 
