@@ -20,7 +20,7 @@ public class ThanhToan_DAO {
         ArrayList<ThanhToan_entity> dsThanhToan = new ArrayList<>();
 
         String sql = "SELECT maThanhToan, soTien, thoiGian, "
-                   + "phuongThuc, trangThai FROM ThanhToan";
+                + "phuongThuc, trangThai FROM ThanhToan";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -30,15 +30,14 @@ public class ThanhToan_DAO {
             }
 
             try (PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
 
                 while (rs.next()) {
                     String maThanhToan = rs.getString("maThanhToan");
                     double soTien = rs.getDouble("soTien");
 
                     Date ngay = rs.getDate("thoiGian");
-                    java.time.LocalDate thoiGian =
-                            ngay != null ? ngay.toLocalDate() : null;
+                    java.time.LocalDate thoiGian = ngay != null ? ngay.toLocalDate() : null;
 
                     String phuongThuc = rs.getString("phuongThuc");
                     String trangThai = rs.getString("trangThai");
@@ -48,8 +47,7 @@ public class ThanhToan_DAO {
                             soTien,
                             thoiGian,
                             phuongThuc,
-                            trangThai
-                    );
+                            trangThai);
 
                     dsThanhToan.add(tt);
                 }
@@ -67,8 +65,8 @@ public class ThanhToan_DAO {
      */
     public boolean createThanhToan(ThanhToan_entity tt) {
         String sql = "INSERT INTO ThanhToan "
-                   + "(maThanhToan, soTien, thoiGian, phuongThuc, trangThai) "
-                   + "VALUES (?, ?, ?, ?, ?)";
+                + "(maThanhToan, soTien, thoiGian, phuongThuc, trangThai) "
+                + "VALUES (?, ?, ?, ?, ?)";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -131,9 +129,9 @@ public class ThanhToan_DAO {
      */
     public boolean updateThanhToan(ThanhToan_entity tt) {
         String sql = "UPDATE ThanhToan "
-                   + "SET soTien = ?, thoiGian = ?, "
-                   + "phuongThuc = ?, trangThai = ? "
-                   + "WHERE maThanhToan = ?";
+                + "SET soTien = ?, thoiGian = ?, "
+                + "phuongThuc = ?, trangThai = ? "
+                + "WHERE maThanhToan = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -170,8 +168,8 @@ public class ThanhToan_DAO {
      */
     public ThanhToan_entity getThanhToanTheoMa(String maThanhToan) {
         String sql = "SELECT maThanhToan, soTien, thoiGian, "
-                   + "phuongThuc, trangThai "
-                   + "FROM ThanhToan WHERE maThanhToan = ?";
+                + "phuongThuc, trangThai "
+                + "FROM ThanhToan WHERE maThanhToan = ?";
 
         try {
             Connection con = ConnectDB.getCon();
@@ -188,8 +186,7 @@ public class ThanhToan_DAO {
                         double soTien = rs.getDouble("soTien");
 
                         Date ngay = rs.getDate("thoiGian");
-                        java.time.LocalDate thoiGian =
-                                ngay != null ? ngay.toLocalDate() : null;
+                        java.time.LocalDate thoiGian = ngay != null ? ngay.toLocalDate() : null;
 
                         String phuongThuc = rs.getString("phuongThuc");
                         String trangThai = rs.getString("trangThai");
@@ -199,8 +196,7 @@ public class ThanhToan_DAO {
                                 soTien,
                                 thoiGian,
                                 phuongThuc,
-                                trangThai
-                        );
+                                trangThai);
                     }
                 }
             }

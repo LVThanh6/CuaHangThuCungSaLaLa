@@ -38,8 +38,8 @@ public class ChiTietDonThuoc_DAO {
         String sql = "SELECT maThuoc, tenThuoc, donViTinh, huongDanSuDung "
                 + "FROM Thuoc ORDER BY tenThuoc";
         try (Connection con = ketNoi();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 danhSach.add(new Thuoc_entity(rs.getString("maThuoc"), rs.getString("tenThuoc"),
                         rs.getString("donViTinh"), rs.getString("huongDanSuDung")));

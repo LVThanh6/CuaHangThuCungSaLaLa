@@ -46,8 +46,7 @@ public class ChiTietHoaDonController {
             return null;
         }
 
-        ArrayList<ChiTietHoaDon_entity> cacDong =
-                chiTietHoaDonDao.getChiTietHoaDonTheoMaHD(maHD);
+        ArrayList<ChiTietHoaDon_entity> cacDong = chiTietHoaDonDao.getChiTietHoaDonTheoMaHD(maHD);
 
         if (cacDong == null) {
             cacDong = new ArrayList<>();
@@ -55,8 +54,7 @@ public class ChiTietHoaDonController {
 
         ArrayList<ThuCung_entity> thuCung = new ArrayList<>();
         if (hoaDon.getMaTC() != null) {
-            ThuCung_entity thongTinThuCung =
-                    thuCungDao.getThuCungTheoMa(hoaDon.getMaTC().getMaTC());
+            ThuCung_entity thongTinThuCung = thuCungDao.getThuCungTheoMa(hoaDon.getMaTC().getMaTC());
             if (thongTinThuCung != null) {
                 thuCung.add(thongTinThuCung);
             }
@@ -72,10 +70,12 @@ public class ChiTietHoaDonController {
             ArrayList<ChiTietHoaDon_entity> cacDong) {
 
         double mucKhuyenMai = hoaDon.getMaKM() == null
-                ? 0 : hoaDon.getMaKM().getMucKM();
+                ? 0
+                : hoaDon.getMaKM().getMucKM();
 
         double mucThue = hoaDon.getMaThue() == null
-                ? 0 : hoaDon.getMaThue().getMucThue();
+                ? 0
+                : hoaDon.getMaThue().getMucThue();
 
         double tongTien = 0;
         if (cacDong != null) {
@@ -93,7 +93,8 @@ public class ChiTietHoaDonController {
         ThanhToan_entity thanhToan = hoaDon.getMaThanhToan();
         double daThanhToan = thanhToan != null
                 && laDaThanhToan(thanhToan.getTrangThai())
-                ? thanhToan.getSoTien() : 0;
+                        ? thanhToan.getSoTien()
+                        : 0;
 
         double conPhaiThu = Math.max(0, thanhTien - daThanhToan);
         if (conPhaiThu < 0.5) {
@@ -124,7 +125,8 @@ public class ChiTietHoaDonController {
             ma = chiTiet.getMaVT().getMaVT();
             ten = chiTiet.getMaVT().getTenVT();
             loai = chiTiet.getMaVT().getMaThuoc() == null
-                    ? "Vật tư" : "Thuốc kê đơn";
+                    ? "Vật tư"
+                    : "Thuốc kê đơn";
         } else {
             ma = null;
             ten = null;
@@ -136,13 +138,13 @@ public class ChiTietHoaDonController {
         double thanhTienDong = tienGoc - tienKhuyenMai;
 
         return new Object[] {
-            giaTri(ma),
-            giaTri(ten),
-            loai,
-            chiTiet.getSoLuong(),
-            tienGocDonVi(chiTiet.getDonGia()),
-            tienKhuyenMai,
-            thanhTienDong
+                giaTri(ma),
+                giaTri(ten),
+                loai,
+                chiTiet.getSoLuong(),
+                tienGocDonVi(chiTiet.getDonGia()),
+                tienKhuyenMai,
+                thanhTienDong
         };
     }
 
@@ -199,14 +201,14 @@ public class ChiTietHoaDonController {
     public boolean laHoaDonDaThanhToan(HoaDon_entity hoaDon) {
         return hoaDon != null
                 && (laDaThanhToan(hoaDon.getTrangThai())
-                || (hoaDon.getMaThanhToan() != null
-                && laDaThanhToan(hoaDon.getMaThanhToan().getTrangThai())));
+                        || (hoaDon.getMaThanhToan() != null
+                                && laDaThanhToan(hoaDon.getMaThanhToan().getTrangThai())));
     }
 
     public static boolean laDaThanhToan(String trangThai) {
         return trangThai != null
                 && (trangThai.equalsIgnoreCase("Đã thanh toán")
-                || trangThai.equalsIgnoreCase("Paid"));
+                        || trangThai.equalsIgnoreCase("Paid"));
     }
 
     private String layHangThanhVien(KhachHang khachHang) {
@@ -218,8 +220,7 @@ public class ChiTietHoaDonController {
             return khachHang.getHangThanhVien();
         }
 
-        HangThanhVien hang =
-                hangThanhVienDao.getHangThanhVienTheoMaKH(khachHang.getMaKH());
+        HangThanhVien hang = hangThanhVienDao.getHangThanhVienTheoMaKH(khachHang.getMaKH());
 
         return hang == null ? null : hang.getTenHang();
     }
@@ -254,10 +255,21 @@ public class ChiTietHoaDonController {
             this.hangThanhVien = hangThanhVien;
         }
 
-        public HoaDon_entity getHoaDon() { return hoaDon; }
-        public ArrayList<ChiTietHoaDon_entity> getCacDong() { return cacDong; }
-        public ArrayList<ThuCung_entity> getThuCung() { return thuCung; }
-        public String getHangThanhVien() { return hangThanhVien; }
+        public HoaDon_entity getHoaDon() {
+            return hoaDon;
+        }
+
+        public ArrayList<ChiTietHoaDon_entity> getCacDong() {
+            return cacDong;
+        }
+
+        public ArrayList<ThuCung_entity> getThuCung() {
+            return thuCung;
+        }
+
+        public String getHangThanhVien() {
+            return hangThanhVien;
+        }
     }
 
     public static final class TongTien {
@@ -289,13 +301,36 @@ public class ChiTietHoaDonController {
             this.conPhaiThu = conPhaiThu;
         }
 
-        public double getMucKhuyenMai() { return mucKhuyenMai; }
-        public double getMucThue() { return mucThue; }
-        public double getTongTien() { return tongTien; }
-        public double getTienKhuyenMai() { return tienKhuyenMai; }
-        public double getTienThue() { return tienThue; }
-        public double getThanhTien() { return thanhTien; }
-        public double getDaThanhToan() { return daThanhToan; }
-        public double getConPhaiThu() { return conPhaiThu; }
+        public double getMucKhuyenMai() {
+            return mucKhuyenMai;
+        }
+
+        public double getMucThue() {
+            return mucThue;
+        }
+
+        public double getTongTien() {
+            return tongTien;
+        }
+
+        public double getTienKhuyenMai() {
+            return tienKhuyenMai;
+        }
+
+        public double getTienThue() {
+            return tienThue;
+        }
+
+        public double getThanhTien() {
+            return thanhTien;
+        }
+
+        public double getDaThanhToan() {
+            return daThanhToan;
+        }
+
+        public double getConPhaiThu() {
+            return conPhaiThu;
+        }
     }
 }

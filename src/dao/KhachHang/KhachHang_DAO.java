@@ -32,7 +32,7 @@ public class KhachHang_DAO {
         }
         String sql = "SELECT maKH, hoTen, sdt, email, diaChi FROM KhachHang ORDER BY maKH";
         try (Statement statement = con.createStatement();
-             ResultSet rs = statement.executeQuery(sql)) {
+                ResultSet rs = statement.executeQuery(sql)) {
 
             while (rs.next()) {
                 String maKH = rs.getString(1);
@@ -50,8 +50,10 @@ public class KhachHang_DAO {
     }
 
     /**
-     * Lấy toàn bộ danh sách khách hàng kèm số thú cưng, tổng chi tiêu và hạng thành viên.
-     * Đã triệt tiêu lỗi tích Descartes (Cartesian Product) gây tính sai tổng chi tiêu và lag CSDL.
+     * Lấy toàn bộ danh sách khách hàng kèm số thú cưng, tổng chi tiêu và hạng thành
+     * viên.
+     * Đã triệt tiêu lỗi tích Descartes (Cartesian Product) gây tính sai tổng chi
+     * tiêu và lag CSDL.
      */
     public ArrayList<KhachHang> getAllKhachHangDayDu() {
         ArrayList<KhachHang> dsDayDu = new ArrayList<KhachHang>();
@@ -76,7 +78,7 @@ public class KhachHang_DAO {
                 "ORDER BY k.maKH";
 
         try (Statement statement = con.createStatement();
-             ResultSet rs = statement.executeQuery(sql)) {
+                ResultSet rs = statement.executeQuery(sql)) {
 
             while (rs.next()) {
                 String maKH = rs.getString("maKH");
@@ -109,7 +111,8 @@ public class KhachHang_DAO {
             return false;
         }
         int n = 0;
-        try (PreparedStatement stmt = con.prepareStatement("INSERT INTO KhachHang (maKH, hoTen, sdt, email, diaChi) VALUES(?, ?, ?, ?, ?)")) {
+        try (PreparedStatement stmt = con
+                .prepareStatement("INSERT INTO KhachHang (maKH, hoTen, sdt, email, diaChi) VALUES(?, ?, ?, ?, ?)")) {
             stmt.setString(1, kh.getMaKH());
             stmt.setString(2, kh.getHoTen());
             stmt.setString(3, kh.getSdt());
@@ -124,8 +127,7 @@ public class KhachHang_DAO {
                     String qlDong = "Giảm 2% hóa đơn dịch vụ\nTích 1 điểm / 10.000 ₫\nNhắc lịch tiêm và tái khám\nƯu đãi sinh nhật thú cưng";
                     HangThanhVien htv = new HangThanhVien(
                             maHang, kh.getMaKH(), "Đồng", 0.0, 5000000.0, 2.0, 1.0,
-                            qlDong, 0.0, 0, new java.sql.Timestamp(System.currentTimeMillis()), "Đang áp dụng"
-                    );
+                            qlDong, 0.0, 0, new java.sql.Timestamp(System.currentTimeMillis()), "Đang áp dụng");
                     htvDAO.themHangThanhVien(htv);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -244,7 +246,8 @@ public class KhachHang_DAO {
     }
 
     /**
-     * Tìm kiếm tổng hợp theo mã, tên hoặc số điện thoại (kèm số thú cưng và chi tiêu).
+     * Tìm kiếm tổng hợp theo mã, tên hoặc số điện thoại (kèm số thú cưng và chi
+     * tiêu).
      * Đã tối ưu hóa chống tích Descartes.
      */
     public List<KhachHang> timKiemTongHop(String keyword) {
@@ -304,7 +307,8 @@ public class KhachHang_DAO {
      * Lấy 1 khách hàng theo mã chính xác
      */
     public KhachHang getKhachHangTheoMa(String maKH) {
-        if (maKH == null || maKH.isBlank()) return null;
+        if (maKH == null || maKH.isBlank())
+            return null;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return null;
@@ -337,7 +341,7 @@ public class KhachHang_DAO {
         }
         String sql = "SELECT COUNT(*) FROM KhachHang";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -357,7 +361,7 @@ public class KhachHang_DAO {
         }
         String sql = "SELECT COUNT(*) FROM ThuCung";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -373,10 +377,11 @@ public class KhachHang_DAO {
      */
     public int getSoLuongThanhVienVangTroLen() {
         Connection con = ConnectDB.getCon();
-        if (con == null) return 0;
+        if (con == null)
+            return 0;
         String sql = "SELECT COUNT(*) FROM QuanLyHangThanhVien WHERE tenHang IN (N'Vàng', N'Kim cương')";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -423,7 +428,7 @@ public class KhachHang_DAO {
         }
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maKH, 3, LEN(maKH)) AS INT)), 0) FROM KhachHang WHERE maKH LIKE 'KH%'";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 int maxId = rs.getInt(1);
                 return String.format("KH%03d", maxId + 1);
@@ -448,7 +453,7 @@ public class KhachHang_DAO {
             ps.setString(1, maKH);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ds.add(new Object[]{
+                    ds.add(new Object[] {
                             rs.getString("maTC"),
                             rs.getString("tenTC"),
                             rs.getString("loai"),
@@ -473,7 +478,8 @@ public class KhachHang_DAO {
         if (con == null || maKH == null) {
             return ds;
         }
-        String sql = "SELECT h.maHD, h.ngayLap, h.trangThai, ISNULL(tt.soTien, 0) AS soTien, ISNULL(tt.phuongThuc, N'Tiền mặt') AS phuongThuc " +
+        String sql = "SELECT h.maHD, h.ngayLap, h.trangThai, ISNULL(tt.soTien, 0) AS soTien, ISNULL(tt.phuongThuc, N'Tiền mặt') AS phuongThuc "
+                +
                 "FROM HoaDon h " +
                 "LEFT JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
                 "WHERE h.maKH = ? ORDER BY h.ngayLap DESC";
@@ -481,7 +487,7 @@ public class KhachHang_DAO {
             ps.setString(1, maKH);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ds.add(new Object[]{
+                    ds.add(new Object[] {
                             rs.getString("maHD"),
                             rs.getTimestamp("ngayLap"),
                             rs.getString("trangThai"),
@@ -497,7 +503,8 @@ public class KhachHang_DAO {
     }
 
     /**
-     * Kiểm tra xem khách hàng có dữ liệu ràng buộc (Thú cưng, Lịch hẹn, Hóa đơn) hay không
+     * Kiểm tra xem khách hàng có dữ liệu ràng buộc (Thú cưng, Lịch hẹn, Hóa đơn)
+     * hay không
      */
     public boolean kiemTraRangBuoc(String maKH) {
         Connection con = ConnectDB.getCon();

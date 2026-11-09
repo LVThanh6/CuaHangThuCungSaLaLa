@@ -16,8 +16,8 @@ import entity.ThuCung.ThuCung_entity;
  */
 public class ThuCung_DAO {
 
-    private static final String SELECT_BASE =
-            "SELECT tc.maTC, tc.maKH, tc.tenTC, tc.loai, tc.gioiTinh, tc.ngaySinh, tc.chuHo, tc.dacDiemNhanDien, " +
+    private static final String SELECT_BASE = "SELECT tc.maTC, tc.maKH, tc.tenTC, tc.loai, tc.gioiTinh, tc.ngaySinh, tc.chuHo, tc.dacDiemNhanDien, "
+            +
             "kh.hoTen, kh.sdt, kh.email, kh.diaChi " +
             "FROM ThuCung tc " +
             "LEFT JOIN KhachHang kh ON kh.maKH = tc.maKH ";
@@ -34,7 +34,7 @@ public class ThuCung_DAO {
 
         String sql = SELECT_BASE + "ORDER BY tc.maTC ASC";
         try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 dsTC.add(mapRowToEntity(rs));
@@ -50,7 +50,8 @@ public class ThuCung_DAO {
      * Tìm thú cưng theo mã chính xác
      */
     public ThuCung_entity getThuCungTheoMa(String maTC) {
-        if (maTC == null || maTC.isBlank()) return null;
+        if (maTC == null || maTC.isBlank())
+            return null;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return null;
@@ -76,7 +77,8 @@ public class ThuCung_DAO {
      */
     public ArrayList<ThuCung_entity> getThuCungTheoMaKH(String maKH) {
         ArrayList<ThuCung_entity> dsTC = new ArrayList<>();
-        if (maKH == null || maKH.isBlank()) return dsTC;
+        if (maKH == null || maKH.isBlank())
+            return dsTC;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return dsTC;
@@ -106,8 +108,8 @@ public class ThuCung_DAO {
         }
 
         String sql = "INSERT INTO ThuCung "
-                   + "(maTC, maKH, tenTC, loai, gioiTinh, ngaySinh, chuHo, dacDiemNhanDien) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(maTC, maKH, tenTC, loai, gioiTinh, ngaySinh, chuHo, dacDiemNhanDien) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection con = ConnectDB.getCon();
         if (con == null) {
@@ -142,7 +144,8 @@ public class ThuCung_DAO {
      * Xóa thú cưng theo mã
      */
     public boolean deleteThuCung(String maTC) {
-        if (maTC == null || maTC.isBlank()) return false;
+        if (maTC == null || maTC.isBlank())
+            return false;
         String sql = "DELETE FROM ThuCung WHERE maTC = ?";
 
         Connection con = ConnectDB.getCon();
@@ -169,9 +172,9 @@ public class ThuCung_DAO {
         }
 
         String sql = "UPDATE ThuCung SET "
-                   + "maKH = ?, tenTC = ?, loai = ?, gioiTinh = ?, "
-                   + "ngaySinh = ?, chuHo = ?, dacDiemNhanDien = ? "
-                   + "WHERE maTC = ?";
+                + "maKH = ?, tenTC = ?, loai = ?, gioiTinh = ?, "
+                + "ngaySinh = ?, chuHo = ?, dacDiemNhanDien = ? "
+                + "WHERE maTC = ?";
 
         Connection con = ConnectDB.getCon();
         if (con == null) {
@@ -211,8 +214,7 @@ public class ThuCung_DAO {
                     rs.getString("hoTen"),
                     rs.getString("sdt"),
                     rs.getString("email"),
-                    rs.getString("diaChi")
-            );
+                    rs.getString("diaChi"));
         }
 
         Date ngay = rs.getDate("ngaySinh");
@@ -226,7 +228,6 @@ public class ThuCung_DAO {
                 rs.getString("gioiTinh"),
                 ngaySinh,
                 rs.getString("chuHo"),
-                rs.getString("dacDiemNhanDien")
-        );
+                rs.getString("dacDiemNhanDien"));
     }
 }

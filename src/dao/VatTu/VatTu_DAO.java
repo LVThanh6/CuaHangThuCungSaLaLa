@@ -16,14 +16,15 @@ import entity.VatTu.VatTu_entity;
  */
 public class VatTu_DAO {
 
-    private static final String SELECT_BASE =
-            "SELECT v.maVT, v.maNCC, v.tenVT, v.soLuongTon, v.trangThai, v.giaBanCoBan, v.giaNhap, v.maThuoc, " +
+    private static final String SELECT_BASE = "SELECT v.maVT, v.maNCC, v.tenVT, v.soLuongTon, v.trangThai, v.giaBanCoBan, v.giaNhap, v.maThuoc, "
+            +
             "ncc.tenNCC, ncc.diaChi, ncc.sdt, ncc.email " +
             "FROM VatTu v " +
             "LEFT JOIN NhaCungCap ncc ON ncc.maNCC = v.maNCC ";
 
     /**
-     * Lấy toàn bộ danh sách vật tư kèm thông tin nhà cung cấp bằng 1 query JOIN duy nhất.
+     * Lấy toàn bộ danh sách vật tư kèm thông tin nhà cung cấp bằng 1 query JOIN duy
+     * nhất.
      */
     public ArrayList<VatTu_entity> getAllVatTu() {
         ArrayList<VatTu_entity> dsVT = new ArrayList<>();
@@ -34,7 +35,7 @@ public class VatTu_DAO {
 
         String sql = SELECT_BASE + "ORDER BY v.maVT ASC";
         try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 dsVT.add(mapRowToEntity(rs));
@@ -55,8 +56,8 @@ public class VatTu_DAO {
         }
 
         String sql = "INSERT INTO VatTu "
-                   + "(maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection con = ConnectDB.getCon();
         if (con == null) {
@@ -85,7 +86,8 @@ public class VatTu_DAO {
      * Xóa vật tư theo mã
      */
     public boolean deleteVatTu(String maVT) {
-        if (maVT == null || maVT.isBlank()) return false;
+        if (maVT == null || maVT.isBlank())
+            return false;
         String sql = "DELETE FROM VatTu WHERE maVT = ?";
 
         Connection con = ConnectDB.getCon();
@@ -112,9 +114,9 @@ public class VatTu_DAO {
         }
 
         String sql = "UPDATE VatTu SET "
-                   + "maNCC = ?, tenVT = ?, soLuongTon = ?, trangThai = ?, "
-                   + "giaBanCoBan = ?, giaNhap = ?, maThuoc = ? "
-                   + "WHERE maVT = ?";
+                + "maNCC = ?, tenVT = ?, soLuongTon = ?, trangThai = ?, "
+                + "giaBanCoBan = ?, giaNhap = ?, maThuoc = ? "
+                + "WHERE maVT = ?";
 
         Connection con = ConnectDB.getCon();
         if (con == null) {
@@ -143,7 +145,8 @@ public class VatTu_DAO {
      * Tìm vật tư theo mã
      */
     public VatTu_entity getVatTuTheoMa(String maVT) {
-        if (maVT == null || maVT.isBlank()) return null;
+        if (maVT == null || maVT.isBlank())
+            return null;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return null;
@@ -201,12 +204,13 @@ public class VatTu_DAO {
         Connection con = ConnectDB.getCon();
         if (con != null) {
             try (PreparedStatement ps = con.prepareStatement("SELECT maVT FROM VatTu");
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String ma = rs.getString(1);
                     if (ma != null && ma.trim().matches("(?i)VT\\d+")) {
                         int so = Integer.parseInt(ma.trim().substring(2));
-                        if (so > max) max = so;
+                        if (so > max)
+                            max = so;
                     }
                 }
             } catch (SQLException | NumberFormatException e) {
@@ -217,7 +221,8 @@ public class VatTu_DAO {
     }
 
     /**
-     * Lấy danh sách nhà cung cấp {maNCC, tenNCC} để đổ vào ComboBox ở form thêm/sửa vật tư.
+     * Lấy danh sách nhà cung cấp {maNCC, tenNCC} để đổ vào ComboBox ở form thêm/sửa
+     * vật tư.
      */
     public ArrayList<String[]> getDanhSachNCC() {
         ArrayList<String[]> ds = new ArrayList<>();
@@ -228,7 +233,7 @@ public class VatTu_DAO {
 
         String sql = "SELECT maNCC, tenNCC FROM NhaCungCap ORDER BY maNCC ASC";
         try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 ds.add(new String[] { rs.getString("maNCC"), rs.getString("tenNCC") });
             }
@@ -247,8 +252,7 @@ public class VatTu_DAO {
                     rs.getString("tenNCC"),
                     rs.getString("diaChi"),
                     rs.getString("sdt"),
-                    rs.getString("email")
-            );
+                    rs.getString("email"));
         }
 
         return new VatTu_entity(
@@ -259,8 +263,7 @@ public class VatTu_DAO {
                 rs.getString("trangThai"),
                 rs.getDouble("giaBanCoBan"),
                 rs.getDouble("giaNhap"),
-                layMaThuoc(rs)
-        );
+                layMaThuoc(rs));
     }
 
     private String layMaThuoc(ResultSet rs) throws SQLException {

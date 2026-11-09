@@ -14,9 +14,9 @@ import java.util.Map;
 import connectDB.ConnectDB;
 import entity.KhachHang.HangThanhVien;
 
-
 /**
- * DAO HangThanhVien - Truy xuất và cập nhật trực tiếp bảng QuanLyHangThanhVien trong CSDL SALALA.
+ * DAO HangThanhVien - Truy xuất và cập nhật trực tiếp bảng QuanLyHangThanhVien
+ * trong CSDL SALALA.
  * (Đã tối ưu hóa truy vấn tổng hợp và phát sinh mã, loại bỏ quét toàn bảng).
  */
 public class HangThanhVien_DAO {
@@ -25,7 +25,8 @@ public class HangThanhVien_DAO {
     }
 
     /**
-     * Lấy toàn bộ danh sách thành viên chi tiết từ bảng QuanLyHangThanhVien kèm thông tin khách hàng và số thú cưng
+     * Lấy toàn bộ danh sách thành viên chi tiết từ bảng QuanLyHangThanhVien kèm
+     * thông tin khách hàng và số thú cưng
      */
     public ArrayList<HangThanhVien> getAllQuanLyHangThanhVien() {
         ArrayList<HangThanhVien> ds = new ArrayList<>();
@@ -43,7 +44,7 @@ public class HangThanhVien_DAO {
                 "ORDER BY q.maHang ASC";
 
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 String maHang = rs.getString("maHang");
@@ -76,17 +77,18 @@ public class HangThanhVien_DAO {
     }
 
     /**
-     * Lấy 4 thẻ nhóm hạng (Đồng, Bạc, Vàng, Kim Cương) tổng hợp từ bảng QuanLyHangThanhVien.
+     * Lấy 4 thẻ nhóm hạng (Đồng, Bạc, Vàng, Kim Cương) tổng hợp từ bảng
+     * QuanLyHangThanhVien.
      * Đã tối ưu hóa bằng 1 truy vấn GROUP BY duy nhất thay vì 4 truy vấn lặp.
      */
     public List<HangThanhVien> getAllHangThanhVien() {
         List<HangThanhVien> dsHang = new ArrayList<>();
 
-        String[] tenCacHang = {"Đồng", "Bạc", "Vàng", "Kim cương"};
-        double[] defaultMin = {0.0, 5_000_000.0, 15_000_000.0, 30_000_000.0};
-        Double[] defaultMax = {5_000_000.0, 15_000_000.0, 30_000_000.0, null};
-        double[] defaultGiam = {2.0, 5.0, 10.0, 15.0};
-        double[] defaultDiem = {1.0, 1.2, 1.5, 2.0};
+        String[] tenCacHang = { "Đồng", "Bạc", "Vàng", "Kim cương" };
+        double[] defaultMin = { 0.0, 5_000_000.0, 15_000_000.0, 30_000_000.0 };
+        Double[] defaultMax = { 5_000_000.0, 15_000_000.0, 30_000_000.0, null };
+        double[] defaultGiam = { 2.0, 5.0, 10.0, 15.0 };
+        double[] defaultDiem = { 1.0, 1.2, 1.5, 2.0 };
         String[] defaultQL = {
                 "Giảm 2% hóa đơn dịch vụ\nTích 1 điểm / 10.000 ₫\nNhắc lịch tiêm và tái khám\nƯu đãi sinh nhật thú cưng",
                 "Giảm 5% hóa đơn dịch vụ\nTích 1,2 điểm / 10.000 ₫\n01 lần vệ sinh tai miễn phí / quý\nƯu tiên khung giờ khám",
@@ -106,11 +108,11 @@ public class HangThanhVien_DAO {
                     "MAX(quyenLoi) AS ql " +
                     "FROM QuanLyHangThanhVien GROUP BY tenHang";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     String th = rs.getString("tenHang");
                     if (th != null) {
-                        mapData.put(th.trim(), new Object[]{
+                        mapData.put(th.trim(), new Object[] {
                                 rs.getInt("soLuong"),
                                 rs.getDouble("tongChiTieu"),
                                 rs.getObject("minChiTieu") != null ? rs.getDouble("minChiTieu") : null,
@@ -141,17 +143,22 @@ public class HangThanhVien_DAO {
                 count = (Integer) d[0];
                 tongChiTieu = (Double) d[1];
                 if (count > 0) {
-                    if (d[2] != null) minSpend = (Double) d[2];
-                    if (d[3] != null) maxSpend = (Double) d[3];
-                    if (d[4] != null) giamGia = (Double) d[4];
-                    if (d[5] != null) diem = (Double) d[5];
+                    if (d[2] != null)
+                        minSpend = (Double) d[2];
+                    if (d[3] != null)
+                        maxSpend = (Double) d[3];
+                    if (d[4] != null)
+                        giamGia = (Double) d[4];
+                    if (d[5] != null)
+                        diem = (Double) d[5];
                     if (d[6] != null && !((String) d[6]).trim().isEmpty()) {
                         quyenLoi = (String) d[6];
                     }
                 }
             }
 
-            HangThanhVien hang = new HangThanhVien(ten, minSpend, maxSpend, giamGia, diem, quyenLoi, count, tongChiTieu);
+            HangThanhVien hang = new HangThanhVien(ten, minSpend, maxSpend, giamGia, diem, quyenLoi, count,
+                    tongChiTieu);
             dsHang.add(hang);
         }
 
@@ -164,7 +171,8 @@ public class HangThanhVien_DAO {
     public List<HangThanhVien> getDanhSachThanhVienTheoHang(String tenHang) {
         List<HangThanhVien> ds = new ArrayList<>();
         Connection con = ConnectDB.getCon();
-        if (con == null || tenHang == null) return ds;
+        if (con == null || tenHang == null)
+            return ds;
 
         String sql = "SELECT q.maHang, q.maKH, q.tenHang, q.chiTieuToiThieu, q.chiTieuToiDa, " +
                 "q.mucGiamGia, q.diemTichLuy1Van, q.quyenLoi, q.tongChiTieu, q.diemTichLuy, " +
@@ -213,9 +221,11 @@ public class HangThanhVien_DAO {
      * Lấy thông tin hạng của một khách hàng theo maKH
      */
     public HangThanhVien getHangThanhVienTheoMaKH(String maKH) {
-        if (maKH == null || maKH.isBlank()) return null;
+        if (maKH == null || maKH.isBlank())
+            return null;
         Connection con = ConnectDB.getCon();
-        if (con == null) return null;
+        if (con == null)
+            return null;
 
         String sql = "SELECT q.maHang, q.maKH, q.tenHang, q.chiTieuToiThieu, q.chiTieuToiDa, " +
                 "q.mucGiamGia, q.diemTichLuy1Van, q.quyenLoi, q.tongChiTieu, q.diemTichLuy, " +
@@ -263,9 +273,11 @@ public class HangThanhVien_DAO {
      * Thêm bản ghi hạng thành viên mới vào bảng QuanLyHangThanhVien
      */
     public boolean themHangThanhVien(HangThanhVien htv) {
-        if (htv == null || htv.getMaHang() == null || htv.getMaKH() == null) return false;
+        if (htv == null || htv.getMaHang() == null || htv.getMaKH() == null)
+            return false;
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "INSERT INTO QuanLyHangThanhVien " +
                 "(maHang, maKH, tenHang, chiTieuToiThieu, chiTieuToiDa, mucGiamGia, " +
@@ -287,7 +299,8 @@ public class HangThanhVien_DAO {
             pstmt.setString(8, htv.getQuyenLoi() != null ? htv.getQuyenLoi() : "");
             pstmt.setDouble(9, htv.getTongChiTieu());
             pstmt.setInt(10, htv.getDiemTichLuy());
-            pstmt.setTimestamp(11, htv.getNgayCapNhatHang() != null ? htv.getNgayCapNhatHang() : new Timestamp(System.currentTimeMillis()));
+            pstmt.setTimestamp(11, htv.getNgayCapNhatHang() != null ? htv.getNgayCapNhatHang()
+                    : new Timestamp(System.currentTimeMillis()));
             pstmt.setString(12, htv.getTrangThai() != null ? htv.getTrangThai() : "Đang áp dụng");
 
             return pstmt.executeUpdate() > 0;
@@ -301,9 +314,11 @@ public class HangThanhVien_DAO {
      * Cập nhật thông tin hạng của một khách hàng trong QuanLyHangThanhVien
      */
     public boolean capNhatHangThanhVien(HangThanhVien htv) {
-        if (htv == null) return false;
+        if (htv == null)
+            return false;
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "UPDATE QuanLyHangThanhVien SET " +
                 "tenHang = ?, chiTieuToiThieu = ?, chiTieuToiDa = ?, mucGiamGia = ?, " +
@@ -324,7 +339,8 @@ public class HangThanhVien_DAO {
             pstmt.setString(6, htv.getQuyenLoi() != null ? htv.getQuyenLoi() : "");
             pstmt.setDouble(7, htv.getTongChiTieu());
             pstmt.setInt(8, htv.getDiemTichLuy());
-            pstmt.setTimestamp(9, htv.getNgayCapNhatHang() != null ? htv.getNgayCapNhatHang() : new Timestamp(System.currentTimeMillis()));
+            pstmt.setTimestamp(9, htv.getNgayCapNhatHang() != null ? htv.getNgayCapNhatHang()
+                    : new Timestamp(System.currentTimeMillis()));
             pstmt.setString(10, htv.getTrangThai() != null ? htv.getTrangThai() : "Đang áp dụng");
             pstmt.setString(11, htv.getMaHang());
             pstmt.setString(12, htv.getMaKH() != null ? htv.getMaKH().getMaKH() : null);
@@ -340,10 +356,12 @@ public class HangThanhVien_DAO {
      * Cập nhật chính sách chung cho tất cả thành viên thuộc một hạng
      */
     public boolean capNhatChinhSachHang(String tenHang, double chiTieuToiThieu, Double chiTieuToiDa,
-                                       double mucGiamGia, double diemTichLuy1Van, String quyenLoi) {
-        if (tenHang == null || tenHang.isBlank()) return false;
+            double mucGiamGia, double diemTichLuy1Van, String quyenLoi) {
+        if (tenHang == null || tenHang.isBlank())
+            return false;
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "UPDATE QuanLyHangThanhVien SET " +
                 "chiTieuToiThieu = ?, chiTieuToiDa = ?, mucGiamGia = ?, diemTichLuy1Van = ?, quyenLoi = ?, " +
@@ -375,9 +393,11 @@ public class HangThanhVien_DAO {
      * Xóa bản ghi trong QuanLyHangThanhVien
      */
     public boolean xoaHangThanhVien(String maHang) {
-        if (maHang == null || maHang.isBlank()) return false;
+        if (maHang == null || maHang.isBlank())
+            return false;
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         String sql = "DELETE FROM QuanLyHangThanhVien WHERE maHang = ?";
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -398,7 +418,7 @@ public class HangThanhVien_DAO {
         if (con != null) {
             String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maHang, 4, LEN(maHang)) AS INT)), 0) FROM QuanLyHangThanhVien WHERE maHang LIKE 'HTV%'";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     int max = rs.getInt(1);
                     return String.format("HTV%03d", max + 1);
@@ -418,7 +438,7 @@ public class HangThanhVien_DAO {
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM QuanLyHangThanhVien";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     return rs.getInt(1);
                 }
@@ -437,7 +457,7 @@ public class HangThanhVien_DAO {
         if (con != null) {
             String sql = "SELECT ISNULL(SUM(tongChiTieu), 0) FROM QuanLyHangThanhVien";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     return rs.getDouble(1);
                 }
@@ -459,7 +479,7 @@ public class HangThanhVien_DAO {
                     "JOIN ChiTietHoaDon c ON c.maHD = h.maHD " +
                     "JOIN KhuyenMai km ON km.maKM = h.maKM";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     return rs.getDouble(1);
                 }
@@ -478,7 +498,7 @@ public class HangThanhVien_DAO {
         if (con != null) {
             String sql = "SELECT COUNT(*) FROM QuanLyHangThanhVien WHERE tenHang <> N'Đồng' OR ngayCapNhatHang >= DATEADD(month, -1, SYSDATETIME())";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
                     return rs.getInt(1);
                 }
@@ -500,9 +520,9 @@ public class HangThanhVien_DAO {
                     "WHERE k.maKH NOT IN (SELECT maKH FROM QuanLyHangThanhVien) " +
                     "ORDER BY k.maKH ASC";
             try (Statement stmt = con.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
-                    ds.add(new String[]{rs.getString("maKH"), rs.getString("hoTen")});
+                    ds.add(new String[] { rs.getString("maKH"), rs.getString("hoTen") });
                 }
             } catch (SQLException e) {
                 e.printStackTrace();

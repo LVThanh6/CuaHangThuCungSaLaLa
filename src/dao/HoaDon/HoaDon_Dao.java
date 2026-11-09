@@ -22,10 +22,10 @@ import entity.DichVu.Thue_entity;
  */
 public class HoaDon_Dao {
 
-    private static final String SELECT_BASE =
-            "SELECT h.maHD, h.ngayLap, h.trangThai, h.maTC, " +
+    private static final String SELECT_BASE = "SELECT h.maHD, h.ngayLap, h.trangThai, h.maTC, " +
             "k.maKH, k.hoTen AS hoTenKH, k.sdt AS sdtKH, k.email AS emailKH, k.diaChi AS diaChiKH, " +
-            "nv.maNhanVien, nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, " +
+            "nv.maNhanVien, nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, "
+            +
             "km.maKM, km.tenKM, km.mucKM, km.ngayBatDau, km.ngayKetThuc, km.dieuKien, " +
             "th.maThue, th.tenThue, th.mucThue, " +
             "tt.maThanhToan, tt.soTien, tt.thoiGian, tt.phuongThuc, tt.trangThai AS trangThaiTT " +
@@ -48,7 +48,7 @@ public class HoaDon_Dao {
 
         String sql = SELECT_BASE + "ORDER BY h.ngayLap DESC, h.maHD DESC";
         try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 dsHD.add(mapRowToHoaDon(rs));
@@ -63,7 +63,8 @@ public class HoaDon_Dao {
      * Tìm hóa đơn theo mã chính xác bằng 1 query JOIN
      */
     public HoaDon_entity getHDTheoMa(String maHD) {
-        if (maHD == null || maHD.isBlank()) return null;
+        if (maHD == null || maHD.isBlank())
+            return null;
         Connection con = ConnectDB.getCon();
         if (con == null) {
             return null;
@@ -108,10 +109,10 @@ public class HoaDon_Dao {
         String sql;
         if (coCotMaTC) {
             sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan, maTC) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         } else {
             sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         }
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -278,10 +279,11 @@ public class HoaDon_Dao {
     public int laySoHoaDonLonNhat() {
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maHD, 3, LEN(maHD)) AS INT)), 0) FROM HoaDon WHERE maHD LIKE 'HD%'";
         Connection con = ConnectDB.getCon();
-        if (con == null) return 0;
+        if (con == null)
+            return 0;
 
         try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -305,8 +307,7 @@ public class HoaDon_Dao {
                     rs.getString("hoTenKH"),
                     rs.getString("sdtKH"),
                     rs.getString("emailKH"),
-                    rs.getString("diaChiKH")
-            );
+                    rs.getString("diaChiKH"));
         }
 
         String maNV = rs.getString("maNhanVien");
@@ -323,8 +324,7 @@ public class HoaDon_Dao {
                     ngaySinhNV != null ? ngaySinhNV.toLocalDate() : null,
                     rs.getString("gioiTinhNV"),
                     rs.getDouble("luongCoBan"),
-                    null
-            );
+                    null);
         }
 
         String maKM = rs.getString("maKM");
@@ -338,8 +338,7 @@ public class HoaDon_Dao {
                     rs.getDouble("mucKM"),
                     ngayBD != null ? ngayBD.toLocalDate() : null,
                     ngayKT != null ? ngayKT.toLocalDate() : null,
-                    rs.getString("dieuKien")
-            );
+                    rs.getString("dieuKien"));
         }
 
         String maThue = rs.getString("maThue");
@@ -348,8 +347,7 @@ public class HoaDon_Dao {
             thue = new Thue_entity(
                     maThue,
                     rs.getString("tenThue"),
-                    rs.getDouble("mucThue")
-            );
+                    rs.getDouble("mucThue"));
         }
 
         String maTT = rs.getString("maThanhToan");
@@ -361,8 +359,7 @@ public class HoaDon_Dao {
                     rs.getDouble("soTien"),
                     thoiGianTT != null ? thoiGianTT.toLocalDate() : null,
                     rs.getString("phuongThuc"),
-                    rs.getString("trangThaiTT")
-            );
+                    rs.getString("trangThaiTT"));
         }
 
         HoaDon_entity hd = new HoaDon_entity(maHD, ngayLap, trangThai, kh, nv, km, thue, tt);

@@ -24,11 +24,13 @@ import entity.ThuCung.ThuCung_entity;
  */
 public class LichHen_DAO {
 
-    private static final String SELECT_BASE =
-            "SELECT lh.maLichHen, lh.maTC, lh.maKH, lh.maNhanVien, lh.maDV, lh.ngayGio, lh.lyDo, lh.trangThai, lh.ghiChu, lh.loaiHen, " +
-            "tc.tenTC, tc.loai AS loaiTC, tc.gioiTinh AS gioiTinhTC, tc.ngaySinh AS ngaySinhTC, tc.chuHo AS chuHoTC, tc.dacDiemNhanDien, " +
+    private static final String SELECT_BASE = "SELECT lh.maLichHen, lh.maTC, lh.maKH, lh.maNhanVien, lh.maDV, lh.ngayGio, lh.lyDo, lh.trangThai, lh.ghiChu, lh.loaiHen, "
+            +
+            "tc.tenTC, tc.loai AS loaiTC, tc.gioiTinh AS gioiTinhTC, tc.ngaySinh AS ngaySinhTC, tc.chuHo AS chuHoTC, tc.dacDiemNhanDien, "
+            +
             "kh.hoTen AS hoTenKH, kh.sdt AS sdtKH, kh.email AS emailKH, kh.diaChi AS diaChiKH, " +
-            "nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu AS chucVuNV, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, " +
+            "nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu AS chucVuNV, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, "
+            +
             "dv.tenDV, dv.moTa AS moTaDV, dv.giaDV, dv.thoiGian AS thoiGianDV, dv.trangThai AS trangThaiDV " +
             "FROM LichHen lh " +
             "LEFT JOIN ThuCung tc ON tc.maTC = lh.maTC " +
@@ -48,7 +50,7 @@ public class LichHen_DAO {
 
         String sql = SELECT_BASE + "ORDER BY lh.ngayGio DESC";
         try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 dsLichHen.add(mapRowToEntity(rs));
@@ -62,9 +64,11 @@ public class LichHen_DAO {
      * Tìm một lịch hẹn theo mã
      */
     public LichHen_entity getLichHenTheoMa(String maLichHen) {
-        if (maLichHen == null || maLichHen.isBlank()) return null;
+        if (maLichHen == null || maLichHen.isBlank())
+            return null;
         Connection con = ConnectDB.getCon();
-        if (con == null) return null;
+        if (con == null)
+            return null;
 
         String sql = SELECT_BASE + "WHERE lh.maLichHen = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -84,12 +88,14 @@ public class LichHen_DAO {
      * Thêm lịch hẹn mới
      */
     public boolean createLichHen(LichHen_entity lh) {
-        if (lh == null || lh.getMaLichHen() == null) return false;
+        if (lh == null || lh.getMaLichHen() == null)
+            return false;
         String sql = "INSERT INTO LichHen (maLichHen, maTC, maKH, maNhanVien, maDV, ngayGio, lyDo, trangThai, ghiChu, loaiHen) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, lh.getMaLichHen());
@@ -131,12 +137,14 @@ public class LichHen_DAO {
      * Cập nhật thông tin lịch hẹn
      */
     public boolean updateLichHen(LichHen_entity lh) {
-        if (lh == null || lh.getMaLichHen() == null) return false;
+        if (lh == null || lh.getMaLichHen() == null)
+            return false;
         String sql = "UPDATE LichHen SET maTC = ?, maKH = ?, maNhanVien = ?, maDV = ?, "
-                   + "ngayGio = ?, lyDo = ?, trangThai = ?, ghiChu = ?, loaiHen = ? WHERE maLichHen = ?";
+                + "ngayGio = ?, lyDo = ?, trangThai = ?, ghiChu = ?, loaiHen = ? WHERE maLichHen = ?";
 
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, lh.getThuCung() != null ? lh.getThuCung().getMaTC() : null);
@@ -178,11 +186,13 @@ public class LichHen_DAO {
      * Xóa lịch hẹn theo mã
      */
     public boolean deleteLichHen(String maLichHen) {
-        if (maLichHen == null || maLichHen.isBlank()) return false;
+        if (maLichHen == null || maLichHen.isBlank())
+            return false;
         String sql = "DELETE FROM LichHen WHERE maLichHen = ?";
 
         Connection con = ConnectDB.getCon();
-        if (con == null) return false;
+        if (con == null)
+            return false;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maLichHen.trim());
@@ -198,11 +208,12 @@ public class LichHen_DAO {
      */
     public String phatSinhMaLichHenMoi() {
         Connection con = ConnectDB.getCon();
-        if (con == null) return "LH001";
+        if (con == null)
+            return "LH001";
 
         String sql = "SELECT ISNULL(MAX(CAST(SUBSTRING(maLichHen, 3, LEN(maLichHen)) AS INT)), 0) FROM LichHen WHERE maLichHen LIKE 'LH%'";
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 int maxId = rs.getInt(1);
                 return String.format("LH%03d", maxId + 1);
@@ -233,8 +244,7 @@ public class LichHen_DAO {
                     rs.getString("hoTenKH"),
                     rs.getString("sdtKH"),
                     rs.getString("emailKH"),
-                    rs.getString("diaChiKH")
-            );
+                    rs.getString("diaChiKH"));
         }
 
         ThuCung_entity tc = null;
@@ -248,8 +258,7 @@ public class LichHen_DAO {
                     rs.getString("gioiTinhTC"),
                     ngaySinhTC != null ? ngaySinhTC.toLocalDate() : null,
                     rs.getString("chuHoTC"),
-                    rs.getString("dacDiemNhanDien")
-            );
+                    rs.getString("dacDiemNhanDien"));
         }
 
         NhanVien_entity nv = null;
@@ -265,8 +274,7 @@ public class LichHen_DAO {
                     ngaySinhNV != null ? ngaySinhNV.toLocalDate() : null,
                     rs.getString("gioiTinhNV"),
                     rs.getDouble("luongCoBan"),
-                    null
-            );
+                    null);
         }
 
         DichVu_entity dv = null;
@@ -279,8 +287,7 @@ public class LichHen_DAO {
                     rs.getString("moTaDV"),
                     rs.getDouble("giaDV"),
                     thoiGian,
-                    rs.getString("trangThaiDV")
-            );
+                    rs.getString("trangThaiDV"));
         }
 
         return new LichHen_entity(
@@ -293,7 +300,6 @@ public class LichHen_DAO {
                 rs.getString("lyDo"),
                 rs.getString("trangThai"),
                 rs.getString("ghiChu"),
-                rs.getString("loaiHen")
-        );
+                rs.getString("loaiHen"));
     }
 }

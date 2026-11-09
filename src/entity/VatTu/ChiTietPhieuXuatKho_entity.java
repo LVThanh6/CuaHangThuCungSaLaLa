@@ -12,7 +12,7 @@ import java.util.Objects;
  */
 public class ChiTietPhieuXuatKho_entity {
 
-    private String maCTPXK; // khóa chính; DAO tự sinh khi thêm mới
+
     private PhieuXuatKho_entity maPhieu;
     private VatTu_entity maVT;
     private String tenVT = ""; // chỉ để hiển thị (JOIN VatTu)

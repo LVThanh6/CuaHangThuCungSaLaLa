@@ -145,7 +145,8 @@ public class HoSoThuCungController {
 
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
-            if (i > 0) writer.write(',');
+            if (i > 0)
+                writer.write(',');
             writer.write("\"" + values[i].replace("\"", "\"\"") + "\"");
         }
         writer.newLine();
@@ -184,6 +185,7 @@ public class HoSoThuCungController {
         public final int tong;
         public final int cho;
         public final int meo;
+
         public ThongKe(int tong, int cho, int meo) {
             this.tong = tong;
             this.cho = cho;

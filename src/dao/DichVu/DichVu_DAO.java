@@ -70,7 +70,8 @@ public class DichVu_DAO {
             statement.setString(2, dv.getTenDV().trim());
             statement.setString(3, dv.getMoTa());
             statement.setDouble(4, dv.getGiaDV());
-            statement.setTime(5, dv.getThoiGian() == null ? java.sql.Time.valueOf("00:30:00") : java.sql.Time.valueOf(dv.getThoiGian()));
+            statement.setTime(5, dv.getThoiGian() == null ? java.sql.Time.valueOf("00:30:00")
+                    : java.sql.Time.valueOf(dv.getThoiGian()));
             statement.setString(6, dv.getTrangThai() == null ? "Đang áp dụng" : dv.getTrangThai().trim());
 
             return statement.executeUpdate() > 0;
@@ -96,7 +97,8 @@ public class DichVu_DAO {
             statement.setString(1, dv.getTenDV().trim());
             statement.setString(2, dv.getMoTa());
             statement.setDouble(3, dv.getGiaDV());
-            statement.setTime(4, dv.getThoiGian() == null ? java.sql.Time.valueOf("00:30:00") : java.sql.Time.valueOf(dv.getThoiGian()));
+            statement.setTime(4, dv.getThoiGian() == null ? java.sql.Time.valueOf("00:30:00")
+                    : java.sql.Time.valueOf(dv.getThoiGian()));
             statement.setString(5, dv.getTrangThai() == null ? "Đang áp dụng" : dv.getTrangThai().trim());
             statement.setString(6, dv.getMaDV().trim());
 
@@ -156,14 +158,15 @@ public class DichVu_DAO {
 
         String sql = "SELECT TOP 1 maDV FROM DichVu ORDER BY maDV DESC";
         try (PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+                ResultSet resultSet = statement.executeQuery()) {
             if (resultSet.next()) {
                 String ma = resultSet.getString("maDV");
                 if (ma != null && ma.toUpperCase().startsWith("DV")) {
                     try {
                         int stt = Integer.parseInt(ma.substring(2).trim());
                         return String.format("DV%03d", stt + 1);
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
         } catch (SQLException e) {
