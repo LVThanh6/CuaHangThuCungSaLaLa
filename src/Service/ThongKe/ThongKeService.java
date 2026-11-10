@@ -10,9 +10,14 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Date;
@@ -249,6 +254,74 @@ public class ThongKeService {
             loi.printStackTrace();
             return new KetQuaTaiDuLieu(false, "Lỗi truy xuất dữ liệu: " + loi.getMessage(), null);
         }
+    }
+
+    // ==========================================================
+    // XUẤT FILE CSV
+    // ==========================================================
+
+    /**
+     * Ghi bảng dữ liệu ra file CSV (UTF-8 có BOM để Excel đọc đúng tiếng Việt).
+     * Các ô được truyền vào dạng chuỗi; hàm này lo phần escape dấu phẩy, nháy kép, xuống dòng.
+     */
+    public void xuatCSV(File tapTin, String[] tieuDeCot, List<String[]> dongDuLieu) throws IOException {
+        try (Writer ghi = new OutputStreamWriter(new FileOutputStream(tapTin), StandardCharsets.UTF_8)) {
+            ghi.write('\uFEFF');
+            ghi.write(noiDongCsv(tieuDeCot));
+            for (String[] dong : dongDuLieu) {
+                ghi.write(noiDongCsv(dong));
+            }
+        }
+    }
+
+    private static String noiDongCsv(String[] cacO) {
+        StringBuilder dong = new StringBuilder();
+        for (int i = 0; i < cacO.length; i++) {
+            if (i > 0) {
+                dong.append(',');
+            }
+            dong.append(thoatOCsv(cacO[i]));
+        }
+        return dong.append("\r\n").toString();
+    }
+
+    private static String thoatOCsv(String giaTri) {
+        if (giaTri == null) {
+            return "";
+        }
+        boolean canNhay = giaTri.indexOf(',') >= 0 || giaTri.indexOf('"') >= 0
+                || giaTri.indexOf('\n') >= 0 || giaTri.indexOf('\r') >= 0;
+        return canNhay ? "\"" + giaTri.replace("\"", "\"\"") + "\"" : giaTri;
+    }
+
+    /** Số dạng thuần (không phân cách hàng nghìn, dấu chấm thập phân) để Excel nhận là số. */
+    public static String soChoCsv(double giaTri) {
+        if (Double.isNaN(giaTri) || Double.isInfinite(giaTri)) {
+            return "";
+        }
+        return BigDecimal.valueOf(giaTri).stripTrailingZeros().toPlainString();
+    }
+
+    /** Chặn CSV injection cho ô văn bản (tên nhân viên, dịch vụ...) bắt đầu bằng = + - @. */
+    public static String vanBanChoCsv(String giaTri) {
+        if (giaTri == null || giaTri.isEmpty()) {
+            return "";
+        }
+        char dau = giaTri.charAt(0);
+        return (dau == '=' || dau == '+' || dau == '-' || dau == '@') ? "'" + giaTri : giaTri;
+    }
+
+    public static String tenTepCsv(String maChiSo, LocalDate tu, LocalDate den) {
+        DateTimeFormatter dinhDang = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String ma = maChiSo == null ? "" : maChiSo.replaceAll("[^A-Za-z0-9_-]", "_");
+        StringBuilder ten = new StringBuilder("ThongKe");
+        if (!ma.isEmpty()) {
+            ten.append('_').append(ma);
+        }
+        if (tu != null && den != null) {
+            ten.append('_').append(dinhDang.format(tu)).append('_').append(dinhDang.format(den));
+        }
+        return ten.append(".csv").toString();
     }
 
     // ==========================================================
