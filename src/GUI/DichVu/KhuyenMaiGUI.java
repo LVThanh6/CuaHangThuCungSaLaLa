@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Giao diện "Khuyến mãi" - SALALA Pet Shop (Dịch vụ / Khuyến mãi).
  * Gồm: tiêu đề, 4 thẻ thống kê, bộ lọc (tìm kiếm, trạng thái, thời gian), bảng,
- * thao tác Sửa / Nhân bản / Tạm dừng - Kích hoạt, xuất danh sách CSV.
+ * thao tác Sửa / Tạm dừng - Kích hoạt, xuất danh sách CSV.
  *
  * Lưu ý về dữ liệu:
  * - Trạng thái (Đang áp dụng / Sắp diễn ra / Hết hạn) được tính tự động từ ngày
@@ -51,7 +51,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private enum CheDo {
-        THEM, SUA, NHAN_BAN
+        THEM, SUA
     }
 
     // ===== Dữ liệu =====
@@ -112,7 +112,7 @@ public class KhuyenMaiGUI extends JPanel {
         trai.add(Box.createVerticalStrut(2));
         trai.add(lblMoTa);
 
-        RoundButton btnThem = new RoundButton("Thêm khuyến mãi", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
+        RoundButton btnThem = new RoundButton("+Thêm khuyến mãi", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
         btnThem.addActionListener(e -> moForm(null, CheDo.THEM));
         JPanel phai = new JPanel(new GridBagLayout());
         phai.setOpaque(false);
@@ -228,7 +228,6 @@ public class KhuyenMaiGUI extends JPanel {
         locTrai.add(btnThoiGian);
 
         RoundButton btnSua = new RoundButton("Sửa", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
-        RoundButton btnNhanBan = new RoundButton("Nhân bản", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
         RoundButton btnTamNgung = new RoundButton("Tạm ngưng", RangBuocGiaoDien.MAU_CANH_BAO_DO, RangBuocGiaoDien.MAU_CANH_BAO_DO, RangBuocGiaoDien.MAU_NEN_THE);
         RoundButton btnXuat = new RoundButton("Xuất danh sách", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
 
@@ -242,18 +241,6 @@ public class KhuyenMaiGUI extends JPanel {
             int mr = table.convertRowIndexToModel(sel);
             if (mr >= 0 && mr < dongHienTai.size())
                 moForm(dongHienTai.get(mr), CheDo.SUA);
-        });
-
-        btnNhanBan.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để nhân bản.",
-                        "Chưa chọn", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            int mr = table.convertRowIndexToModel(sel);
-            if (mr >= 0 && mr < dongHienTai.size())
-                moForm(dongHienTai.get(mr), CheDo.NHAN_BAN);
         });
 
         btnTamNgung.addActionListener(e -> {
@@ -274,7 +261,6 @@ public class KhuyenMaiGUI extends JPanel {
         JPanel locPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         locPhai.setOpaque(false);
         locPhai.add(btnSua);
-        locPhai.add(btnNhanBan);
         locPhai.add(btnTamNgung);
         locPhai.add(btnXuat);
 
@@ -492,12 +478,11 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     // =====================================================================
-    // Form thêm / sửa / nhân bản
+    // Form thêm / sửa
     // =====================================================================
     private void moForm(KhuyenMai_Entity mau, CheDo cheDo) {
         final boolean sua = cheDo == CheDo.SUA;
-        String tieuDe = sua ? "Chỉnh sửa khuyến mãi"
-                : (cheDo == CheDo.NHAN_BAN ? "Nhân bản khuyến mãi" : "Thêm khuyến mãi");
+        String tieuDe = sua ? "Chỉnh sửa khuyến mãi" : "Thêm khuyến mãi";
 
         Window cha = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(cha, tieuDe, Dialog.ModalityType.APPLICATION_MODAL);
@@ -514,8 +499,7 @@ public class KhuyenMaiGUI extends JPanel {
         JTextField txtMa = new JTextField(sua ? mau.getMaKM() : "KM" + System.currentTimeMillis() % 100000);
         if (sua)
             txtMa.setEditable(false);
-        JTextField txtTen = new JTextField(mau == null ? ""
-                : nz(mau.getTenKM()) + (cheDo == CheDo.NHAN_BAN ? " (bản sao)" : ""));
+        JTextField txtTen = new JTextField(mau == null ? "" : nz(mau.getTenKM()));
         JComboBox<String> cboLoai = new JComboBox<>(new String[] { "Phần trăm", "Số tiền" });
         if (mau != null && !laPhanTram(mau))
             cboLoai.setSelectedIndex(1);
