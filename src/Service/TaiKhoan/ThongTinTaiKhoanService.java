@@ -266,7 +266,7 @@ public class ThongTinTaiKhoanService {
 
     /** Dữ liệu 1 dòng hiển thị trên bảng (đúng thứ tự cột của GUI). */
     public Object[] taoDongBang(TaiKhoanItem item) {
-        String trangThaiText = item.isTrangThai() ? "🟢 Hoạt động" : "🔴 Đã khóa";
+        String trangThaiText = item.isTrangThai() ? "Hoạt động" : "Đã khóa";
         String qlText = (item.getTenQuanLy() != null)
                 ? item.getTenQuanLy() + " (" + item.getMaQuanLy() + ")" : "Toàn quyền";
         return new Object[] {

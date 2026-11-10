@@ -28,7 +28,7 @@ public class DangNhapGUI extends JFrame {
     private JButton btnDangNhap;
     private JLabel lblThongBaoLoi;
 
-    private final DangNhapService controller = new DangNhapService();
+    private final DangNhapService service = new DangNhapService();
 
     public DangNhapGUI() {
         khoiTaoGiaoDien();
@@ -270,13 +270,13 @@ public class DangNhapGUI extends JFrame {
         btnDangNhap.setText("Đang kiểm tra...");
 
         SwingUtilities.invokeLater(() -> {
-            DangNhapService.KetQuaDangNhap result = controller.dangNhap(username, password);
+            DangNhapService.KetQuaDangNhap result = service.dangNhap(username, password);
             if (result.isThanhCong()) {
                 lblThongBaoLoi.setText(" ");
                 TaiKhoan tk = result.getTaiKhoan();
 
                 // Khuyến nghị đổi mật khẩu nếu đang dùng mật khẩu mặc định
-                if (controller.nenKhuyenNghiDoiMatKhau(password)) {
+                if (service.nenKhuyenNghiDoiMatKhau(password)) {
                     int luaChon = JOptionPane.showConfirmDialog(this,
                             "Bạn đang đăng nhập bằng mật khẩu mặc định (" + DangNhapService.MAT_KHAU_MAC_DINH
                                     + ").\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",

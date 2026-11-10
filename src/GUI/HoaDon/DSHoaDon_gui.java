@@ -18,7 +18,7 @@ import java.util.List;
 
 public class DSHoaDon_gui extends JPanel {
 
-    private final DSHoaDonService controller = new DSHoaDonService();
+    private final DSHoaDonService service = new DSHoaDonService();
 
     private final Color XANH = Color.decode("#0F766E");
     private final Color NEN = new Color(248, 250, 252);
@@ -103,26 +103,7 @@ public class DSHoaDon_gui extends JPanel {
         thongTinTieuDe.add(Box.createVerticalStrut(4));
         thongTinTieuDe.add(lblMoTa);
 
-        // JButton btnLapHoaDon = new JButton("Lập Hóa Đơn");
-        // btnLapHoaDon.setFont(new Font("Arial", Font.BOLD, 12));
-        // btnLapHoaDon.setForeground(Color.WHITE);
-        // btnLapHoaDon.setBackground(Color.decode("#0F766E"));
-        // btnLapHoaDon.setOpaque(true);
-        // btnLapHoaDon.setContentAreaFilled(true);
-        // btnLapHoaDon.setBorderPainted(false);
-        // btnLapHoaDon.setFocusPainted(false);
-        // btnLapHoaDon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        //
-        // // ==================== NÚT LẬP HÓA ĐƠN ====================
-        // btnLapHoaDon.addActionListener(e -> {
-        // if (hanhDongLapHoaDon != null) {
-        // hanhDongLapHoaDon.run();
-        // } else {
-        // JOptionPane.showMessageDialog(this,
-        // "Kết nối sang LapHoaDon_gui thất bại",
-        // "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        // }
-        // });
+        
 
         tieuDe.add(thongTinTieuDe, BorderLayout.CENTER);
         // tieuDe.add(btnLapHoaDon, BorderLayout.EAST);
@@ -300,7 +281,7 @@ public class DSHoaDon_gui extends JPanel {
                 label.setHorizontalAlignment(SwingConstants.CENTER);
                 String tt = value == null ? "" : value.toString();
 
-                if (controller.daThanhToan(tt)) {
+                if (service.daThanhToan(tt)) {
                     label.setForeground(new Color(21, 128, 61));
                     label.setBackground(new Color(220, 252, 231));
                 } else {
@@ -328,7 +309,7 @@ public class DSHoaDon_gui extends JPanel {
         SwingWorker<ArrayList<HoaDon_entity>, Void> worker = new SwingWorker<>() {
             @Override
             protected ArrayList<HoaDon_entity> doInBackground() {
-                return controller.taiDanhSach();
+                return service.taiDanhSach();
             }
 
             @Override
@@ -358,7 +339,7 @@ public class DSHoaDon_gui extends JPanel {
 
     // ==================CẬP NHẬT THỐNG KÊ==================
     private void capNhatThongKe(ArrayList<HoaDon_entity> ds) {
-        DSHoaDonService.ThongKe thongKe = controller.thongKe(ds);
+        DSHoaDonService.ThongKe thongKe = service.thongKe(ds);
         lblTong.setText(String.valueOf(thongKe.getTongSo()));
         lblDaThanhToan.setText(String.valueOf(thongKe.getDaThanhToan()));
         lblChuaThanhToan.setText(String.valueOf(thongKe.getChuaThanhToan()));
@@ -370,7 +351,7 @@ public class DSHoaDon_gui extends JPanel {
         model.setRowCount(0);
         danhSachHienThi = new ArrayList<>(ds);
         for (HoaDon_entity hd : ds) {
-            model.addRow(controller.taoDongHienThi(hd));
+            model.addRow(service.taoDongHienThi(hd));
         }
         capNhatNutThaoTac();
     }
@@ -393,7 +374,7 @@ public class DSHoaDon_gui extends JPanel {
         }
 
         String trangThaiChon = cboTrangThai.getSelectedItem().toString();
-        ArrayList<HoaDon_entity> ketQua = controller.locDanhSach(danhSach, tuKhoa, trangThaiChon);
+        ArrayList<HoaDon_entity> ketQua = service.locDanhSach(danhSach, tuKhoa, trangThaiChon);
         hienThiBang(ketQua);
     }
 
@@ -431,7 +412,7 @@ public class DSHoaDon_gui extends JPanel {
         if (xacNhan != JOptionPane.YES_OPTION)
             return;
 
-        if (controller.xoaHoaDon(maHD)) {
+        if (service.xoaHoaDon(maHD)) {
             taiDuLieu();
             JOptionPane.showMessageDialog(this, "Đã xóa hóa đơn " + maHD + ".",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
@@ -452,7 +433,7 @@ public class DSHoaDon_gui extends JPanel {
         File file = chooser.getSelectedFile();
 
         try {
-            controller.xuatCSV(danhSachHienThi, file);
+            service.xuatCSV(danhSachHienThi, file);
             JOptionPane.showMessageDialog(this,
                     "Xuất danh sách thành công.");
         } catch (Exception ex) {

@@ -20,7 +20,7 @@ public class ThueGUI extends JPanel {
     private static final Color XAM = new Color(0x6B7280);
     private static final Color DO = new Color(0xDC2626);
 
-    private final ThueService controller = new ThueService();
+    private final ThueService service = new ThueService();
     private JTable table;
     private DefaultTableModel model;
     private JButton btnSua, btnXoa;
@@ -77,7 +77,7 @@ public class ThueGUI extends JPanel {
                         "Xóa loại thuế " + thue.getTenThue() + " (" + thue.getMaThue() + ")?", "Xác nhận xóa",
                         JOptionPane.YES_NO_OPTION);
                 if (kq == JOptionPane.YES_OPTION) {
-                    if (controller.delete(thue.getMaThue())) {
+                    if (service.delete(thue.getMaThue())) {
                         JOptionPane.showMessageDialog(this, "Xóa thành công!");
                         taiLai();
                     } else {
@@ -127,7 +127,7 @@ public class ThueGUI extends JPanel {
 
     private void taiLai() {
         model.setRowCount(0);
-        danhSach = controller.getAll();
+        danhSach = service.getAll();
         if (danhSach != null) {
             for (Thue_entity t : danhSach) {
                 model.addRow(new Object[] {
@@ -177,7 +177,7 @@ public class ThueGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                boolean ok = controller.save(
+                boolean ok = service.save(
                         txtMa.getText(), txtTen.getText(), txtMuc.getText(), goc == null);
 
                 if (ok) {

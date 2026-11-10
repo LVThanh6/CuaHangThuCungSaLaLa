@@ -76,7 +76,7 @@ public class XemLichGUI extends JPanel {
     };
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-    private final XemLichService controller = new XemLichService();
+    private final XemLichService service = new XemLichService();
     private List<LichHen_entity> danhSachLichHen = new ArrayList<>();
     private List<LichHen_entity> danhSachDangHienThi = new ArrayList<>();
     private LocalDate tuNgay;
@@ -373,7 +373,7 @@ public class XemLichGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            XemLichService.DuLieuManHinh duLieu = controller.taiDuLieu();
+            XemLichService.DuLieuManHinh duLieu = service.taiDuLieu();
             danhSachLichHen = duLieu.lichHen;
             List<NhanVien_entity> nhanVien = duLieu.nhanVien;
             Object selected = cboBacSi.getSelectedItem();
@@ -398,7 +398,7 @@ public class XemLichGUI extends JPanel {
     private void locDuLieu() {
         if (bangLichKham == null)
             return;
-        List<LichHen_entity> ketQua = controller.loc(danhSachLichHen,
+        List<LichHen_entity> ketQua = service.loc(danhSachLichHen,
                 String.valueOf(cboBacSi.getSelectedItem()),
                 String.valueOf(cboTrangThai.getSelectedItem()), tuNgay, denNgay);
         DefaultTableModel model = (DefaultTableModel) bangLichKham.getModel();
@@ -421,7 +421,7 @@ public class XemLichGUI extends JPanel {
 
     private void capNhatThongKeTuDuLieu() {
         LocalDate homNay = LocalDate.now();
-        XemLichService.ThongKe thongKe = controller.thongKeHomNay(danhSachLichHen, homNay);
+        XemLichService.ThongKe thongKe = service.thongKeHomNay(danhSachLichHen, homNay);
         capNhatThongKe(DINH_DANG_NGAY.format(homNay), thongKe.tong, thongKe.choKham,
                 thongKe.dangKham, thongKe.daKham, thongKe.daHuy);
     }
@@ -438,7 +438,7 @@ public class XemLichGUI extends JPanel {
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
             return;
         try {
-            XemLichService.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            XemLichService.KhoangNgay khoang = service.khoangNgay(tu.getText(), den.getText());
             tuNgay = khoang.tuNgay;
             denNgay = khoang.denNgay;
             nhanNgayLoc.setText(tuNgay == null && denNgay == null ? "Ngày: Tất cả"
@@ -469,7 +469,7 @@ public class XemLichGUI extends JPanel {
         if (lich == null)
             return;
         try {
-            LichHen_entity chiTiet = controller.timTheoMa(lich.getMaLichHen());
+            LichHen_entity chiTiet = service.timTheoMa(lich.getMaLichHen());
             if (chiTiet == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn " + lich.getMaLichHen() + ".",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
@@ -499,14 +499,14 @@ public class XemLichGUI extends JPanel {
         if (lich == null)
             return;
         try {
-            lich = controller.timTheoMa(lich.getMaLichHen());
+            lich = service.timTheoMa(lich.getMaLichHen());
             if (lich == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn cần sửa.",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            List<NhanVien_entity> nhanVien = controller.taiNhanVien();
-            List<DichVu_entity> dichVu = controller.taiDichVu();
+            List<NhanVien_entity> nhanVien = service.taiNhanVien();
+            List<DichVu_entity> dichVu = service.taiDichVu();
             JTextField txtNgayGio = new JTextField(DINH_DANG_NGAY_GIO.format(lich.getNgayGio()));
             JTextField txtLyDo = new JTextField(lich.getLyDo());
             JTextField txtLoaiHen = new JTextField(lich.getLoaiHen());
@@ -568,7 +568,7 @@ public class XemLichGUI extends JPanel {
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
                 return;
             NhanVien_entity nv = (NhanVien_entity) cboNhanVien.getSelectedItem();
-            if (controller.capNhat(lich, new XemLichService.ThongTinCapNhat(
+            if (service.capNhat(lich, new XemLichService.ThongTinCapNhat(
                     txtNgayGio.getText(), nv, txtLyDo.getText(), txtLoaiHen.getText(),
                     (DichVu_entity) cboDichVu.getSelectedItem(),
                     String.valueOf(cboTrangThai.getSelectedItem()), txtGhiChu.getText()))) {
@@ -600,7 +600,7 @@ public class XemLichGUI extends JPanel {
             return;
 
         try {
-            XemLichService.KetQuaHuyLich ketQua = controller.huy(lichChon.getMaLichHen());
+            XemLichService.KetQuaHuyLich ketQua = service.huy(lichChon.getMaLichHen());
             if (ketQua == XemLichService.KetQuaHuyLich.KHONG_TIM_THAY) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn để hủy.",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
@@ -643,7 +643,7 @@ public class XemLichGUI extends JPanel {
                 "Xác nhận", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
             return;
         try {
-            controller.xuatDanhSach(file, danhSachDangHienThi);
+            service.xuatDanhSach(file, danhSachDangHienThi);
             JOptionPane.showMessageDialog(this, "Đã xuất danh sách ra:\n" + file.getAbsolutePath(),
                     "Xuất thành công", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {
