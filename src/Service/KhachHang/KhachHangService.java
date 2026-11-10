@@ -28,6 +28,7 @@ import entity.KhachHang.KhachHang;
  *   7. CHỨC NĂNG 5: XÓA KHÁCH HÀNG AN TOÀN (RÀNG BUỘC TOÀN VẸN)
  *   8. CHỨC NĂNG 6: XEM HỒ SƠ CHI TIẾT (THÚ CƯNG & LỊCH SỬ HÓA ĐƠN)
  *   9. CÁC LỚP ĐỐI TƯỢNG ĐÓNG GÓI DỮ LIỆU (DTO - DATA TRANSFER OBJECTS)
+ *   10. CHỨC NĂNG 7: XUẤT DANH SÁCH KHÁCH HÀNG RA FILE CSV
  * ============================================================================
  */
 public class KhachHangService {
