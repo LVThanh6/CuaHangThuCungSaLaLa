@@ -5,6 +5,7 @@ import Service.KhachHang.HangThanhVienService.ThongKeHangThanhVien;
 import Service.KhachHang.HangThanhVienService.KetQuaCapNhatChinhSach;
 import Service.KhachHang.HangThanhVienService.KetQuaChuyenHang;
 import Service.KhachHang.HangThanhVienService.KetQuaPhanHang;
+import Service.KhachHang.HangThanhVienService.KetQuaDongBoChiTieu;
 import Service.KhachHang.HangThanhVienService.ThongTinDongThanhVien;
 import Service.KhachHang.HangThanhVienService.TheHangThanhVienModel;
 import Service.KhachHang.HangThanhVienService.DuLieuFormChinhSachHang;
@@ -529,6 +530,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
 
             hienThiDialogChuyenHang(dialog, tt.getMaHang(), tt.getMaKH(), tt.getHoTen(), tenHang);
         });
+
 
         JButton btnDong = new JButton("Đóng");
         btnDong.setPreferredSize(new Dimension(90, 36));
