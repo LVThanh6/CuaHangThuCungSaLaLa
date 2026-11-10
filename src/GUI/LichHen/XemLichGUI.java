@@ -123,6 +123,7 @@ public class XemLichGUI extends JPanel {
         loadDataToTable();
     }
 
+    //Hàm gốc định hình toàn bộ khung màn hình chính
     private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout(0, KHOANG_CACH));
         setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
@@ -137,6 +138,7 @@ public class XemLichGUI extends JPanel {
         add(taoTheDanhSach(), BorderLayout.CENTER);
     }
 
+    //Tạo dòng chữ "Lịch khám sức khỏe" và đặt nút bấm "Tạo lịch khám" ở góc phải.
     private JPanel taoPhanDauTrang() {
         panelDauTrang = new JPanel(new BorderLayout(0, 8));
         panelDauTrang.setOpaque(false);
@@ -176,6 +178,7 @@ public class XemLichGUI extends JPanel {
         return panelDauTrang;
     }
 
+    //Dựng 4 thẻ hiển thị con số nằm ngang (Lịch hôm nay, Chờ khám, Đang khám, Đã khám/Hủy).
     private JPanel taoHangThongKe() {
         panelThongKe = new JPanel(new GridLayout(1, 4, KHOANG_CACH, 0));
         panelThongKe.setOpaque(false);
@@ -193,6 +196,7 @@ public class XemLichGUI extends JPanel {
         return panelThongKe;
     }
 
+    //Dựng một khung bo tròn lớn để bao bọc thanh công cụ và bảng danh sách bên trong
     private TheBoGoc taoTheDanhSach() {
         theDanhSach = new TheBoGoc(BAN_KINH_THE, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
         theDanhSach.add(taoThanhCongCu(), BorderLayout.NORTH);
@@ -200,7 +204,8 @@ public class XemLichGUI extends JPanel {
         theDanhSach.add(taoChanBang(), BorderLayout.SOUTH);
         return theDanhSach;
     }
-
+    
+    //Thiết kế bộ lọc (Ngày, Nhân viên, Trạng thái) và cụm nút thao tác (Xem, Sửa, Hủy) nằm ngay trên bảng.
     private JPanel taoThanhCongCu() {
         panelThanhCongCu = new JPanel(new BorderLayout());
         panelThanhCongCu.setOpaque(false);
@@ -294,6 +299,7 @@ public class XemLichGUI extends JPanel {
         return panelThanhCongCu;
     }
 
+    //Khai báo các cột cho bảng lịch khám, căn chỉnh chiều rộng và gắn màu cho tiêu đề cột.
     private JScrollPane taoBang() {
         bangLichKham = new TableMau(TIEU_DE_BANG, new Object[0][TIEU_DE_BANG.length]);
         bangLichKham.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -323,6 +329,7 @@ public class XemLichGUI extends JPanel {
         return khungCuonBang;
     }
 
+    //Tạo vùng dưới cùng của bảng để hiển thị các dòng chữ chú thích như "Không có lịch khám" hay "Hiển thị x lịch khám".
     private JPanel taoChanBang() {
         panelChanBang = new JPanel(new BorderLayout());
         panelChanBang.setOpaque(false);
@@ -347,6 +354,7 @@ public class XemLichGUI extends JPanel {
         return panelChanBang;
     }
 
+    //Tự động bật/tắt (Enable/Disable) các nút Xem, Sửa, Hủy. (Chỉ bật khi người dùng chọn đúng 1 dòng trên bảng).
     private void capNhatNutThaoTac() {
         boolean chonMot = bangLichKham != null && bangLichKham.getSelectedRowCount() == 1;
         if (nutXemChiTiet != null)
@@ -357,6 +365,7 @@ public class XemLichGUI extends JPanel {
             nutHuyLich.setEnabled(chonMot);
     }
 
+    //Trung tâm gắn Listener (hành động) cho các nút bấm, combobox và thao tác double-click chuột.
     private void caiDatSuKien() {
         nutTaoLichKham.addActionListener(e -> moFormDatLich());
         cboBacSi.addActionListener(e -> locDuLieu());
@@ -371,6 +380,7 @@ public class XemLichGUI extends JPanel {
         });
     }
 
+    //Gọi Service để lấy toàn bộ dữ liệu lịch hẹn và danh sách nhân viên từ cơ sở dữ liệu lên.
     public void loadDataToTable() {
         try {
             XemLichService.DuLieuManHinh duLieu = service.taiDuLieu();
@@ -395,6 +405,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //Lọc lại bảng danh sách lịch hẹn mỗi khi người dùng thay đổi ngày, đổi nhân viên hoặc đổi trạng thái.
     private void locDuLieu() {
         if (bangLichKham == null)
             return;
@@ -419,6 +430,7 @@ public class XemLichGUI extends JPanel {
         capNhatThongTinHienThi();
     }
 
+    //Đếm và tính toán lại các con số (tổng, chờ khám, đang khám...) của ngày hôm nay để đưa lên 4 thẻ thống kê.
     private void capNhatThongKeTuDuLieu() {
         LocalDate homNay = LocalDate.now();
         XemLichService.ThongKe thongKe = service.thongKeHomNay(danhSachLichHen, homNay);
@@ -426,6 +438,7 @@ public class XemLichGUI extends JPanel {
                 thongKe.dangKham, thongKe.daKham, thongKe.daHuy);
     }
 
+    //Mở hộp thoại popup cho phép người dùng nhập từ ngày - đến ngày để lọc lịch.
     private void chonKhoangNgay() {
         JTextField tu = new JTextField(tuNgay == null ? "" : DINH_DANG_NGAY.format(tuNgay));
         JTextField den = new JTextField(denNgay == null ? "" : DINH_DANG_NGAY.format(denNgay));
@@ -451,12 +464,14 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //Mở giao diện DatLichMoiGUI để người dùng thêm lịch khám mới.
     private void moFormDatLich() {
         DatLichMoiGUI form = new DatLichMoiGUI();
         form.setXuLySauKhiDatLich(this::loadDataToTable);
         JOptionPane.showMessageDialog(this, form, "Tạo lịch khám", JOptionPane.PLAIN_MESSAGE);
     }
 
+    //Lấy dòng đã chọn
     private int layDongDaChon() {
         if (bangLichKham == null || bangLichKham.getSelectedRowCount() != 1)
             return -1;
@@ -464,6 +479,7 @@ public class XemLichGUI extends JPanel {
         return dongHienThi < 0 ? -1 : bangLichKham.convertRowIndexToModel(dongHienThi);
     }
 
+    //Xem chi tiết lịch
     private void xemChiTietLich() {
         LichHen_entity lich = layLichHenDaChon();
         if (lich == null)
@@ -494,6 +510,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //Chỉnh sửa lịch
     private void suaLich() {
         LichHen_entity lich = layLichHenDaChon();
         if (lich == null)
@@ -588,6 +605,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //Hiện cảnh báo xác nhận, nếu đồng ý sẽ đổi trạng thái của lịch thành "Đã hủy".
     private void huyLich() {
         LichHen_entity lichChon = layLichHenDaChon();
         if (lichChon == null)
@@ -630,6 +648,7 @@ public class XemLichGUI extends JPanel {
         return row < 0 || row >= danhSachDangHienThi.size() ? null : danhSachDangHienThi.get(row);
     }
 
+    //Xuất danh sách lịch hẹn ra tệp CSV
     private void xuatDanhSach() {
         JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new java.io.File("danh-sach-lich-hen.csv"));
@@ -652,6 +671,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //Cập nhật dòng chữ dưới cùng của bảng (VD: báo số lượng dòng, hoặc báo "Không có lịch khám").
     private void capNhatThongTinHienThi() {
         int soDong = bangLichKham.getRowCount();
         if (soDong > 0) {
@@ -663,6 +683,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //Đưa các con số đã tính toán hiển thị lên 4 thẻ giao diện thống kê.
     public void capNhatThongKe(String ngayHienThi, int soHomNay, int soChoKham, int soDangKham, int soDaKham,
             int soDaHuy) {
         theLichHomNay.datGiaTri(String.valueOf(soHomNay), "Ngày " + ngayHienThi);
@@ -702,6 +723,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
+    //từ class TheBoGoc cho đến RendererTrangThai đều là các Class kế thừa dùng để tùy chỉnh giao diện cho đẹp hơn
     private static class TheBoGoc extends JPanel {
         private int banKinh;
         private Color mauNen;

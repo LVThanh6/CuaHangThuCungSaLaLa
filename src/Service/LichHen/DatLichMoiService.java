@@ -49,6 +49,7 @@ public class DatLichMoiService {
         this.hoSoDao = hoSoDao;
     }
 
+    //Nạp danh sách Nhân viên và Dịch vụ (tự động loại bỏ các dịch vụ đang bị khóa/ngưng hoạt động).
     public DuLieuTuyChon taiDuLieuTuyChon() throws SQLException {
         List<NhanVien_entity> nhanVien = nhanVienDao.getAll();
         List<DichVu_entity> dichVu = new ArrayList<>();
@@ -60,6 +61,7 @@ public class DatLichMoiService {
         return new DuLieuTuyChon(nhanVien, dichVu);
     }
 
+    //Nhận số điện thoại nhập vào, lọc bỏ ký tự thừa, tìm và trả về đúng thông tin chủ nuôi.
     public KhachHang timKhachHangTheoSoDienThoai(String soDienThoai) {
         String sdtSo = soDienThoai == null ? "" : soDienThoai.trim().replaceAll("[^0-9]", "");
         if (sdtSo.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập số điện thoại khách hàng.");
@@ -72,6 +74,7 @@ public class DatLichMoiService {
         return null;
     }
 
+    //Lấy toàn bộ thú cưng của khách hàng vừa tìm thấy. Đặc biệt: Tự động dò tìm cân nặng ở lần khám gần nhất của từng bé thú cưng để điền sẵn cho bác sĩ.
     public DuLieuThuCung taiThuCung(String maKhachHang) throws SQLException {
         List<ThuCung_entity> thuCung = thuCungDao.getThuCungTheoMaKH(maKhachHang);
         Map<String, CanNangGanNhat> canNang = new HashMap<>();
@@ -91,10 +94,12 @@ public class DatLichMoiService {
         return new DuLieuThuCung(thuCung, canNang);
     }
 
+    //Tạo mã lịch hẹn mới, đảm bảo không trùng lặp với các mã đã tồn tại trong cơ sở dữ liệu.
     public String maLichHenMoi() {
         return lichHenDao.phatSinhMaLichHenMoi();
     }
 
+    //Kiểm tra toàn bộ điều kiện (Phải có khách, thú cưng, bác sĩ, ngày giờ phải ở tương lai, ghi chú không quá 500 ký tự) rồi tạo lịch với trạng thái mặc định "Chờ khám".
     public String datLich(ThongTinDatLich thongTin) {
         if (thongTin.khachHang == null) {
             throw new IllegalArgumentException("Vui lòng tìm và xác nhận khách hàng trước khi đặt lịch.");
@@ -139,6 +144,7 @@ public class DatLichMoiService {
         return maLichHen;
     }
 
+    //Kiểm tra trạng thái của dịch vụ xem có chứa chữ "ngưng", "ngừng" để ẩn đi.
     private boolean laDichVuNgungHoatDong(String trangThai) {
         if (trangThai == null) return false;
         String normalized = trangThai.trim().toLowerCase();
