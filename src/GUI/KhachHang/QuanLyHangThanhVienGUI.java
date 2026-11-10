@@ -1,14 +1,14 @@
 package GUI.KhachHang;
 
 import Service.KhachHang.HangThanhVienService;
-import Service.KhachHang.HangThanhVienService.Dashboard;
+import Service.KhachHang.HangThanhVienService.ThongKeHangThanhVien;
 import Service.KhachHang.HangThanhVienService.KetQuaCapNhatChinhSach;
 import Service.KhachHang.HangThanhVienService.KetQuaChuyenHang;
 import Service.KhachHang.HangThanhVienService.KetQuaPhanHang;
 import Service.KhachHang.HangThanhVienService.ThongTinDongThanhVien;
-import Service.KhachHang.HangThanhVienService.TierCardModel;
-import Service.KhachHang.HangThanhVienService.TierPolicyFormData;
-import Service.KhachHang.KhachHangService.CustomerDetails;
+import Service.KhachHang.HangThanhVienService.TheHangThanhVienModel;
+import Service.KhachHang.HangThanhVienService.DuLieuFormChinhSachHang;
+import Service.KhachHang.KhachHangService.ChiTietKhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 
 import javax.swing.*;
@@ -207,7 +207,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Nạp dữ liệu thực tế từ database SALALA và cập nhật giao diện
      */
     public void capNhatThongKe() {
-        Dashboard dashboard = service.layThongKeTongQuan();
+        ThongKeHangThanhVien dashboard = service.layThongKeTongQuan();
 
         if (lblValTongKH != null)
             lblValTongKH.setText(dashboard.layChuoiTongThanhVien());
@@ -219,9 +219,9 @@ public class QuanLyHangThanhVienGUI extends JPanel {
             lblValChiTieu.setText(dashboard.layChiTieuDinhDang());
 
         panelDanhSachHang.removeAll();
-        List<TierCardModel> cards = service.layDanhSachTheHang(dashboard);
+        List<TheHangThanhVienModel> cards = service.layDanhSachTheHang(dashboard);
 
-        for (TierCardModel card : cards) {
+        for (TheHangThanhVienModel card : cards) {
             JPanel the = taoTheHang(card);
             panelDanhSachHang.add(the);
         }
@@ -230,7 +230,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelDanhSachHang.repaint();
     }
 
-    private JPanel taoTheHang(TierCardModel card) {
+    private JPanel taoTheHang(TheHangThanhVienModel card) {
         JPanel the = new JPanel();
         the.setLayout(new BoxLayout(the, BoxLayout.Y_AXIS));
         the.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
@@ -581,7 +581,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Hộp thoại xem chi tiết hồ sơ khách hàng ngay từ màn hình Hạng thành viên
      */
     private void hienThiDialogXemChiTietKhachHang(String maKH) {
-        CustomerDetails details = service.layChiTietKhachHang(maKH);
+        ChiTietKhachHang details = service.layChiTietKhachHang(maKH);
         if (details == null)
             return;
 
@@ -611,7 +611,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         JTable tableTC = new JTable(
-                new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
+                new DefaultTableModel(details.layDuLieuBangThuCung(), ChiTietKhachHang.COT_THU_CUNG) {
                     @Override
                     public boolean isCellEditable(int r, int c) {
                         return false;
@@ -627,7 +627,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         panelBody.add(scrollTC);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        JTable tableHD = new JTable(new DefaultTableModel(details.layDuLieuBangHoaDon(), CustomerDetails.COT_HOA_DON) {
+        JTable tableHD = new JTable(new DefaultTableModel(details.layDuLieuBangHoaDon(), ChiTietKhachHang.COT_HOA_DON) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -693,7 +693,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
         // Hàm nạp thông tin hạng vào form khi chọn ComboBox
         Runnable napThongTinHang = () -> {
             String selected = (String) cboTenHang.getSelectedItem();
-            TierPolicyFormData form = service.layDuLieuFormChinhSach(selected);
+            DuLieuFormChinhSachHang form = service.layDuLieuFormChinhSach(selected);
             txtChiTieuMin.setText(form.chiTieuMin);
             txtChiTieuMax.setText(form.chiTieuMax);
             txtGiamGia.setText(form.mucGiamGia);
@@ -800,16 +800,16 @@ public class QuanLyHangThanhVienGUI extends JPanel {
                     JOptionPane.showMessageDialog(dialog, kq.getThongBao(), "Lỗi định dạng",
                             JOptionPane.WARNING_MESSAGE);
                     switch (kq.getTruongLoi()) {
-                        case MINIMUM:
+                        case CHI_TIEU_TOI_THIEU:
                             txtChiTieuMin.requestFocus();
                             break;
-                        case MAXIMUM:
+                        case CHI_TIEU_TOI_DA:
                             txtChiTieuMax.requestFocus();
                             break;
-                        case DISCOUNT:
+                        case MUC_GIAM_GIA:
                             txtGiamGia.requestFocus();
                             break;
-                        case POINTS:
+                        case DIEM_TICH_LUY:
                             txtDiemTichLuy1Van.requestFocus();
                             break;
                         default:

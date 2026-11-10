@@ -1,10 +1,11 @@
 package GUI.KhachHang;
 
 import Service.KhachHang.KhachHangService;
-import Service.KhachHang.KhachHangService.CustomerDetails;
-import Service.KhachHang.KhachHangService.CustomerStatistics;
+import Service.KhachHang.KhachHangService.ChiTietKhachHang;
+import Service.KhachHang.KhachHangService.ThongKeKhachHang;
 import Service.KhachHang.KhachHangService.KetQuaXoaKhachHang;
 import Service.KhachHang.KhachHangService.KetQuaXuLyKhachHang;
+import Service.KhachHang.KhachHangService.KetQuaXuatFile;
 import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.QuanLyTable;
@@ -36,6 +37,8 @@ public class DanhSachKhachHangGUI extends JPanel {
     private JButton btnXemKhachHang;
     private JButton btnSuaKhachHang;
     private JButton btnXoaKhachHang;
+    // Nút xuất danh sách khách hàng ra file CSV (gắn vào thanh công cụ của QuanLyTable)
+    private JButton btnXuatDanhSach;
 
     // Các thẻ thống kê số liệu
     private JPanel panelThongKe;
@@ -228,6 +231,10 @@ public class DanhSachKhachHangGUI extends JPanel {
                 danhSachBoLoc);
 
         panelQuanLyTable.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        // Tạo nút "Xuất danh sách" và gắn vào thanh công cụ của QuanLyTable
+        btnXuatDanhSach = taoNutXuatDanhSach();
+        panelQuanLyTable.datNutCongCuPhai(btnXuatDanhSach);
     }
 
     // =========================================================================
@@ -259,6 +266,9 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnXoaKhachHang.addActionListener(e -> thucHienTrenKhachHang(table, 2));
         capNhatTrangThaiNut(table);
 
+        // 4. Nút xuất danh sách khách hàng ra file CSV
+        btnXuatDanhSach.addActionListener(e -> xuLyXuatDanhSach());
+
         // Thiết lập renderer cho cột Hạng thành viên
         table.getColumnModel().getColumn(service.layViTriCotHangThanhVien())
                 .setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
@@ -284,6 +294,59 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnXemKhachHang.setEnabled(coDong);
         btnSuaKhachHang.setEnabled(coDong);
         btnXoaKhachHang.setEnabled(coDong);
+    }
+
+    /**
+     * Tạo nút "Xuất danh sách" với giao diện thống nhất cùng phong cách toàn bộ ứng dụng.
+     * Nút sẽ được gắn vào thanh công cụ của QuanLyTable qua datNutCongCuPhai().
+     */
+    private JButton taoNutXuatDanhSach() {
+        JButton btn = new JButton("Xuất danh sách");
+        btn.setPreferredSize(new Dimension(145, 38));
+        btn.setFont(RangBuocGiaoDien.fontDam(12));
+        btn.setForeground(new Color(30, 41, 59));
+        btn.setBackground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    /**
+     * Xử lý sự kiện khi người dùng nhấn nút "Xuất danh sách":
+     * 1. Mở hộp thoại chọn vị trí lưu file (JFileChooser).
+     * 2. Gọi service.xuatDanhSachKhachHangRaCSV() để thực thi logic xuất.
+     * 3. Hiển thị thông báo kết quả thành công / lỗi cho người dùng.
+     */
+    private void xuLyXuatDanhSach() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu danh sách khách hàng");
+        fileChooser.setSelectedFile(new java.io.File(service.layTenFileCSVMacDinh()));
+
+        int luaChon = fileChooser.showSaveDialog(this);
+        if (luaChon != JFileChooser.APPROVE_OPTION) {
+            return; // Người dùng huỷ, không làm gì cả
+        }
+
+        java.io.File file = fileChooser.getSelectedFile();
+        // Tự động thêm đuôi .csv nếu người dùng quên
+        if (!file.getName().toLowerCase().endsWith(".csv")) {
+            file = new java.io.File(file.getAbsolutePath() + ".csv");
+        }
+
+        KetQuaXuatFile ketQua = service.xuatDanhSachKhachHangRaCSV(file, panelQuanLyTable.getBangDuLieu());
+
+        if (ketQua.isThanhCong()) {
+            JOptionPane.showMessageDialog(this,
+                    ketQua.getThongBao(),
+                    "Xuất file thành công",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    ketQua.getThongBao(),
+                    "Lỗi xuất file",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void thucHienTrenKhachHang(JTable table, int thaoTac) {
@@ -318,7 +381,7 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Cập nhật các thẻ thống kê từ CSDL
      */
     public void capNhatThongKe() {
-        CustomerStatistics statistics = service.layThongKe();
+        ThongKeKhachHang statistics = service.layThongKe();
         if (lblValTongKH != null)
             lblValTongKH.setText(statistics.layChuoiTongKhachHang());
         if (lblValKhachMoi != null)
@@ -425,13 +488,13 @@ public class DanhSachKhachHangGUI extends JPanel {
                 JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi định dạng",
                         JOptionPane.WARNING_MESSAGE);
                 switch (ketQua.getTruongLoi()) {
-                    case CODE:
+                    case MA_KHACH_HANG:
                         txtMaKH.requestFocus();
                         break;
-                    case NAME:
+                    case HO_TEN:
                         txtHoTen.requestFocus();
                         break;
-                    case PHONE:
+                    case SO_DIEN_THOAI:
                         txtSDT.requestFocus();
                         break;
                     case EMAIL:
@@ -457,7 +520,7 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Hộp thoại xem chi tiết khách hàng (kèm thú cưng và lịch sử hóa đơn)
      */
     private void hienThiDialogXemChiTiet(String maKH) {
-        CustomerDetails details = service.layChiTiet(maKH);
+        ChiTietKhachHang details = service.layChiTiet(maKH);
         if (details == null) {
             JOptionPane.showMessageDialog(this, service.layThongDiepKhongTimThayKhachHang(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
@@ -492,7 +555,7 @@ public class DanhSachKhachHangGUI extends JPanel {
 
         // 2. Danh sách thú cưng của khách
         JTable tableTC = new JTable(
-                new DefaultTableModel(details.layDuLieuBangThuCung(), CustomerDetails.COT_THU_CUNG) {
+                new DefaultTableModel(details.layDuLieuBangThuCung(), ChiTietKhachHang.COT_THU_CUNG) {
                     @Override
                     public boolean isCellEditable(int r, int c) {
                         return false;
@@ -509,7 +572,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // 3. Lịch sử hóa đơn của khách
-        JTable tableHD = new JTable(new DefaultTableModel(details.layDuLieuBangHoaDon(), CustomerDetails.COT_HOA_DON) {
+        JTable tableHD = new JTable(new DefaultTableModel(details.layDuLieuBangHoaDon(), ChiTietKhachHang.COT_HOA_DON) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -614,13 +677,13 @@ public class DanhSachKhachHangGUI extends JPanel {
                 JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",
                         JOptionPane.WARNING_MESSAGE);
                 switch (ketQua.getTruongLoi()) {
-                    case CODE:
+                    case MA_KHACH_HANG:
                         txtMaKH.requestFocus();
                         break;
-                    case NAME:
+                    case HO_TEN:
                         txtHoTen.requestFocus();
                         break;
-                    case PHONE:
+                    case SO_DIEN_THOAI:
                         txtSDT.requestFocus();
                         break;
                     case EMAIL:
