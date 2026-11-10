@@ -1,11 +1,11 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.VatTu.VatTuController;
-import controller.VatTu.VatTuController.CatalogItem;
-import controller.VatTu.VatTuController.InventorySummary;
-import controller.VatTu.VatTuController.SupplierOption;
-import controller.VatTu.VatTuController.VatTuInput;
+import Service.VatTu.VatTuService;
+import Service.VatTu.VatTuService.CatalogItem;
+import Service.VatTu.VatTuService.InventorySummary;
+import Service.VatTu.VatTuService.SupplierOption;
+import Service.VatTu.VatTuService.VatTuInput;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -47,10 +47,10 @@ public class VatTuGUI extends JPanel {
 
     private static final Locale VN = Locale.forLanguageTag("vi-VN");
 
-    private final List<VatTuController.VatTu> tatCa = new ArrayList<>();
-    private final List<VatTuController.VatTu> daLoc = new ArrayList<>();
+    private final List<VatTuService.VatTu> tatCa = new ArrayList<>();
+    private final List<VatTuService.VatTu> daLoc = new ArrayList<>();
     private final Set<String> daChon = new HashSet<>();
-    private final VatTuController controller = new VatTuController();
+    private final VatTuService controller = new VatTuService();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -193,10 +193,10 @@ public class VatTuGUI extends JPanel {
         System.arraycopy(DANH_MUC, 0, dsDanhMuc, 1, DANH_MUC.length);
         cbDanhMuc = new JComboBox<>(dsDanhMuc);
 
-        String[] dsTrangThai = new String[VatTuController.TrangThai.values().length + 1];
+        String[] dsTrangThai = new String[VatTuService.TrangThai.values().length + 1];
         dsTrangThai[0] = "Trạng thái";
-        for (int i = 0; i < VatTuController.TrangThai.values().length; i++)
-            dsTrangThai[i + 1] = VatTuController.TrangThai.values()[i].label;
+        for (int i = 0; i < VatTuService.TrangThai.values().length; i++)
+            dsTrangThai[i + 1] = VatTuService.TrangThai.values()[i].label;
         cbTrangThai = new JComboBox<>(dsTrangThai);
 
         for (JComboBox<String> cb : java.util.List.of(cbDanhMuc, cbTrangThai)) {
@@ -357,9 +357,9 @@ public class VatTuGUI extends JPanel {
     private void apDungLoc() {
         int dm = cbDanhMuc.getSelectedIndex();
         int tt = cbTrangThai.getSelectedIndex();
-        VatTuController.TrangThai status = tt == 0 ? null
-                : VatTuController.TrangThai.values()[tt - 1];
-        List<VatTuController.VatTu> filtered = controller.loc(
+        VatTuService.TrangThai status = tt == 0 ? null
+                : VatTuService.TrangThai.values()[tt - 1];
+        List<VatTuService.VatTu> filtered = controller.loc(
                 tatCa, txtTim.getText(), dm == 0 ? null : DANH_MUC[dm - 1],
                 status, sapXepTang);
         daLoc.clear();
@@ -389,7 +389,7 @@ public class VatTuGUI extends JPanel {
         if (moi == null)
             return;
 
-        VatTuController.SaveResult result = controller.luu(moi, false);
+        VatTuService.SaveResult result = controller.luu(moi, false);
         if (result.isSaved()) {
             taiDuLieuMau();
             chonDong(moi.getMa());
@@ -405,12 +405,12 @@ public class VatTuGUI extends JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một vật tư để sửa.");
             return;
         }
-        VatTuController.VatTu cu = model.tai(r);
+        VatTuService.VatTu cu = model.tai(r);
         VatTuInput moi = hienFormVatTu(cu);
         if (moi == null)
             return;
 
-        VatTuController.SaveResult result = controller.luu(moi, true);
+        VatTuService.SaveResult result = controller.luu(moi, true);
         if (result.isSaved()) {
             taiDuLieuMau();
             chonDong(moi.getMa());
@@ -426,7 +426,7 @@ public class VatTuGUI extends JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một vật tư để xóa.");
             return;
         }
-        VatTuController.VatTu vt = model.tai(r);
+        VatTuService.VatTu vt = model.tai(r);
         int chon = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc muốn xóa vật tư \"" + vt.getTen() + "\" (" + vt.getMa() + ")?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -461,7 +461,7 @@ public class VatTuGUI extends JPanel {
      * Trả về entity mới nếu người dùng bấm Lưu và dữ liệu hợp lệ, ngược lại trả về
      * null.
      */
-    private VatTuInput hienFormVatTu(VatTuController.VatTu cu) {
+    private VatTuInput hienFormVatTu(VatTuService.VatTu cu) {
         final boolean sua = cu != null;
 
         List<SupplierOption> dsNCC = controller.taiNhaCungCap();
@@ -567,12 +567,12 @@ public class VatTuGUI extends JPanel {
                 canhBao(dlg, "Danh mục \"Thuốc điều trị\" cần nhập mã thuốc.", txtMaThuoc);
                 return;
             }
-            Long giaNhap = VatTuController.docSoTien(txtGiaNhap.getText());
+            Long giaNhap = VatTuService.docSoTien(txtGiaNhap.getText());
             if (giaNhap == null) {
                 canhBao(dlg, "Giá nhập không hợp lệ.", txtGiaNhap);
                 return;
             }
-            Long giaBan = VatTuController.docSoTien(txtGiaBan.getText());
+            Long giaBan = VatTuService.docSoTien(txtGiaBan.getText());
             if (giaBan == null) {
                 canhBao(dlg, "Giá bán cơ bản không hợp lệ.", txtGiaBan);
                 return;
@@ -582,7 +582,7 @@ public class VatTuGUI extends JPanel {
             String supplierCode = dsNCC.get(cbNcc.getSelectedIndex()).getCode();
             String databaseStatus = (sua && cu.getTrangThai() != null)
                     ? cu.getTrangThai()
-                    : VatTuController.trangThai(ton).label;
+                    : VatTuService.trangThai(ton).label;
             VatTuInput moi = new VatTuInput(ma, ten, supplierCode,
                     laThuoc ? maThuoc : null, laThuoc, ton, giaNhap, giaBan, databaseStatus);
             String validationError = controller.validate(moi, sua);
@@ -648,14 +648,14 @@ public class VatTuGUI extends JPanel {
     private class BangModel extends AbstractTableModel {
         private final String[] cot = { "MÃ VT", "TÊN VẬT TƯ", "DANH MỤC", "TỒN KHO", "ĐƠN VỊ", "GIÁ NHẬP",
                 "TRẠNG THÁI" };
-        private List<VatTuController.VatTu> hang = new ArrayList<>();
+        private List<VatTuService.VatTu> hang = new ArrayList<>();
 
-        void datHang(List<VatTuController.VatTu> h) {
+        void datHang(List<VatTuService.VatTu> h) {
             hang = new ArrayList<>(h);
             fireTableDataChanged();
         }
 
-        VatTuController.VatTu tai(int r) {
+        VatTuService.VatTu tai(int r) {
             return hang.get(r);
         }
 
@@ -695,7 +695,7 @@ public class VatTuGUI extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     }
 
-    private static String layChu(VatTuController.VatTu vt, int cot) {
+    private static String layChu(VatTuService.VatTu vt, int cot) {
         switch (cot) {
             case 0:
                 return vt.getMa();
@@ -726,7 +726,7 @@ public class VatTuGUI extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            VatTuController.VatTu vt = (VatTuController.VatTu) v;
+            VatTuService.VatTu vt = (VatTuService.VatTu) v;
             setText(layChu(vt, cot));
             setBackground(nen(sel));
 
@@ -748,7 +748,7 @@ public class VatTuGUI extends JPanel {
     }
 
     private static class TrangThaiRenderer extends JPanel implements TableCellRenderer {
-        private VatTuController.TrangThai tt = VatTuController.TrangThai.CON_HANG;
+        private VatTuService.TrangThai tt = VatTuService.TrangThai.CON_HANG;
 
         TrangThaiRenderer() {
             setOpaque(true);
@@ -756,7 +756,7 @@ public class VatTuGUI extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            tt = VatTuController.trangThai(((VatTuController.VatTu) v).getTonKho());
+            tt = VatTuService.trangThai(((VatTuService.VatTu) v).getTonKho());
             setBackground(nen(sel));
             return this;
         }

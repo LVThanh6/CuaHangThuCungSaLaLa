@@ -19,17 +19,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import controller.HoaDon.LapHoaDonController;
-import controller.HoaDon.LapHoaDonController.InvoiceInput;
-import controller.HoaDon.LapHoaDonController.InvoiceLine;
-import controller.HoaDon.LapHoaDonController.InvoiceTotals;
-import controller.HoaDon.LapHoaDonController.LoaiMatHang;
-import controller.HoaDon.LapHoaDonController.PrescriptionOption;
-import controller.HoaDon.LapHoaDonController.ValidationError;
+import Service.HoaDon.LapHoaDonService;
+import Service.HoaDon.LapHoaDonService.InvoiceInput;
+import Service.HoaDon.LapHoaDonService.InvoiceLine;
+import Service.HoaDon.LapHoaDonService.InvoiceTotals;
+import Service.HoaDon.LapHoaDonService.LoaiMatHang;
+import Service.HoaDon.LapHoaDonService.PrescriptionOption;
+import Service.HoaDon.LapHoaDonService.ValidationError;
 
 public class LapHoaDon_gui extends JPanel {
 
-    private final LapHoaDonController controller = new LapHoaDonController();
+    private final LapHoaDonService controller = new LapHoaDonService();
 
     // Nhân viên đang đăng nhập
     private NhanVien_entity nhanVienDangNhap;
@@ -100,7 +100,7 @@ public class LapHoaDon_gui extends JPanel {
      */
     public static NhanVien_entity layNhanVienDangNhapHienTai() {
         try {
-            return new LapHoaDonController().layNhanVienDangNhapHienTai();
+            return new LapHoaDonService().layNhanVienDangNhapHienTai();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null,
                     "Không thể tải thông tin nhân viên đăng nhập: " + e.getMessage(),
@@ -830,7 +830,7 @@ public class LapHoaDon_gui extends JPanel {
         line = controller.ganNguoiThucHien(line, nhanVienThucHien, bacSiThucHien);
 
         try {
-            LapHoaDonController.AddLineResult result = controller.themHoacGopMatHang(
+            LapHoaDonService.AddLineResult result = controller.themHoacGopMatHang(
                     chiTietHoaDon, line, cboThuCung.getSelectedItem() != null);
 
             if (result.getValidation() != ValidationError.NONE) {

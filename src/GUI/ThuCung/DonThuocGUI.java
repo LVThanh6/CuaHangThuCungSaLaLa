@@ -6,7 +6,7 @@ import GUI.GiaoDienChinhGUI;
 import GUI.ThuCung.HoSoThuCungGUI.NutBoTron;
 import GUI.ThuCung.HoSoThuCungGUI.OTimKiemGoiY;
 import GUI.ThuCung.HoSoThuCungGUI.PanelBoTron;
-import controller.ThuCung.DonThuocController;
+import Service.ThuCung.DonThuocService;
 import entity.BacSi.BacSi_entity;
 import entity.ThuCung.ChiTietDonThuoc_entity;
 import entity.ThuCung.DonThuoc_entity;
@@ -50,7 +50,7 @@ public class DonThuocGUI extends JPanel {
             "Tùy chỉnh khoảng ngày..."
     };
 
-    private final DonThuocController controller = new DonThuocController();
+    private final DonThuocService controller = new DonThuocService();
 
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<DonThuoc_entity> danhSachDonThuoc = new ArrayList<>();
@@ -364,7 +364,7 @@ public class DonThuocGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        DonThuocController.ThongKe thongKe = controller.thongKe(daLoc);
+        DonThuocService.ThongKe thongKe = controller.thongKe(daLoc);
         nhanSoTongDon.setText(String.valueOf(thongKe.tong));
         nhanSoDaCapThuoc.setText(String.valueOf(thongKe.daCap));
         nhanSoChoLayThuoc.setText(String.valueOf(thongKe.choLay));
@@ -388,7 +388,7 @@ public class DonThuocGUI extends JPanel {
                 JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
             return;
         try {
-            DonThuocController.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            DonThuocService.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
             tuNgay = khoang.tuNgay;
             denNgay = khoang.denNgay;
             cboThoiGian.setSelectedItem("Tùy chỉnh khoảng ngày...");
@@ -408,7 +408,7 @@ public class DonThuocGUI extends JPanel {
 
     private void moFormDonThuoc(DonThuoc_entity donHienTai) {
         try {
-            DonThuocController.DuLieuForm duLieu = controller.taiDuLieuForm();
+            DonThuocService.DuLieuForm duLieu = controller.taiDuLieuForm();
             List<HoSoSucKhoe_entity> hoSoList = duLieu.hoSo;
             List<ThuCung_entity> thuCungList = duLieu.thuCung;
             List<BacSi_entity> bacSiList = duLieu.bacSi;
@@ -521,7 +521,7 @@ public class DonThuocGUI extends JPanel {
                         String.valueOf(chiTietModel.getValueAt(i, 4)), txtMa.getText(),
                         new ArrayList<ChiTietDonThuoc_entity>()));
             }
-            if (controller.luu(new DonThuocController.ThongTinDonThuoc(
+            if (controller.luu(new DonThuocService.ThongTinDonThuoc(
                     txtMa.getText(), donHienTai == null, hs, txtNgay.getText(),
                     txtGhiChu.getText(), String.valueOf(cboTrangThaiForm.getSelectedItem()), chiTiet))) {
                 JOptionPane.showMessageDialog(this, "Lưu thành công.");
@@ -661,7 +661,7 @@ public class DonThuocGUI extends JPanel {
             return;
         try {
             entity.NhanVien.NhanVien_entity nhanVien = GUI.HoaDon.LapHoaDon_gui.layNhanVienDangNhapHienTai();
-            DonThuocController.KetQuaXuatThuoc ketQua = controller.xuatVaTaoHoaDon(maDon, nhanVien);
+            DonThuocService.KetQuaXuatThuoc ketQua = controller.xuatVaTaoHoaDon(maDon, nhanVien);
             java.text.DecimalFormat dinhDangTien = new java.text.DecimalFormat("#,##0 ₫");
             JOptionPane.showMessageDialog(this,
                     "Đã xuất đơn thuốc thành công!\nHóa đơn [" + ketQua.maHoaDon

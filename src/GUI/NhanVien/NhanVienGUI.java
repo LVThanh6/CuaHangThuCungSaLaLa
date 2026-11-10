@@ -20,14 +20,14 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import controller.NhanVien.NhanVienController;
-import controller.NhanVien.NhanVienController.TrangThai;
+import Service.NhanVien.NhanVienService;
+import Service.NhanVien.NhanVienService.TrangThai;
 import entity.NhanVien.NhanVien_entity;
 
 public class NhanVienGUI extends JPanel {
 
-    private static final String[] CHUC_VU = NhanVienController.CHUC_VU;
-    private static final String[] GIOI_TINH = NhanVienController.GIOI_TINH;
+    private static final String[] CHUC_VU = NhanVienService.CHUC_VU;
+    private static final String[] GIOI_TINH = NhanVienService.GIOI_TINH;
 
     private static final Color NEN_CHON = new Color(240, 250, 247);
     private static final Color NEN_HEADER = new Color(246, 248, 247);
@@ -35,7 +35,7 @@ public class NhanVienGUI extends JPanel {
 
     private final List<NhanVien_entity> tatCa = new ArrayList<>();
     private final List<NhanVien_entity> daLoc = new ArrayList<>();
-    private final NhanVienController controller = new NhanVienController();
+    private final NhanVienService controller = new NhanVienService();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -387,7 +387,7 @@ public class NhanVienGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        NhanVienController.ThongKe thongKe = controller.thongKe(tatCa);
+        NhanVienService.ThongKe thongKe = controller.thongKe(tatCa);
         lblSoLieu[0].setText(String.valueOf(thongKe.tongSo));
         lblSoLieu[1].setText(String.valueOf(thongKe.dangLam));
         lblSoLieu[2].setText(String.valueOf(thongKe.ngung));
@@ -471,7 +471,7 @@ public class NhanVienGUI extends JPanel {
         if (kq != JOptionPane.YES_OPTION)
             return;
         try {
-            NhanVienController.KetQuaXoa result = controller.xoa(nv.getMaNhanVien());
+            NhanVienService.KetQuaXoa result = controller.xoa(nv.getMaNhanVien());
             if (result.coDuLieuLienQuan) {
                 JOptionPane.showMessageDialog(this,
                         "Nhân viên này đã có dữ liệu liên quan (lịch làm việc, lịch hẹn, hóa đơn, phiếu kho...)\n"
@@ -514,7 +514,7 @@ public class NhanVienGUI extends JPanel {
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
         JTextField txtDiaChi = new JTextField(goc == null ? "" : nz(goc.getDiaChi()));
         JTextField txtNgay = new JTextField(
-                goc == null || goc.getNgaySinh() == null ? "" : NhanVienController.dinhDangNgay(goc.getNgaySinh()));
+                goc == null || goc.getNgaySinh() == null ? "" : NhanVienService.dinhDangNgay(goc.getNgaySinh()));
         JComboBox<String> cbGT = new JComboBox<>(GIOI_TINH);
         JComboBox<String> cbChucVu = new JComboBox<>(CHUC_VU);
         JTextField txtLuong = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongCoBan()));
@@ -536,7 +536,7 @@ public class NhanVienGUI extends JPanel {
         try {
             double totalSalary = controller.tinhTongLuongThang(goc, LocalDate.now());
             txtTongLuong
-                    .setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : NhanVienController.dinhDangTien(totalSalary));
+                    .setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : NhanVienService.dinhDangTien(totalSalary));
         } catch (SQLException ex) {
             txtTongLuong.setText("Không thể tính");
         }
@@ -546,7 +546,7 @@ public class NhanVienGUI extends JPanel {
 
         Runnable apDungLuong = () -> {
             if (goc == null)
-                txtLuong.setText(String.valueOf(NhanVienController.luongMacDinh((String) cbChucVu.getSelectedItem())));
+                txtLuong.setText(String.valueOf(NhanVienService.luongMacDinh((String) cbChucVu.getSelectedItem())));
         };
         cbChucVu.addActionListener(e -> apDungLuong.run());
         apDungLuong.run();
@@ -610,7 +610,7 @@ public class NhanVienGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                NhanVienController.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
+                NhanVienService.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
                         txtTen.getText(), txtSdt.getText(), txtDiaChi.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbChucVu.getSelectedItem(),
                         txtLuong.getText(), cbTT.getSelectedIndex() == 0);
@@ -750,7 +750,7 @@ public class NhanVienGUI extends JPanel {
             case 2:
                 return nz(nv.getChucVu());
             case 4:
-                return NhanVienController.dinhDangNgay(nv.getNgaySinh());
+                return NhanVienService.dinhDangNgay(nv.getNgaySinh());
             case 5:
                 return TrangThai.tuEntity(nv).nhan;
             default:
@@ -799,7 +799,7 @@ public class NhanVienGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             NhanVien_entity nv = (NhanVien_entity) v;
-            lblSdt.setText(NhanVienController.dinhDangSdt(nv.getSdt()));
+            lblSdt.setText(NhanVienService.dinhDangSdt(nv.getSdt()));
             lblDiaChi.setText(nz(nv.getDiaChi()));
             lblDiaChi.setToolTipText(nz(nv.getDiaChi()));
             setBackground(nen(sel));

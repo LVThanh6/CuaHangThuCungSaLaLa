@@ -1,7 +1,7 @@
 package GUI.LichHen;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.LichHen.DatLichMoiController;
+import Service.LichHen.DatLichMoiService;
 import entity.DichVu.DichVu_entity;
 import entity.KhachHang.KhachHang;
 import entity.NhanVien.NhanVien_entity;
@@ -82,7 +82,7 @@ public class DatLichMoiGUI extends JPanel {
     private static final String GIA_TRI_TRONG = "—";
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
-    private final DatLichMoiController controller = new DatLichMoiController();
+    private final DatLichMoiService controller = new DatLichMoiService();
     private final Map<String, ThuCung_entity> thuCungTheoNhan = new HashMap<>();
     private final Map<String, NhanVien_entity> nhanVienTheoNhan = new HashMap<>();
     private final Map<String, DichVu_entity> dichVuTheoNhan = new HashMap<>();
@@ -507,7 +507,7 @@ public class DatLichMoiGUI extends JPanel {
 
     private void taiDuLieuCombobox() {
         try {
-            DatLichMoiController.DuLieuTuyChon duLieu = controller.taiDuLieuTuyChon();
+            DatLichMoiService.DuLieuTuyChon duLieu = controller.taiDuLieuTuyChon();
             cboBacSi.removeAllItems();
             cboBacSi.addItem("-- Chọn nhân viên --");
             nhanVienTheoNhan.clear();
@@ -593,13 +593,13 @@ public class DatLichMoiGUI extends JPanel {
         cboThuCung.addItem(DANH_SACH_THU_CUNG[0]);
         canNangGanNhatTheoThuCung.clear();
         try {
-            DatLichMoiController.DuLieuThuCung duLieu = controller.taiThuCung(khachHangDuocChon.getMaKH());
+            DatLichMoiService.DuLieuThuCung duLieu = controller.taiThuCung(khachHangDuocChon.getMaKH());
             for (ThuCung_entity thuCung : duLieu.thuCung) {
                 String nhan = thuCung.getTenTC() + " (" + thuCung.getMaTC() + ")";
                 cboThuCung.addItem(nhan);
                 thuCungTheoNhan.put(nhan, thuCung);
             }
-            for (Map.Entry<String, DatLichMoiController.CanNangGanNhat> entry : duLieu.canNangGanNhat.entrySet()) {
+            for (Map.Entry<String, DatLichMoiService.CanNangGanNhat> entry : duLieu.canNangGanNhat.entrySet()) {
                 canNangGanNhatTheoThuCung.put(entry.getKey(), entry.getValue().canNang);
             }
             if (thuCungTheoNhan.isEmpty()) {
@@ -638,7 +638,7 @@ public class DatLichMoiGUI extends JPanel {
         DichVu_entity dichVu = dichVuTheoNhan.get(noiDung);
 
         try {
-            String maLichHen = controller.datLich(new DatLichMoiController.ThongTinDatLich(
+            String maLichHen = controller.datLich(new DatLichMoiService.ThongTinDatLich(
                     khachHangDuocChon, thuCung, nhanVien, dichVu, noiDung,
                     txtNgayKham.getText(), gioKhamDuocChon, vungGhiChu.getText()));
             JOptionPane.showMessageDialog(this, "Đặt lịch khám thành công. Mã lịch: " + maLichHen,

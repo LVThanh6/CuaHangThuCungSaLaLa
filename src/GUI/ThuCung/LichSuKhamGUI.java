@@ -6,7 +6,7 @@ import GUI.GiaoDienChinhGUI;
 import GUI.ThuCung.HoSoThuCungGUI.NutBoTron;
 import GUI.ThuCung.HoSoThuCungGUI.OTimKiemGoiY;
 import GUI.ThuCung.HoSoThuCungGUI.PanelBoTron;
-import controller.ThuCung.LichSuKhamController;
+import Service.ThuCung.LichSuKhamService;
 import entity.BacSi.BacSi_entity;
 import entity.ThuCung.HoSoSucKhoe_entity;
 import entity.ThuCung.ThuCung_entity;
@@ -53,7 +53,7 @@ public class LichSuKhamGUI extends JPanel {
             "Chẩn đoán", "Cân nặng (kg)", "Bác sĩ phụ trách" };
     private final String[] dsBacSiLoc = { "Bác sĩ: Tất cả" };
     private final String[] dsThoiGianLoc = { "Thời gian: Tất cả", "Hôm nay", "7 ngày qua", "Tháng này" };
-    private final LichSuKhamController controller = new LichSuKhamController();
+    private final LichSuKhamService controller = new LichSuKhamService();
     private List<HoSoSucKhoe_entity> danhSachHoSo = new ArrayList<>();
     private List<HoSoSucKhoe_entity> danhSachDangHienThi = new ArrayList<>();
     private LocalDate tuNgay;
@@ -367,7 +367,7 @@ public class LichSuKhamGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            LichSuKhamController.DuLieuManHinh duLieu = controller.taiDuLieu();
+            LichSuKhamService.DuLieuManHinh duLieu = controller.taiDuLieu();
             danhSachHoSo = duLieu.hoSo;
             List<BacSi_entity> bacSi = duLieu.bacSi;
             Object selected = cboBacSi.getSelectedItem();
@@ -412,7 +412,7 @@ public class LichSuKhamGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        LichSuKhamController.ThongKe thongKe = controller.thongKe(danhSachHoSo, LocalDate.now());
+        LichSuKhamService.ThongKe thongKe = controller.thongKe(danhSachHoSo, LocalDate.now());
         nhanSoTongLuotKham.setText(String.valueOf(thongKe.tongLuot));
         nhanSoKhamHomNay.setText(String.valueOf(thongKe.homNay));
         nhanSoKhamThangNay.setText(String.valueOf(thongKe.thangNay));
@@ -435,7 +435,7 @@ public class LichSuKhamGUI extends JPanel {
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
             return;
         try {
-            LichSuKhamController.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            LichSuKhamService.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
             tuNgay = khoang.tuNgay;
             denNgay = khoang.denNgay;
             cboThoiGian.setSelectedIndex(0);
@@ -525,7 +525,7 @@ public class LichSuKhamGUI extends JPanel {
                 return;
             ThuCung_entity tc = (ThuCung_entity) cboThuCung.getSelectedItem();
             BacSi_entity bs = (BacSi_entity) cboBacSiForm.getSelectedItem();
-            boolean saved = controller.luu(new LichSuKhamController.ThongTinHoSo(
+            boolean saved = controller.luu(new LichSuKhamService.ThongTinHoSo(
                     txtMa.getText(), hoSoHienTai == null, tc, bs, txtNgay.getText(),
                     txtTrieuChung.getText(), txtChuanDoan.getText(), txtCanNang.getText()));
             if (saved) {

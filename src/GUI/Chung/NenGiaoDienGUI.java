@@ -1,6 +1,6 @@
 package GUI.Chung;
 
-import controller.Chung.NenGiaoDienController;
+import Service.Chung.NenGiaoDienService;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -39,7 +39,7 @@ import javax.swing.text.JTextComponent;
  * - TamNenNoiDung : tấm nền kem bán trong suốt phía sau vùng nội dung.
  * - LamMoNen : làm mờ/trong suốt các panel con để ảnh nền hiện lên.
  * Phần xử lý ảnh và phân loại màu nền nằm ở
- * controller.Chung.NenGiaoDienController.
+ * controller.Chung.NenGiaoDienService.
  */
 public final class NenGiaoDienGUI {
 
@@ -57,9 +57,9 @@ public final class NenGiaoDienGUI {
      */
     public static class NenAnhPanel extends JPanel {
         private static final long serialVersionUID = 1L;
-        private static final NenGiaoDienController CONTROLLER = new NenGiaoDienController();
+        private static final NenGiaoDienService CONTROLLER = new NenGiaoDienService();
 
-        private NenGiaoDienController.AnhNenDaXuLy anhDaXuLy;
+        private NenGiaoDienService.AnhNenDaXuLy anhDaXuLy;
         private int rongCache = -1;
         private int caoCache = -1;
 
@@ -73,7 +73,7 @@ public final class NenGiaoDienGUI {
             super(layout);
             setOpaque(true);
             setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
-            NenGiaoDienController.taiAnhNen();
+            NenGiaoDienService.taiAnhNen();
         }
 
         /** Có nạp được ảnh nền hay không. */
@@ -207,7 +207,7 @@ public final class NenGiaoDienGUI {
     public static final class LamMoNen {
 
         private static final String DA_XU_LY = "salala.lamMoNen";
-        private static final NenGiaoDienController CONTROLLER = new NenGiaoDienController();
+        private static final NenGiaoDienService CONTROLLER = new NenGiaoDienService();
 
         private LamMoNen() {
         }

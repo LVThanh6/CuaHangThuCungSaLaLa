@@ -2,7 +2,7 @@ package GUI.DichVu;
 
 import GUI.Chung.RangBuocGiaoDien;
 import entity.DichVu.Thue_entity;
-import controller.DichVu.ThueController;
+import Service.DichVu.ThueService;
 
 import java.awt.*;
 import java.util.List;
@@ -20,7 +20,7 @@ public class ThueGUI extends JPanel {
     private static final Color XAM = new Color(0x6B7280);
     private static final Color DO = new Color(0xDC2626);
 
-    private final ThueController controller = new ThueController();
+    private final ThueService controller = new ThueService();
     private JTable table;
     private DefaultTableModel model;
     private JButton btnSua, btnXoa;

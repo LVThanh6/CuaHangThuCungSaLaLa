@@ -3,7 +3,7 @@ package GUI.ThuCung;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 import GUI.GiaoDienChinhGUI;
-import controller.ThuCung.HoSoThuCungController;
+import Service.ThuCung.HoSoThuCungService;
 import entity.KhachHang.KhachHang;
 import entity.ThuCung.ThuCung_entity;
 import java.awt.*;
@@ -34,7 +34,7 @@ public class HoSoThuCungGUI extends JPanel {
     private final String[] tieuDeCot = { "Mã thú cưng", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh",
             "Chủ nuôi", "SĐT chủ", "Đặc điểm nhận diện" };
     private final String[] dsLoaiLoc = { "Loài: Tất cả", "Chó", "Mèo", "Thỏ", "Hamster" };
-    private final HoSoThuCungController controller = new HoSoThuCungController();
+    private final HoSoThuCungService controller = new HoSoThuCungService();
 
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<ThuCung_entity> danhSachThuCung = new ArrayList<>();
@@ -322,7 +322,7 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        HoSoThuCungController.ThongKe thongKe = controller.thongKe(danhSachThuCung);
+        HoSoThuCungService.ThongKe thongKe = controller.thongKe(danhSachThuCung);
         nhanSoTongThuCung.setText(String.valueOf(thongKe.tong));
         nhanSoCho.setText(String.valueOf(thongKe.cho));
         nhanSoMeo.setText(String.valueOf(thongKe.meo));
@@ -499,7 +499,7 @@ public class HoSoThuCungGUI extends JPanel {
             String loai = String.valueOf(cboLoaiNhap.getSelectedItem()).trim();
             String chuHo = txtChuHo.getText().trim();
             KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
-            if (controller.luu(new HoSoThuCungController.ThongTinThuCung(
+            if (controller.luu(new HoSoThuCungService.ThongTinThuCung(
                     txtMa.getText(), thuCung == null, kh, ten, loai,
                     String.valueOf(cboGioiTinh.getSelectedItem()), txtNgaySinh.getText(),
                     chuHo, txtDacDiem.getText()))) {

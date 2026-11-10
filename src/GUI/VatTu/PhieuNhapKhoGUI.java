@@ -1,12 +1,12 @@
 package GUI.VatTu;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.VatTu.PhieuNhapKhoController;
-import controller.VatTu.PhieuNhapKhoController.Dong;
-import controller.VatTu.PhieuNhapKhoController.CatalogItem;
-import controller.VatTu.PhieuNhapKhoController.Filter;
-import controller.VatTu.PhieuNhapKhoController.Phieu;
-import controller.VatTu.PhieuNhapKhoController.TrangThai;
+import Service.VatTu.PhieuNhapKhoService;
+import Service.VatTu.PhieuNhapKhoService.Dong;
+import Service.VatTu.PhieuNhapKhoService.CatalogItem;
+import Service.VatTu.PhieuNhapKhoService.Filter;
+import Service.VatTu.PhieuNhapKhoService.Phieu;
+import Service.VatTu.PhieuNhapKhoService.TrangThai;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -68,7 +68,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     // ===== Thành phần =====
     private final Runnable onLapPhieuXuat;
     private final Runnable onTonKhoThayDoi; // gọi sau khi xác nhận phiếu để tab Vật tư tải lại tồn kho
-    private final PhieuNhapKhoController controller = new PhieuNhapKhoController();
+    private final PhieuNhapKhoService controller = new PhieuNhapKhoService();
 
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
@@ -332,7 +332,7 @@ public class PhieuNhapKhoGUI extends JPanel {
                     p.nhanVien,
                     p.nhaCungCap,
                     p.dong.size(),
-                    PhieuNhapKhoController.tongTien(p),
+                    PhieuNhapKhoService.tongTien(p),
                     p.tt.text
             });
         }
@@ -359,9 +359,9 @@ public class PhieuNhapKhoGUI extends JPanel {
         if (ok != JOptionPane.OK_OPTION)
             return;
         try {
-            LocalDate f = PhieuNhapKhoController.parseDate(from.getText(), DF);
-            LocalDate t = PhieuNhapKhoController.parseDate(to.getText(), DF);
-            String rangeError = PhieuNhapKhoController.validateDateRange(f, t);
+            LocalDate f = PhieuNhapKhoService.parseDate(from.getText(), DF);
+            LocalDate t = PhieuNhapKhoService.parseDate(to.getText(), DF);
+            String rangeError = PhieuNhapKhoService.validateDateRange(f, t);
             if (rangeError != null) {
                 JOptionPane.showMessageDialog(this, rangeError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -447,7 +447,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         };
         for (Dong dItem : p.dong) {
             m.addRow(new Object[] { dItem.ten, dItem.donVi, dItem.sl, MONEY.format(dItem.donGia) + " đ",
-                    MONEY.format(PhieuNhapKhoController.thanhTien(dItem)) + " đ" });
+                    MONEY.format(PhieuNhapKhoService.thanhTien(dItem)) + " đ" });
         }
         JTable tbl = new JTable(m);
         tbl.setRowHeight(32);
@@ -455,8 +455,8 @@ public class PhieuNhapKhoGUI extends JPanel {
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
-        JLabel lblSum = new JLabel("Tổng số lượng: " + PhieuNhapKhoController.tongSoLuong(p)
-                + "    Tổng giá trị: " + MONEY.format(PhieuNhapKhoController.tongTien(p)) + " đ");
+        JLabel lblSum = new JLabel("Tổng số lượng: " + PhieuNhapKhoService.tongSoLuong(p)
+                + "    Tổng giá trị: " + MONEY.format(PhieuNhapKhoService.tongTien(p)) + " đ");
         lblSum.setFont(new Font(FONT, Font.BOLD, 13));
         lblSum.setForeground(PRIMARY);
         bottom.add(lblSum, BorderLayout.WEST);
@@ -480,7 +480,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             }
             int ok = JOptionPane.showConfirmDialog(d,
                     "Xác nhận phiếu nhập " + p.so + " và cộng "
-                            + PhieuNhapKhoController.tongSoLuong(p) + " đơn vị vào tồn kho?",
+                            + PhieuNhapKhoService.tongSoLuong(p) + " đơn vị vào tồn kho?",
                     "Xác nhận nhập kho", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (ok != JOptionPane.YES_OPTION)
                 return;
@@ -624,7 +624,7 @@ public class PhieuNhapKhoGUI extends JPanel {
                 if (r >= 0 && r < m.getRowCount()) {
                     int sl = ((Number) m.getValueAt(r, 3)).intValue();
                     long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                    m.setValueAt(PhieuNhapKhoController.thanhTien(new Dong("", "", "", sl, gia)), r, 5);
+                    m.setValueAt(PhieuNhapKhoService.thanhTien(new Dong("", "", "", sl, gia)), r, 5);
                 }
             }
         });
@@ -632,7 +632,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         if (src != null) {
             for (Dong dg : src.dong) {
                 m.addRow(new Object[] { dg.ma, dg.ten, dg.donVi, dg.sl, dg.donGia,
-                        PhieuNhapKhoController.thanhTien(dg) });
+                        PhieuNhapKhoService.thanhTien(dg) });
             }
         }
 
@@ -656,7 +656,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             int i = cboVT.getSelectedIndex();
             if (i < 0 || i >= catalog.size())
                 return;
-            Long parsedPrice = PhieuNhapKhoController.parsePrice(txtGia.getText());
+            Long parsedPrice = PhieuNhapKhoService.parsePrice(txtGia.getText());
             if (parsedPrice == null) {
                 JOptionPane.showMessageDialog(d, "Đơn giá không hợp lệ.", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -699,7 +699,7 @@ public class PhieuNhapKhoGUI extends JPanel {
                 t.getCellEditor().stopCellEditing();
             LocalDate ngay;
             try {
-                ngay = PhieuNhapKhoController.parseDate(txtNgay.getText(), DF);
+                ngay = PhieuNhapKhoService.parseDate(txtNgay.getText(), DF);
             } catch (DateTimeParseException ex) {
                 JOptionPane.showMessageDialog(d, "Ngày lập không hợp lệ (định dạng dd/MM/yyyy).", "Lỗi",
                         JOptionPane.WARNING_MESSAGE);
@@ -714,7 +714,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             int idxNCC = cboNCC.getSelectedIndex();
             String maNCC = idxNCC >= 0 ? dsNCC.get(idxNCC)[0] : "";
             java.util.List<Dong> lines = linesFromModel(m);
-            String validationError = controller.validate(new PhieuNhapKhoController.Draft(ngay, maNCC, lines));
+            String validationError = controller.validate(new PhieuNhapKhoService.Draft(ngay, maNCC, lines));
             if (validationError != null) {
                 JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -770,7 +770,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
 
-        String csv = PhieuNhapKhoController.toCsv(filtered);
+        String csv = PhieuNhapKhoService.toCsv(filtered);
         try {
             Files.write(fc.getSelectedFile().toPath(), csv.getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + filtered.size() + " phiếu ra file.", "Thành công",
@@ -828,7 +828,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     private String buildText(Phieu p) {
-        return PhieuNhapKhoController.buildText(p, MONEY);
+        return PhieuNhapKhoService.buildText(p, MONEY);
     }
 
     private static java.util.List<Dong> linesFromModel(DefaultTableModel model) {
@@ -845,7 +845,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         model.setRowCount(0);
         for (Dong line : lines) {
             model.addRow(new Object[] { line.ma, line.ten, line.donVi, line.sl,
-                    line.donGia, PhieuNhapKhoController.thanhTien(line) });
+                    line.donGia, PhieuNhapKhoService.thanhTien(line) });
         }
     }
 
