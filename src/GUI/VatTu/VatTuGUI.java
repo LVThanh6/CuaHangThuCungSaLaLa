@@ -50,7 +50,7 @@ public class VatTuGUI extends JPanel {
     private final List<VatTuService.VatTu> tatCa = new ArrayList<>();
     private final List<VatTuService.VatTu> daLoc = new ArrayList<>();
     private final Set<String> daChon = new HashSet<>();
-    private final VatTuService controller = new VatTuService();
+    private final VatTuService service = new VatTuService();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -347,7 +347,7 @@ public class VatTuGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        InventorySummary summary = controller.thongKe(tatCa);
+        InventorySummary summary = service.thongKe(tatCa);
         lblSoLieu[0].setText(summary.getTotal() + " Mặt hàng");
         lblSoLieu[1].setText(summary.getSufficient() + " Mặt hàng");
         lblSoLieu[2].setText(summary.getLow() + " Mặt hàng");
@@ -359,7 +359,7 @@ public class VatTuGUI extends JPanel {
         int tt = cbTrangThai.getSelectedIndex();
         VatTuService.TrangThai status = tt == 0 ? null
                 : VatTuService.TrangThai.values()[tt - 1];
-        List<VatTuService.VatTu> filtered = controller.loc(
+        List<VatTuService.VatTu> filtered = service.loc(
                 tatCa, txtTim.getText(), dm == 0 ? null : DANH_MUC[dm - 1],
                 status, sapXepTang);
         daLoc.clear();
@@ -378,7 +378,7 @@ public class VatTuGUI extends JPanel {
 
     private void taiDuLieuMau() {
         tatCa.clear();
-        tatCa.addAll(controller.taiDanhSach());
+        tatCa.addAll(service.taiDanhSach());
         lamMoi();
     }
 
@@ -389,7 +389,7 @@ public class VatTuGUI extends JPanel {
         if (moi == null)
             return;
 
-        VatTuService.SaveResult result = controller.luu(moi, false);
+        VatTuService.SaveResult result = service.luu(moi, false);
         if (result.isSaved()) {
             taiDuLieuMau();
             chonDong(moi.getMa());
@@ -410,7 +410,7 @@ public class VatTuGUI extends JPanel {
         if (moi == null)
             return;
 
-        VatTuService.SaveResult result = controller.luu(moi, true);
+        VatTuService.SaveResult result = service.luu(moi, true);
         if (result.isSaved()) {
             taiDuLieuMau();
             chonDong(moi.getMa());
@@ -433,7 +433,7 @@ public class VatTuGUI extends JPanel {
         if (chon != JOptionPane.YES_OPTION)
             return;
 
-        if (controller.xoa(vt.getMa())) {
+        if (service.xoa(vt.getMa())) {
             taiDuLieuMau();
         } else {
             JOptionPane.showMessageDialog(this,
@@ -464,7 +464,7 @@ public class VatTuGUI extends JPanel {
     private VatTuInput hienFormVatTu(VatTuService.VatTu cu) {
         final boolean sua = cu != null;
 
-        List<SupplierOption> dsNCC = controller.taiNhaCungCap();
+        List<SupplierOption> dsNCC = service.taiNhaCungCap();
         if (dsNCC.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "Chưa có nhà cung cấp nào trong CSDL nên không thể thêm / sửa vật tư.",
@@ -475,7 +475,7 @@ public class VatTuGUI extends JPanel {
         Window cha = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(cha, sua ? "Sửa vật tư" : "Thêm vật tư", Dialog.ModalityType.APPLICATION_MODAL);
 
-        JTextField txtMa = new JTextField(sua ? cu.getMa() : controller.taoMaMoi(), 22);
+        JTextField txtMa = new JTextField(sua ? cu.getMa() : service.taoMaMoi(), 22);
         txtMa.setEditable(false); // mã tự phát sinh (VT + STT), không cho nhập tay
         txtMa.setBackground(NEN_HEADER);
         JTextField txtTen = new JTextField(sua ? cu.getTen() : "", 22);
@@ -555,7 +555,7 @@ public class VatTuGUI extends JPanel {
                 canhBao(dlg, "Vui lòng nhập mã vật tư.", txtMa);
                 return;
             }
-            if (!sua && controller.maVatTuTonTai(ma)) {
+            if (!sua && service.maVatTuTonTai(ma)) {
                 canhBao(dlg, "Mã vật tư \"" + ma + "\" đã tồn tại.", txtMa);
                 return;
             }
@@ -585,7 +585,7 @@ public class VatTuGUI extends JPanel {
                     : VatTuService.trangThai(ton).label;
             VatTuInput moi = new VatTuInput(ma, ten, supplierCode,
                     laThuoc ? maThuoc : null, laThuoc, ton, giaNhap, giaBan, databaseStatus);
-            String validationError = controller.validate(moi, sua);
+            String validationError = service.validate(moi, sua);
             if (validationError != null) {
                 JComponent focus = validationError.contains("mã vật tư") ? txtMa
                         : validationError.contains("tên vật tư") ? txtTen
@@ -620,7 +620,7 @@ public class VatTuGUI extends JPanel {
 
     public int getTonKho(String ma) {
         try {
-            return controller.tonKho(ma, tatCa);
+            return service.tonKho(ma, tatCa);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
             return 0;
@@ -629,7 +629,7 @@ public class VatTuGUI extends JPanel {
 
     public java.util.List<Object[]> getDanhSachVatTu() {
         java.util.List<Object[]> rows = new java.util.ArrayList<>();
-        for (CatalogItem item : controller.danhMucVatTu(tatCa)) {
+        for (CatalogItem item : service.danhMucVatTu(tatCa)) {
             rows.add(new Object[] { item.getCode(), item.getName(), item.getUnit(), item.getPurchasePrice() });
         }
         return rows;
@@ -637,7 +637,7 @@ public class VatTuGUI extends JPanel {
 
     public void tangTon(String ma, int soLuong) {
         try {
-            controller.capNhatTon(ma, soLuong, tatCa);
+            service.capNhatTon(ma, soLuong, tatCa);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Không tìm thấy vật tư", JOptionPane.ERROR_MESSAGE);
             return;

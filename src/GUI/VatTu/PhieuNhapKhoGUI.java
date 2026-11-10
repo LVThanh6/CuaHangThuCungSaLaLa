@@ -68,7 +68,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     // ===== Thành phần =====
     private final Runnable onLapPhieuXuat;
     private final Runnable onTonKhoThayDoi; // gọi sau khi xác nhận phiếu để tab Vật tư tải lại tồn kho
-    private final PhieuNhapKhoService controller = new PhieuNhapKhoService();
+    private final PhieuNhapKhoService service = new PhieuNhapKhoService();
 
     private java.util.List<Phieu> filtered = new ArrayList<>();
     private final java.util.List<Phieu> pageRows = new ArrayList<>();
@@ -118,7 +118,7 @@ public class PhieuNhapKhoGUI extends JPanel {
 
     /** Tải lại danh sách phiếu từ CSDL (gọi khi chuyển sang tab này). */
     public void taiLai() {
-        controller.refresh();
+        service.refresh();
         reload(true);
     }
 
@@ -319,7 +319,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     private void reload(boolean resetPage) {
         int stIdx = cboTrangThai.getSelectedIndex();
         TrangThai[] stMap = { null, TrangThai.CHO_XAC_NHAN, TrangThai.DA_XAC_NHAN, TrangThai.DA_HUY };
-        filtered = controller.loc(new Filter(txtSearch.getText(), stMap[stIdx], tuNgay, denNgay));
+        filtered = service.loc(new Filter(txtSearch.getText(), stMap[stIdx], tuNgay, denNgay));
 
         model.setRowCount(0);
         pageRows.clear();
@@ -337,7 +337,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             });
         }
 
-        lblShowing.setText(!controller.isConnected()
+        lblShowing.setText(!service.isConnected()
                 ? "Không kết nối được CSDL SALALA - hãy kiểm tra SQL Server"
                 : filtered.isEmpty()
                         ? "Không có phiếu nhập nào"
@@ -392,7 +392,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     private void lapPhieu() {
         Phieu p = openEditor(null);
         if (p != null) {
-            if (!controller.add(p)) {
+            if (!service.add(p)) {
                 JOptionPane.showMessageDialog(this, "Không lưu được phiếu nhập vào CSDL. Xem chi tiết lỗi ở console.",
                         "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             }
@@ -412,7 +412,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         }
         Phieu np = openEditor(p);
         if (np != null) {
-            if (!controller.update(p, np)) {
+            if (!service.update(p, np)) {
                 JOptionPane.showMessageDialog(this,
                         "Không cập nhật được phiếu (phiếu đã đổi trạng thái hoặc lỗi CSDL).",
                         "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
@@ -485,7 +485,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             if (ok != JOptionPane.YES_OPTION)
                 return;
 
-            if (!controller.confirm(p)) {
+            if (!service.confirm(p)) {
                 JOptionPane.showMessageDialog(d, "Không xác nhận được phiếu (phiếu đã đổi trạng thái hoặc lỗi CSDL).",
                         "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
                 reload(false);
@@ -505,7 +505,7 @@ public class PhieuNhapKhoGUI extends JPanel {
                     "Hủy phiếu nhập", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (ok != JOptionPane.YES_OPTION)
                 return;
-            if (!controller.cancel(p)) {
+            if (!service.cancel(p)) {
                 JOptionPane.showMessageDialog(d, "Không hủy được phiếu (phiếu đã đổi trạng thái hoặc lỗi CSDL).",
                         "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             }
@@ -548,7 +548,7 @@ public class PhieuNhapKhoGUI extends JPanel {
     }
 
     private Phieu openEditor(Phieu src) {
-        final java.util.List<CatalogItem> catalog = controller.getCatalog();
+        final java.util.List<CatalogItem> catalog = service.getCatalog();
         final Phieu[] result = { null };
 
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
@@ -557,13 +557,13 @@ public class PhieuNhapKhoGUI extends JPanel {
         d.setLocationRelativeTo(this);
 
         JTextField txtSo = new JTextField(src == null
-                ? controller.taoMaPhieuMoi()
+                ? service.taoMaPhieuMoi()
                 : src.so);
         txtSo.setEditable(false);
         JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.ngay).format(DF));
         // Nhân viên lập & nhà cung cấp: chọn từ bảng NhanVien / NhaCungCap (khóa ngoại
         // của PhieuNhapKho)
-        final java.util.List<String[]> dsNV = controller.getNhanVienOptions();
+        final java.util.List<String[]> dsNV = service.getNhanVienOptions();
         JComboBox<String> cboNV = new JComboBox<>();
         for (String[] r : dsNV)
             cboNV.addItem(r[0] + " - " + r[1]);
@@ -577,7 +577,7 @@ public class PhieuNhapKhoGUI extends JPanel {
         if (src != null)
             cboNV.setEnabled(false); // không đổi người lập khi sửa phiếu
 
-        final java.util.List<String[]> dsNCC = controller.getNhaCungCapOptions();
+        final java.util.List<String[]> dsNCC = service.getNhaCungCapOptions();
         JComboBox<String> cboNCC = new JComboBox<>();
         for (String[] r : dsNCC)
             cboNCC.addItem(r[0] + " - " + r[1]);
@@ -664,7 +664,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             long gia = parsedPrice;
             int sl = (Integer) spSL.getValue();
             java.util.List<Dong> lines = linesFromModel(m);
-            controller.mergeLine(lines, controller.taoDong(catalog.get(i), sl, gia));
+            service.mergeLine(lines, service.taoDong(catalog.get(i), sl, gia));
             replaceModelRows(m, lines);
         });
         btnXoa.addActionListener(e -> {
@@ -714,7 +714,7 @@ public class PhieuNhapKhoGUI extends JPanel {
             int idxNCC = cboNCC.getSelectedIndex();
             String maNCC = idxNCC >= 0 ? dsNCC.get(idxNCC)[0] : "";
             java.util.List<Dong> lines = linesFromModel(m);
-            String validationError = controller.validate(new PhieuNhapKhoService.Draft(ngay, maNCC, lines));
+            String validationError = service.validate(new PhieuNhapKhoService.Draft(ngay, maNCC, lines));
             if (validationError != null) {
                 JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;

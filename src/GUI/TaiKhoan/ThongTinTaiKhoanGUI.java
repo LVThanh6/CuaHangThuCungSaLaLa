@@ -30,7 +30,7 @@ import java.util.List;
 public class ThongTinTaiKhoanGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private final ThongTinTaiKhoanService controller = new ThongTinTaiKhoanService();
+    private final ThongTinTaiKhoanService service = new ThongTinTaiKhoanService();
     private TableMau bangTaiKhoan;
     private DefaultTableModel modelBang;
     private TableRowSorter<DefaultTableModel> rowSorter;
@@ -212,14 +212,14 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         pLocTrai.add(txtTimKiem);
 
         // Lọc vai trò
-        cbLocVaiTro = new JComboBox<>(controller.danhSachVaiTroLoc());
+        cbLocVaiTro = new JComboBox<>(service.danhSachVaiTroLoc());
         cbLocVaiTro.setFont(RangBuocGiaoDien.fontThuong(12));
         cbLocVaiTro.setPreferredSize(new Dimension(180, 36));
         cbLocVaiTro.addActionListener(e -> locDuLieu());
         pLocTrai.add(cbLocVaiTro);
 
         // Lọc trạng thái
-        cbLocTrangThai = new JComboBox<>(controller.danhSachTrangThaiLoc());
+        cbLocTrangThai = new JComboBox<>(service.danhSachTrangThaiLoc());
         cbLocTrangThai.setFont(RangBuocGiaoDien.fontThuong(12));
         cbLocTrangThai.setPreferredSize(new Dimension(150, 36));
         cbLocTrangThai.addActionListener(e -> locDuLieu());
@@ -326,11 +326,11 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     // ==========================================
     public void taiDuLieuLenBang() {
         modelBang.setRowCount(0);
-        ThongTinTaiKhoanService.DuLieuDanhSach data = controller.taiDanhSach();
+        ThongTinTaiKhoanService.DuLieuDanhSach data = service.taiDanhSach();
         danhSachHienTai = data.taiKhoan;
 
         for (ThongTinTaiKhoanService.TaiKhoanItem item : danhSachHienTai) {
-            modelBang.addRow(controller.taoDongBang(item));
+            modelBang.addRow(service.taoDongBang(item));
         }
 
         // Cập nhật số liệu thẻ KPI
@@ -351,7 +351,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         final String vaiTro = (String) cbLocVaiTro.getSelectedItem();
         final String trangThai = (String) cbLocTrangThai.getSelectedItem();
 
-        // Quy tắc lọc nằm ở controller; GUI chỉ ánh xạ dòng bảng -> dữ liệu
+        // Quy tắc lọc nằm ở service; GUI chỉ ánh xạ dòng bảng -> dữ liệu
         rowSorter.setRowFilter(new RowFilter<DefaultTableModel, Integer>() {
             @Override
             public boolean include(Entry<? extends DefaultTableModel, ? extends Integer> entry) {
@@ -360,7 +360,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
                 int modelRow = entry.getIdentifier();
                 if (modelRow < 0 || modelRow >= danhSachHienTai.size())
                     return true;
-                return controller.khopBoLoc(danhSachHienTai.get(modelRow), tuKhoa, vaiTro, trangThai);
+                return service.khopBoLoc(danhSachHienTai.get(modelRow), tuKhoa, vaiTro, trangThai);
             }
         });
     }
@@ -396,7 +396,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         p.setBackground(Color.WHITE);
         p.setBorder(new EmptyBorder(20, 24, 20, 24));
 
-        String maPhatSinh = controller.taoMaMoi();
+        String maPhatSinh = service.taoMaMoi();
 
         JTextField txtMa = taoInputText(maPhatSinh, false);
         JTextField txtUser = taoInputText("", true);
@@ -405,11 +405,11 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         txtPass.setBorder(new CompoundBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
                 new EmptyBorder(0, 10, 0, 10)));
 
-        JComboBox<String> cbVaiTro = new JComboBox<>(controller.danhSachVaiTro());
+        JComboBox<String> cbVaiTro = new JComboBox<>(service.danhSachVaiTro());
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
         // Danh sách liên kết nhân viên / bác sĩ chưa có tài khoản
-        ThongTinTaiKhoanService.DanhMucTaoTaiKhoan catalog = controller.taiDanhMucTaoTaiKhoan();
+        ThongTinTaiKhoanService.DanhMucTaoTaiKhoan catalog = service.taiDanhMucTaoTaiKhoan();
         List<ThongTinTaiKhoanService.DoiTuongOption> doiTuongOptions = new ArrayList<>();
 
         DefaultComboBoxModel<String> modelLienKet = new DefaultComboBoxModel<>();
@@ -442,7 +442,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         cbLienKet.addActionListener(e -> {
             int idx = cbLienKet.getSelectedIndex();
             if (idx > 0) {
-                cbVaiTro.setSelectedItem(controller.vaiTroGoiY(doiTuongOptions.get(idx - 1)));
+                cbVaiTro.setSelectedItem(service.vaiTroGoiY(doiTuongOptions.get(idx - 1)));
             }
         });
 
@@ -479,7 +479,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
             int lkIdx = cbLienKet.getSelectedIndex();
             if (lkIdx > 0)
                 doiTuong = doiTuongOptions.get(lkIdx - 1);
-            ThongTinTaiKhoanService.KetQuaTaoTaiKhoan result = controller.taoTaiKhoan(
+            ThongTinTaiKhoanService.KetQuaTaoTaiKhoan result = service.taoTaiKhoan(
                     new ThongTinTaiKhoanService.ThongTinTaiKhoanMoi(maPhatSinh,
                             txtUser.getText(), new String(txtPass.getPassword()),
                             (String) cbVaiTro.getSelectedItem(), chkKichHoat.isSelected(),
@@ -523,12 +523,12 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         JTextField txtMa = taoInputText(chon.getMaTK() + " (" + chon.getTenDangNhap() + ")", false);
         JTextField txtChu = taoInputText(chon.getHoTenNguoiDung(), false);
 
-        JComboBox<String> cbVaiTro = new JComboBox<>(controller.danhSachVaiTro());
+        JComboBox<String> cbVaiTro = new JComboBox<>(service.danhSachVaiTro());
         cbVaiTro.setSelectedItem(chon.getVaiTro());
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
         // Quản lý
-        List<ThongTinTaiKhoanService.QuanLyOption> dsQL = controller.taiDanhSachQuanLy();
+        List<ThongTinTaiKhoanService.QuanLyOption> dsQL = service.taiDanhSachQuanLy();
         DefaultComboBoxModel<String> modelQL = new DefaultComboBoxModel<>();
         modelQL.addElement("-- Không chỉ định (Toàn quyền) --");
         int selectQLIdx = 0;
@@ -572,7 +572,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
                 maQLMoi = dsQL.get(cbQL.getSelectedIndex() - 1).ma;
             }
 
-            boolean ok = controller.capNhatTaiKhoan(chon.getMaTK(), chon.getTenDangNhap(), vtMoi, ttMoi, maQLMoi);
+            boolean ok = service.capNhatTaiKhoan(chon.getMaTK(), chon.getTenDangNhap(), vtMoi, ttMoi, maQLMoi);
             if (ok) {
                 JOptionPane.showMessageDialog(dlg, "Cập nhật tài khoản thành công!", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -606,7 +606,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (opt == JOptionPane.YES_OPTION) {
-            boolean ok = controller.datTrangThai(chon.getMaTK(), trangThaiMoi);
+            boolean ok = service.datTrangThai(chon.getMaTK(), trangThaiMoi);
             if (ok) {
                 JOptionPane.showMessageDialog(this, "Đã " + hanhDong.toLowerCase() + " tài khoản thành công!",
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -633,7 +633,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
 
         if (matKhauMoi != null) {
             matKhauMoi = matKhauMoi.trim();
-            ThongTinTaiKhoanService.KetQuaMatKhau result = controller.datLaiMatKhau(chon.getMaTK(), matKhauMoi);
+            ThongTinTaiKhoanService.KetQuaMatKhau result = service.datLaiMatKhau(chon.getMaTK(), matKhauMoi);
             if (result.thanhCong) {
                 JOptionPane.showMessageDialog(this, "Đặt lại mật khẩu thành công!\nMật khẩu mới: " + matKhauMoi,
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -658,7 +658,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (opt == JOptionPane.YES_OPTION) {
-            boolean ok = controller.xoaTaiKhoan(chon.getMaTK());
+            boolean ok = service.xoaTaiKhoan(chon.getMaTK());
             if (ok) {
                 JOptionPane.showMessageDialog(this, "Xóa tài khoản thành công!", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -845,7 +845,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         private JPasswordField txtXacNhanMatKhau;
         private JLabel lblLoi;
         private final TaiKhoan taiKhoan;
-        private final ThongTinTaiKhoanService controller = new ThongTinTaiKhoanService();
+        private final ThongTinTaiKhoanService service = new ThongTinTaiKhoanService();
 
         public DoiMatKhauDialog(Frame parent, TaiKhoan taiKhoan) {
             super(parent, "Đổi mật khẩu tài khoản", true);
@@ -955,7 +955,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
             String passMoi = new String(txtMatKhauMoi.getPassword()).trim();
             String passXacNhan = new String(txtXacNhanMatKhau.getPassword()).trim();
 
-            ThongTinTaiKhoanService.KetQuaDoiMatKhau result = controller.doiMatKhau(taiKhoan, passCu, passMoi,
+            ThongTinTaiKhoanService.KetQuaDoiMatKhau result = service.doiMatKhau(taiKhoan, passCu, passMoi,
                     passXacNhan);
             if (result.isThanhCong()) {
                 JOptionPane.showMessageDialog(this,

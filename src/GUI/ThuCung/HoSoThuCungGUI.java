@@ -34,7 +34,7 @@ public class HoSoThuCungGUI extends JPanel {
     private final String[] tieuDeCot = { "Mã thú cưng", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh",
             "Chủ nuôi", "SĐT chủ", "Đặc điểm nhận diện" };
     private final String[] dsLoaiLoc = { "Loài: Tất cả", "Chó", "Mèo", "Thỏ", "Hamster" };
-    private final HoSoThuCungService controller = new HoSoThuCungService();
+    private final HoSoThuCungService service = new HoSoThuCungService();
 
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<ThuCung_entity> danhSachThuCung = new ArrayList<>();
@@ -288,7 +288,7 @@ public class HoSoThuCungGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            danhSachThuCung = controller.taiDanhSach();
+            danhSachThuCung = service.taiDanhSach();
             locDuLieu();
             capNhatThongKe();
         } catch (RuntimeException e) {
@@ -300,7 +300,7 @@ public class HoSoThuCungGUI extends JPanel {
     private void locDuLieu() {
         if (bangThuCung == null)
             return;
-        daLoc = controller.loc(danhSachThuCung, txtTimKiem.getText(), String.valueOf(cboLoai.getSelectedItem()));
+        daLoc = service.loc(danhSachThuCung, txtTimKiem.getText(), String.valueOf(cboLoai.getSelectedItem()));
         capNhatBang();
     }
 
@@ -322,7 +322,7 @@ public class HoSoThuCungGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        HoSoThuCungService.ThongKe thongKe = controller.thongKe(danhSachThuCung);
+        HoSoThuCungService.ThongKe thongKe = service.thongKe(danhSachThuCung);
         nhanSoTongThuCung.setText(String.valueOf(thongKe.tong));
         nhanSoCho.setText(String.valueOf(thongKe.cho));
         nhanSoMeo.setText(String.valueOf(thongKe.meo));
@@ -357,7 +357,7 @@ public class HoSoThuCungGUI extends JPanel {
         if (maThuCung == null)
             return;
         try {
-            ThuCung_entity tc = controller.timTheoMa(maThuCung);
+            ThuCung_entity tc = service.timTheoMa(maThuCung);
             if (tc == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy thú cưng.", "Cảnh báo",
                         JOptionPane.WARNING_MESSAGE);
@@ -374,7 +374,7 @@ public class HoSoThuCungGUI extends JPanel {
         if (maThuCung == null)
             return;
         try {
-            ThuCung_entity tc = controller.timTheoMa(maThuCung);
+            ThuCung_entity tc = service.timTheoMa(maThuCung);
             if (tc == null)
                 return;
             hienThiFormThuCung(tc, false, true);
@@ -392,7 +392,7 @@ public class HoSoThuCungGUI extends JPanel {
         if (JOptionPane.showConfirmDialog(this, "Xóa hồ sơ thú cưng \"" + tenThuCung + "\"?\nKhông thể hoàn tác.",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             try {
-                if (controller.xoa(maThuCung)) {
+                if (service.xoa(maThuCung)) {
                     JOptionPane.showMessageDialog(this, "Đã xóa thành công.");
                     loadDataToTable();
                 } else {
@@ -412,7 +412,7 @@ public class HoSoThuCungGUI extends JPanel {
 
     private void hienThiFormThuCung(ThuCung_entity thuCung, boolean chiDoc, boolean luuDuoc) {
         try {
-            List<KhachHang> dsKhach = controller.taiKhachHang();
+            List<KhachHang> dsKhach = service.taiKhachHang();
             if (dsKhach == null || dsKhach.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Cần có khách hàng trước.", "Cảnh báo",
                         JOptionPane.WARNING_MESSAGE);
@@ -420,7 +420,7 @@ public class HoSoThuCungGUI extends JPanel {
             }
 
             JTextField txtMa = new JTextField(thuCung == null
-                    ? controller.phatSinhMa(danhSachThuCung)
+                    ? service.phatSinhMa(danhSachThuCung)
                     : giaTri(thuCung.getMaTC()));
             txtMa.setEditable(false);
             JTextField txtTen = new JTextField(thuCung == null ? "" : giaTri(thuCung.getTenTC()));
@@ -499,7 +499,7 @@ public class HoSoThuCungGUI extends JPanel {
             String loai = String.valueOf(cboLoaiNhap.getSelectedItem()).trim();
             String chuHo = txtChuHo.getText().trim();
             KhachHang kh = (KhachHang) cboKhachHang.getSelectedItem();
-            if (controller.luu(new HoSoThuCungService.ThongTinThuCung(
+            if (service.luu(new HoSoThuCungService.ThongTinThuCung(
                     txtMa.getText(), thuCung == null, kh, ten, loai,
                     String.valueOf(cboGioiTinh.getSelectedItem()), txtNgaySinh.getText(),
                     chuHo, txtDacDiem.getText()))) {
@@ -524,7 +524,7 @@ public class HoSoThuCungGUI extends JPanel {
         if (!file.getName().toLowerCase(Locale.ROOT).endsWith(".csv"))
             file = new java.io.File(file.getParentFile(), file.getName() + ".csv");
         try {
-            controller.xuatDanhSach(file, daLoc);
+            service.xuatDanhSach(file, daLoc);
             JOptionPane.showMessageDialog(this, "Xuất thành công.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Lỗi xuất file.", "Lỗi", JOptionPane.ERROR_MESSAGE);

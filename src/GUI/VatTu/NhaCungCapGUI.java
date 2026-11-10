@@ -44,7 +44,7 @@ public class NhaCungCapGUI extends JPanel {
     private TableRowSorter<TableModel> sorter;
     private JLabel lblTongNCC;
 
-    private final NhaCungCapService controller = new NhaCungCapService();
+    private final NhaCungCapService service = new NhaCungCapService();
 
     public NhaCungCapGUI() {
         setLayout(new BorderLayout());
@@ -214,7 +214,7 @@ public class NhaCungCapGUI extends JPanel {
     // =====================================================================
     public void loadData() {
         model.setRowCount(0);
-        ArrayList<Supplier> suppliers = new ArrayList<>(controller.taiDanhSach());
+        ArrayList<Supplier> suppliers = new ArrayList<>(service.taiDanhSach());
         for (Supplier supplier : suppliers) {
             model.addRow(new Object[] {
                     supplier.getCode(), supplier.getName(), supplier.getAddress(),
@@ -230,7 +230,7 @@ public class NhaCungCapGUI extends JPanel {
     private void themNhaCungCap() {
         SupplierInput ncc = openEditor(null);
         if (ncc != null) {
-            OperationResult result = controller.tao(ncc);
+            OperationResult result = service.tao(ncc);
             if (result.isSuccessful()) {
                 JOptionPane.showMessageDialog(this, "Them nha cung cap thanh cong!", "Thanh cong",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -251,7 +251,7 @@ public class NhaCungCapGUI extends JPanel {
         SupplierInput old = new SupplierInput(maNCC, tenNCC, diaChi, sdt, email);
         SupplierInput updated = openEditor(old);
         if (updated != null) {
-            OperationResult result = controller.capNhat(updated);
+            OperationResult result = service.capNhat(updated);
             if (result.isSuccessful()) {
                 JOptionPane.showMessageDialog(this, "Cap nhat nha cung cap thanh cong!", "Thanh cong",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -271,7 +271,7 @@ public class NhaCungCapGUI extends JPanel {
         if (ok != JOptionPane.YES_OPTION)
             return;
 
-        OperationResult result = controller.xoa(maNCC);
+        OperationResult result = service.xoa(maNCC);
         if (result.isSuccessful()) {
             JOptionPane.showMessageDialog(this, "Da xoa nha cung cap thanh cong!", "Thanh cong",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -291,7 +291,7 @@ public class NhaCungCapGUI extends JPanel {
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this),
                 isNew ? "Them nha cung cap moi" : "Sua nha cung cap", Dialog.ModalityType.APPLICATION_MODAL);
 
-        JTextField txtMa = new JTextField(isNew ? controller.taoMaMoi(suppliersFromModel()) : src.getMa());
+        JTextField txtMa = new JTextField(isNew ? service.taoMaMoi(suppliersFromModel()) : src.getMa());
         txtMa.setEditable(isNew);
         JTextField txtTen = new JTextField(isNew ? "" : src.getTen());
         JTextField txtDiaChi = new JTextField(isNew ? "" : src.getDiaChi());
@@ -390,7 +390,7 @@ public class NhaCungCapGUI extends JPanel {
                 Supplier supplier = new Supplier(
                         e.getStringValue(0), e.getStringValue(1), e.getStringValue(2),
                         e.getStringValue(3), e.getStringValue(4));
-                return controller.phuHopTimKiem(supplier, keyword);
+                return service.phuHopTimKiem(supplier, keyword);
             }
         });
     }

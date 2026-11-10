@@ -75,8 +75,8 @@ public class PhieuXuatKhoGUI extends JPanel {
             "Sử dụng cho điều trị", "Bán hàng cho khách", "Chăm sóc thú cưng", "Vật tư hư hỏng"
     };
 
-    // ===== Nguồn dữ liệu: CSDL SALALA qua controller / DAO =====
-    private final PhieuXuatKhoService controller = new PhieuXuatKhoService();
+    // ===== Nguồn dữ liệu: CSDL SALALA qua service / DAO =====
+    private final PhieuXuatKhoService service = new PhieuXuatKhoService();
 
     // ===== Dữ liệu & trạng thái màn hình =====
     private java.util.List<Phieu> filtered = new ArrayList<>();
@@ -239,7 +239,7 @@ public class PhieuXuatKhoGUI extends JPanel {
     }
 
     private void refreshStats() {
-        PhieuXuatKhoService.Statistics stats = controller.statistics();
+        PhieuXuatKhoService.Statistics stats = service.statistics();
         lblTongPhieu.setText(String.valueOf(stats.getTotal()));
         lblDaXuat.setText(String.valueOf(stats.getExported()));
         lblNhap.setText(String.valueOf(stats.getDrafts()));
@@ -416,7 +416,7 @@ public class PhieuXuatKhoGUI extends JPanel {
     private void applyFilter() {
         int ttIdx = cboTrangThai.getSelectedIndex(); // 0 = tất cả, 1 = Nháp, 2 = Đã xuất, 3 = Đã hủy
         TrangThai[] map = { null, TrangThai.NHAP, TrangThai.DA_XUAT, TrangThai.DA_HUY };
-        filtered = controller.loc(new Filter(txtSearch.getText(), map[ttIdx], tuNgay, denNgay));
+        filtered = service.loc(new Filter(txtSearch.getText(), map[ttIdx], tuNgay, denNgay));
     }
 
     /**
@@ -424,10 +424,10 @@ public class PhieuXuatKhoGUI extends JPanel {
      * không đọc được.
      */
     private void taiLaiTuDB() {
-        boolean ok = controller.reload();
+        boolean ok = service.reload();
         reload(true);
         if (!ok) {
-            lblShowing.setText("Không đọc được dữ liệu từ CSDL SALALA: " + controller.getLastError());
+            lblShowing.setText("Không đọc được dữ liệu từ CSDL SALALA: " + service.getLastError());
             lblShowing.setForeground(RED);
         }
     }
@@ -504,8 +504,8 @@ public class PhieuXuatKhoGUI extends JPanel {
         Phieu p = openEditor(null);
         if (p == null)
             return;
-        if (!controller.add(p)) {
-            JOptionPane.showMessageDialog(this, "Không lưu được phiếu xuất:\n" + controller.getLastError(),
+        if (!service.add(p)) {
+            JOptionPane.showMessageDialog(this, "Không lưu được phiếu xuất:\n" + service.getLastError(),
                     "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -525,8 +525,8 @@ public class PhieuXuatKhoGUI extends JPanel {
         Phieu np = openEditor(p);
         if (np == null)
             return;
-        if (!controller.update(p, np)) {
-            JOptionPane.showMessageDialog(this, "Không lưu được thay đổi:\n" + controller.getLastError(),
+        if (!service.update(p, np)) {
+            JOptionPane.showMessageDialog(this, "Không lưu được thay đổi:\n" + service.getLastError(),
                     "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             taiLaiTuDB();
             return;
@@ -543,7 +543,7 @@ public class PhieuXuatKhoGUI extends JPanel {
                     JOptionPane.WARNING_MESSAGE);
             return false;
         }
-        java.util.List<String> loi = controller.kiemTraTon(p);
+        java.util.List<String> loi = service.kiemTraTon(p);
         if (!loi.isEmpty()) {
             JOptionPane.showMessageDialog(parent,
                     "Không được xuất quá số lượng tồn kho:\n" + String.join("\n", loi),
@@ -557,8 +557,8 @@ public class PhieuXuatKhoGUI extends JPanel {
         if (ok != JOptionPane.YES_OPTION)
             return false;
 
-        if (!controller.confirm(p)) {
-            JOptionPane.showMessageDialog(parent, "Không xác nhận được phiếu xuất:\n" + controller.getLastError(),
+        if (!service.confirm(p)) {
+            JOptionPane.showMessageDialog(parent, "Không xác nhận được phiếu xuất:\n" + service.getLastError(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
             taiLaiTuDB();
             return false;
@@ -577,8 +577,8 @@ public class PhieuXuatKhoGUI extends JPanel {
                 "Hủy phiếu xuất", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (ok != JOptionPane.YES_OPTION)
             return false;
-        if (!controller.cancel(p)) {
-            JOptionPane.showMessageDialog(parent, "Không hủy được phiếu xuất:\n" + controller.getLastError(),
+        if (!service.cancel(p)) {
+            JOptionPane.showMessageDialog(parent, "Không hủy được phiếu xuất:\n" + service.getLastError(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
             taiLaiTuDB();
             return false;
@@ -832,9 +832,9 @@ public class PhieuXuatKhoGUI extends JPanel {
      */
     private Phieu openEditor(Phieu src) {
         // Danh mục vật tư + tồn kho và danh sách nhân viên đọc trực tiếp từ CSDL
-        final java.util.List<CatalogItem> catalog = controller.layDanhMucVatTu();
+        final java.util.List<CatalogItem> catalog = service.layDanhMucVatTu();
         if (catalog.isEmpty()) {
-            String err = controller.getLastError();
+            String err = service.getLastError();
             JOptionPane.showMessageDialog(this,
                     err == null || err.isEmpty()
                             ? "Chưa có vật tư nào trong CSDL để lập phiếu xuất."
@@ -842,7 +842,7 @@ public class PhieuXuatKhoGUI extends JPanel {
                     "Không thể lập phiếu", JOptionPane.WARNING_MESSAGE);
             return null;
         }
-        final java.util.List<String[]> dsNhanVien = controller.layDanhSachNhanVien();
+        final java.util.List<String[]> dsNhanVien = service.layDanhSachNhanVien();
         if (src == null && dsNhanVien.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có nhân viên nào trong CSDL để lập phiếu.",
                     "Không thể lập phiếu", JOptionPane.WARNING_MESSAGE);
@@ -855,7 +855,7 @@ public class PhieuXuatKhoGUI extends JPanel {
                 Dialog.ModalityType.APPLICATION_MODAL);
 
         // ---- thông tin chung ----
-        JTextField txtMa = new JTextField(src == null ? controller.previewNextCode() : src.so);
+        JTextField txtMa = new JTextField(src == null ? service.previewNextCode() : src.so);
         txtMa.setEditable(false);
         JTextField txtNgay = new JTextField((src == null ? LocalDate.now() : src.ngay).format(DF));
 
@@ -935,8 +935,8 @@ public class PhieuXuatKhoGUI extends JPanel {
                     try {
                         int sl = ((Number) m.getValueAt(r, 3)).intValue();
                         long gia = ((Number) m.getValueAt(r, 4)).longValue();
-                        int ton = controller.tonKho((String) m.getValueAt(r, 0));
-                        PhieuXuatKhoService.QuantityResult quantity = controller.normalizeEditedQuantity(sl, ton);
+                        int ton = service.tonKho((String) m.getValueAt(r, 0));
+                        PhieuXuatKhoService.QuantityResult quantity = service.normalizeEditedQuantity(sl, ton);
                         if (quantity.exceededStock()) {
                             JOptionPane.showMessageDialog(d,
                                     "Không được xuất quá tồn kho. Tồn hiện tại: " + ton, "Vượt tồn kho",
@@ -977,11 +977,11 @@ public class PhieuXuatKhoGUI extends JPanel {
                 t.getCellEditor().stopCellEditing();
             CatalogItem item = catalog.get(i);
             String ma = item.getMa();
-            int ton = controller.tonKho(ma); // tồn mới nhất trong CSDL
+            int ton = service.tonKho(ma); // tồn mới nhất trong CSDL
             int sl = (Integer) spSL.getValue();
             java.util.List<Dong> lines = linesFromModel(m);
-            PhieuXuatKhoService.LineAdditionResult addition = controller.mergeLine(lines,
-                    controller.taoDong(item, sl), ton);
+            PhieuXuatKhoService.LineAdditionResult addition = service.mergeLine(lines,
+                    service.taoDong(item, sl), ton);
             if (!addition.isSuccessful()) {
                 JOptionPane.showMessageDialog(d,
                         "Không được xuất quá số lượng tồn hiện tại.\nTồn kho: " + ton
@@ -1033,7 +1033,7 @@ public class PhieuXuatKhoGUI extends JPanel {
             String lyDo = lyObj == null ? "" : lyObj.toString().trim();
             String ghiChu = txtGhiChu.getText().trim();
             java.util.List<Dong> lines = linesFromModel(m);
-            String validationError = controller.validate(
+            String validationError = service.validate(
                     new PhieuXuatKhoService.Draft(ngay, lyDo, ghiChu, lines));
             if (validationError != null) {
                 JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);

@@ -38,7 +38,7 @@ public class BacSiGUI extends JPanel {
 
     private final List<BacSi_entity> tatCa = new ArrayList<>();
     private final List<BacSi_entity> daLoc = new ArrayList<>();
-    private final BacSiService controller = new BacSiService();
+    private final BacSiService service = new BacSiService();
     private int cotSapXep = -1;
     private boolean sapXepTang = true;
     private int tongNhanVien = 0;
@@ -423,7 +423,7 @@ public class BacSiGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        BacSiService.ThongKe thongKe = controller.thongKe(tatCa);
+        BacSiService.ThongKe thongKe = service.thongKe(tatCa);
         lblSo[0].setText(String.valueOf(thongKe.tongSo));
         lblSo[1].setText(String.valueOf(thongKe.dangLam));
         lblSo[2].setText(String.valueOf(thongKe.tamNghi));
@@ -438,7 +438,7 @@ public class BacSiGUI extends JPanel {
         String tenCnChon = cn > 0 ? (String) cbChuyenNganh.getSelectedItem() : null;
         String trangThai = tt == 0 ? null : TrangThai.values()[tt - 1].name();
         daLoc.clear();
-        daLoc.addAll(controller.locDanhSach(tatCa, txtTim.getText(), tenCnChon, trangThai,
+        daLoc.addAll(service.locDanhSach(tatCa, txtTim.getText(), tenCnChon, trangThai,
                 cotSapXep, sapXepTang));
         capNhatBang();
     }
@@ -512,7 +512,7 @@ public class BacSiGUI extends JPanel {
 
     private void doiTrangThai(BacSi_entity bs, TrangThai t) {
         try {
-            controller.doiTrangThai(bs.getMaBacSi(), t == TrangThai.DANG_LAM);
+            service.doiTrangThai(bs.getMaBacSi(), t == TrangThai.DANG_LAM);
             taiLai();
         } catch (SQLException ex) {
             baoLoi("Không thể đổi trạng thái", ex);
@@ -526,7 +526,7 @@ public class BacSiGUI extends JPanel {
         if (kq != JOptionPane.YES_OPTION)
             return;
         try {
-            BacSiService.KetQuaXoa result = controller.xoa(bs.getMaBacSi());
+            BacSiService.KetQuaXoa result = service.xoa(bs.getMaBacSi());
             if (result.coDuLieuLienQuan) {
                 JOptionPane.showMessageDialog(this,
                         "Bác sĩ này đã có hồ sơ khám hoặc đơn thuốc liên quan\n"
@@ -548,7 +548,7 @@ public class BacSiGUI extends JPanel {
         String maHienThi;
         if (goc == null) {
             try {
-                maHienThi = controller.taoMaMoi();
+                maHienThi = service.taoMaMoi();
             } catch (SQLException ex) {
                 baoLoi("Không thể tạo mã mới", ex);
                 return;
@@ -599,7 +599,7 @@ public class BacSiGUI extends JPanel {
                         JOptionPane.QUESTION_MESSAGE);
                 if (tenMoi != null && !tenMoi.isBlank()) {
                     try {
-                        controller.themChuyenNganh(tenMoi);
+                        service.themChuyenNganh(tenMoi);
                         taiDanhSachChuyenNganh(cbCN, false);
                         cbCN.setSelectedItem(tenMoi.trim());
                     } catch (SQLException ex) {
@@ -668,7 +668,7 @@ public class BacSiGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                BacSiService.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
+                BacSiService.KetQuaLuu result = service.validateAndSave(txtMa.getText(), goc,
                         txtTen.getText(), txtSdt.getText(), txtEmail.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbCN.getSelectedItem(),
                         txtLuongThang.getText(), cbTT.getSelectedIndex() == 0);
@@ -723,7 +723,7 @@ public class BacSiGUI extends JPanel {
 
         BacSiService.LichTuan lich;
         try {
-            lich = controller.taiLichTuan(bs.getMaBacSi());
+            lich = service.taiLichTuan(bs.getMaBacSi());
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
                     "Không tải được lịch làm việc của bác sĩ: " + ex.getMessage(),
@@ -794,7 +794,7 @@ public class BacSiGUI extends JPanel {
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
         try {
-            controller.ghiCsv(fc.getSelectedFile(), daLoc);
+            service.ghiCsv(fc.getSelectedFile(), daLoc);
             JOptionPane.showMessageDialog(this, "Đã xuất " + daLoc.size() + " bác sĩ.",
                     "Xuất danh sách", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -809,7 +809,7 @@ public class BacSiGUI extends JPanel {
             cb.addItem("Chuyên ngành: Tất cả");
         }
         try {
-            List<ChuyenNganh_entity> ds = controller.taiChuyenNganh();
+            List<ChuyenNganh_entity> ds = service.taiChuyenNganh();
             for (ChuyenNganh_entity cn : ds) {
                 cb.addItem(cn.getTenChuyenNganh());
             }
@@ -824,7 +824,7 @@ public class BacSiGUI extends JPanel {
 
     private void taiLai() {
         try {
-            BacSiService.DuLieuDanhSach data = controller.taiDanhSach();
+            BacSiService.DuLieuDanhSach data = service.taiDanhSach();
             tatCa.clear();
             tatCa.addAll(data.getBacSi());
             tongNhanVien = data.getTongNhanVien();

@@ -21,6 +21,8 @@ public class QuanLyTable extends JPanel {
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private java.util.List<JComboBox<String>> listComboBoxBoLoc = new java.util.ArrayList<>();
+    // Panel bên phải của thanh công cụ — để giao diện bên ngoài gắn nút tùy biến vào
+    private JPanel panelPhaiCongCu;
 
     public QuanLyTable(String[] tenCot, Object[][] duLieu, String placeholderTimKiem, String[] danhSachBoLoc) {
         setLayout(new BorderLayout(0, 16));
@@ -77,20 +79,10 @@ public class QuanLyTable extends JPanel {
         }
         panelThanhCongCu.add(panelTrai, BorderLayout.CENTER);
 
-        // Bên phải: Nút Xuất danh sách
-        JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        panelPhai.setOpaque(false);
-        JButton btnXuat = new JButton("Xuất danh sách");
-        btnXuat.setPreferredSize(new Dimension(145, 38));
-        btnXuat.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnXuat.setForeground(new Color(30, 41, 59));
-        btnXuat.setBackground(Color.WHITE);
-        btnXuat.setFocusPainted(false);
-        btnXuat.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
-        btnXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnXuat.addActionListener(e -> xuatFileCSV(this));
-        panelPhai.add(btnXuat);
-        panelThanhCongCu.add(panelPhai, BorderLayout.EAST);
+        // Bên phải: Vùng chứa nút tùy biến (giao diện bên ngoài gắn vào qua datNutCongCuPhai)
+        panelPhaiCongCu = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        panelPhaiCongCu.setOpaque(false);
+        panelThanhCongCu.add(panelPhaiCongCu, BorderLayout.EAST);
 
         add(panelThanhCongCu, BorderLayout.NORTH);
 
@@ -163,39 +155,22 @@ public class QuanLyTable extends JPanel {
         }
     }
 
-    public void xuatFileCSV(Component parent) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Lưu danh sách ra file CSV");
-        chooser.setSelectedFile(new java.io.File("DanhSach.csv"));
-        if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
-            java.io.File file = chooser.getSelectedFile();
-            try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
-                    new java.io.FileOutputStream(file), java.nio.charset.StandardCharsets.UTF_8)) {
-                // Ghi UTF-8 BOM để Excel hiển thị đúng tiếng Việt có dấu
-                writer.write('\ufeff');
-                int colCount = model.getColumnCount();
-                int exportCols = colCount;
-                for (int c = 0; c < exportCols; c++) {
-                    writer.write("\"" + model.getColumnName(c) + "\"" + (c < exportCols - 1 ? "," : ""));
-                }
-                writer.write("\r\n");
-                int rowCount = bangDuLieu.getRowCount();
-                for (int r = 0; r < rowCount; r++) {
-                    for (int c = 0; c < exportCols; c++) {
-                        Object val = bangDuLieu.getValueAt(r, c);
-                        String str = val != null ? val.toString().replace("\"", "\"\"") : "";
-                        writer.write("\"" + str + "\"" + (c < exportCols - 1 ? "," : ""));
-                    }
-                    writer.write("\r\n");
-                }
-                JOptionPane.showMessageDialog(parent, "Xuất file thành công: " + file.getAbsolutePath(), "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(parent, "Lỗi khi xuất file: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+    /**
+     * Gắn một component (thường là JButton) vào vùng bên phải của thanh công cụ.
+     * Giao diện cụ thể (DanhSachKhachHangGUI, v.v.) gọi hàm này để tùy biến nút
+     * mà không phải sửa vào QuanLyTable.
+     *
+     * @param comp Component cần gắn (ví dụ: btnXuatDanhSach)
+     */
+    public void datNutCongCuPhai(JComponent comp) {
+        panelPhaiCongCu.removeAll();
+        if (comp != null) {
+            panelPhaiCongCu.add(comp);
         }
+        panelPhaiCongCu.revalidate();
+        panelPhaiCongCu.repaint();
     }
+
 
     public void capNhatDuLieu(Object[][] duLieuMoi) {
         if (model != null) {

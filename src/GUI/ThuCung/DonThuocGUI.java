@@ -50,7 +50,7 @@ public class DonThuocGUI extends JPanel {
             "Tùy chỉnh khoảng ngày..."
     };
 
-    private final DonThuocService controller = new DonThuocService();
+    private final DonThuocService service = new DonThuocService();
 
     // --- DỮ LIỆU & PHÂN TRANG ---
     private List<DonThuoc_entity> danhSachDonThuoc = new ArrayList<>();
@@ -324,7 +324,7 @@ public class DonThuocGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            danhSachDonThuoc = controller.taiDanhSach();
+            danhSachDonThuoc = service.taiDanhSach();
             locDuLieu();
         } catch (SQLException | RuntimeException e) {
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + e.getMessage(), "Lỗi DB",
@@ -338,7 +338,7 @@ public class DonThuocGUI extends JPanel {
             tuNgay = null;
             denNgay = null;
         }
-        daLoc = controller.loc(danhSachDonThuoc, txtTimKiem.getText(),
+        daLoc = service.loc(danhSachDonThuoc, txtTimKiem.getText(),
                 String.valueOf(cboTrangThai.getSelectedItem()), time, tuNgay, denNgay, LocalDate.now());
 
         capNhatBang();
@@ -364,7 +364,7 @@ public class DonThuocGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        DonThuocService.ThongKe thongKe = controller.thongKe(daLoc);
+        DonThuocService.ThongKe thongKe = service.thongKe(daLoc);
         nhanSoTongDon.setText(String.valueOf(thongKe.tong));
         nhanSoDaCapThuoc.setText(String.valueOf(thongKe.daCap));
         nhanSoChoLayThuoc.setText(String.valueOf(thongKe.choLay));
@@ -388,7 +388,7 @@ public class DonThuocGUI extends JPanel {
                 JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
             return;
         try {
-            DonThuocService.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            DonThuocService.KhoangNgay khoang = service.khoangNgay(tu.getText(), den.getText());
             tuNgay = khoang.tuNgay;
             denNgay = khoang.denNgay;
             cboThoiGian.setSelectedItem("Tùy chỉnh khoảng ngày...");
@@ -408,14 +408,14 @@ public class DonThuocGUI extends JPanel {
 
     private void moFormDonThuoc(DonThuoc_entity donHienTai) {
         try {
-            DonThuocService.DuLieuForm duLieu = controller.taiDuLieuForm();
+            DonThuocService.DuLieuForm duLieu = service.taiDuLieuForm();
             List<HoSoSucKhoe_entity> hoSoList = duLieu.hoSo;
             List<ThuCung_entity> thuCungList = duLieu.thuCung;
             List<BacSi_entity> bacSiList = duLieu.bacSi;
             List<Thuoc_entity> thuocList = duLieu.thuoc;
 
             JTextField txtMa = new JTextField(
-                    donHienTai == null ? controller.maTiepTheo() : donHienTai.getMaDonThuoc());
+                    donHienTai == null ? service.maTiepTheo() : donHienTai.getMaDonThuoc());
             txtMa.setEditable(false);
             JComboBox<HoSoSucKhoe_entity> cboHoSo = new JComboBox<>(hoSoList.toArray(new HoSoSucKhoe_entity[0]));
             cboHoSo.setRenderer(new DefaultListCellRenderer() {
@@ -463,7 +463,7 @@ public class DonThuocGUI extends JPanel {
                 }
             };
             if (donHienTai != null) {
-                for (ChiTietDonThuoc_entity item : controller.taiChiTiet(donHienTai.getMaDonThuoc()))
+                for (ChiTietDonThuoc_entity item : service.taiChiTiet(donHienTai.getMaDonThuoc()))
                     chiTietModel.addRow(new Object[] { item.getMaThuoc() != null ? item.getMaThuoc().getMaThuoc() : "",
                             item.getTenThuoc(), item.getDonViTinh(), item.getSoLuong(), item.getLieuLuong() });
             }
@@ -516,12 +516,12 @@ public class DonThuocGUI extends JPanel {
                         break;
                     }
                 }
-                chiTiet.add(controller.taoChiTiet(thuoc,
+                chiTiet.add(service.taoChiTiet(thuoc,
                         String.valueOf(chiTietModel.getValueAt(i, 3)),
                         String.valueOf(chiTietModel.getValueAt(i, 4)), txtMa.getText(),
                         new ArrayList<ChiTietDonThuoc_entity>()));
             }
-            if (controller.luu(new DonThuocService.ThongTinDonThuoc(
+            if (service.luu(new DonThuocService.ThongTinDonThuoc(
                     txtMa.getText(), donHienTai == null, hs, txtNgay.getText(),
                     txtGhiChu.getText(), String.valueOf(cboTrangThaiForm.getSelectedItem()), chiTiet))) {
                 JOptionPane.showMessageDialog(this, "Lưu thành công.");
@@ -559,14 +559,14 @@ public class DonThuocGUI extends JPanel {
                 String maThuoc = String.valueOf(model.getValueAt(i, 0));
                 for (Thuoc_entity item : ds) {
                     if (item.getMaThuoc().equals(maThuoc)) {
-                        dangCo.add(controller.taoChiTiet(item,
+                        dangCo.add(service.taoChiTiet(item,
                                 String.valueOf(model.getValueAt(i, 3)),
                                 String.valueOf(model.getValueAt(i, 4)), "", new ArrayList<ChiTietDonThuoc_entity>()));
                         break;
                     }
                 }
             }
-            ChiTietDonThuoc_entity chiTiet = controller.taoChiTiet(
+            ChiTietDonThuoc_entity chiTiet = service.taoChiTiet(
                     thuoc, txtSL.getText(), txtLieu.getText(), "", dangCo);
             model.addRow(new Object[] { thuoc.getMaThuoc(), thuoc.getTenThuoc(), thuoc.getDonViTinh(),
                     chiTiet.getSoLuong(), chiTiet.getLieuLuong() });
@@ -597,12 +597,12 @@ public class DonThuocGUI extends JPanel {
         if (ma == null)
             return;
         try {
-            DonThuoc_entity don = controller.timTheoMa(ma);
+            DonThuoc_entity don = service.timTheoMa(ma);
             if (don == null)
                 return;
             DefaultTableModel model = new DefaultTableModel(
                     new String[] { "Mã thuốc", "Tên thuốc", "Đơn vị", "Số lượng", "Liều lượng" }, 0);
-            for (ChiTietDonThuoc_entity item : controller.taiChiTietDon(ma))
+            for (ChiTietDonThuoc_entity item : service.taiChiTietDon(ma))
                 model.addRow(new Object[] { item.getMaThuoc() != null ? item.getMaThuoc().getMaThuoc() : "",
                         item.getTenThuoc(), item.getDonViTinh(), item.getSoLuong(), item.getLieuLuong() });
             JPanel panel = new JPanel(new BorderLayout(0, 8));
@@ -622,7 +622,7 @@ public class DonThuocGUI extends JPanel {
         if (ma == null)
             return;
         try {
-            DonThuoc_entity don = controller.timTheoMa(ma);
+            DonThuoc_entity don = service.timTheoMa(ma);
             if (don != null)
                 moFormDonThuoc(don);
         } catch (SQLException | RuntimeException e) {
@@ -637,7 +637,7 @@ public class DonThuocGUI extends JPanel {
         if (JOptionPane.showConfirmDialog(this, "Xóa đơn thuốc \"" + ma + "\"?", "Xác nhận", JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             try {
-                if (controller.xoa(ma)) {
+                if (service.xoa(ma)) {
                     JOptionPane.showMessageDialog(this, "Đã xóa.");
                     loadDataToTable();
                 } else
@@ -661,7 +661,7 @@ public class DonThuocGUI extends JPanel {
             return;
         try {
             entity.NhanVien.NhanVien_entity nhanVien = GUI.HoaDon.LapHoaDon_gui.layNhanVienDangNhapHienTai();
-            DonThuocService.KetQuaXuatThuoc ketQua = controller.xuatVaTaoHoaDon(maDon, nhanVien);
+            DonThuocService.KetQuaXuatThuoc ketQua = service.xuatVaTaoHoaDon(maDon, nhanVien);
             java.text.DecimalFormat dinhDangTien = new java.text.DecimalFormat("#,##0 ₫");
             JOptionPane.showMessageDialog(this,
                     "Đã xuất đơn thuốc thành công!\nHóa đơn [" + ketQua.maHoaDon
@@ -686,7 +686,7 @@ public class DonThuocGUI extends JPanel {
         if (!file.getName().toLowerCase().endsWith(".csv"))
             file = new java.io.File(file.getParentFile(), file.getName() + ".csv");
         try {
-            controller.xuatDanhSach(file, daLoc);
+            service.xuatDanhSach(file, daLoc);
             JOptionPane.showMessageDialog(this, "Xuất thành công.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);

@@ -58,7 +58,7 @@ import java.util.ArrayList;
  */
 
 public class ChiTietHoaDon_gui extends JPanel {
-    private final ChiTietHoaDonService controller;
+    private final ChiTietHoaDonService service;
 
     private static final Color XANH = Color.decode("#0F766E");
 
@@ -131,8 +131,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     public static void hienThi(Component cha, String maHD, DSHoaDon_gui dsHoaDon) {
 
-        ChiTietHoaDonService controller = new ChiTietHoaDonService();
-        ChiTietHoaDonService.DuLieuChiTiet duLieu = controller.taiDuLieu(maHD);
+        ChiTietHoaDonService service = new ChiTietHoaDonService();
+        ChiTietHoaDonService.DuLieuChiTiet duLieu = service.taiDuLieu(maHD);
         HoaDon_entity hd = duLieu == null ? null : duLieu.getHoaDon();
 
         if (hd == null) {
@@ -164,7 +164,7 @@ public class ChiTietHoaDon_gui extends JPanel {
 
                 Dialog.ModalityType.APPLICATION_MODAL);
 
-        ChiTietHoaDon_gui chiTiet = new ChiTietHoaDon_gui(controller, duLieu, dsHoaDon);
+        ChiTietHoaDon_gui chiTiet = new ChiTietHoaDon_gui(service, duLieu, dsHoaDon);
 
         // Cửa sổ chi tiết cũng dùng ảnh nền + tấm nền kem mờ giống màn hình chính
         NenAnhPanel nen = new NenAnhPanel();
@@ -202,11 +202,11 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== KHỞI TẠO ====================
 
-    public ChiTietHoaDon_gui(ChiTietHoaDonService controller,
+    public ChiTietHoaDon_gui(ChiTietHoaDonService service,
             ChiTietHoaDonService.DuLieuChiTiet duLieu,
             DSHoaDon_gui dsHoaDon) {
 
-        this.controller = controller;
+        this.service = service;
 
         this.hd = duLieu.getHoaDon();
 
@@ -217,7 +217,7 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         this.hangThanhVien = duLieu.getHangThanhVien();
 
-        apDungTongTien(controller.tinhTongTien(hd, this.dong));
+        apDungTongTien(service.tinhTongTien(hd, this.dong));
 
         setLayout(new BorderLayout());
 
@@ -533,7 +533,7 @@ public class ChiTietHoaDon_gui extends JPanel {
         };
 
         for (ChiTietHoaDon_entity c : dong) {
-            Object[] duLieuDong = controller.taoDongChiTietHienThi(c, mucKM);
+            Object[] duLieuDong = service.taoDongChiTietHienThi(c, mucKM);
 
             // Định dạng các cột tiền theo cách trình bày của GUI.
             duLieuDong[4] = tien((double) duLieuDong[4]);
@@ -692,9 +692,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         ThanhToan_entity tt = hd.getMaThanhToan();
 
-        String trangThai = controller.layTrangThaiThanhToan(hd);
+        String trangThai = service.layTrangThaiThanhToan(hd);
 
-        boolean daTT = controller.laHoaDonDaThanhToan(hd);
+        boolean daTT = service.laHoaDonDaThanhToan(hd);
 
         Chip chip = daTT
 
@@ -977,7 +977,7 @@ public class ChiTietHoaDon_gui extends JPanel {
     // ==================== IN / XUẤT HÓA ĐƠN ====================
 
     private boolean isHoaDonDaThanhToan() {
-        return controller.laHoaDonDaThanhToan(hd);
+        return service.laHoaDonDaThanhToan(hd);
     }
 
     private void inHoaDon() {
@@ -1016,7 +1016,7 @@ public class ChiTietHoaDon_gui extends JPanel {
             @Override
             protected Boolean doInBackground() {
                 return phuongThucThanhToan == null
-                        || controller.xacNhanThanhToan(hd, phuongThucThanhToan, thanhTien);
+                        || service.xacNhanThanhToan(hd, phuongThucThanhToan, thanhTien);
             }
 
             @Override
@@ -1152,7 +1152,7 @@ public class ChiTietHoaDon_gui extends JPanel {
     }
 
     private void capNhatHienThiSauThanhToan() {
-        apDungTongTien(controller.tinhTongTien(hd, dong));
+        apDungTongTien(service.tinhTongTien(hd, dong));
         napTheThanhToanVaTongTien();
         noiDung.validate();
         if (dsHoaDon != null) {

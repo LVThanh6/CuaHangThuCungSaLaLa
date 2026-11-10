@@ -82,7 +82,7 @@ public class DatLichMoiGUI extends JPanel {
     private static final String GIA_TRI_TRONG = "—";
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
-    private final DatLichMoiService controller = new DatLichMoiService();
+    private final DatLichMoiService service = new DatLichMoiService();
     private final Map<String, ThuCung_entity> thuCungTheoNhan = new HashMap<>();
     private final Map<String, NhanVien_entity> nhanVienTheoNhan = new HashMap<>();
     private final Map<String, DichVu_entity> dichVuTheoNhan = new HashMap<>();
@@ -145,7 +145,7 @@ public class DatLichMoiGUI extends JPanel {
         taiDuLieuCombobox();
         caiDatSuKien();
         txtNgayKham.setText(DINH_DANG_NGAY.format(LocalDate.now()));
-        nhanMaLichHen.setText(controller.maLichHenMoi());
+        nhanMaLichHen.setText(service.maLichHenMoi());
         capNhatTomTat();
     }
 
@@ -507,7 +507,7 @@ public class DatLichMoiGUI extends JPanel {
 
     private void taiDuLieuCombobox() {
         try {
-            DatLichMoiService.DuLieuTuyChon duLieu = controller.taiDuLieuTuyChon();
+            DatLichMoiService.DuLieuTuyChon duLieu = service.taiDuLieuTuyChon();
             cboBacSi.removeAllItems();
             cboBacSi.addItem("-- Chọn nhân viên --");
             nhanVienTheoNhan.clear();
@@ -562,7 +562,7 @@ public class DatLichMoiGUI extends JPanel {
 
     private void timKhachHangTheoSoDienThoai() {
         try {
-            khachHangDuocChon = controller.timKhachHangTheoSoDienThoai(txtSoDienThoai.getText());
+            khachHangDuocChon = service.timKhachHangTheoSoDienThoai(txtSoDienThoai.getText());
             if (khachHangDuocChon == null) {
                 lamTrongThongTinKhachHang();
                 lamTrongThongTinThuCung();
@@ -593,7 +593,7 @@ public class DatLichMoiGUI extends JPanel {
         cboThuCung.addItem(DANH_SACH_THU_CUNG[0]);
         canNangGanNhatTheoThuCung.clear();
         try {
-            DatLichMoiService.DuLieuThuCung duLieu = controller.taiThuCung(khachHangDuocChon.getMaKH());
+            DatLichMoiService.DuLieuThuCung duLieu = service.taiThuCung(khachHangDuocChon.getMaKH());
             for (ThuCung_entity thuCung : duLieu.thuCung) {
                 String nhan = thuCung.getTenTC() + " (" + thuCung.getMaTC() + ")";
                 cboThuCung.addItem(nhan);
@@ -638,7 +638,7 @@ public class DatLichMoiGUI extends JPanel {
         DichVu_entity dichVu = dichVuTheoNhan.get(noiDung);
 
         try {
-            String maLichHen = controller.datLich(new DatLichMoiService.ThongTinDatLich(
+            String maLichHen = service.datLich(new DatLichMoiService.ThongTinDatLich(
                     khachHangDuocChon, thuCung, nhanVien, dichVu, noiDung,
                     txtNgayKham.getText(), gioKhamDuocChon, vungGhiChu.getText()));
             JOptionPane.showMessageDialog(this, "Đặt lịch khám thành công. Mã lịch: " + maLichHen,
@@ -669,7 +669,7 @@ public class DatLichMoiGUI extends JPanel {
         for (NutBo nut : nutGioKham) {
             nut.datChon(false);
         }
-        nhanMaLichHen.setText(controller.maLichHenMoi());
+        nhanMaLichHen.setText(service.maLichHenMoi());
         capNhatTomTat();
     }
 
