@@ -80,17 +80,17 @@ public class HangThanhVienService {
     /**
      * Khởi tạo với DAO được chỉ định sẵn.
      */
-    public HangThanhVienService(HangThanhVien_DAO tierDao, KhachHang_DAO customerDao) {
-        this(tierDao, customerDao, new KhachHangService(customerDao));
+    public HangThanhVienService(HangThanhVien_DAO hangDAO, KhachHang_DAO khDAO) {
+        this(hangDAO, khDAO, new KhachHangService(khDAO));
     }
 
     /**
      * Khởi tạo đầy đủ phục vụ Dependency Injection.
      */
-    public HangThanhVienService(HangThanhVien_DAO tierDao, KhachHang_DAO customerDao,
+    public HangThanhVienService(HangThanhVien_DAO hangDAO, KhachHang_DAO khDAO,
             KhachHangService khachHangService) {
-        this.hangThanhVienDAO = tierDao;
-        this.khachHangDAO = customerDao;
+        this.hangThanhVienDAO = hangDAO;
+        this.khachHangDAO = khDAO;
         this.khachHangService = khachHangService;
     }
 
@@ -520,13 +520,13 @@ public class HangThanhVienService {
         return null;
     }
 
-    private static void dongBoChinhSachHang(HangThanhVien destination, HangThanhVien policy) {
-        destination.setTenHang(policy.getTenHang());
-        destination.setChiTieuToiThieu(policy.getChiTieuToiThieu());
-        destination.setChiTieuToiDa(policy.getChiTieuToiDa());
-        destination.setMucGiamGia(policy.getMucGiamGia());
-        destination.setDiemTichLuy1Van(policy.getDiemTichLuy1Van());
-        destination.setQuyenLoi(policy.getQuyenLoi());
+    private static void dongBoChinhSachHang(HangThanhVien dich, HangThanhVien chinhSach) {
+        dich.setTenHang(chinhSach.getTenHang());
+        dich.setChiTieuToiThieu(chinhSach.getChiTieuToiThieu());
+        dich.setChiTieuToiDa(chinhSach.getChiTieuToiDa());
+        dich.setMucGiamGia(chinhSach.getMucGiamGia());
+        dich.setDiemTichLuy1Van(chinhSach.getDiemTichLuy1Van());
+        dich.setQuyenLoi(chinhSach.getQuyenLoi());
     }
 
     // =========================================================================
@@ -792,8 +792,8 @@ public class HangThanhVienService {
     }
 
     // Bí danh tương thích lớp cũ
-    public static class Dashboard extends ThongKeHangThanhVien {
-        public Dashboard(int tongThanhVien, int soNangHangGanDay, double tongChiTieu,
+    public static class ThongKeTongQuanCu extends ThongKeHangThanhVien {
+        public ThongKeTongQuanCu(int tongThanhVien, int soNangHangGanDay, double tongChiTieu,
                 double tongGiamGia, List<HangThanhVien> danhSachHang) {
             super(tongThanhVien, soNangHangGanDay, tongChiTieu, tongGiamGia, danhSachHang);
         }
@@ -827,8 +827,8 @@ public class HangThanhVienService {
     }
 
     // Bí danh tương thích lớp cũ
-    public static class TierCardModel extends TheHangThanhVienModel {
-        public TierCardModel(String tenHang, String dieuKienChiTieu, String mucGiamGia,
+    public static class MauTheHangCu extends TheHangThanhVienModel {
+        public MauTheHangCu(String tenHang, String dieuKienChiTieu, String mucGiamGia,
                 String soKhachHang, String tiLeKhachHang, String[] danhSachQuyenLoi,
                 Color mauVienTop, Color mauNenNhe) {
             super(tenHang, dieuKienChiTieu, mucGiamGia, soKhachHang, tiLeKhachHang, danhSachQuyenLoi, mauVienTop,

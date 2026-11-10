@@ -363,8 +363,7 @@ public class KhachHangService {
             }
         }
 
-        return new ChiTietKhachHang(khachHang, danhSachThuCung, danhSachHoaDon);
-    }
+        return new ChiTietKhachHang(khachHang, danhSachThuCung, danhSachHoaDon);    }
 
     // =========================================================================
     // 9. CÁC LỚP ĐỐI TƯỢNG ĐÓNG GÓI DỮ LIỆU (DTO - DATA TRANSFER OBJECTS)
@@ -379,11 +378,11 @@ public class KhachHangService {
         CODE, NAME, PHONE
     }
 
-    // Tương thích tên gọi cũ
-    public static final class InputField {
-        public static final TruongNhapLieu CODE = TruongNhapLieu.MA_KHACH_HANG;
-        public static final TruongNhapLieu NAME = TruongNhapLieu.HO_TEN;
-        public static final TruongNhapLieu PHONE = TruongNhapLieu.SO_DIEN_THOAI;
+    // Tương thích tên gọi cũ (giữ lại để tránh lỗi biên dịch nếu còn tham chiếu)
+    public static final class TruongNhapLieuCu {
+        public static final TruongNhapLieu MA = TruongNhapLieu.MA_KHACH_HANG;
+        public static final TruongNhapLieu TEN = TruongNhapLieu.HO_TEN;
+        public static final TruongNhapLieu SDT = TruongNhapLieu.SO_DIEN_THOAI;
         public static final TruongNhapLieu EMAIL = TruongNhapLieu.EMAIL;
     }
 
@@ -455,9 +454,9 @@ public class KhachHangService {
         public String layChuoiMoTaThuCung() { return chuoiMoTaThuCungTrungBinh; }
     }
 
-    // Bí danh tương thích lớp cũ
-    public static class CustomerStatistics extends ThongKeKhachHang {
-        public CustomerStatistics(int tongKhachHang, int tongThuCung, int thanhVienVangTroLen, int khachHangMoi) {
+    // Bí danh tương thích lớp cũ — đổi tên tiếng Việt
+    public static class ThongKeKhachHangCu extends ThongKeKhachHang {
+        public ThongKeKhachHangCu(int tongKhachHang, int tongThuCung, int thanhVienVangTroLen, int khachHangMoi) {
             super(tongKhachHang, tongThuCung, thanhVienVangTroLen, khachHangMoi);
         }
     }
@@ -473,20 +472,20 @@ public class KhachHangService {
                 "Mã HĐ", "Ngày lập", "Trạng thái", "Số tiền (₫)", "Hình thức"
         };
 
-        public final KhachHang customer;
-        public final List<DongThuCung> pets;
-        public final List<DongHoaDon> invoices;
+        public final KhachHang khachHang;
+        public final List<DongThuCung> danhSachThuCung;
+        public final List<DongHoaDon> danhSachHoaDon;
 
-        public ChiTietKhachHang(KhachHang customer, List<DongThuCung> pets, List<DongHoaDon> invoices) {
-            this.customer = customer;
-            this.pets = pets;
-            this.invoices = invoices;
+        public ChiTietKhachHang(KhachHang khachHang, List<DongThuCung> danhSachThuCung, List<DongHoaDon> danhSachHoaDon) {
+            this.khachHang = khachHang;
+            this.danhSachThuCung = danhSachThuCung;
+            this.danhSachHoaDon = danhSachHoaDon;
         }
 
         public Object[][] layDuLieuBangThuCung() {
-            Object[][] duLieu = new Object[pets.size()][6];
-            for (int i = 0; i < pets.size(); i++) {
-                DongThuCung tc = pets.get(i);
+            Object[][] duLieu = new Object[danhSachThuCung.size()][6];
+            for (int i = 0; i < danhSachThuCung.size(); i++) {
+                DongThuCung tc = danhSachThuCung.get(i);
                 duLieu[i] = new Object[] {
                         tc.ma, tc.ten, tc.loai, tc.gioiTinh, tc.ngaySinh, tc.dacDiem
                 };
@@ -495,9 +494,9 @@ public class KhachHangService {
         }
 
         public Object[][] layDuLieuBangHoaDon() {
-            Object[][] duLieu = new Object[invoices.size()][5];
-            for (int i = 0; i < invoices.size(); i++) {
-                DongHoaDon hd = invoices.get(i);
+            Object[][] duLieu = new Object[danhSachHoaDon.size()][5];
+            for (int i = 0; i < danhSachHoaDon.size(); i++) {
+                DongHoaDon hd = danhSachHoaDon.get(i);
                 duLieu[i][0] = hd.ma;
                 duLieu[i][1] = hd.ngayLap;
                 duLieu[i][2] = hd.trangThai;
@@ -508,28 +507,28 @@ public class KhachHangService {
         }
 
         public String layDiaChiHienThi() {
-            return (customer != null && customer.getDiaChi() != null && !customer.getDiaChi().trim().isEmpty())
-                    ? customer.getDiaChi() : "Chưa cập nhật";
+            return (khachHang != null && khachHang.getDiaChi() != null && !khachHang.getDiaChi().trim().isEmpty())
+                    ? khachHang.getDiaChi() : "Chưa cập nhật";
         }
 
         public String layTieuDeDialogChiTiet() {
-            return "Hồ Sơ Chi Tiết Khách Hàng - " + (customer != null ? customer.getMaKH() : "");
+            return "Hồ Sơ Chi Tiết Khách Hàng - " + (khachHang != null ? khachHang.getMaKH() : "");
         }
 
         public String layThongTinMaKH() {
-            return "Mã KH: " + (customer != null ? customer.getMaKH() : "");
+            return "Mã KH: " + (khachHang != null ? khachHang.getMaKH() : "");
         }
 
         public String layThongTinHoTen() {
-            return "Họ tên: " + (customer != null ? customer.getHoTen() : "");
+            return "Họ tên: " + (khachHang != null ? khachHang.getHoTen() : "");
         }
 
         public String layThongTinSDT() {
-            return "Điện thoại: " + (customer != null ? customer.getSdt() : "");
+            return "Điện thoại: " + (khachHang != null ? khachHang.getSdt() : "");
         }
 
         public String layThongTinEmail() {
-            return "Email: " + (customer != null ? customer.getEmail() : "");
+            return "Email: " + (khachHang != null ? khachHang.getEmail() : "");
         }
 
         public String layThongTinDiaChi() {
@@ -537,18 +536,18 @@ public class KhachHangService {
         }
 
         public String layTieuDeThuCung() {
-            return " Thú cưng sở hữu (" + pets.size() + ") ";
+            return " Thú cưng sở hữu (" + danhSachThuCung.size() + ") ";
         }
 
         public String layTieuDeHoaDon() {
-            return " Lịch sử hóa đơn giao dịch (" + invoices.size() + ") ";
+            return " Lịch sử hóa đơn giao dịch (" + danhSachHoaDon.size() + ") ";
         }
     }
 
-    // Bí danh tương thích lớp cũ
-    public static class CustomerDetails extends ChiTietKhachHang {
-        public CustomerDetails(KhachHang customer, List<DongThuCung> pets, List<DongHoaDon> invoices) {
-            super(customer, pets, invoices);
+    // Bí danh tương thích lớp cũ — đổi tên tiếng Việt
+    public static class ChiTietKhachHangCu extends ChiTietKhachHang {
+        public ChiTietKhachHangCu(KhachHang khachHang, List<DongThuCung> danhSachThuCung, List<DongHoaDon> danhSachHoaDon) {
+            super(khachHang, danhSachThuCung, danhSachHoaDon);
         }
     }
 
