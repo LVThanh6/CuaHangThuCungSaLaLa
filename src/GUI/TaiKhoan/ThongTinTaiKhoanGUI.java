@@ -3,7 +3,7 @@ package GUI.TaiKhoan;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 
-import controller.TaiKhoan.ThongTinTaiKhoanController;
+import Service.TaiKhoan.ThongTinTaiKhoanService;
 import entity.TaiKhoan.TaiKhoan;
 
 import javax.swing.*;
@@ -21,7 +21,7 @@ import java.util.List;
  * Giao diện Tài khoản người dùng trong SALALA Pet Shop (gộp từ
  * QuanLyTaiKhoanGUI,
  * ThongTinTaiKhoanDialog và DoiMatKhauDialog). Nghiệp vụ nằm ở
- * ThongTinTaiKhoanController.
+ * ThongTinTaiKhoanService.
  * - Panel chính: xem danh sách, lọc, tìm kiếm, cấp mới, sửa vai trò,
  * đặt lại mật khẩu (SHA-256), khóa/mở khóa và xóa tài khoản.
  * - ThongTinTaiKhoanDialog: hồ sơ tài khoản đang đăng nhập.
@@ -30,7 +30,7 @@ import java.util.List;
 public class ThongTinTaiKhoanGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private final ThongTinTaiKhoanController controller = new ThongTinTaiKhoanController();
+    private final ThongTinTaiKhoanService controller = new ThongTinTaiKhoanService();
     private TableMau bangTaiKhoan;
     private DefaultTableModel modelBang;
     private TableRowSorter<DefaultTableModel> rowSorter;
@@ -48,7 +48,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     private JLabel lblBiKhoa;
     private JLabel lblPhanBo;
 
-    private List<ThongTinTaiKhoanController.TaiKhoanItem> danhSachHienTai;
+    private List<ThongTinTaiKhoanService.TaiKhoanItem> danhSachHienTai;
 
     public ThongTinTaiKhoanGUI() {
         khoiTaoGiaoDien();
@@ -326,10 +326,10 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     // ==========================================
     public void taiDuLieuLenBang() {
         modelBang.setRowCount(0);
-        ThongTinTaiKhoanController.DuLieuDanhSach data = controller.taiDanhSach();
+        ThongTinTaiKhoanService.DuLieuDanhSach data = controller.taiDanhSach();
         danhSachHienTai = data.taiKhoan;
 
-        for (ThongTinTaiKhoanController.TaiKhoanItem item : danhSachHienTai) {
+        for (ThongTinTaiKhoanService.TaiKhoanItem item : danhSachHienTai) {
             modelBang.addRow(controller.taoDongBang(item));
         }
 
@@ -365,7 +365,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         });
     }
 
-    private ThongTinTaiKhoanController.TaiKhoanItem getDongDuocChon() {
+    private ThongTinTaiKhoanService.TaiKhoanItem getDongDuocChon() {
         int viewRow = bangTaiKhoan.getSelectedRow();
         if (viewRow < 0)
             return null;
@@ -373,7 +373,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         String maTK = (String) modelBang.getValueAt(modelRow, 0);
 
         if (danhSachHienTai != null) {
-            for (ThongTinTaiKhoanController.TaiKhoanItem item : danhSachHienTai) {
+            for (ThongTinTaiKhoanService.TaiKhoanItem item : danhSachHienTai) {
                 if (item.getMaTK().equals(maTK))
                     return item;
             }
@@ -400,7 +400,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
 
         JTextField txtMa = taoInputText(maPhatSinh, false);
         JTextField txtUser = taoInputText("", true);
-        JPasswordField txtPass = new JPasswordField(ThongTinTaiKhoanController.MAT_KHAU_MAC_DINH);
+        JPasswordField txtPass = new JPasswordField(ThongTinTaiKhoanService.MAT_KHAU_MAC_DINH);
         txtPass.setPreferredSize(new Dimension(300, 36));
         txtPass.setBorder(new CompoundBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
                 new EmptyBorder(0, 10, 0, 10)));
@@ -409,16 +409,16 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
         // Danh sách liên kết nhân viên / bác sĩ chưa có tài khoản
-        ThongTinTaiKhoanController.DanhMucTaoTaiKhoan catalog = controller.taiDanhMucTaoTaiKhoan();
-        List<ThongTinTaiKhoanController.DoiTuongOption> doiTuongOptions = new ArrayList<>();
+        ThongTinTaiKhoanService.DanhMucTaoTaiKhoan catalog = controller.taiDanhMucTaoTaiKhoan();
+        List<ThongTinTaiKhoanService.DoiTuongOption> doiTuongOptions = new ArrayList<>();
 
         DefaultComboBoxModel<String> modelLienKet = new DefaultComboBoxModel<>();
         modelLienKet.addElement("-- Không liên kết đối tượng cụ thể --");
-        for (ThongTinTaiKhoanController.DoiTuongOption option : catalog.nhanVien) {
+        for (ThongTinTaiKhoanService.DoiTuongOption option : catalog.nhanVien) {
             modelLienKet.addElement("[Nhân viên] " + option.ten + " (" + option.ma + " - " + option.vaiTro + ")");
             doiTuongOptions.add(option);
         }
-        for (ThongTinTaiKhoanController.DoiTuongOption option : catalog.bacSi) {
+        for (ThongTinTaiKhoanService.DoiTuongOption option : catalog.bacSi) {
             modelLienKet.addElement("[Bác sĩ] " + option.ten + " (" + option.ma + " - " + option.vaiTro + ")");
             doiTuongOptions.add(option);
         }
@@ -426,10 +426,10 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         cbLienKet.setPreferredSize(new Dimension(300, 36));
 
         // Danh sách quản lý
-        List<ThongTinTaiKhoanController.QuanLyOption> dsQL = catalog.quanLy;
+        List<ThongTinTaiKhoanService.QuanLyOption> dsQL = catalog.quanLy;
         DefaultComboBoxModel<String> modelQL = new DefaultComboBoxModel<>();
         modelQL.addElement("-- Không chỉ định (Toàn quyền) --");
-        for (ThongTinTaiKhoanController.QuanLyOption ql : dsQL) {
+        for (ThongTinTaiKhoanService.QuanLyOption ql : dsQL) {
             modelQL.addElement(ql.hoTen + " (" + ql.ma + ")");
         }
         JComboBox<String> cbQL = new JComboBox<>(modelQL);
@@ -475,12 +475,12 @@ public class ThongTinTaiKhoanGUI extends JPanel {
             int qlIdx = cbQL.getSelectedIndex();
             if (qlIdx > 0)
                 maQLChon = dsQL.get(qlIdx - 1).ma;
-            ThongTinTaiKhoanController.DoiTuongOption doiTuong = null;
+            ThongTinTaiKhoanService.DoiTuongOption doiTuong = null;
             int lkIdx = cbLienKet.getSelectedIndex();
             if (lkIdx > 0)
                 doiTuong = doiTuongOptions.get(lkIdx - 1);
-            ThongTinTaiKhoanController.KetQuaTaoTaiKhoan result = controller.taoTaiKhoan(
-                    new ThongTinTaiKhoanController.ThongTinTaiKhoanMoi(maPhatSinh,
+            ThongTinTaiKhoanService.KetQuaTaoTaiKhoan result = controller.taoTaiKhoan(
+                    new ThongTinTaiKhoanService.ThongTinTaiKhoanMoi(maPhatSinh,
                             txtUser.getText(), new String(txtPass.getPassword()),
                             (String) cbVaiTro.getSelectedItem(), chkKichHoat.isSelected(),
                             maQLChon, doiTuong));
@@ -501,7 +501,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     }
 
     private void xuLySuaTaiKhoan() {
-        ThongTinTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
+        ThongTinTaiKhoanService.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để chỉnh sửa!", "Thông báo",
                     JOptionPane.WARNING_MESSAGE);
@@ -528,12 +528,12 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         cbVaiTro.setPreferredSize(new Dimension(300, 36));
 
         // Quản lý
-        List<ThongTinTaiKhoanController.QuanLyOption> dsQL = controller.taiDanhSachQuanLy();
+        List<ThongTinTaiKhoanService.QuanLyOption> dsQL = controller.taiDanhSachQuanLy();
         DefaultComboBoxModel<String> modelQL = new DefaultComboBoxModel<>();
         modelQL.addElement("-- Không chỉ định (Toàn quyền) --");
         int selectQLIdx = 0;
         for (int i = 0; i < dsQL.size(); i++) {
-            ThongTinTaiKhoanController.QuanLyOption ql = dsQL.get(i);
+            ThongTinTaiKhoanService.QuanLyOption ql = dsQL.get(i);
             modelQL.addElement(ql.hoTen + " (" + ql.ma + ")");
             if (ql.ma.equals(chon.getMaQuanLy())) {
                 selectQLIdx = i + 1;
@@ -590,7 +590,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     }
 
     private void xuLyKhoaMoKhoa() {
-        ThongTinTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
+        ThongTinTaiKhoanService.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để thao tác!", "Thông báo",
                     JOptionPane.WARNING_MESSAGE);
@@ -619,7 +619,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     }
 
     private void xuLyResetMatKhau() {
-        ThongTinTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
+        ThongTinTaiKhoanService.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để đặt lại mật khẩu!", "Thông báo",
                     JOptionPane.WARNING_MESSAGE);
@@ -629,11 +629,11 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         String matKhauMoi = JOptionPane.showInputDialog(this,
                 "Nhập mật khẩu mới cho tài khoản [" + chon.getTenDangNhap()
                         + "]:\n(Mật khẩu sẽ được mã hóa bảo mật SHA-256)",
-                ThongTinTaiKhoanController.MAT_KHAU_MAC_DINH);
+                ThongTinTaiKhoanService.MAT_KHAU_MAC_DINH);
 
         if (matKhauMoi != null) {
             matKhauMoi = matKhauMoi.trim();
-            ThongTinTaiKhoanController.KetQuaMatKhau result = controller.datLaiMatKhau(chon.getMaTK(), matKhauMoi);
+            ThongTinTaiKhoanService.KetQuaMatKhau result = controller.datLaiMatKhau(chon.getMaTK(), matKhauMoi);
             if (result.thanhCong) {
                 JOptionPane.showMessageDialog(this, "Đặt lại mật khẩu thành công!\nMật khẩu mới: " + matKhauMoi,
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -644,7 +644,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     }
 
     private void xuLyXoaTaiKhoan() {
-        ThongTinTaiKhoanController.TaiKhoanItem chon = getDongDuocChon();
+        ThongTinTaiKhoanService.TaiKhoanItem chon = getDongDuocChon();
         if (chon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để xóa!", "Thông báo",
                     JOptionPane.WARNING_MESSAGE);
@@ -734,7 +734,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
 
         public ThongTinTaiKhoanDialog(Frame parent, TaiKhoan tk, String tenHienThi) {
             super(parent, "Thông tin tài khoản", true);
-            ThongTinTaiKhoanController.ThongTinHoSo thongTin = new ThongTinTaiKhoanController().taoThongTin(tk,
+            ThongTinTaiKhoanService.ThongTinHoSo thongTin = new ThongTinTaiKhoanService().taoThongTin(tk,
                     tenHienThi);
             setSize(440, 480);
             setLocationRelativeTo(parent);
@@ -845,7 +845,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         private JPasswordField txtXacNhanMatKhau;
         private JLabel lblLoi;
         private final TaiKhoan taiKhoan;
-        private final ThongTinTaiKhoanController controller = new ThongTinTaiKhoanController();
+        private final ThongTinTaiKhoanService controller = new ThongTinTaiKhoanService();
 
         public DoiMatKhauDialog(Frame parent, TaiKhoan taiKhoan) {
             super(parent, "Đổi mật khẩu tài khoản", true);
@@ -955,7 +955,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
             String passMoi = new String(txtMatKhauMoi.getPassword()).trim();
             String passXacNhan = new String(txtXacNhanMatKhau.getPassword()).trim();
 
-            ThongTinTaiKhoanController.KetQuaDoiMatKhau result = controller.doiMatKhau(taiKhoan, passCu, passMoi,
+            ThongTinTaiKhoanService.KetQuaDoiMatKhau result = controller.doiMatKhau(taiKhoan, passCu, passMoi,
                     passXacNhan);
             if (result.isThanhCong()) {
                 JOptionPane.showMessageDialog(this,

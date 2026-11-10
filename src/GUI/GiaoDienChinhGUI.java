@@ -27,14 +27,14 @@ import GUI.ThuCung.DonThuocGUI;
 import GUI.ThuCung.HoSoThuCungGUI;
 import GUI.ThuCung.LichSuKhamGUI;
 import GUI.TaiKhoan.ThongTinTaiKhoanGUI;
-import controller.Chung.NavigationController;
+import Service.Chung.NavigationService;
 import GUI.VatTu.NhaCungCapGUI;
 import GUI.VatTu.PhieuNhapKhoGUI;
 import GUI.VatTu.PhieuXuatKhoGUI;
 import GUI.VatTu.VatTuGUI;
 
 public class GiaoDienChinhGUI extends NenAnhPanel {
-    private static final NavigationController dieuHuongController = new NavigationController();
+    private static final NavigationService dieuHuongService = new NavigationService();
 
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
     private HeaderGUI headerGUI;
@@ -47,8 +47,8 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     // ==========================================
     public GiaoDienChinhGUI() {
         this(
-                dieuHuongController.isDaDangNhap() ? dieuHuongController.getTenNguoiDungHienTai() : "Lê Văn Thành",
-                dieuHuongController.isDaDangNhap() ? dieuHuongController.getVaiTroNguoiDungHienTai() : "Quản lý");
+                dieuHuongService.isDaDangNhap() ? dieuHuongService.getTenNguoiDungHienTai() : "Lê Văn Thành",
+                dieuHuongService.isDaDangNhap() ? dieuHuongService.getVaiTroNguoiDungHienTai() : "Quản lý");
     }
 
     public GiaoDienChinhGUI(String tenNguoiDung, String chucVu) {
@@ -187,17 +187,17 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
         }
 
         hienThiNoiDungMacDinh("Đang xem tab: " + tenTab);
-        hienThiManHinh(dieuHuongController.layManHinhChoTab(tenTab));
+        hienThiManHinh(dieuHuongService.layManHinhChoTab(tenTab));
     }
 
     private void xuLyChonMenuCon(String tenTab, String tenMenuCon) {
         this.tabHienTai = tenTab;
         hienThiNoiDungMacDinh("Đang xem: " + tenTab + " - " + tenMenuCon);
 
-        hienThiManHinh(dieuHuongController.layManHinhChoMenuCon(tenMenuCon));
+        hienThiManHinh(dieuHuongService.layManHinhChoMenuCon(tenMenuCon));
     }
 
-    private void hienThiManHinh(NavigationController.ManHinh manHinh) {
+    private void hienThiManHinh(NavigationService.ManHinh manHinh) {
         switch (manHinh) {
             case NHAN_VIEN:
                 hienThiDanhSachNhanVien();
@@ -414,7 +414,7 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
     // TIỆN ÍCH ĐĂNG XUẤT
     // ==========================================
     public static void xuLyDangXuat(JFrame frameChinh) {
-        dieuHuongController.dangXuat();
+        dieuHuongService.dangXuat();
         if (frameChinh != null)
             frameChinh.dispose();
         DangNhapGUI login = new DangNhapGUI();

@@ -1,4 +1,4 @@
-package controller.HoaDon;
+package Service.HoaDon;
 
 import java.util.ArrayList;
 
@@ -14,21 +14,21 @@ import entity.KhachHang.KhachHang;
 import entity.ThuCung.ThuCung_entity;
 
 /**
- * Controller xử lý dữ liệu và nghiệp vụ của màn hình chi tiết hóa đơn.
+ * Service xử lý dữ liệu và nghiệp vụ của màn hình chi tiết hóa đơn.
  * Không chứa mã tạo Swing component, JOptionPane hoặc PrinterJob.
  */
-public class ChiTietHoaDonController {
+public class ChiTietHoaDonService {
     private final HoaDon_Dao hoaDonDao;
     private final ChiTietHoaDon_DAO chiTietHoaDonDao;
     private final ThuCung_DAO thuCungDao;
     private final HangThanhVien_DAO hangThanhVienDao;
 
-    public ChiTietHoaDonController() {
+    public ChiTietHoaDonService() {
         this(new HoaDon_Dao(), new ChiTietHoaDon_DAO(),
                 new ThuCung_DAO(), new HangThanhVien_DAO());
     }
 
-    ChiTietHoaDonController(
+    ChiTietHoaDonService(
             HoaDon_Dao hoaDonDao,
             ChiTietHoaDon_DAO chiTietHoaDonDao,
             ThuCung_DAO thuCungDao,

@@ -2,7 +2,7 @@ package GUI.LichHen;
 
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
-import controller.LichHen.LichLamViecController;
+import Service.LichHen.LichLamViecService;
 import entity.LichHen.LichLamViec_entity;
 import entity.LichHen.NhanSuLichLamViec_entity;
 
@@ -61,7 +61,7 @@ public class LichLamViecGUI extends JPanel {
     private static final DateTimeFormatter DINH_DANG_THU = DateTimeFormatter.ofPattern("EEEE",
             Locale.forLanguageTag("vi-VN"));
 
-    private final LichLamViecController controller = new LichLamViecController();
+    private final LichLamViecService controller = new LichLamViecService();
     private final List<LichLamViec_entity> danhSachLich = new ArrayList<>();
     private final Map<LocalDate, Integer> soLichTheoNgay = new HashMap<>();
     private final Timer timerChotNgay = new Timer(0, e -> xuLyChotNgay());
@@ -303,9 +303,9 @@ public class LichLamViecGUI extends JPanel {
     }
 
     private boolean taiDuLieu() {
-        LichLamViecController.KhoangNgay khoang = controller.khoangXem(ngayDangChon, cheDoXem.name());
+        LichLamViecService.KhoangNgay khoang = controller.khoangXem(ngayDangChon, cheDoXem.name());
         try {
-            LichLamViecController.DuLieuLich duLieu = controller.taiDuLieu(
+            LichLamViecService.DuLieuLich duLieu = controller.taiDuLieu(
                     khoang.tuNgay, khoang.denNgayExclusive, YearMonth.from(ngayDangChon));
             danhSachLich.clear();
             soLichTheoNgay.clear();
@@ -411,7 +411,7 @@ public class LichLamViecGUI extends JPanel {
             });
         }
 
-        LichLamViecController.KhoangNgay khoang = controller.khoangXem(ngayDangChon, cheDoXem.name());
+        LichLamViecService.KhoangNgay khoang = controller.khoangXem(ngayDangChon, cheDoXem.name());
         lblTieuDeLich.setText(tieuDeKhoang(khoang));
         int soCa = danhSachLich.size();
         int soHoanThanh = 0;
@@ -427,7 +427,7 @@ public class LichLamViecGUI extends JPanel {
         capNhatTrangThaiNut();
     }
 
-    private String tieuDeKhoang(LichLamViecController.KhoangNgay khoang) {
+    private String tieuDeKhoang(LichLamViecService.KhoangNgay khoang) {
         switch (cheDoXem) {
             case NGAY:
                 return ngayDangChon.format(DINH_DANG_THU) + ", " + ngayDangChon.format(DINH_DANG_NGAY);

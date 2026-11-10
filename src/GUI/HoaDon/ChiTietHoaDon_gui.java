@@ -6,7 +6,7 @@ import GUI.Chung.NenAnhPanel;
 
 import GUI.Chung.TamNenNoiDung;
 
-import controller.HoaDon.ChiTietHoaDonController;
+import Service.HoaDon.ChiTietHoaDonService;
 
 import entity.HoaDon.ChiTietHoaDon_entity;
 
@@ -58,7 +58,7 @@ import java.util.ArrayList;
  */
 
 public class ChiTietHoaDon_gui extends JPanel {
-    private final ChiTietHoaDonController controller;
+    private final ChiTietHoaDonService controller;
 
     private static final Color XANH = Color.decode("#0F766E");
 
@@ -131,8 +131,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     public static void hienThi(Component cha, String maHD, DSHoaDon_gui dsHoaDon) {
 
-        ChiTietHoaDonController controller = new ChiTietHoaDonController();
-        ChiTietHoaDonController.DuLieuChiTiet duLieu = controller.taiDuLieu(maHD);
+        ChiTietHoaDonService controller = new ChiTietHoaDonService();
+        ChiTietHoaDonService.DuLieuChiTiet duLieu = controller.taiDuLieu(maHD);
         HoaDon_entity hd = duLieu == null ? null : duLieu.getHoaDon();
 
         if (hd == null) {
@@ -202,8 +202,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== KHỞI TẠO ====================
 
-    public ChiTietHoaDon_gui(ChiTietHoaDonController controller,
-            ChiTietHoaDonController.DuLieuChiTiet duLieu,
+    public ChiTietHoaDon_gui(ChiTietHoaDonService controller,
+            ChiTietHoaDonService.DuLieuChiTiet duLieu,
             DSHoaDon_gui dsHoaDon) {
 
         this.controller = controller;
@@ -269,7 +269,7 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== TÍNH TIỀN ====================
 
-    private void apDungTongTien(ChiTietHoaDonController.TongTien tong) {
+    private void apDungTongTien(ChiTietHoaDonService.TongTien tong) {
         mucKM = tong.getMucKhuyenMai();
         mucThue = tong.getMucThue();
         tongTien = tong.getTongTien();

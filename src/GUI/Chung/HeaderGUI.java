@@ -11,7 +11,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import controller.Chung.NavigationController;
+import Service.Chung.NavigationService;
 import GUI.GiaoDienChinhGUI;
 import GUI.TaiKhoan.ThongTinTaiKhoanGUI;
 
@@ -24,11 +24,11 @@ public class HeaderGUI extends JPanel {
     private String tenNguoiDung;
     private String chucVu;
     private String chuCaiAvatar;
-    private NavigationController.VaiTroHeThong vaiTroHeThong;
+    private NavigationService.VaiTroHeThong vaiTroHeThong;
 
     private String[] danhSachTabs;
-    private NavigationController.MenuQuyen menuQuyen;
-    private final NavigationController controller = new NavigationController();
+    private NavigationService.MenuQuyen menuQuyen;
+    private final NavigationService controller = new NavigationService();
     private String tabHienTai;
 
     private List<JButton> danhSachNutTab;
@@ -38,8 +38,8 @@ public class HeaderGUI extends JPanel {
 
     public HeaderGUI() {
         this(
-                new NavigationController().getTenNguoiDungHienTai(),
-                new NavigationController().getVaiTroNguoiDungHienTai());
+                new NavigationService().getTenNguoiDungHienTai(),
+                new NavigationService().getVaiTroNguoiDungHienTai());
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu) {
@@ -76,7 +76,7 @@ public class HeaderGUI extends JPanel {
         return danhSachTabs;
     }
 
-    public NavigationController.VaiTroHeThong getVaiTroHeThong() {
+    public NavigationService.VaiTroHeThong getVaiTroHeThong() {
         return vaiTroHeThong;
     }
 

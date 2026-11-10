@@ -1,6 +1,6 @@
 package GUI.TaiKhoan;
 
-import controller.TaiKhoan.DangNhapController;
+import Service.TaiKhoan.DangNhapService;
 import entity.TaiKhoan.TaiKhoan;
 
 import GUI.Chung.RangBuocGiaoDien;
@@ -28,7 +28,7 @@ public class DangNhapGUI extends JFrame {
     private JButton btnDangNhap;
     private JLabel lblThongBaoLoi;
 
-    private final DangNhapController controller = new DangNhapController();
+    private final DangNhapService controller = new DangNhapService();
 
     public DangNhapGUI() {
         khoiTaoGiaoDien();
@@ -186,7 +186,7 @@ public class DangNhapGUI extends JFrame {
         form.add(lblPass);
         form.add(Box.createVerticalStrut(6));
 
-        txtMatKhau = new JPasswordField(DangNhapController.MAT_KHAU_MAC_DINH);
+        txtMatKhau = new JPasswordField(DangNhapService.MAT_KHAU_MAC_DINH);
         txtMatKhau.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         txtMatKhau.setPreferredSize(new Dimension(300, 38));
         txtMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -253,14 +253,14 @@ public class DangNhapGUI extends JFrame {
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.addActionListener(e -> {
             txtTenDangNhap.setText(username);
-            txtMatKhau.setText(DangNhapController.MAT_KHAU_MAC_DINH);
+            txtMatKhau.setText(DangNhapService.MAT_KHAU_MAC_DINH);
             lblThongBaoLoi.setText(" ");
         });
         return b;
     }
 
     // ==========================================
-    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION (nghiệp vụ nằm ở DangNhapController)
+    // XỬ LÝ ĐĂNG NHẬP & LƯU SESSION (nghiệp vụ nằm ở DangNhapService)
     // ==========================================
     private void xuLyDangNhap() {
         String username = txtTenDangNhap.getText().trim();
@@ -270,7 +270,7 @@ public class DangNhapGUI extends JFrame {
         btnDangNhap.setText("Đang kiểm tra...");
 
         SwingUtilities.invokeLater(() -> {
-            DangNhapController.KetQuaDangNhap result = controller.dangNhap(username, password);
+            DangNhapService.KetQuaDangNhap result = controller.dangNhap(username, password);
             if (result.isThanhCong()) {
                 lblThongBaoLoi.setText(" ");
                 TaiKhoan tk = result.getTaiKhoan();
@@ -278,7 +278,7 @@ public class DangNhapGUI extends JFrame {
                 // Khuyến nghị đổi mật khẩu nếu đang dùng mật khẩu mặc định
                 if (controller.nenKhuyenNghiDoiMatKhau(password)) {
                     int luaChon = JOptionPane.showConfirmDialog(this,
-                            "Bạn đang đăng nhập bằng mật khẩu mặc định (" + DangNhapController.MAT_KHAU_MAC_DINH
+                            "Bạn đang đăng nhập bằng mật khẩu mặc định (" + DangNhapService.MAT_KHAU_MAC_DINH
                                     + ").\nĐể đảm bảo an toàn, hệ thống khuyến nghị bạn nên đổi mật khẩu ngay bây giờ.\nBạn có muốn đổi mật khẩu không?",
                             "Cảnh báo bảo mật",
                             JOptionPane.YES_NO_OPTION,
@@ -304,9 +304,9 @@ public class DangNhapGUI extends JFrame {
                 this.dispose();
             } else {
                 hienThiLoi(result.getThongBao());
-                if (result.getTruongLoi() == DangNhapController.TruongNhap.TEN_DANG_NHAP)
+                if (result.getTruongLoi() == DangNhapService.TruongNhap.TEN_DANG_NHAP)
                     txtTenDangNhap.requestFocus();
-                else if (result.getTruongLoi() == DangNhapController.TruongNhap.MAT_KHAU)
+                else if (result.getTruongLoi() == DangNhapService.TruongNhap.MAT_KHAU)
                     txtMatKhau.requestFocus();
             }
             btnDangNhap.setEnabled(true);
@@ -331,7 +331,7 @@ public class DangNhapGUI extends JFrame {
         }
 
         SwingUtilities.invokeLater(() -> {
-            if (!new DangNhapController().ketNoiCoSoDuLieu()) {
+            if (!new DangNhapService().ketNoiCoSoDuLieu()) {
                 JOptionPane.showMessageDialog(null, "Không thể kết nối cơ sở dữ liệu SALALA.",
                         "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
             }

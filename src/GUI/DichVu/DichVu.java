@@ -1,7 +1,7 @@
 package GUI.DichVu;
 
-import controller.DichVu.DichVuController;
-import controller.DichVu.DichVuController.DichVuData;
+import Service.DichVu.DichVuService;
+import Service.DichVu.DichVuService.DichVuData;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,7 +31,7 @@ public class DichVu extends JPanel {
         return new Font("Segoe UI", dam ? Font.BOLD : Font.PLAIN, size);
     }
 
-    private final DichVuController controller = new DichVuController();
+    private final DichVuService controller = new DichVuService();
 
     // ===== Dữ liệu hiển thị =====
     private final List<DichVuData> tatCa = new ArrayList<>();
@@ -142,7 +142,7 @@ public class DichVu extends JPanel {
     }
 
     private void capNhatThongKe() {
-        DichVuController.Statistics stats = controller.statistics(tatCa);
+        DichVuService.Statistics stats = controller.statistics(tatCa);
         giaTri[0].setText("" + stats.total);
         phu[0].setText(stats.categoryCount + " nhóm dịch vụ");
         giaTri[1].setText("" + stats.active);

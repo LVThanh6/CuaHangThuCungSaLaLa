@@ -20,8 +20,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import controller.BacSi.BacSiController;
-import controller.BacSi.BacSiController.TrangThai;
+import Service.BacSi.BacSiService;
+import Service.BacSi.BacSiService.TrangThai;
 import entity.BacSi.ChuyenNganh_entity;
 import entity.BacSi.BacSi_entity;
 
@@ -29,8 +29,8 @@ public class BacSiGUI extends JPanel {
 
     private static final String THEM_CHUYEN_NGANH = "Thêm chuyên ngành mới...";
 
-    private static final int COT_HO_TEN = BacSiController.COT_HO_TEN;
-    private static final int COT_SO_CA = BacSiController.COT_SO_CA;
+    private static final int COT_HO_TEN = BacSiService.COT_HO_TEN;
+    private static final int COT_SO_CA = BacSiService.COT_SO_CA;
 
     private static final Color NEN_CHON = new Color(240, 250, 247);
     private static final Color NEN_HEADER = new Color(246, 248, 247);
@@ -38,7 +38,7 @@ public class BacSiGUI extends JPanel {
 
     private final List<BacSi_entity> tatCa = new ArrayList<>();
     private final List<BacSi_entity> daLoc = new ArrayList<>();
-    private final BacSiController controller = new BacSiController();
+    private final BacSiService controller = new BacSiService();
     private int cotSapXep = -1;
     private boolean sapXepTang = true;
     private int tongNhanVien = 0;
@@ -423,13 +423,13 @@ public class BacSiGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        BacSiController.ThongKe thongKe = controller.thongKe(tatCa);
+        BacSiService.ThongKe thongKe = controller.thongKe(tatCa);
         lblSo[0].setText(String.valueOf(thongKe.tongSo));
         lblSo[1].setText(String.valueOf(thongKe.dangLam));
         lblSo[2].setText(String.valueOf(thongKe.tamNghi));
         lblSo[3].setText(String.valueOf(thongKe.soCa));
         lblMo[0].setText("Thuộc " + tongNhanVien + " nhân viên");
-        lblMo[3].setText("Tháng " + BacSiController.nhanThangHienTai());
+        lblMo[3].setText("Tháng " + BacSiService.nhanThangHienTai());
     }
 
     private void apDungLoc() {
@@ -526,7 +526,7 @@ public class BacSiGUI extends JPanel {
         if (kq != JOptionPane.YES_OPTION)
             return;
         try {
-            BacSiController.KetQuaXoa result = controller.xoa(bs.getMaBacSi());
+            BacSiService.KetQuaXoa result = controller.xoa(bs.getMaBacSi());
             if (result.coDuLieuLienQuan) {
                 JOptionPane.showMessageDialog(this,
                         "Bác sĩ này đã có hồ sơ khám hoặc đơn thuốc liên quan\n"
@@ -568,11 +568,11 @@ public class BacSiGUI extends JPanel {
         JTextField txtSdt = new JTextField(goc == null ? "" : nz(goc.getSdt()));
         JTextField txtEmail = new JTextField(goc == null ? "" : nz(goc.getEmail()));
         JTextField txtNgay = new JTextField(
-                goc == null || goc.getNgaySinh() == null ? "" : BacSiController.dinhDangNgay(goc.getNgaySinh()));
+                goc == null || goc.getNgaySinh() == null ? "" : BacSiService.dinhDangNgay(goc.getNgaySinh()));
         JTextField txtLuongThang = new JTextField(goc == null ? "" : String.format("%.0f", goc.getLuongThang()));
         JTextField txtSoCa = new JTextField(String.valueOf(goc == null ? 0 : goc.getSoCaKham()));
 
-        JComboBox<String> cbGT = new JComboBox<>(BacSiController.GIOI_TINH);
+        JComboBox<String> cbGT = new JComboBox<>(BacSiService.GIOI_TINH);
         JComboBox<String> cbCN = new JComboBox<>();
         taiDanhSachChuyenNganh(cbCN, false);
 
@@ -584,7 +584,7 @@ public class BacSiGUI extends JPanel {
             if (goc.getGioiTinh() != null)
                 cbGT.setSelectedItem(goc.getGioiTinh());
             if (goc.getChuyenNganh() != null)
-                cbCN.setSelectedItem(BacSiController.tenChuyenNganh(goc));
+                cbCN.setSelectedItem(BacSiService.tenChuyenNganh(goc));
             if (coTK)
                 cbTT.setSelectedIndex(Boolean.TRUE.equals(goc.getTrangThaiTK()) ? 0 : 1);
         }
@@ -668,7 +668,7 @@ public class BacSiGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                BacSiController.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
+                BacSiService.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
                         txtTen.getText(), txtSdt.getText(), txtEmail.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbCN.getSelectedItem(),
                         txtLuongThang.getText(), cbTT.getSelectedIndex() == 0);
@@ -721,7 +721,7 @@ public class BacSiGUI extends JPanel {
             }
         };
 
-        BacSiController.LichTuan lich;
+        BacSiService.LichTuan lich;
         try {
             lich = controller.taiLichTuan(bs.getMaBacSi());
         } catch (SQLException ex) {
@@ -741,7 +741,7 @@ public class BacSiGUI extends JPanel {
         t.getTableHeader().setFont(RangBuocGiaoDien.fontDam(12));
         t.getTableHeader().setReorderingAllowed(false);
 
-        JLabel lblTieuDe = new JLabel(bs.getHoTen() + " · " + BacSiController.tenChuyenNganh(bs));
+        JLabel lblTieuDe = new JLabel(bs.getHoTen() + " · " + BacSiService.tenChuyenNganh(bs));
         lblTieuDe.setFont(RangBuocGiaoDien.fontDam(14));
         lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         JLabel lblGhiChu = new JLabel("Lịch đã xếp từ " + lich.tuNgay + " đến " + lich.denNgay);
@@ -824,7 +824,7 @@ public class BacSiGUI extends JPanel {
 
     private void taiLai() {
         try {
-            BacSiController.DuLieuDanhSach data = controller.taiDanhSach();
+            BacSiService.DuLieuDanhSach data = controller.taiDanhSach();
             tatCa.clear();
             tatCa.addAll(data.getBacSi());
             tongNhanVien = data.getTongNhanVien();
@@ -891,9 +891,9 @@ public class BacSiGUI extends JPanel {
             case 2:
                 return nz(bs.getGioiTinh());
             case 3:
-                return BacSiController.dinhDangSdt(bs.getSdt());
+                return BacSiService.dinhDangSdt(bs.getSdt());
             case 4:
-                return BacSiController.tenChuyenNganh(bs);
+                return BacSiService.tenChuyenNganh(bs);
             case 5:
                 return nz(bs.getEmail());
             case 6:

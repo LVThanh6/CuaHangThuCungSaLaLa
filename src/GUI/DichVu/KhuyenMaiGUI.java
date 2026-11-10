@@ -1,7 +1,7 @@
 package GUI.DichVu;
 
-import controller.DichVu.KhuyenMaiController;
-import controller.DichVu.KhuyenMaiController.Status;
+import Service.DichVu.KhuyenMaiService;
+import Service.DichVu.KhuyenMaiService.Status;
 import entity.DichVu.KhuyenMai_Entity;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ public class KhuyenMaiGUI extends JPanel {
 
     /** Dùng ở màn hình lập hóa đơn để bỏ qua khuyến mãi đang tạm dừng. */
     public static boolean isTamDung(String maKM) {
-        return KhuyenMaiController.isPausedPromotion(maKM);
+        return KhuyenMaiService.isPausedPromotion(maKM);
     }
 
     private enum CheDo {
@@ -70,7 +70,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     // ===== Dữ liệu =====
-    private final KhuyenMaiController controller = new KhuyenMaiController();
+    private final KhuyenMaiService controller = new KhuyenMaiService();
     private List<KhuyenMai_Entity> tatCa = new ArrayList<>();
     private List<KhuyenMai_Entity> locRa = new ArrayList<>();
     private final List<KhuyenMai_Entity> dongHienTai = new ArrayList<>();
@@ -204,7 +204,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        KhuyenMaiController.Summary summary = controller.summarize(tatCa);
+        KhuyenMaiService.Summary summary = controller.summarize(tatCa);
         lblTong.setText(String.valueOf(summary.total));
         lblDang.setText(String.valueOf(summary.active));
         lblSap.setText(String.valueOf(summary.upcoming));
@@ -389,7 +389,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private static String soThuong(double v) {
-        return KhuyenMaiController.formatNumber(v);
+        return KhuyenMaiService.formatNumber(v);
     }
 
     private String hienMuc(KhuyenMai_Entity km) {
@@ -445,7 +445,7 @@ public class KhuyenMaiGUI extends JPanel {
         if (ok != JOptionPane.OK_OPTION)
             return;
         try {
-            KhuyenMaiController.DateRange range = controller.parseDateRange(tu.getText(), den.getText());
+            KhuyenMaiService.DateRange range = controller.parseDateRange(tu.getText(), den.getText());
             tuNgay = range.from;
             denNgay = range.to;
         } catch (IllegalArgumentException ex) {

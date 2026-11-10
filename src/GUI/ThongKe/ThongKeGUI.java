@@ -1,7 +1,7 @@
 package GUI.ThongKe;
 
 import GUI.Chung.RangBuocGiaoDien;
-import controller.ThongKe.ThongKeController;
+import Service.ThongKe.ThongKeService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -40,8 +40,8 @@ public class ThongKeGUI extends JPanel {
     private final JSpinner ngayKetThuc = taoBoChonNgay(LocalDate.now());
     private final JComboBox<String> cboKhoangNhanh = new JComboBox<>(
             new String[] { "Tùy chọn", "Hôm nay", "7 ngày qua", "30 ngày qua", "Tháng này", "Năm nay" });
-    private final JComboBox<ThongKeController.DanhMuc> cboNhomChiSo = new JComboBox<>(
-            ThongKeController.DanhMuc.values());
+    private final JComboBox<ThongKeService.DanhMuc> cboNhomChiSo = new JComboBox<>(
+            ThongKeService.DanhMuc.values());
     private final JComboBox<ChiSo> cboChiSo = new JComboBox<>();
     private final List<ChiSo> tatCaChiSo = new java.util.ArrayList<>();
     private final JLabel lblGhiChuChiSo = new JLabel(" ");
@@ -57,9 +57,9 @@ public class ThongKeGUI extends JPanel {
         }
     };
     private final JTable bangDuLieu = new JTable(modelBang);
-    private final ThongKeController thongKeController = new ThongKeController();
+    private final ThongKeService thongKeService = new ThongKeService();
     private int maYeuCauDuLieu;
-    private ThongKeController.DuLieuBaoCao duLieuThongKe;
+    private ThongKeService.DuLieuBaoCao duLieuThongKe;
 
     public ThongKeGUI() {
         khoiTaoGiaoDien();
@@ -260,25 +260,25 @@ public class ThongKeGUI extends JPanel {
         if (chon == 0) {
             return;
         }
-        ThongKeController.KhoangThoiGianNhanh khoangNhanhChon;
+        ThongKeService.KhoangThoiGianNhanh khoangNhanhChon;
         switch (chon) {
             case 1:
-                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.HOM_NAY;
+                khoangNhanhChon = ThongKeService.KhoangThoiGianNhanh.HOM_NAY;
                 break;
             case 2:
-                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BAY_NGAY_QUA;
+                khoangNhanhChon = ThongKeService.KhoangThoiGianNhanh.BAY_NGAY_QUA;
                 break;
             case 3:
-                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.BA_MUOI_NGAY_QUA;
+                khoangNhanhChon = ThongKeService.KhoangThoiGianNhanh.BA_MUOI_NGAY_QUA;
                 break;
             case 4:
-                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.THANG_NAY;
+                khoangNhanhChon = ThongKeService.KhoangThoiGianNhanh.THANG_NAY;
                 break;
             default:
-                khoangNhanhChon = ThongKeController.KhoangThoiGianNhanh.NAM_NAY;
+                khoangNhanhChon = ThongKeService.KhoangThoiGianNhanh.NAM_NAY;
                 break;
         }
-        ThongKeController.KhoangNgay khoangNgay = ThongKeController.layKhoangNhanh(khoangNhanhChon, LocalDate.now());
+        ThongKeService.KhoangNgay khoangNgay = ThongKeService.layKhoangNhanh(khoangNhanhChon, LocalDate.now());
         datNgay(ngayBatDau, khoangNgay.getBatDau());
         datNgay(ngayKetThuc, khoangNgay.getKetThuc());
         apDungKhoangDaChon();
@@ -293,7 +293,7 @@ public class ThongKeGUI extends JPanel {
     }
 
     private void taiLaiDuLieu(LocalDate tu, LocalDate den) {
-        String thongBaoLoiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
+        String thongBaoLoiKhoangNgay = ThongKeService.loiKhoangNgay(tu, den);
         if (thongBaoLoiKhoangNgay != null) {
             hienLoi(thongBaoLoiKhoangNgay);
             return;
@@ -302,10 +302,10 @@ public class ThongKeGUI extends JPanel {
         lblTrangThai.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         lblTrangThai.setToolTipText(null);
         lblTrangThai.setText("Đang tải dữ liệu thống kê...");
-        new SwingWorker<ThongKeController.KetQuaTaiDuLieu, Void>() {
+        new SwingWorker<ThongKeService.KetQuaTaiDuLieu, Void>() {
             @Override
-            protected ThongKeController.KetQuaTaiDuLieu doInBackground() {
-                return thongKeController.taiDuLieu(tu, den);
+            protected ThongKeService.KetQuaTaiDuLieu doInBackground() {
+                return thongKeService.taiDuLieu(tu, den);
             }
 
             @Override
@@ -313,14 +313,14 @@ public class ThongKeGUI extends JPanel {
                 if (yeuCau != maYeuCauDuLieu || isCancelled())
                     return;
                 try {
-                    ThongKeController.KetQuaTaiDuLieu ketQua = get();
+                    ThongKeService.KetQuaTaiDuLieu ketQua = get();
                     if (!ketQua.isThanhCong()) {
                         hienLoi("Không thể tải dữ liệu thống kê: " + ketQua.getThongBaoLoi());
                         return;
                     }
                     capNhatDuLieu(ketQua.getBaoCao());
                     lblMoTa.setText("Từ " + DINH_DANG_NGAY.format(tu) + " đến " + DINH_DANG_NGAY.format(den)
-                            + " · Dữ liệu " + ThongKeController.moTaNhomThoiGian(tu, den) + ".");
+                            + " · Dữ liệu " + ThongKeService.moTaNhomThoiGian(tu, den) + ".");
                     lblTrangThai.setText(" ");
                 } catch (InterruptedException loi) {
                     Thread.currentThread().interrupt();
@@ -333,13 +333,13 @@ public class ThongKeGUI extends JPanel {
         }.execute();
     }
 
-    private void capNhatDuLieu(ThongKeController.DuLieuBaoCao duLieu) {
+    private void capNhatDuLieu(ThongKeService.DuLieuBaoCao duLieu) {
         duLieuThongKe = duLieu;
 
         ChiSo dangChon = (ChiSo) cboChiSo.getSelectedItem();
         String maDangChon = dangChon == null ? null : dangChon.ma;
         tatCaChiSo.clear();
-        for (ThongKeController.ChiSoBaoCao chiSoBaoCao : duLieu.getDanhSachChiSo()) {
+        for (ThongKeService.ChiSoBaoCao chiSoBaoCao : duLieu.getDanhSachChiSo()) {
             tatCaChiSo.add(new ChiSo(chiSoBaoCao));
         }
         capNhatDanhSachChiSo(maDangChon);
@@ -348,9 +348,9 @@ public class ThongKeGUI extends JPanel {
 
     private void capNhatDanhSachChiSo(String maCanChon) {
         cboChiSo.removeAllItems();
-        ThongKeController.DanhMuc nhomChon = (ThongKeController.DanhMuc) cboNhomChiSo.getSelectedItem();
+        ThongKeService.DanhMuc nhomChon = (ThongKeService.DanhMuc) cboNhomChiSo.getSelectedItem();
         for (ChiSo chiSo : tatCaChiSo) {
-            if (nhomChon == ThongKeController.layDanhMucCho(chiSo.ma, chiSo.ten)) {
+            if (nhomChon == ThongKeService.layDanhMucCho(chiSo.ma, chiSo.ten)) {
                 cboChiSo.addItem(chiSo);
             }
         }
@@ -395,7 +395,7 @@ public class ThongKeGUI extends JPanel {
         ChiSo chiSo = (ChiSo) cboChiSo.getSelectedItem();
         modelBang.setRowCount(0);
 
-        boolean laNhomNhanSu = cboNhomChiSo.getSelectedItem() == ThongKeController.DanhMuc.NHAN_SU;
+        boolean laNhomNhanSu = cboNhomChiSo.getSelectedItem() == ThongKeService.DanhMuc.NHAN_SU;
         panelTimNhanVien.setVisible(laNhomNhanSu);
         String tuKhoa = laNhomNhanSu ? txtTimNhanVien.getText().trim() : "";
 
@@ -404,7 +404,7 @@ public class ThongKeGUI extends JPanel {
             return;
         }
         lblGhiChuChiSo.setText(chiSo.ghiChu);
-        boolean theoThoiGian = ThongKeController.laChuoiThoiGian(chiSo.ma);
+        boolean theoThoiGian = ThongKeService.laChuoiThoiGian(chiSo.ma);
         modelBang.setColumnIdentifiers(new Object[] {
                 theoThoiGian ? "Thời gian" : "Danh mục", "Số liệu" });
         NumberFormat dinhDang = NumberFormat.getNumberInstance(VIET_NAM);
@@ -413,7 +413,7 @@ public class ThongKeGUI extends JPanel {
         double tongHienThi = 0;
         int soDong = 0;
         for (int i = 0; i < chiSo.nhan.length; i++) {
-            if (!tuKhoa.isEmpty() && !thongKeController.khopTuKhoaNhanVien(tuKhoa, chiSo.nhan[i])) {
+            if (!tuKhoa.isEmpty() && !thongKeService.khopTuKhoaNhanVien(tuKhoa, chiSo.nhan[i])) {
                 continue;
             }
             modelBang.addRow(new Object[] { chiSo.nhan[i], dinhDang.format(chiSo.giaTri[0][i]) + hauTo });
@@ -456,7 +456,7 @@ public class ThongKeGUI extends JPanel {
         }
         Window cha = SwingUtilities.getWindowAncestor(this);
         DialogTaoBieuDo dialog = new DialogTaoBieuDo(
-                cha, dsChiSo, (ChiSo) cboChiSo.getSelectedItem(), tu, den, thongKeController);
+                cha, dsChiSo, (ChiSo) cboChiSo.getSelectedItem(), tu, den, thongKeService);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
@@ -495,7 +495,7 @@ public class ThongKeGUI extends JPanel {
         private final double[][] giaTri;
         private final double tong;
 
-        private ChiSo(ThongKeController.ChiSoBaoCao duLieu) {
+        private ChiSo(ThongKeService.ChiSoBaoCao duLieu) {
             ma = duLieu.getMa();
             ten = duLieu.getTen();
             donVi = duLieu.getDonVi();
@@ -528,12 +528,12 @@ public class ThongKeGUI extends JPanel {
         private final JSpinner ngayKetThuc;
         private final JLabel lblTrangThai = new JLabel(" ");
         private final JButton btnTao = new JButton("Tạo biểu đồ");
-        private final ThongKeController thongKeController;
+        private final ThongKeService thongKeService;
 
         private DialogTaoBieuDo(Window cha, List<ChiSo> danhSachChiSo, ChiSo chiSoChon,
-                LocalDate tu, LocalDate den, ThongKeController thongKeController) {
+                LocalDate tu, LocalDate den, ThongKeService thongKeService) {
             super(cha, "Tạo biểu đồ thống kê", ModalityType.APPLICATION_MODAL);
-            this.thongKeController = thongKeController;
+            this.thongKeService = thongKeService;
             ngayBatDau = taoBoChonNgay(tu);
             ngayKetThuc = taoBoChonNgay(den);
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -599,7 +599,7 @@ public class ThongKeGUI extends JPanel {
                 lblTrangThai.setText(loi.getMessage());
                 return;
             }
-            String thongBaoLoiKhoangNgay = ThongKeController.loiKhoangNgay(tu, den);
+            String thongBaoLoiKhoangNgay = ThongKeService.loiKhoangNgay(tu, den);
             if (thongBaoLoiKhoangNgay != null) {
                 lblTrangThai.setText(thongBaoLoiKhoangNgay);
                 return;
@@ -613,21 +613,21 @@ public class ThongKeGUI extends JPanel {
             lblTrangThai.setText("Đang nạp dữ liệu cho khoảng thời gian đã chọn...");
             String maChiSo = chiSoChon.ma;
             int loai = loaiBieuDo(cboLoai.getSelectedIndex());
-            new SwingWorker<ThongKeController.KetQuaTaiDuLieu, Void>() {
+            new SwingWorker<ThongKeService.KetQuaTaiDuLieu, Void>() {
                 @Override
-                protected ThongKeController.KetQuaTaiDuLieu doInBackground() {
-                    return thongKeController.taiDuLieu(tu, den);
+                protected ThongKeService.KetQuaTaiDuLieu doInBackground() {
+                    return thongKeService.taiDuLieu(tu, den);
                 }
 
                 @Override
                 protected void done() {
                     try {
-                        ThongKeController.KetQuaTaiDuLieu ketQua = get();
+                        ThongKeService.KetQuaTaiDuLieu ketQua = get();
                         if (!ketQua.isThanhCong()) {
                             throw new IllegalStateException(ketQua.getThongBaoLoi());
                         }
                         ChiSo chiSo = null;
-                        for (ThongKeController.ChiSoBaoCao ketQuaBaoCao : ketQua.getBaoCao().getDanhSachChiSo()) {
+                        for (ThongKeService.ChiSoBaoCao ketQuaBaoCao : ketQua.getBaoCao().getDanhSachChiSo()) {
                             if (ketQuaBaoCao.getMa().equals(maChiSo)) {
                                 chiSo = new ChiSo(ketQuaBaoCao);
                                 break;

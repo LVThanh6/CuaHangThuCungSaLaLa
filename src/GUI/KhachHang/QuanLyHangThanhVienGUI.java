@@ -1,14 +1,14 @@
 package GUI.KhachHang;
 
-import controller.KhachHang.HangThanhVienController;
-import controller.KhachHang.HangThanhVienController.Dashboard;
-import controller.KhachHang.HangThanhVienController.KetQuaCapNhatChinhSach;
-import controller.KhachHang.HangThanhVienController.KetQuaChuyenHang;
-import controller.KhachHang.HangThanhVienController.KetQuaPhanHang;
-import controller.KhachHang.HangThanhVienController.ThongTinDongThanhVien;
-import controller.KhachHang.HangThanhVienController.TierCardModel;
-import controller.KhachHang.HangThanhVienController.TierPolicyFormData;
-import controller.KhachHang.KhachHangController.CustomerDetails;
+import Service.KhachHang.HangThanhVienService;
+import Service.KhachHang.HangThanhVienService.Dashboard;
+import Service.KhachHang.HangThanhVienService.KetQuaCapNhatChinhSach;
+import Service.KhachHang.HangThanhVienService.KetQuaChuyenHang;
+import Service.KhachHang.HangThanhVienService.KetQuaPhanHang;
+import Service.KhachHang.HangThanhVienService.ThongTinDongThanhVien;
+import Service.KhachHang.HangThanhVienService.TierCardModel;
+import Service.KhachHang.HangThanhVienService.TierPolicyFormData;
+import Service.KhachHang.KhachHangService.CustomerDetails;
 import GUI.Chung.RangBuocGiaoDien;
 
 import javax.swing.*;
@@ -59,7 +59,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
     private JPanel panelDanhSachHang;
     private JScrollPane scrollDanhSachHang;
 
-    private final HangThanhVienController controller = new HangThanhVienController();
+    private final HangThanhVienService controller = new HangThanhVienService();
 
     // =========================================================================
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)

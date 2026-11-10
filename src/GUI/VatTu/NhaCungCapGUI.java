@@ -11,10 +11,10 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
-import controller.VatTu.NhaCungCapController;
-import controller.VatTu.NhaCungCapController.OperationResult;
-import controller.VatTu.NhaCungCapController.Supplier;
-import controller.VatTu.NhaCungCapController.SupplierInput;
+import Service.VatTu.NhaCungCapService;
+import Service.VatTu.NhaCungCapService.OperationResult;
+import Service.VatTu.NhaCungCapService.Supplier;
+import Service.VatTu.NhaCungCapService.SupplierInput;
 
 /**
  * Giao dien "Quan ly Nha cung cap" - SALALA Pet Shop.
@@ -44,7 +44,7 @@ public class NhaCungCapGUI extends JPanel {
     private TableRowSorter<TableModel> sorter;
     private JLabel lblTongNCC;
 
-    private final NhaCungCapController controller = new NhaCungCapController();
+    private final NhaCungCapService controller = new NhaCungCapService();
 
     public NhaCungCapGUI() {
         setLayout(new BorderLayout());
@@ -326,7 +326,7 @@ public class NhaCungCapGUI extends JPanel {
             String sdt = txtSDT.getText().trim();
             String email = txtEmail.getText().trim();
 
-            String validationError = NhaCungCapController.validate(
+            String validationError = NhaCungCapService.validate(
                     new SupplierInput(ma, ten, diaChi, sdt, email));
             if (validationError != null) {
                 JOptionPane.showMessageDialog(d, validationError, "Lỗi", JOptionPane.WARNING_MESSAGE);

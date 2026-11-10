@@ -1,10 +1,10 @@
 package GUI.KhachHang;
 
-import controller.KhachHang.KhachHangController;
-import controller.KhachHang.KhachHangController.CustomerDetails;
-import controller.KhachHang.KhachHangController.CustomerStatistics;
-import controller.KhachHang.KhachHangController.KetQuaXoaKhachHang;
-import controller.KhachHang.KhachHangController.KetQuaXuLyKhachHang;
+import Service.KhachHang.KhachHangService;
+import Service.KhachHang.KhachHangService.CustomerDetails;
+import Service.KhachHang.KhachHangService.CustomerStatistics;
+import Service.KhachHang.KhachHangService.KetQuaXoaKhachHang;
+import Service.KhachHang.KhachHangService.KetQuaXuLyKhachHang;
 import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.QuanLyTable;
@@ -56,7 +56,7 @@ public class DanhSachKhachHangGUI extends JPanel {
     private Object[][] duLieuKhachHang;
     private String[] danhSachBoLoc;
 
-    private final KhachHangController controller = new KhachHangController();
+    private final KhachHangService controller = new KhachHangService();
 
     // =========================================================================
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
@@ -269,10 +269,10 @@ public class DanhSachKhachHangGUI extends JPanel {
                         JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
                         lbl.setFont(RangBuocGiaoDien.fontDam(12));
                         String valStr = val != null ? val.toString() : "";
-                        lbl.setForeground(KhachHangController.layMauHang(valStr));
+                        lbl.setForeground(KhachHangService.layMauHang(valStr));
                         lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
                         if (!isSel) {
-                            lbl.setBackground(KhachHangController.layMauNenDong(r));
+                            lbl.setBackground(KhachHangService.layMauNenDong(r));
                         }
                         return lbl;
                     }
@@ -304,7 +304,7 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     /**
-     * Tải dữ liệu thực tế từ cơ sở dữ liệu SALALA qua KhachHangController
+     * Tải dữ liệu thực tế từ cơ sở dữ liệu SALALA qua KhachHangService
      */
     public void taiDuLieuTuDatabase() {
         duLieuKhachHang = controller.taiDuLieuBang();

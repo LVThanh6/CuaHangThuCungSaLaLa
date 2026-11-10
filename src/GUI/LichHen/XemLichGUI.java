@@ -2,7 +2,7 @@ package GUI.LichHen;
 
 import GUI.Chung.TableMau;
 import GUI.Chung.RangBuocGiaoDien;
-import controller.LichHen.XemLichController;
+import Service.LichHen.XemLichService;
 import entity.DichVu.DichVu_entity;
 import entity.LichHen.LichHen_entity;
 import entity.NhanVien.NhanVien_entity;
@@ -76,7 +76,7 @@ public class XemLichGUI extends JPanel {
     };
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm");
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-    private final XemLichController controller = new XemLichController();
+    private final XemLichService controller = new XemLichService();
     private List<LichHen_entity> danhSachLichHen = new ArrayList<>();
     private List<LichHen_entity> danhSachDangHienThi = new ArrayList<>();
     private LocalDate tuNgay;
@@ -373,7 +373,7 @@ public class XemLichGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            XemLichController.DuLieuManHinh duLieu = controller.taiDuLieu();
+            XemLichService.DuLieuManHinh duLieu = controller.taiDuLieu();
             danhSachLichHen = duLieu.lichHen;
             List<NhanVien_entity> nhanVien = duLieu.nhanVien;
             Object selected = cboBacSi.getSelectedItem();
@@ -421,7 +421,7 @@ public class XemLichGUI extends JPanel {
 
     private void capNhatThongKeTuDuLieu() {
         LocalDate homNay = LocalDate.now();
-        XemLichController.ThongKe thongKe = controller.thongKeHomNay(danhSachLichHen, homNay);
+        XemLichService.ThongKe thongKe = controller.thongKeHomNay(danhSachLichHen, homNay);
         capNhatThongKe(DINH_DANG_NGAY.format(homNay), thongKe.tong, thongKe.choKham,
                 thongKe.dangKham, thongKe.daKham, thongKe.daHuy);
     }
@@ -438,7 +438,7 @@ public class XemLichGUI extends JPanel {
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
             return;
         try {
-            XemLichController.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            XemLichService.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
             tuNgay = khoang.tuNgay;
             denNgay = khoang.denNgay;
             nhanNgayLoc.setText(tuNgay == null && denNgay == null ? "Ngày: Tất cả"
@@ -568,7 +568,7 @@ public class XemLichGUI extends JPanel {
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
                 return;
             NhanVien_entity nv = (NhanVien_entity) cboNhanVien.getSelectedItem();
-            if (controller.capNhat(lich, new XemLichController.ThongTinCapNhat(
+            if (controller.capNhat(lich, new XemLichService.ThongTinCapNhat(
                     txtNgayGio.getText(), nv, txtLyDo.getText(), txtLoaiHen.getText(),
                     (DichVu_entity) cboDichVu.getSelectedItem(),
                     String.valueOf(cboTrangThai.getSelectedItem()), txtGhiChu.getText()))) {
@@ -600,18 +600,18 @@ public class XemLichGUI extends JPanel {
             return;
 
         try {
-            XemLichController.KetQuaHuyLich ketQua = controller.huy(lichChon.getMaLichHen());
-            if (ketQua == XemLichController.KetQuaHuyLich.KHONG_TIM_THAY) {
+            XemLichService.KetQuaHuyLich ketQua = controller.huy(lichChon.getMaLichHen());
+            if (ketQua == XemLichService.KetQuaHuyLich.KHONG_TIM_THAY) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn để hủy.",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (ketQua == XemLichController.KetQuaHuyLich.DA_HUY) {
+            if (ketQua == XemLichService.KetQuaHuyLich.DA_HUY) {
                 JOptionPane.showMessageDialog(this, "Lịch hẹn này đã được hủy trước đó.",
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            if (ketQua == XemLichController.KetQuaHuyLich.THANH_CONG) {
+            if (ketQua == XemLichService.KetQuaHuyLich.THANH_CONG) {
                 JOptionPane.showMessageDialog(this, "Đã hủy lịch hẹn.",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 loadDataToTable();

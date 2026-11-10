@@ -1,7 +1,7 @@
 package GUI.HoaDon;
 
 import entity.HoaDon.HoaDon_entity;
-import controller.HoaDon.DSHoaDonController;
+import Service.HoaDon.DSHoaDonService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,7 +18,7 @@ import java.util.List;
 
 public class DSHoaDon_gui extends JPanel {
 
-    private final DSHoaDonController controller = new DSHoaDonController();
+    private final DSHoaDonService controller = new DSHoaDonService();
 
     private final Color XANH = Color.decode("#0F766E");
     private final Color NEN = new Color(248, 250, 252);
@@ -358,7 +358,7 @@ public class DSHoaDon_gui extends JPanel {
 
     // ==================CẬP NHẬT THỐNG KÊ==================
     private void capNhatThongKe(ArrayList<HoaDon_entity> ds) {
-        DSHoaDonController.ThongKe thongKe = controller.thongKe(ds);
+        DSHoaDonService.ThongKe thongKe = controller.thongKe(ds);
         lblTong.setText(String.valueOf(thongKe.getTongSo()));
         lblDaThanhToan.setText(String.valueOf(thongKe.getDaThanhToan()));
         lblChuaThanhToan.setText(String.valueOf(thongKe.getChuaThanhToan()));
