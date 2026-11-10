@@ -60,7 +60,7 @@ public class NhaCungCapGUI extends JPanel {
         JPanel left = new JPanel();
         left.setOpaque(false);
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-        JLabel t = new JLabel("Quan ly Nha cung cap");
+        JLabel t = new JLabel("Quản lí nhà cung cấp");
         t.setFont(new Font(FONT, Font.BOLD, 18));
         t.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         JLabel s = new JLabel("Them, sua, xoa thong tin nha cung cap vat tu");
