@@ -1,5 +1,6 @@
 package GUI.DichVu;
 
+import GUI.Chung.RangBuocGiaoDien;
 import Service.DichVu.KhuyenMaiService;
 import Service.DichVu.KhuyenMaiService.Status;
 import entity.DichVu.KhuyenMai_Entity;
@@ -39,22 +40,6 @@ import java.util.Set;
 public class KhuyenMaiGUI extends JPanel {
 
     // ===== Màu sắc =====
-    private static final Color XANH = new Color(0x0F6B5C);
-    private static final Color XANH_BG = new Color(0xDDF3EE);
-    private static final Color NEN = new Color(0xF8FAFA);
-    private static final Color VIEN = new Color(0xE5E7EB);
-    private static final Color CHU = new Color(0x111827);
-    private static final Color XAM = new Color(0x6B7280);
-    private static final Color DO = new Color(0xDC2626);
-
-    private static final Color LUC_BG = new Color(0xDCFCE7);
-    private static final Color LUC = new Color(0x047857);
-    private static final Color LAM_BG = new Color(0xDBEAFE);
-    private static final Color LAM = new Color(0x1D4ED8);
-    private static final Color TIM_BG = new Color(0xEDE9FE);
-    private static final Color TIM = new Color(0x6D28D9);
-    private static final Color XAM_BG = new Color(0xF3F4F6);
-    private static final Color XAM_DAM = new Color(0x4B5563);
 
     private static final String FONT = "Segoe UI";
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -87,7 +72,7 @@ public class KhuyenMaiGUI extends JPanel {
 
     public KhuyenMaiGUI() {
         setLayout(new BorderLayout(0, 14));
-        setBackground(NEN);
+        setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         setBorder(new EmptyBorder(16, 20, 20, 20));
 
         JPanel tren = new JPanel(new BorderLayout(0, 14));
@@ -110,14 +95,14 @@ public class KhuyenMaiGUI extends JPanel {
         trai.setLayout(new BoxLayout(trai, BoxLayout.Y_AXIS));
         JLabel lblSub = new JLabel("Dịch vụ / Khuyến mãi");
         lblSub.setFont(new Font(FONT, Font.PLAIN, 12));
-        lblSub.setForeground(XAM);
+        lblSub.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         JLabel lblTitle = new JLabel("Khuyến mãi");
         lblTitle.setFont(new Font(FONT, Font.BOLD, 22));
-        lblTitle.setForeground(CHU);
+        lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         JLabel lblMoTa = new JLabel(
                 "Thiết lập ưu đãi theo thời gian, điều kiện áp dụng và theo dõi hiệu lực chương trình.");
         lblMoTa.setFont(new Font(FONT, Font.PLAIN, 12));
-        lblMoTa.setForeground(XAM);
+        lblMoTa.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         lblSub.setAlignmentX(LEFT_ALIGNMENT);
         lblTitle.setAlignmentX(LEFT_ALIGNMENT);
         lblMoTa.setAlignmentX(LEFT_ALIGNMENT);
@@ -127,7 +112,7 @@ public class KhuyenMaiGUI extends JPanel {
         trai.add(Box.createVerticalStrut(2));
         trai.add(lblMoTa);
 
-        RoundButton btnThem = new RoundButton("Thêm khuyến mãi", XANH, XANH, Color.WHITE);
+        RoundButton btnThem = new RoundButton("Thêm khuyến mãi", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
         btnThem.addActionListener(e -> moForm(null, CheDo.THEM));
         JPanel phai = new JPanel(new GridBagLayout());
         phai.setOpaque(false);
@@ -159,14 +144,14 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private JComponent theThongKe(String bieuTuong, String tieuDe, JLabel giaTri, String phu) {
-        RoundedPanel card = new RoundedPanel(12, Color.WHITE, VIEN);
+        RoundedPanel card = new RoundedPanel(12, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
         card.setLayout(new BorderLayout(12, 0));
         card.setBorder(new EmptyBorder(14, 14, 14, 14));
 
         JLabel ic = new JLabel(bieuTuong, SwingConstants.CENTER);
         ic.setFont(new Font("Segoe UI Symbol", Font.BOLD, 16));
-        ic.setForeground(XANH);
-        RoundedPanel icBox = new RoundedPanel(10, XANH_BG, XANH_BG);
+        ic.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
+        RoundedPanel icBox = new RoundedPanel(10, RangBuocGiaoDien.MAU_CHU_DAO_NHAT, RangBuocGiaoDien.MAU_CHU_DAO_NHAT);
         icBox.setLayout(new BorderLayout());
         icBox.setPreferredSize(new Dimension(38, 38));
         icBox.add(ic, BorderLayout.CENTER);
@@ -176,12 +161,12 @@ public class KhuyenMaiGUI extends JPanel {
 
         JLabel t = new JLabel(tieuDe);
         t.setFont(new Font(FONT, Font.PLAIN, 12));
-        t.setForeground(XAM);
+        t.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         giaTri.setFont(new Font(FONT, Font.BOLD, 22));
-        giaTri.setForeground(CHU);
+        giaTri.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         JLabel s = new JLabel(phu);
         s.setFont(new Font(FONT, Font.PLAIN, 11));
-        s.setForeground(XAM);
+        s.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
 
         FlowLayout fl = new FlowLayout(FlowLayout.LEFT, 8, 0);
         fl.setAlignOnBaseline(true);
@@ -215,7 +200,7 @@ public class KhuyenMaiGUI extends JPanel {
     // Khung danh sách: bộ lọc + bảng
     // =====================================================================
     private JComponent taoKhungDanhSach() {
-        RoundedPanel box = new RoundedPanel(12, Color.WHITE, VIEN);
+        RoundedPanel box = new RoundedPanel(12, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
         box.setLayout(new BorderLayout());
 
         // ---- thanh lọc ----
@@ -227,11 +212,11 @@ public class KhuyenMaiGUI extends JPanel {
                 "Trạng thái: Tất cả", "Trạng thái: Đang áp dụng", "Trạng thái: Sắp diễn ra",
                 "Trạng thái: Tạm dừng", "Trạng thái: Hết hạn" });
         cboTrangThai.setFont(new Font(FONT, Font.PLAIN, 12));
-        cboTrangThai.setBackground(Color.WHITE);
+        cboTrangThai.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         cboTrangThai.setPreferredSize(new Dimension(190, 34));
         cboTrangThai.addActionListener(e -> hienThi(true));
 
-        btnThoiGian = new RoundButton("Thời gian: Tất cả", Color.WHITE, VIEN, CHU);
+        btnThoiGian = new RoundButton("Thời gian: Tất cả", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
         btnThoiGian.setFont(new Font(FONT, Font.PLAIN, 12));
         btnThoiGian.setPreferredSize(new Dimension(230, 34));
         btnThoiGian.addActionListener(e -> chonThoiGian());
@@ -242,10 +227,10 @@ public class KhuyenMaiGUI extends JPanel {
         locTrai.add(cboTrangThai);
         locTrai.add(btnThoiGian);
 
-        RoundButton btnSua = new RoundButton("Sửa", Color.WHITE, VIEN, CHU);
-        RoundButton btnNhanBan = new RoundButton("Nhân bản", XANH, XANH, Color.WHITE);
-        RoundButton btnTamNgung = new RoundButton("Tạm ngưng", DO, DO, Color.WHITE);
-        RoundButton btnXuat = new RoundButton("Xuất danh sách", Color.WHITE, VIEN, CHU);
+        RoundButton btnSua = new RoundButton("Sửa", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
+        RoundButton btnNhanBan = new RoundButton("Nhân bản", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
+        RoundButton btnTamNgung = new RoundButton("Tạm ngưng", RangBuocGiaoDien.MAU_CANH_BAO_DO, RangBuocGiaoDien.MAU_CANH_BAO_DO, RangBuocGiaoDien.MAU_NEN_THE);
+        RoundButton btnXuat = new RoundButton("Xuất danh sách", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
 
         btnSua.addActionListener(e -> {
             int sel = table.getSelectedRow();
@@ -313,10 +298,10 @@ public class KhuyenMaiGUI extends JPanel {
         table.setFont(new Font(FONT, Font.PLAIN, 12));
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
-        table.setGridColor(new Color(0xF0F1F3));
+        table.setGridColor(RangBuocGiaoDien.MAU_LUOI_BANG);
         table.setIntercellSpacing(new Dimension(0, 1));
-        table.setSelectionBackground(new Color(0xE8F5F2));
-        table.setSelectionForeground(CHU);
+        table.setSelectionBackground(RangBuocGiaoDien.MAU_CHU_DAO_NHAT);
+        table.setSelectionForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         table.setFillsViewportHeight(true);
         table.setFocusable(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -326,13 +311,13 @@ public class KhuyenMaiGUI extends JPanel {
         h.setPreferredSize(new Dimension(0, 36));
         h.setDefaultRenderer(new HeaderRenderer(2));
 
-        table.getColumnModel().getColumn(0).setCellRenderer(new Cell(XANH, Font.BOLD, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(1).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(2).setCellRenderer(new Cell(CHU, Font.BOLD, SwingConstants.RIGHT));
-        table.getColumnModel().getColumn(3).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(4).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(5).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(6).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(0).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_DAO, Font.BOLD, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(1).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(2).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_CHINH, Font.BOLD, SwingConstants.RIGHT));
+        table.getColumnModel().getColumn(3).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(4).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(5).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(6).setCellRenderer(new Cell(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(7).setCellRenderer(new StatusRenderer());
         int[] rong = { 95, 160, 95, 80, 95, 95, 210, 110 };
         for (int i = 0; i < rong.length; i++) {
@@ -340,18 +325,18 @@ public class KhuyenMaiGUI extends JPanel {
         }
 
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, VIEN));
-        sp.getViewport().setBackground(Color.WHITE);
+        sp.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
+        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
         // ---- chân bảng ----
         lblHienThi = new JLabel();
         lblHienThi.setFont(new Font(FONT, Font.PLAIN, 12));
-        lblHienThi.setForeground(XAM);
+        lblHienThi.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         JLabel ghiChu = new JLabel(
                 "Trạng thái được cập nhật tự động theo thời gian; chương trình tạm dừng cần kích hoạt thủ công");
         ghiChu.setFont(new Font(FONT, Font.PLAIN, 11));
-        ghiChu.setForeground(XAM);
+        ghiChu.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         JPanel chanTrai = new JPanel();
         chanTrai.setOpaque(false);
         chanTrai.setLayout(new BoxLayout(chanTrai, BoxLayout.Y_AXIS));
@@ -364,7 +349,7 @@ public class KhuyenMaiGUI extends JPanel {
         JPanel chan = new JPanel(new BorderLayout());
         chan.setOpaque(false);
         chan.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, VIEN),
+                BorderFactory.createMatteBorder(1, 0, 0, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
                 new EmptyBorder(10, 16, 10, 12)));
         chan.add(chanTrai, BorderLayout.WEST);
 
@@ -521,7 +506,7 @@ public class KhuyenMaiGUI extends JPanel {
 
         JPanel p = new JPanel(new GridBagLayout());
         p.setBorder(new EmptyBorder(16, 20, 16, 20));
-        p.setBackground(Color.WHITE);
+        p.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         GridBagConstraints gc = new GridBagConstraints();
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.weightx = 1;
@@ -555,8 +540,8 @@ public class KhuyenMaiGUI extends JPanel {
             p.add(truong[i], gc);
         }
 
-        RoundButton btnLuu = new RoundButton("Lưu", XANH, XANH, Color.WHITE);
-        RoundButton btnHuy = new RoundButton("Hủy", Color.WHITE, VIEN, CHU);
+        RoundButton btnLuu = new RoundButton("Lưu", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
+        RoundButton btnHuy = new RoundButton("Hủy", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
         btnHuy.addActionListener(e -> dlg.dispose());
         btnLuu.addActionListener(e -> {
             try {
@@ -582,12 +567,12 @@ public class KhuyenMaiGUI extends JPanel {
         pPhai.add(btnLuu);
 
         JPanel pBtn = new JPanel(new BorderLayout());
-        pBtn.setBackground(Color.WHITE);
+        pBtn.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         pBtn.setBorder(new EmptyBorder(0, 20, 14, 20));
         pBtn.add(pPhai, BorderLayout.EAST);
 
         if (sua) { // vẫn giữ chức năng xóa của bản cũ, đặt trong form chỉnh sửa
-            RoundButton btnXoa = new RoundButton("Xóa", Color.WHITE, new Color(0xFCA5A5), DO);
+            RoundButton btnXoa = new RoundButton("Xóa", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_NGUY_HIEM_CHAM, RangBuocGiaoDien.MAU_CANH_BAO_DO);
             btnXoa.addActionListener(e -> {
                 int kq = JOptionPane.showConfirmDialog(dlg,
                         "Xóa khuyến mãi " + mau.getTenKM() + " (" + mau.getMaKM() + ")?",
@@ -633,10 +618,10 @@ public class KhuyenMaiGUI extends JPanel {
             super.getTableCellRendererComponent(t, v, false, false, r, c);
             setHorizontalAlignment(phai.contains(c) ? SwingConstants.RIGHT : SwingConstants.LEFT);
             setFont(new Font(FONT, Font.BOLD, 11));
-            setForeground(XAM);
-            setBackground(new Color(0xF9FAFB));
+            setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+            setBackground(RangBuocGiaoDien.MAU_TIEU_DE_BANG);
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, VIEN),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
                     new EmptyBorder(0, 12, 0, 12)));
             return this;
         }
@@ -681,13 +666,13 @@ public class KhuyenMaiGUI extends JPanel {
             String s = v == null ? "" : v.toString();
             badge.setText(s);
             if (Status.ACTIVE.label.equals(s))
-                badge.setColors(LUC_BG, LUC);
+                badge.setColors(RangBuocGiaoDien.MAU_THANH_CONG_NEN, RangBuocGiaoDien.MAU_THANH_CONG_CHU);
             else if (Status.UPCOMING.label.equals(s))
-                badge.setColors(LAM_BG, LAM);
+                badge.setColors(RangBuocGiaoDien.MAU_THONG_TIN_NEN, RangBuocGiaoDien.MAU_THONG_TIN_CHU);
             else if (Status.PAUSED.label.equals(s))
-                badge.setColors(TIM_BG, TIM);
+                badge.setColors(RangBuocGiaoDien.MAU_CHU_DAO_NHAT, RangBuocGiaoDien.MAU_CHU_DAO);
             else
-                badge.setColors(XAM_BG, XAM_DAM);
+                badge.setColors(RangBuocGiaoDien.MAU_TRUNG_TINH_NEN, RangBuocGiaoDien.MAU_TRUNG_TINH_CHU);
             panel.setOpaque(true);
             panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
             return panel;
@@ -695,7 +680,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private static class Badge extends JLabel {
-        private Color bg = XAM_BG;
+        private Color bg = RangBuocGiaoDien.MAU_TRUNG_TINH_NEN;
 
         Badge() {
             setOpaque(false);
@@ -741,7 +726,7 @@ public class KhuyenMaiGUI extends JPanel {
         @Override
         public void setEnabled(boolean b) {
             super.setEnabled(b);
-            setForeground(b ? fg : new Color(0x9CA3AF));
+            setForeground(b ? fg : RangBuocGiaoDien.MAU_CHU_GOI_Y);
             setCursor(Cursor.getPredefinedCursor(b ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
         }
 
@@ -750,9 +735,9 @@ public class KhuyenMaiGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             boolean en = isEnabled();
-            g2.setColor(en ? fill : XAM_BG);
+            g2.setColor(en ? fill : RangBuocGiaoDien.MAU_TRUNG_TINH_NEN);
             g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
-            g2.setColor(en ? line : VIEN);
+            g2.setColor(en ? line : RangBuocGiaoDien.MAU_DUONG_VIEN);
             g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
             g2.dispose();
             super.paintComponent(g);
@@ -792,7 +777,7 @@ public class KhuyenMaiGUI extends JPanel {
             this.hint = hint;
             setFont(new Font(FONT, Font.PLAIN, 12));
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(VIEN, 1, true),
+                    BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
                     new EmptyBorder(0, 32, 0, 8)));
         }
 
@@ -802,12 +787,12 @@ public class KhuyenMaiGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             int cy = getHeight() / 2;
-            g2.setColor(XAM);
+            g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
             g2.setStroke(new BasicStroke(1.4f));
             g2.draw(new Ellipse2D.Double(12, cy - 6, 8, 8));
             g2.drawLine(19, cy + 1, 23, cy + 5);
             if (getText().isEmpty()) {
-                g2.setColor(new Color(0x9CA3AF));
+                g2.setColor(RangBuocGiaoDien.MAU_CHU_GOI_Y);
                 g2.setFont(getFont());
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(hint, 32, cy + (fm.getAscent() - fm.getDescent()) / 2);
