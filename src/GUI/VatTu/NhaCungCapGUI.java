@@ -6,8 +6,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 
@@ -31,6 +29,7 @@ public class NhaCungCapGUI extends JPanel {
     private DefaultTableModel model;
     private TableRowSorter<TableModel> sorter;
     private JLabel lblTongNCC;
+    private RoundButton btnSua, btnXoa;
 
     private final NhaCungCapService service = new NhaCungCapService();
 
@@ -105,6 +104,16 @@ public class NhaCungCapGUI extends JPanel {
         txtSearch.getDocument().addDocumentListener(new SimpleDocListener(this::applyFilter));
         filter.add(txtSearch);
 
+        btnSua = new RoundButton("Sửa", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN, RangBuocGiaoDien.MAU_CHU_CHINH);
+        btnSua.setEnabled(false);
+        btnSua.addActionListener(e -> suaDongDangChon());
+        filter.add(btnSua);
+
+        btnXoa = new RoundButton("Xóa", RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_NGUY_HIEM_CHAM, RangBuocGiaoDien.MAU_NGUY_HIEM_CHU);
+        btnXoa.setEnabled(false);
+        btnXoa.addActionListener(e -> xoaDongDangChon());
+        filter.add(btnXoa);
+
         JPanel filterWrap = new JPanel(new BorderLayout());
         filterWrap.setOpaque(false);
         filterWrap.setBorder(new EmptyBorder(0, 6, 0, 6));
@@ -112,7 +121,7 @@ public class NhaCungCapGUI extends JPanel {
         filterWrap.add(new JSeparator(), BorderLayout.SOUTH);
 
         // ---- bang ----
-        String[] cols = { "MA NCC", "TEN NHA CUNG CAP", "DIA CHI", "SO DIEN THOAI", "EMAIL", "THAO TAC" };
+        String[] cols = { "MA NCC", "TEN NHA CUNG CAP", "DIA CHI", "SO DIEN THOAI", "EMAIL" };
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
@@ -151,39 +160,16 @@ public class NhaCungCapGUI extends JPanel {
                 .setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(4)
                 .setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_PHU, Font.PLAIN, SwingConstants.LEFT));
-        table.getColumnModel().getColumn(5).setCellRenderer(new ActionRenderer());
 
-        int[] widths = { 90, 220, 200, 130, 180, 120 };
+        int[] widths = { 100, 240, 220, 140, 200 };
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
 
-        // Click handler cho cot Thao tac
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
-                if (row < 0 || col != 5)
-                    return;
-                int modelRow = table.convertRowIndexToModel(row);
-                String maNCC = (String) model.getValueAt(modelRow, 0);
-
-                int relX = e.getX() - table.getCellRect(row, col, false).x;
-                if (relX < 50) {
-                    suaNhaCungCap(modelRow);
-                } else {
-                    xoaNhaCungCap(modelRow, maNCC);
-                }
-            }
-        });
-        table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                int c = table.columnAtPoint(e.getPoint());
-                int r = table.rowAtPoint(e.getPoint());
-                boolean hand = c == 5 && r >= 0;
-                table.setCursor(Cursor.getPredefinedCursor(hand ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+        // Chon dong -> bat nut Sua / Xoa canh o tim kiem
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                capNhatNutThaoTac();
             }
         });
 
@@ -206,10 +192,11 @@ public class NhaCungCapGUI extends JPanel {
         for (Supplier supplier : suppliers) {
             model.addRow(new Object[] {
                     supplier.getCode(), supplier.getName(), supplier.getAddress(),
-                    supplier.getPhone(), supplier.getEmail(), ""
+                    supplier.getPhone(), supplier.getEmail()
             });
         }
         lblTongNCC.setText(suppliers.size() + " nha cung cap");
+        capNhatNutThaoTac();
     }
 
     // =====================================================================
@@ -267,6 +254,36 @@ public class NhaCungCapGUI extends JPanel {
         } else {
             JOptionPane.showMessageDialog(this, result.getError(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    // =====================================================================
+    // Sua / Xoa dong dang chon (nut canh o tim kiem)
+    // =====================================================================
+    private void capNhatNutThaoTac() {
+        boolean coChon = table.getSelectedRow() >= 0;
+        btnSua.setEnabled(coChon);
+        btnXoa.setEnabled(coChon);
+    }
+
+    private void suaDongDangChon() {
+        int viewRow = table.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần sửa.", "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        suaNhaCungCap(table.convertRowIndexToModel(viewRow));
+    }
+
+    private void xoaDongDangChon() {
+        int viewRow = table.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần xóa.", "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        int modelRow = table.convertRowIndexToModel(viewRow);
+        xoaNhaCungCap(modelRow, (String) model.getValueAt(modelRow, 0));
     }
 
     // =====================================================================
@@ -424,31 +441,6 @@ public class NhaCungCapGUI extends JPanel {
         }
     }
 
-    private static class ActionRenderer implements TableCellRenderer {
-        private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-
-        ActionRenderer() {
-            panel.setBorder(new EmptyBorder(11, 12, 0, 0));
-            panel.add(link("Sua", RangBuocGiaoDien.MAU_CHU_DAO));
-            panel.add(link("Xoa", RangBuocGiaoDien.MAU_NGUY_HIEM_CHU));
-        }
-
-        private static JLabel link(String text, Color color) {
-            JLabel l = new JLabel(text);
-            l.setFont(new Font(FONT, Font.BOLD, 12));
-            l.setForeground(color);
-            l.setPreferredSize(new Dimension(46, 20));
-            return l;
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
-            panel.setOpaque(true);
-            panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
-            return panel;
-        }
-    }
-
     // =====================================================================
     // Component phu
     // =====================================================================
@@ -498,6 +490,9 @@ public class NhaCungCapGUI extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            if (!isEnabled()) {
+                g2.setComposite(AlphaComposite.SrcOver.derive(0.45f));
+            }
             g2.setColor(fill);
             g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
             g2.setColor(line);
