@@ -6,13 +6,13 @@ import java.util.Objects;
 
 public class VatTu_entity {
 	private String maVT;
-    private NhaCungCap_entity maNCC;
-    private String tenVT;
-    private int soLuongTon;
-    private String trangThai;
-    private double giaBanCoBan;
-    private double giaNhap;
-    private Thuoc_entity maThuoc;
+	private NhaCungCap_entity maNCC;
+	private String tenVT;
+	private int soLuongTon;
+	private String trangThai;
+	private double giaBanCoBan;
+	private double giaNhap;
+	private Thuoc_entity maThuoc;
 
 	public VatTu_entity() {
 		super();
@@ -53,7 +53,7 @@ public class VatTu_entity {
 	public void setMaVT(String maVT) {
 		this.maVT = maVT;
 	}
-	
+
 	public NhaCungCap_entity getMaNCC() {
 		return maNCC;
 	}
@@ -65,51 +65,65 @@ public class VatTu_entity {
 	public void setMaNCC(String maNCC) {
 		this.maNCC = maNCC != null ? new NhaCungCap_entity(maNCC, "", "", "", "") : null;
 	}
-	
+
 	public String getTenVT() {
 		return tenVT;
 	}
+
 	public void setTenVT(String tenVT) {
 		this.tenVT = tenVT;
 	}
+
 	public int getSoLuongTon() {
 		return soLuongTon;
 	}
+
 	public void setSoLuongTon(int soLuongTon) {
 		this.soLuongTon = soLuongTon;
 	}
+
 	public String getTrangThai() {
 		return trangThai;
 	}
+
 	public void setTrangThai(String trangThai) {
 		this.trangThai = trangThai;
 	}
+
 	public double getGiaBanCoBan() {
 		return giaBanCoBan;
 	}
+
 	public void setGiaBanCoBan(double giaBanCoBan) {
 		this.giaBanCoBan = giaBanCoBan;
 	}
+
 	public double getGiaNhap() {
 		return giaNhap;
 	}
+
 	public void setGiaNhap(double giaNhap) {
 		this.giaNhap = giaNhap;
 	}
+
 	public Thuoc_entity getMaThuoc() {
 		return maThuoc;
 	}
+
 	public void setMaThuoc(Thuoc_entity maThuoc) {
 		this.maThuoc = maThuoc;
 	}
+
 	public void setMaThuoc(String maThuoc) {
 		this.maThuoc = maThuoc != null ? new Thuoc_entity(maThuoc) : null;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		VatTu_entity that = (VatTu_entity) o;
 		return Objects.equals(maVT, that.maVT);
 	}

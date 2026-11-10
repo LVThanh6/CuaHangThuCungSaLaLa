@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,51 @@ import connectDB.ConnectDB;
 import entity.BacSi.BacSi_entity;
 
 public class BacSi_DAO {
+
+    /** Một dòng lịch làm việc của bác sĩ (bảng LichLamViec). */
+    public static class LichLamViecDong {
+        public final LocalDate ngay;
+        public final LocalTime gioBatDau, gioKetThuc;
+        public final String trangThai;
+
+        public LichLamViecDong(LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc, String trangThai) {
+            this.ngay = ngay;
+            this.gioBatDau = gioBatDau;
+            this.gioKetThuc = gioKetThuc;
+            this.trangThai = trangThai;
+        }
+    }
+
+    /**
+     * Lịch làm việc của bác sĩ trong khoảng [tu, den) - den không bao gồm.
+     */
+    public List<LichLamViecDong> getLichLamViec(String maBacSi, LocalDate tu, LocalDate den) throws SQLException {
+        List<LichLamViecDong> ds = new ArrayList<>();
+        if (maBacSi == null || maBacSi.isBlank() || tu == null || den == null) return ds;
+        Connection con = ConnectDB.getCon();
+        if (con == null) return ds;
+
+        String sql = "SELECT ngay, gioBatDau, gioKetThuc, trangThai FROM LichLamViec " +
+                     "WHERE maBacSi = ? AND ngay >= ? AND ngay < ? ORDER BY ngay, gioBatDau";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maBacSi.trim());
+            ps.setDate(2, Date.valueOf(tu));
+            ps.setDate(3, Date.valueOf(den));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Date n = rs.getDate("ngay");
+                    java.sql.Time b = rs.getTime("gioBatDau");
+                    java.sql.Time k = rs.getTime("gioKetThuc");
+                    ds.add(new LichLamViecDong(
+                        n != null ? n.toLocalDate() : null,
+                        b != null ? b.toLocalTime() : null,
+                        k != null ? k.toLocalTime() : null,
+                        rs.getString("trangThai")));
+                }
+            }
+        }
+        return ds;
+    }
 
     /**
      * Lấy toàn bộ danh sách bác sĩ kèm trạng thái tài khoản và tổng số ca khám tháng hiện tại

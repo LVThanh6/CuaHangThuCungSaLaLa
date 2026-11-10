@@ -6,7 +6,7 @@ import GUI.GiaoDienChinhGUI;
 import GUI.ThuCung.HoSoThuCungGUI.NutBoTron;
 import GUI.ThuCung.HoSoThuCungGUI.OTimKiemGoiY;
 import GUI.ThuCung.HoSoThuCungGUI.PanelBoTron;
-import controller.LichSuKhamController;
+import Service.ThuCung.LichSuKhamService;
 import entity.BacSi.BacSi_entity;
 import entity.ThuCung.HoSoSucKhoe_entity;
 import entity.ThuCung.ThuCung_entity;
@@ -27,9 +27,11 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * Class LichSuKhamGUI: Giao diện "Lịch sử khám" (Tab Thú cưng ➔ Lịch sử khám).
- * Quản lý hồ sơ sức khỏe và lịch sử khám thông qua controller.
- * Các trường hiển thị dựa theo bảng HoSoSucKhoe (kết hợp ThuCung, KhachHang, BacSyThuY).
- * Dùng lại các thành phần PanelBoTron, NutBoTron, OTimKiemGoiY của HoSoThuCungGUI.
+ * Quản lý hồ sơ sức khỏe và lịch sử khám thông qua service.
+ * Các trường hiển thị dựa theo bảng HoSoSucKhoe (kết hợp ThuCung, KhachHang,
+ * BacSyThuY).
+ * Dùng lại các thành phần PanelBoTron, NutBoTron, OTimKiemGoiY của
+ * HoSoThuCungGUI.
  */
 public class LichSuKhamGUI extends JPanel {
 
@@ -51,7 +53,7 @@ public class LichSuKhamGUI extends JPanel {
             "Chẩn đoán", "Cân nặng (kg)", "Bác sĩ phụ trách" };
     private final String[] dsBacSiLoc = { "Bác sĩ: Tất cả" };
     private final String[] dsThoiGianLoc = { "Thời gian: Tất cả", "Hôm nay", "7 ngày qua", "Tháng này" };
-    private final LichSuKhamController controller = new LichSuKhamController();
+    private final LichSuKhamService service = new LichSuKhamService();
     private List<HoSoSucKhoe_entity> danhSachHoSo = new ArrayList<>();
     private List<HoSoSucKhoe_entity> danhSachDangHienThi = new ArrayList<>();
     private LocalDate tuNgay;
@@ -338,11 +340,19 @@ public class LichSuKhamGUI extends JPanel {
         cboThoiGian.addActionListener(e -> locDuLieu());
         txtTimKiem.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                locDuLieu();
+            }
+
             @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                locDuLieu();
+            }
+
             @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { locDuLieu(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                locDuLieu();
+            }
         });
         bangLichSuKham.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -357,7 +367,7 @@ public class LichSuKhamGUI extends JPanel {
 
     public void loadDataToTable() {
         try {
-            LichSuKhamController.DuLieuManHinh duLieu = controller.taiDuLieu();
+            LichSuKhamService.DuLieuManHinh duLieu = service.taiDuLieu();
             danhSachHoSo = duLieu.hoSo;
             List<BacSi_entity> bacSi = duLieu.bacSi;
             Object selected = cboBacSi.getSelectedItem();
@@ -380,17 +390,18 @@ public class LichSuKhamGUI extends JPanel {
     }
 
     private void locDuLieu() {
-        if (bangLichSuKham == null) return;
+        if (bangLichSuKham == null)
+            return;
         String doctor = String.valueOf(cboBacSi.getSelectedItem());
         String time = String.valueOf(cboThoiGian.getSelectedItem());
         LocalDate today = LocalDate.now();
-        danhSachDangHienThi =
-                controller.loc(danhSachHoSo, txtTimKiem.getText(), doctor, time, tuNgay, denNgay, today);
+        danhSachDangHienThi = service.loc(danhSachHoSo, txtTimKiem.getText(), doctor, time, tuNgay, denNgay, today);
         DefaultTableModel model = (DefaultTableModel) bangLichSuKham.getModel();
         model.setRowCount(0);
         for (HoSoSucKhoe_entity hs : danhSachDangHienThi) {
             model.addRow(new Object[] { hs.getMaHSSK(),
-                    value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")", value(hs.getChuHo()),
+                    value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")",
+                    value(hs.getChuHo()),
                     hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()),
                     value(hs.getTrieuChung()), value(hs.getChuanDoan()),
                     hs.getCanNang() == null ? "" : hs.getCanNang().toPlainString(), value(hs.getTenBacSi()) });
@@ -401,7 +412,7 @@ public class LichSuKhamGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        LichSuKhamController.ThongKe thongKe = controller.thongKe(danhSachHoSo, LocalDate.now());
+        LichSuKhamService.ThongKe thongKe = service.thongKe(danhSachHoSo, LocalDate.now());
         nhanSoTongLuotKham.setText(String.valueOf(thongKe.tongLuot));
         nhanSoKhamHomNay.setText(String.valueOf(thongKe.homNay));
         nhanSoKhamThangNay.setText(String.valueOf(thongKe.thangNay));
@@ -416,12 +427,15 @@ public class LichSuKhamGUI extends JPanel {
         JTextField tu = new JTextField(tuNgay == null ? "" : DINH_DANG_NGAY.format(tuNgay));
         JTextField den = new JTextField(denNgay == null ? "" : DINH_DANG_NGAY.format(denNgay));
         JPanel form = new JPanel(new GridLayout(2, 2, 8, 8));
-        form.add(new JLabel("Từ ngày (dd/MM/yyyy):")); form.add(tu);
-        form.add(new JLabel("Đến ngày (dd/MM/yyyy):")); form.add(den);
+        form.add(new JLabel("Từ ngày (dd/MM/yyyy):"));
+        form.add(tu);
+        form.add(new JLabel("Đến ngày (dd/MM/yyyy):"));
+        form.add(den);
         if (JOptionPane.showConfirmDialog(this, form, "Lọc theo khoảng ngày",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return;
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+            return;
         try {
-            LichSuKhamController.KhoangNgay khoang = controller.khoangNgay(tu.getText(), den.getText());
+            LichSuKhamService.KhoangNgay khoang = service.khoangNgay(tu.getText(), den.getText());
             tuNgay = khoang.tuNgay;
             denNgay = khoang.denNgay;
             cboThoiGian.setSelectedIndex(0);
@@ -439,11 +453,12 @@ public class LichSuKhamGUI extends JPanel {
 
     private void moFormHoSo(HoSoSucKhoe_entity hoSoHienTai) {
         try {
-            List<ThuCung_entity> thuCungList = controller.taiThuCung();
-            List<BacSi_entity> bacSiList = controller.taiBacSi();
-            
+            List<ThuCung_entity> thuCungList = service.taiThuCung();
+            List<BacSi_entity> bacSiList = service.taiBacSi();
+
             JTextField txtMa = new JTextField(hoSoHienTai == null
-                    ? controller.maTiepTheo() : hoSoHienTai.getMaHSSK());
+                    ? service.maTiepTheo()
+                    : hoSoHienTai.getMaHSSK());
             txtMa.setEditable(false);
             JComboBox<ThuCung_entity> cboThuCung = new JComboBox<>(thuCungList.toArray(new ThuCung_entity[0]));
             cboThuCung.setRenderer(new DefaultListCellRenderer() {
@@ -473,10 +488,12 @@ public class LichSuKhamGUI extends JPanel {
             });
             if (hoSoHienTai != null) {
                 for (int i = 0; i < cboThuCung.getItemCount(); i++) {
-                    if (hoSoHienTai.getMaTC() != null && hoSoHienTai.getMaTC().equals(cboThuCung.getItemAt(i))) cboThuCung.setSelectedIndex(i);
+                    if (hoSoHienTai.getMaTC() != null && hoSoHienTai.getMaTC().equals(cboThuCung.getItemAt(i)))
+                        cboThuCung.setSelectedIndex(i);
                 }
                 for (int i = 0; i < cboBacSiForm.getItemCount(); i++) {
-                    if (hoSoHienTai.getMaBacSi() != null && hoSoHienTai.getMaBacSi().equals(cboBacSiForm.getItemAt(i))) cboBacSiForm.setSelectedIndex(i);
+                    if (hoSoHienTai.getMaBacSi() != null && hoSoHienTai.getMaBacSi().equals(cboBacSiForm.getItemAt(i)))
+                        cboBacSiForm.setSelectedIndex(i);
                 }
             }
             JTextField txtNgay = new JTextField(hoSoHienTai == null
@@ -485,21 +502,30 @@ public class LichSuKhamGUI extends JPanel {
             JTextField txtTrieuChung = new JTextField(hoSoHienTai == null ? "" : value(hoSoHienTai.getTrieuChung()));
             JTextField txtChuanDoan = new JTextField(hoSoHienTai == null ? "" : value(hoSoHienTai.getChuanDoan()));
             JTextField txtCanNang = new JTextField(hoSoHienTai == null || hoSoHienTai.getCanNang() == null
-                    ? "" : hoSoHienTai.getCanNang().toPlainString());
+                    ? ""
+                    : hoSoHienTai.getCanNang().toPlainString());
             JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
-            form.add(new JLabel("Mã hồ sơ:")); form.add(txtMa);
-            form.add(new JLabel("Thú cưng:")); form.add(cboThuCung);
-            form.add(new JLabel("Bác sĩ:")); form.add(cboBacSiForm);
-            form.add(new JLabel("Ngày khám (dd/MM/yyyy HH:mm):")); form.add(txtNgay);
-            form.add(new JLabel("Triệu chứng:")); form.add(txtTrieuChung);
-            form.add(new JLabel("Chẩn đoán:")); form.add(txtChuanDoan);
-            form.add(new JLabel("Cân nặng (kg):")); form.add(txtCanNang);
+            form.add(new JLabel("Mã hồ sơ:"));
+            form.add(txtMa);
+            form.add(new JLabel("Thú cưng:"));
+            form.add(cboThuCung);
+            form.add(new JLabel("Bác sĩ:"));
+            form.add(cboBacSiForm);
+            form.add(new JLabel("Ngày khám (dd/MM/yyyy HH:mm):"));
+            form.add(txtNgay);
+            form.add(new JLabel("Triệu chứng:"));
+            form.add(txtTrieuChung);
+            form.add(new JLabel("Chẩn đoán:"));
+            form.add(txtChuanDoan);
+            form.add(new JLabel("Cân nặng (kg):"));
+            form.add(txtCanNang);
             String title = hoSoHienTai == null ? "Thêm lượt khám" : "Cập nhật hồ sơ khám";
             if (JOptionPane.showConfirmDialog(this, form, title, JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return;
+                    JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION)
+                return;
             ThuCung_entity tc = (ThuCung_entity) cboThuCung.getSelectedItem();
             BacSi_entity bs = (BacSi_entity) cboBacSiForm.getSelectedItem();
-            boolean saved = controller.luu(new LichSuKhamController.ThongTinHoSo(
+            boolean saved = service.luu(new LichSuKhamService.ThongTinHoSo(
                     txtMa.getText(), hoSoHienTai == null, tc, bs, txtNgay.getText(),
                     txtTrieuChung.getText(), txtChuanDoan.getText(), txtCanNang.getText()));
             if (saved) {
@@ -543,16 +569,18 @@ public class LichSuKhamGUI extends JPanel {
             return;
         }
         try {
-            HoSoSucKhoe_entity hs = controller.timTheoMa(maHoSo);
+            HoSoSucKhoe_entity hs = service.timTheoMa(maHoSo);
             if (hs == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy hồ sơ " + maHoSo + ".",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             String chiTiet = "Mã hồ sơ: " + hs.getMaHSSK()
-                    + "\nThú cưng: " + value(hs.getTenThuCung()) + " (" + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")"
+                    + "\nThú cưng: " + value(hs.getTenThuCung()) + " ("
+                    + (hs.getMaTC() != null ? hs.getMaTC().getMaTC() : "") + ")"
                     + "\nChủ nuôi: " + value(hs.getChuHo())
-                    + "\nBác sĩ: " + value(hs.getTenBacSi()) + " (" + (hs.getMaBacSi() != null ? hs.getMaBacSi().getMaBacSi() : "") + ")"
+                    + "\nBác sĩ: " + value(hs.getTenBacSi()) + " ("
+                    + (hs.getMaBacSi() != null ? hs.getMaBacSi().getMaBacSi() : "") + ")"
                     + "\nNgày khám: " + (hs.getNgayKham() == null ? "" : DINH_DANG_NGAY_GIO.format(hs.getNgayKham()))
                     + "\nTriệu chứng: " + value(hs.getTrieuChung())
                     + "\nChẩn đoán: " + value(hs.getChuanDoan())
@@ -571,7 +599,7 @@ public class LichSuKhamGUI extends JPanel {
             return;
         }
         try {
-            HoSoSucKhoe_entity hs = controller.timTheoMa(maHoSo);
+            HoSoSucKhoe_entity hs = service.timTheoMa(maHoSo);
             if (hs == null) {
                 JOptionPane.showMessageDialog(this, "Không tìm thấy hồ sơ " + maHoSo + ".",
                         "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
@@ -594,7 +622,7 @@ public class LichSuKhamGUI extends JPanel {
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (luaChon == JOptionPane.YES_OPTION) {
             try {
-                if (controller.xoa(maHoSo)) {
+                if (service.xoa(maHoSo)) {
                     JOptionPane.showMessageDialog(this, "Đã xóa hồ sơ khám.",
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     loadDataToTable();
@@ -612,15 +640,17 @@ public class LichSuKhamGUI extends JPanel {
     private void xuatDanhSach() {
         JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new java.io.File("lich-su-kham.csv"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
+            return;
         java.io.File file = chooser.getSelectedFile();
         if (!file.getName().toLowerCase(Locale.ROOT).endsWith(".csv")) {
             file = new java.io.File(file.getParentFile(), file.getName() + ".csv");
         }
         if (file.exists() && JOptionPane.showConfirmDialog(this, "Tệp đã tồn tại, ghi đè?",
-                "Xác nhận", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+                "Xác nhận", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+            return;
         try {
-            controller.xuatDanhSach(file, danhSachDangHienThi);
+            service.xuatDanhSach(file, danhSachDangHienThi);
             JOptionPane.showMessageDialog(this, "Đã xuất tệp: " + file.getAbsolutePath(),
                     "Xuất thành công", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {

@@ -11,9 +11,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import controller.NavigationController;
+import Service.Chung.NavigationService;
 import GUI.GiaoDienChinhGUI;
-import GUI.TaiKhoan.ThongTinTaiKhoanDialog;
+import GUI.TaiKhoan.ThongTinTaiKhoanGUI;
 
 public class HeaderGUI extends JPanel {
 
@@ -24,11 +24,11 @@ public class HeaderGUI extends JPanel {
     private String tenNguoiDung;
     private String chucVu;
     private String chuCaiAvatar;
-    private NavigationController.VaiTroHeThong vaiTroHeThong;
+    private NavigationService.VaiTroHeThong vaiTroHeThong;
 
     private String[] danhSachTabs;
-    private NavigationController.MenuQuyen menuQuyen;
-    private final NavigationController controller = new NavigationController();
+    private NavigationService.MenuQuyen menuQuyen;
+    private final NavigationService controller = new NavigationService();
     private String tabHienTai;
 
     private List<JButton> danhSachNutTab;
@@ -38,8 +38,8 @@ public class HeaderGUI extends JPanel {
 
     public HeaderGUI() {
         this(
-                new NavigationController().getTenNguoiDungHienTai(),
-                new NavigationController().getVaiTroNguoiDungHienTai());
+                new NavigationService().getTenNguoiDungHienTai(),
+                new NavigationService().getVaiTroNguoiDungHienTai());
     }
 
     public HeaderGUI(String tenNguoiDung, String chucVu) {
@@ -76,14 +76,15 @@ public class HeaderGUI extends JPanel {
         return danhSachTabs;
     }
 
-    public NavigationController.VaiTroHeThong getVaiTroHeThong() {
+    public NavigationService.VaiTroHeThong getVaiTroHeThong() {
         return vaiTroHeThong;
     }
 
     private void capNhatChuCaiAvatar() {
         String[] parts = tenNguoiDung.trim().split("\\s+");
         if (parts.length >= 2) {
-            chuCaiAvatar = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+            chuCaiAvatar = (parts[parts.length - 2].substring(0, 1) + parts[parts.length - 1].substring(0, 1))
+                    .toUpperCase();
         } else if (parts.length == 1 && !parts[0].isEmpty()) {
             chuCaiAvatar = parts[0].substring(0, 1).toUpperCase();
         } else {
@@ -120,8 +121,11 @@ public class HeaderGUI extends JPanel {
                 g2.fillOval(18, 8, 6, 6);
                 g2.fillOval(13, 17, 7, 7);
             }
+
             @Override
-            public Dimension getPreferredSize() { return new Dimension(32, 32); }
+            public Dimension getPreferredSize() {
+                return new Dimension(32, 32);
+            }
         };
 
         JLabel lblTenThuongHieu = new JLabel("SALALA Pet Shop");
@@ -153,15 +157,18 @@ public class HeaderGUI extends JPanel {
                 int textH = fm.getAscent();
                 g2.drawString(chuCaiAvatar, (36 - textW) / 2, (36 + textH) / 2 - 2);
             }
+
             @Override
-            public Dimension getPreferredSize() { return new Dimension(36, 36); }
+            public Dimension getPreferredSize() {
+                return new Dimension(36, 36);
+            }
         };
 
         JPanel thongTin = new JPanel();
         thongTin.setLayout(new BoxLayout(thongTin, BoxLayout.Y_AXIS));
         thongTin.setOpaque(false);
 
-        JLabel lblTen = new JLabel(tenNguoiDung + " ▾");
+        JLabel lblTen = new JLabel(tenNguoiDung);
         lblTen.setFont(RangBuocGiaoDien.fontDam(13));
         lblTen.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
 
@@ -187,11 +194,11 @@ public class HeaderGUI extends JPanel {
         itemThongTin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         itemThongTin.addActionListener(e -> {
             Frame frame = (Frame) SwingUtilities.getWindowAncestor(this);
-            ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanDialog(
+            ThongTinTaiKhoanGUI.ThongTinTaiKhoanDialog dlg = new ThongTinTaiKhoanGUI.ThongTinTaiKhoanDialog(
                     frame, controller.getTaiKhoanHienTai(), controller.getTenNguoiDungHienTai());
             dlg.setVisible(true);
         });
-        
+
         JMenuItem itemDangXuat = new JMenuItem("Đăng xuất");
         itemDangXuat.setFont(RangBuocGiaoDien.fontDam(13));
         itemDangXuat.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
@@ -199,7 +206,8 @@ public class HeaderGUI extends JPanel {
         itemDangXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         itemDangXuat.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?", "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?",
+                    "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (confirm == JOptionPane.YES_OPTION) {
                 JFrame frameChinh = (JFrame) SwingUtilities.getWindowAncestor(this);
                 GiaoDienChinhGUI.xuLyDangXuat(frameChinh);
@@ -213,7 +221,8 @@ public class HeaderGUI extends JPanel {
         khoiNguoiDung.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                userMenu.show(khoiNguoiDung, khoiNguoiDung.getWidth() - userMenu.getPreferredSize().width, khoiNguoiDung.getHeight());
+                userMenu.show(khoiNguoiDung, khoiNguoiDung.getWidth() - userMenu.getPreferredSize().width,
+                        khoiNguoiDung.getHeight());
             }
         });
 
@@ -230,12 +239,13 @@ public class HeaderGUI extends JPanel {
     }
 
     private void veLaiCacNutTab() {
-        if (panelTabContainer == null) return;
+        if (panelTabContainer == null)
+            return;
         panelTabContainer.removeAll();
         danhSachNutTab.clear();
 
         for (String tenTab : danhSachTabs) {
-            JButton nut = new JButton(tenTab + " ▾") {
+            JButton nut = new JButton(tenTab) {
                 @Override
                 protected void paintComponent(Graphics g) {
                     RangBuocGiaoDien.batKhuRangCua(g);
@@ -257,7 +267,8 @@ public class HeaderGUI extends JPanel {
             };
 
             nut.setFont(RangBuocGiaoDien.fontVua(13));
-            nut.setForeground(tenTab.equals(tabHienTai) ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_CHINH);
+            nut.setForeground(
+                    tenTab.equals(tabHienTai) ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_CHINH);
             nut.setFocusPainted(false);
             nut.setBorderPainted(false);
             nut.setContentAreaFilled(false);
@@ -285,7 +296,8 @@ public class HeaderGUI extends JPanel {
 
     private JPopupMenu taoPopupMenu(String tenTab) {
         String[] cacCon = getMenuConCuaTab(tenTab);
-        if (cacCon == null || cacCon.length == 0) return null;
+        if (cacCon == null || cacCon.length == 0)
+            return null;
 
         JPopupMenu menu = new JPopupMenu();
         menu.setBackground(Color.WHITE);
@@ -355,6 +367,11 @@ public class HeaderGUI extends JPanel {
         repaint();
     }
 
-    public String getTabHienTai() { return tabHienTai; }
-    public void setTabSelectionListener(TabSelectionListener tabSelectionListener) { this.tabSelectionListener = tabSelectionListener; }
+    public String getTabHienTai() {
+        return tabHienTai;
+    }
+
+    public void setTabSelectionListener(TabSelectionListener tabSelectionListener) {
+        this.tabSelectionListener = tabSelectionListener;
+    }
 }

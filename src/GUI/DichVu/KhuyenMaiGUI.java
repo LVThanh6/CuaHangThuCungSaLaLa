@@ -1,7 +1,7 @@
 package GUI.DichVu;
 
-import controller.KhuyenMaiController;
-import controller.KhuyenMaiController.Status;
+import Service.DichVu.KhuyenMaiService;
+import Service.DichVu.KhuyenMaiService.Status;
 import entity.DichVu.KhuyenMai_Entity;
 
 import javax.swing.*;
@@ -29,29 +29,31 @@ import java.util.Set;
  * thao tác Sửa / Nhân bản / Tạm dừng - Kích hoạt, xuất danh sách CSV.
  *
  * Lưu ý về dữ liệu:
- *  - Trạng thái (Đang áp dụng / Sắp diễn ra / Hết hạn) được tính tự động từ ngày bắt đầu - kết thúc.
- *  - "Tạm dừng" hiện chỉ lưu trong bộ nhớ (TAM_DUNG); muốn lưu bền vững cần thêm cột vào CSDL/entity.
- *  - "Loại giảm": mức giảm <= 100 được coi là Phần trăm, > 100 là Số tiền (VNĐ).
+ * - Trạng thái (Đang áp dụng / Sắp diễn ra / Hết hạn) được tính tự động từ ngày
+ * bắt đầu - kết thúc.
+ * - "Tạm dừng" hiện chỉ lưu trong bộ nhớ (TAM_DUNG); muốn lưu bền vững cần thêm
+ * cột vào CSDL/entity.
+ * - "Loại giảm": mức giảm <= 100 được coi là Phần trăm, > 100 là Số tiền (VNĐ).
  * (Lưu file với encoding UTF-8 để hiển thị đúng tiếng Việt.)
  */
 public class KhuyenMaiGUI extends JPanel {
 
     // ===== Màu sắc =====
-    private static final Color XANH    = new Color(0x0F6B5C);
+    private static final Color XANH = new Color(0x0F6B5C);
     private static final Color XANH_BG = new Color(0xDDF3EE);
-    private static final Color NEN     = new Color(0xF8FAFA);
-    private static final Color VIEN    = new Color(0xE5E7EB);
-    private static final Color CHU     = new Color(0x111827);
-    private static final Color XAM     = new Color(0x6B7280);
-    private static final Color DO      = new Color(0xDC2626);
+    private static final Color NEN = new Color(0xF8FAFA);
+    private static final Color VIEN = new Color(0xE5E7EB);
+    private static final Color CHU = new Color(0x111827);
+    private static final Color XAM = new Color(0x6B7280);
+    private static final Color DO = new Color(0xDC2626);
 
-    private static final Color LUC_BG  = new Color(0xDCFCE7);
-    private static final Color LUC     = new Color(0x047857);
-    private static final Color LAM_BG  = new Color(0xDBEAFE);
-    private static final Color LAM     = new Color(0x1D4ED8);
-    private static final Color TIM_BG  = new Color(0xEDE9FE);
-    private static final Color TIM     = new Color(0x6D28D9);
-    private static final Color XAM_BG  = new Color(0xF3F4F6);
+    private static final Color LUC_BG = new Color(0xDCFCE7);
+    private static final Color LUC = new Color(0x047857);
+    private static final Color LAM_BG = new Color(0xDBEAFE);
+    private static final Color LAM = new Color(0x1D4ED8);
+    private static final Color TIM_BG = new Color(0xEDE9FE);
+    private static final Color TIM = new Color(0x6D28D9);
+    private static final Color XAM_BG = new Color(0xF3F4F6);
     private static final Color XAM_DAM = new Color(0x4B5563);
 
     private static final String FONT = "Segoe UI";
@@ -60,13 +62,15 @@ public class KhuyenMaiGUI extends JPanel {
 
     /** Dùng ở màn hình lập hóa đơn để bỏ qua khuyến mãi đang tạm dừng. */
     public static boolean isTamDung(String maKM) {
-        return KhuyenMaiController.isPausedPromotion(maKM);
+        return KhuyenMaiService.isPausedPromotion(maKM);
     }
 
-    private enum CheDo { THEM, SUA, NHAN_BAN }
+    private enum CheDo {
+        THEM, SUA, NHAN_BAN
+    }
 
     // ===== Dữ liệu =====
-    private final KhuyenMaiController controller = new KhuyenMaiController();
+    private final KhuyenMaiService service = new KhuyenMaiService();
     private List<KhuyenMai_Entity> tatCa = new ArrayList<>();
     private List<KhuyenMai_Entity> locRa = new ArrayList<>();
     private final List<KhuyenMai_Entity> dongHienTai = new ArrayList<>();
@@ -110,7 +114,8 @@ public class KhuyenMaiGUI extends JPanel {
         JLabel lblTitle = new JLabel("Khuyến mãi");
         lblTitle.setFont(new Font(FONT, Font.BOLD, 22));
         lblTitle.setForeground(CHU);
-        JLabel lblMoTa = new JLabel("Thiết lập ưu đãi theo thời gian, điều kiện áp dụng và theo dõi hiệu lực chương trình.");
+        JLabel lblMoTa = new JLabel(
+                "Thiết lập ưu đãi theo thời gian, điều kiện áp dụng và theo dõi hiệu lực chương trình.");
         lblMoTa.setFont(new Font(FONT, Font.PLAIN, 12));
         lblMoTa.setForeground(XAM);
         lblSub.setAlignmentX(LEFT_ALIGNMENT);
@@ -122,7 +127,7 @@ public class KhuyenMaiGUI extends JPanel {
         trai.add(Box.createVerticalStrut(2));
         trai.add(lblMoTa);
 
-        RoundButton btnThem = new RoundButton("+  Thêm khuyến mãi", XANH, XANH, Color.WHITE);
+        RoundButton btnThem = new RoundButton("Thêm khuyến mãi", XANH, XANH, Color.WHITE);
         btnThem.addActionListener(e -> moForm(null, CheDo.THEM));
         JPanel phai = new JPanel(new GridBagLayout());
         phai.setOpaque(false);
@@ -193,13 +198,13 @@ public class KhuyenMaiGUI extends JPanel {
         body.add(t);
         body.add(hang);
 
-        card.add(iconWrap, BorderLayout.WEST);
+        // card.add(iconWrap, BorderLayout.WEST);
         card.add(body, BorderLayout.CENTER);
         return card;
     }
 
     private void capNhatThongKe() {
-        KhuyenMaiController.Summary summary = controller.summarize(tatCa);
+        KhuyenMaiService.Summary summary = service.summarize(tatCa);
         lblTong.setText(String.valueOf(summary.total));
         lblDang.setText(String.valueOf(summary.active));
         lblSap.setText(String.valueOf(summary.upcoming));
@@ -218,9 +223,9 @@ public class KhuyenMaiGUI extends JPanel {
         txtTim.setPreferredSize(new Dimension(300, 34));
         txtTim.getDocument().addDocumentListener(new SimpleDocListener(() -> hienThi(true)));
 
-        cboTrangThai = new JComboBox<>(new String[]{
+        cboTrangThai = new JComboBox<>(new String[] {
                 "Trạng thái: Tất cả", "Trạng thái: Đang áp dụng", "Trạng thái: Sắp diễn ra",
-                "Trạng thái: Tạm dừng", "Trạng thái: Hết hạn"});
+                "Trạng thái: Tạm dừng", "Trạng thái: Hết hạn" });
         cboTrangThai.setFont(new Font(FONT, Font.PLAIN, 12));
         cboTrangThai.setBackground(Color.WHITE);
         cboTrangThai.setPreferredSize(new Dimension(190, 34));
@@ -240,36 +245,43 @@ public class KhuyenMaiGUI extends JPanel {
         RoundButton btnSua = new RoundButton("Sửa", Color.WHITE, VIEN, CHU);
         RoundButton btnNhanBan = new RoundButton("Nhân bản", XANH, XANH, Color.WHITE);
         RoundButton btnTamNgung = new RoundButton("Tạm ngưng", DO, DO, Color.WHITE);
-        RoundButton btnXuat = new RoundButton("⤓  Xuất danh sách", Color.WHITE, VIEN, CHU);
+        RoundButton btnXuat = new RoundButton("Xuất danh sách", Color.WHITE, VIEN, CHU);
 
         btnSua.addActionListener(e -> {
             int sel = table.getSelectedRow();
             if (sel < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để sửa.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để sửa.", "Chưa chọn",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             int mr = table.convertRowIndexToModel(sel);
-            if (mr >= 0 && mr < dongHienTai.size()) moForm(dongHienTai.get(mr), CheDo.SUA);
+            if (mr >= 0 && mr < dongHienTai.size())
+                moForm(dongHienTai.get(mr), CheDo.SUA);
         });
 
         btnNhanBan.addActionListener(e -> {
             int sel = table.getSelectedRow();
             if (sel < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để nhân bản.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để nhân bản.",
+                        "Chưa chọn", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             int mr = table.convertRowIndexToModel(sel);
-            if (mr >= 0 && mr < dongHienTai.size()) moForm(dongHienTai.get(mr), CheDo.NHAN_BAN);
+            if (mr >= 0 && mr < dongHienTai.size())
+                moForm(dongHienTai.get(mr), CheDo.NHAN_BAN);
         });
 
         btnTamNgung.addActionListener(e -> {
             int sel = table.getSelectedRow();
             if (sel < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một khuyến mãi trong danh sách để tạm ngưng/kích hoạt.", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Vui lòng chọn một khuyến mãi trong danh sách để tạm ngưng/kích hoạt.", "Chưa chọn",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             int mr = table.convertRowIndexToModel(sel);
-            if (mr >= 0 && mr < dongHienTai.size()) doiTamDung(dongHienTai.get(mr));
+            if (mr >= 0 && mr < dongHienTai.size())
+                doiTamDung(dongHienTai.get(mr));
         });
 
         btnXuat.addActionListener(e -> xuatDanhSach());
@@ -288,8 +300,8 @@ public class KhuyenMaiGUI extends JPanel {
         loc.add(locPhai, BorderLayout.EAST);
 
         // ---- bảng ----
-        String[] cot = {"Mã khuyến mãi", "Tên khuyến mãi", "Mức giảm", "Loại giảm", "Ngày bắt đầu",
-                "Ngày kết thúc", "Điều kiện", "Trạng thái"};
+        String[] cot = { "Mã khuyến mãi", "Tên khuyến mãi", "Mức giảm", "Loại giảm", "Ngày bắt đầu",
+                "Ngày kết thúc", "Điều kiện", "Trạng thái" };
         model = new DefaultTableModel(cot, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -322,7 +334,7 @@ public class KhuyenMaiGUI extends JPanel {
         table.getColumnModel().getColumn(5).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(6).setCellRenderer(new Cell(CHU, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(7).setCellRenderer(new StatusRenderer());
-        int[] rong = {95, 160, 95, 80, 95, 95, 210, 110};
+        int[] rong = { 95, 160, 95, 80, 95, 95, 210, 110 };
         for (int i = 0; i < rong.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
         }
@@ -336,7 +348,8 @@ public class KhuyenMaiGUI extends JPanel {
         lblHienThi = new JLabel();
         lblHienThi.setFont(new Font(FONT, Font.PLAIN, 12));
         lblHienThi.setForeground(XAM);
-        JLabel ghiChu = new JLabel("Trạng thái được cập nhật tự động theo thời gian; chương trình tạm dừng cần kích hoạt thủ công");
+        JLabel ghiChu = new JLabel(
+                "Trạng thái được cập nhật tự động theo thời gian; chương trình tạm dừng cần kích hoạt thủ công");
         ghiChu.setFont(new Font(FONT, Font.PLAIN, 11));
         ghiChu.setForeground(XAM);
         JPanel chanTrai = new JPanel();
@@ -366,30 +379,31 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
     /** Đọc lại dữ liệu từ CSDL rồi hiển thị. */
     private void taiLai() {
-        List<KhuyenMai_Entity> ds = controller.load();
+        List<KhuyenMai_Entity> ds = service.load();
         tatCa = new ArrayList<>(ds);
         hienThi(false);
     }
 
     private boolean laPhanTram(KhuyenMai_Entity km) {
-        return controller.isPercentage(km);
+        return service.isPercentage(km);
     }
 
     private static String soThuong(double v) {
-        return KhuyenMaiController.formatNumber(v);
+        return KhuyenMaiService.formatNumber(v);
     }
 
     private String hienMuc(KhuyenMai_Entity km) {
-        return controller.formatAmount(km);
+        return service.formatAmount(km);
     }
 
     private void apDungLoc() {
-        locRa = controller.filter(tatCa, txtTim.getText(), cboTrangThai.getSelectedIndex(), tuNgay, denNgay);
+        locRa = service.filter(tatCa, txtTim.getText(), cboTrangThai.getSelectedIndex(), tuNgay, denNgay);
     }
 
     /** Lọc lại, cập nhật thống kê và hiển thị toàn bộ kết quả. */
     private void hienThi(boolean veTrang1) {
-        if (model == null) return;
+        if (model == null)
+            return;
         dangNap = true;
         apDungLoc();
         model.setRowCount(0);
@@ -397,7 +411,7 @@ public class KhuyenMaiGUI extends JPanel {
         for (int i = 0; i < locRa.size(); i++) {
             KhuyenMai_Entity km = locRa.get(i);
             dongHienTai.add(km);
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     km.getMaKM(),
                     km.getTenKM(),
                     hienMuc(km),
@@ -405,7 +419,7 @@ public class KhuyenMaiGUI extends JPanel {
                     km.getNgayBatDau() != null ? DF.format(km.getNgayBatDau()) : "",
                     km.getNgayKetThuc() != null ? DF.format(km.getNgayKetThuc()) : "",
                     nz(km.getDieuKien()),
-                    controller.status(km).label,
+                    service.status(km).label,
                     ""
             });
         }
@@ -428,9 +442,10 @@ public class KhuyenMaiGUI extends JPanel {
         p.add(new JLabel("Để trống = không giới hạn"));
         int ok = JOptionPane.showConfirmDialog(this, p, "Lọc theo thời gian hiệu lực",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (ok != JOptionPane.OK_OPTION) return;
+        if (ok != JOptionPane.OK_OPTION)
+            return;
         try {
-            KhuyenMaiController.DateRange range = controller.parseDateRange(tu.getText(), den.getText());
+            KhuyenMaiService.DateRange range = service.parseDateRange(tu.getText(), den.getText());
             tuNgay = range.from;
             denNgay = range.to;
         } catch (IllegalArgumentException ex) {
@@ -438,10 +453,14 @@ public class KhuyenMaiGUI extends JPanel {
             return;
         }
         String text;
-        if (tuNgay == null && denNgay == null) text = "Thời gian: Tất cả";
-        else if (tuNgay != null && denNgay != null) text = "Thời gian: " + tuNgay.format(DF) + " – " + denNgay.format(DF);
-        else if (tuNgay != null) text = "Thời gian: từ " + tuNgay.format(DF);
-        else text = "Thời gian: đến " + denNgay.format(DF);
+        if (tuNgay == null && denNgay == null)
+            text = "Thời gian: Tất cả";
+        else if (tuNgay != null && denNgay != null)
+            text = "Thời gian: " + tuNgay.format(DF) + " – " + denNgay.format(DF);
+        else if (tuNgay != null)
+            text = "Thời gian: từ " + tuNgay.format(DF);
+        else
+            text = "Thời gian: đến " + denNgay.format(DF);
         btnThoiGian.setText(text);
         hienThi(true);
     }
@@ -450,19 +469,20 @@ public class KhuyenMaiGUI extends JPanel {
     // Thao tác trên dòng
     // =====================================================================
 
-
     private void doiTamDung(KhuyenMai_Entity km) {
-        Status status = controller.status(km);
-        if (status == Status.EXPIRED) return;
+        Status status = service.status(km);
+        if (status == Status.EXPIRED)
+            return;
         if (status == Status.PAUSED) {
-            controller.resume(km.getMaKM());
+            service.resume(km.getMaKM());
         } else {
             int kq = JOptionPane.showConfirmDialog(this,
                     "Tạm dừng khuyến mãi " + km.getTenKM() + " (" + km.getMaKM() + ")?\n"
                             + "Chương trình sẽ không được áp dụng cho đến khi kích hoạt lại.",
                     "Tạm dừng khuyến mãi", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-            if (kq != JOptionPane.YES_OPTION) return;
-            controller.pause(km.getMaKM());
+            if (kq != JOptionPane.YES_OPTION)
+                return;
+            service.pause(km.getMaKM());
         }
         hienThi(false);
     }
@@ -473,10 +493,11 @@ public class KhuyenMaiGUI extends JPanel {
     private void xuatDanhSach() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new File("danh-sach-khuyen-mai.csv"));
-        if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
+            return;
 
         try {
-            Files.write(fc.getSelectedFile().toPath(), controller.toCsv(locRa).getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), service.toCsv(locRa).getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + locRa.size() + " khuyến mãi ra file.", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -490,7 +511,8 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
     private void moForm(KhuyenMai_Entity mau, CheDo cheDo) {
         final boolean sua = cheDo == CheDo.SUA;
-        String tieuDe = sua ? "Chỉnh sửa khuyến mãi" : (cheDo == CheDo.NHAN_BAN ? "Nhân bản khuyến mãi" : "Thêm khuyến mãi");
+        String tieuDe = sua ? "Chỉnh sửa khuyến mãi"
+                : (cheDo == CheDo.NHAN_BAN ? "Nhân bản khuyến mãi" : "Thêm khuyến mãi");
 
         Window cha = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(cha, tieuDe, Dialog.ModalityType.APPLICATION_MODAL);
@@ -505,21 +527,25 @@ public class KhuyenMaiGUI extends JPanel {
         gc.weightx = 1;
 
         JTextField txtMa = new JTextField(sua ? mau.getMaKM() : "KM" + System.currentTimeMillis() % 100000);
-        if (sua) txtMa.setEditable(false);
+        if (sua)
+            txtMa.setEditable(false);
         JTextField txtTen = new JTextField(mau == null ? ""
                 : nz(mau.getTenKM()) + (cheDo == CheDo.NHAN_BAN ? " (bản sao)" : ""));
-        JComboBox<String> cboLoai = new JComboBox<>(new String[]{"Phần trăm", "Số tiền"});
-        if (mau != null && !laPhanTram(mau)) cboLoai.setSelectedIndex(1);
+        JComboBox<String> cboLoai = new JComboBox<>(new String[] { "Phần trăm", "Số tiền" });
+        if (mau != null && !laPhanTram(mau))
+            cboLoai.setSelectedIndex(1);
         JTextField txtMuc = new JTextField(mau == null ? "10" : soThuong(mau.getMucKM()));
         JTextField txtBatDau = new JTextField(mau == null || mau.getNgayBatDau() == null
-                ? DF.format(LocalDate.now()) : DF.format(mau.getNgayBatDau()));
+                ? DF.format(LocalDate.now())
+                : DF.format(mau.getNgayBatDau()));
         JTextField txtKetThuc = new JTextField(mau == null || mau.getNgayKetThuc() == null
-                ? DF.format(LocalDate.now().plusMonths(3)) : DF.format(mau.getNgayKetThuc()));
+                ? DF.format(LocalDate.now().plusMonths(3))
+                : DF.format(mau.getNgayKetThuc()));
         JTextField txtDieuKien = new JTextField(mau == null ? "" : nz(mau.getDieuKien()));
 
-        String[] nhan = {"Mã KM", "Tên khuyến mãi", "Loại giảm", "Mức giảm (% hoặc số tiền VNĐ)",
-                "Ngày bắt đầu (dd/MM/yyyy)", "Ngày kết thúc (dd/MM/yyyy)", "Điều kiện áp dụng"};
-        JComponent[] truong = {txtMa, txtTen, cboLoai, txtMuc, txtBatDau, txtKetThuc, txtDieuKien};
+        String[] nhan = { "Mã KM", "Tên khuyến mãi", "Loại giảm", "Mức giảm (% hoặc số tiền VNĐ)",
+                "Ngày bắt đầu (dd/MM/yyyy)", "Ngày kết thúc (dd/MM/yyyy)", "Điều kiện áp dụng" };
+        JComponent[] truong = { txtMa, txtTen, cboLoai, txtMuc, txtBatDau, txtKetThuc, txtDieuKien };
         for (int i = 0; i < nhan.length; i++) {
             gc.gridy = i * 2;
             gc.insets = new Insets(0, 0, 4, 0);
@@ -535,14 +561,15 @@ public class KhuyenMaiGUI extends JPanel {
         btnLuu.addActionListener(e -> {
             try {
                 boolean phanTram = cboLoai.getSelectedIndex() == 0;
-                boolean ok = controller.save(txtMa.getText(), txtTen.getText(), phanTram, txtMuc.getText(),
+                boolean ok = service.save(txtMa.getText(), txtTen.getText(), phanTram, txtMuc.getText(),
                         txtBatDau.getText(), txtKetThuc.getText(), txtDieuKien.getText(), tatCa, sua);
                 if (ok) {
                     JOptionPane.showMessageDialog(dlg, "Lưu thành công!");
                     dlg.dispose();
                     taiLai(); // nạp lại dữ liệu mới ngay lập tức
                 } else {
-                    JOptionPane.showMessageDialog(dlg, "Không thể lưu khuyến mãi vào CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dlg, "Không thể lưu khuyến mãi vào CSDL.", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -565,9 +592,10 @@ public class KhuyenMaiGUI extends JPanel {
                 int kq = JOptionPane.showConfirmDialog(dlg,
                         "Xóa khuyến mãi " + mau.getTenKM() + " (" + mau.getMaKM() + ")?",
                         "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-                if (kq != JOptionPane.YES_OPTION) return;
-                if (controller.delete(mau.getMaKM())) {
-                    controller.resume(mau.getMaKM());
+                if (kq != JOptionPane.YES_OPTION)
+                    return;
+                if (service.delete(mau.getMaKM())) {
+                    service.resume(mau.getMaKM());
                     JOptionPane.showMessageDialog(dlg, "Xóa thành công!");
                     dlg.dispose();
                     taiLai();
@@ -594,9 +622,12 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
     private static class HeaderRenderer extends DefaultTableCellRenderer {
         private final Set<Integer> phai = new HashSet<>();
+
         HeaderRenderer(int... cotPhai) {
-            for (int c : cotPhai) phai.add(c);
+            for (int c : cotPhai)
+                phai.add(c);
         }
+
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             super.getTableCellRendererComponent(t, v, false, false, r, c);
@@ -614,9 +645,13 @@ public class KhuyenMaiGUI extends JPanel {
     private static class Cell extends DefaultTableCellRenderer {
         private final Color mau;
         private final int kieu, canh;
+
         Cell(Color mau, int kieu, int canh) {
-            this.mau = mau; this.kieu = kieu; this.canh = canh;
+            this.mau = mau;
+            this.kieu = kieu;
+            this.canh = canh;
         }
+
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             super.getTableCellRendererComponent(t, v, sel, false, r, c);
@@ -644,28 +679,37 @@ public class KhuyenMaiGUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             String s = v == null ? "" : v.toString();
-            badge.setText("● " + s);
-            if (Status.ACTIVE.label.equals(s)) badge.setColors(LUC_BG, LUC);
-            else if (Status.UPCOMING.label.equals(s)) badge.setColors(LAM_BG, LAM);
-            else if (Status.PAUSED.label.equals(s)) badge.setColors(TIM_BG, TIM);
-            else badge.setColors(XAM_BG, XAM_DAM);
+            badge.setText(s);
+            if (Status.ACTIVE.label.equals(s))
+                badge.setColors(LUC_BG, LUC);
+            else if (Status.UPCOMING.label.equals(s))
+                badge.setColors(LAM_BG, LAM);
+            else if (Status.PAUSED.label.equals(s))
+                badge.setColors(TIM_BG, TIM);
+            else
+                badge.setColors(XAM_BG, XAM_DAM);
             panel.setOpaque(true);
             panel.setBackground(sel ? t.getSelectionBackground() : t.getBackground());
             return panel;
         }
     }
 
-
-
     private static class Badge extends JLabel {
         private Color bg = XAM_BG;
+
         Badge() {
             setOpaque(false);
             setFont(new Font(FONT, Font.BOLD, 11));
             setBorder(new EmptyBorder(3, 10, 3, 10));
         }
-        void setColors(Color bg, Color fg) { this.bg = bg; setForeground(fg); }
-        @Override protected void paintComponent(Graphics g) {
+
+        void setColors(Color bg, Color fg) {
+            this.bg = bg;
+            setForeground(fg);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(bg);
@@ -678,9 +722,12 @@ public class KhuyenMaiGUI extends JPanel {
     /** Nút bo góc. */
     private static class RoundButton extends JButton {
         private final Color fill, line, fg;
+
         RoundButton(String text, Color fill, Color line, Color fg) {
             super(text);
-            this.fill = fill; this.line = line; this.fg = fg;
+            this.fill = fill;
+            this.line = line;
+            this.fg = fg;
             setContentAreaFilled(false);
             setBorderPainted(false);
             setFocusPainted(false);
@@ -690,12 +737,16 @@ public class KhuyenMaiGUI extends JPanel {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(8, 16, 8, 16));
         }
-        @Override public void setEnabled(boolean b) {
+
+        @Override
+        public void setEnabled(boolean b) {
             super.setEnabled(b);
             setForeground(b ? fg : new Color(0x9CA3AF));
             setCursor(Cursor.getPredefinedCursor(b ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             boolean en = isEnabled();
@@ -712,11 +763,16 @@ public class KhuyenMaiGUI extends JPanel {
     private static class RoundedPanel extends JPanel {
         private final int arc;
         private final Color fill, line;
+
         RoundedPanel(int arc, Color fill, Color line) {
-            this.arc = arc; this.fill = fill; this.line = line;
+            this.arc = arc;
+            this.fill = fill;
+            this.line = line;
             setOpaque(false);
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(fill);
@@ -731,6 +787,7 @@ public class KhuyenMaiGUI extends JPanel {
     /** Ô tìm kiếm có icon kính lúp và chữ gợi ý. */
     private static class SearchField extends JTextField {
         private final String hint;
+
         SearchField(String hint) {
             this.hint = hint;
             setFont(new Font(FONT, Font.PLAIN, 12));
@@ -738,7 +795,9 @@ public class KhuyenMaiGUI extends JPanel {
                     BorderFactory.createLineBorder(VIEN, 1, true),
                     new EmptyBorder(0, 32, 0, 8)));
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -759,9 +818,21 @@ public class KhuyenMaiGUI extends JPanel {
 
     private static class SimpleDocListener implements javax.swing.event.DocumentListener {
         private final Runnable r;
-        SimpleDocListener(Runnable r) { this.r = r; }
-        public void insertUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
-        public void removeUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
-        public void changedUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
+
+        SimpleDocListener(Runnable r) {
+            this.r = r;
+        }
+
+        public void insertUpdate(javax.swing.event.DocumentEvent e) {
+            r.run();
+        }
+
+        public void removeUpdate(javax.swing.event.DocumentEvent e) {
+            r.run();
+        }
+
+        public void changedUpdate(javax.swing.event.DocumentEvent e) {
+            r.run();
+        }
     }
 }

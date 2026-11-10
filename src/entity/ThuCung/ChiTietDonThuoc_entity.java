@@ -31,42 +31,81 @@ public class ChiTietDonThuoc_entity {
     public ChiTietDonThuoc_entity(String maCTDT, String maDonThuoc, String maThuoc,
             BigDecimal soLuong, BigDecimal lieuLuong) {
         this(maCTDT,
-             maDonThuoc != null ? new DonThuoc_entity(maDonThuoc) : null,
-             maThuoc != null ? new Thuoc_entity(maThuoc) : null,
-             soLuong, lieuLuong);
+                maDonThuoc != null ? new DonThuoc_entity(maDonThuoc) : null,
+                maThuoc != null ? new Thuoc_entity(maThuoc) : null,
+                soLuong, lieuLuong);
     }
 
-    public String getMaCTDT() { return maCTDT; }
-    public void setMaCTDT(String maCTDT) { this.maCTDT = maCTDT; }
+    public String getMaCTDT() {
+        return maCTDT;
+    }
 
-    public DonThuoc_entity getMaDonThuoc() { return maDonThuoc; }
-    public void setMaDonThuoc(DonThuoc_entity maDonThuoc) { this.maDonThuoc = maDonThuoc; }
+    public void setMaCTDT(String maCTDT) {
+        this.maCTDT = maCTDT;
+    }
+
+    public DonThuoc_entity getMaDonThuoc() {
+        return maDonThuoc;
+    }
+
+    public void setMaDonThuoc(DonThuoc_entity maDonThuoc) {
+        this.maDonThuoc = maDonThuoc;
+    }
+
     public void setMaDonThuoc(String maDonThuoc) {
         this.maDonThuoc = maDonThuoc != null ? new DonThuoc_entity(maDonThuoc) : null;
     }
 
-    public Thuoc_entity getMaThuoc() { return maThuoc; }
-    public void setMaThuoc(Thuoc_entity maThuoc) { this.maThuoc = maThuoc; }
+    public Thuoc_entity getMaThuoc() {
+        return maThuoc;
+    }
+
+    public void setMaThuoc(Thuoc_entity maThuoc) {
+        this.maThuoc = maThuoc;
+    }
+
     public void setMaThuoc(String maThuoc) {
         this.maThuoc = maThuoc != null ? new Thuoc_entity(maThuoc) : null;
     }
 
-    public String getTenThuoc() { return tenThuoc; }
-    public void setTenThuoc(String tenThuoc) { this.tenThuoc = tenThuoc; }
+    public String getTenThuoc() {
+        return tenThuoc;
+    }
 
-    public String getDonViTinh() { return donViTinh; }
-    public void setDonViTinh(String donViTinh) { this.donViTinh = donViTinh; }
+    public void setTenThuoc(String tenThuoc) {
+        this.tenThuoc = tenThuoc;
+    }
 
-    public BigDecimal getSoLuong() { return soLuong; }
-    public void setSoLuong(BigDecimal soLuong) { this.soLuong = soLuong; }
+    public String getDonViTinh() {
+        return donViTinh;
+    }
 
-    public BigDecimal getLieuLuong() { return lieuLuong; }
-    public void setLieuLuong(BigDecimal lieuLuong) { this.lieuLuong = lieuLuong; }
+    public void setDonViTinh(String donViTinh) {
+        this.donViTinh = donViTinh;
+    }
+
+    public BigDecimal getSoLuong() {
+        return soLuong;
+    }
+
+    public void setSoLuong(BigDecimal soLuong) {
+        this.soLuong = soLuong;
+    }
+
+    public BigDecimal getLieuLuong() {
+        return lieuLuong;
+    }
+
+    public void setLieuLuong(BigDecimal lieuLuong) {
+        this.lieuLuong = lieuLuong;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ChiTietDonThuoc_entity that = (ChiTietDonThuoc_entity) o;
         return Objects.equals(maCTDT, that.maCTDT);
     }

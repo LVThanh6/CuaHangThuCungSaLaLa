@@ -54,69 +54,89 @@ public class NhanVien_entity {
 	public void setMaNhanVien(String maNhanVien) {
 		this.maNhanVien = maNhanVien;
 	}
-	
+
 	public TaiKhoan getMaTK() {
 		return maTK;
 	}
+
 	public void setMaTK(TaiKhoan maTK) {
 		this.maTK = maTK;
 	}
+
 	public void setMaTK(String maTK) {
 		this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
 	}
+
 	public String getHoTen() {
 		return hoTen;
 	}
+
 	public void setHoTen(String hoTen) {
 		this.hoTen = hoTen;
 	}
+
 	public String getChucVu() {
 		return chucVu;
 	}
+
 	public void setChucVu(String chucVu) {
 		this.chucVu = chucVu;
 	}
+
 	public String getSdt() {
 		return sdt;
 	}
+
 	public void setSdt(String sdt) {
 		this.sdt = sdt;
 	}
+
 	public String getDiaChi() {
 		return diaChi;
 	}
+
 	public void setDiaChi(String diaChi) {
 		this.diaChi = diaChi;
 	}
+
 	public LocalDate getNgaySinh() {
 		return ngaySinh;
 	}
+
 	public void setNgaySinh(LocalDate ngaySinh) {
 		this.ngaySinh = ngaySinh;
 	}
+
 	public String getGioiTinh() {
 		return gioiTinh;
 	}
+
 	public void setGioiTinh(String gioiTinh) {
 		this.gioiTinh = gioiTinh;
 	}
+
 	public double getLuongCoBan() {
 		return luongCoBan;
 	}
+
 	public void setLuongCoBan(double luongCoBan) {
 		this.luongCoBan = luongCoBan;
 	}
+
 	public Boolean getTrangThaiTK() {
 		return trangThaiTK;
 	}
+
 	public void setTrangThaiTK(Boolean trangThaiTK) {
 		this.trangThaiTK = trangThaiTK;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		NhanVien_entity that = (NhanVien_entity) o;
 		return Objects.equals(maNhanVien, that.maNhanVien);
 	}

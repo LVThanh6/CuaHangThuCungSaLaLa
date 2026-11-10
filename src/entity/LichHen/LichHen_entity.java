@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 
 public class LichHen_entity {
     private String maLichHen;
-    
+
     // Sử dụng Object Composition để lấy nguyên đối tượng chứa khóa ngoại
     private ThuCung_entity thuCung;
     private KhachHang khachHang;
     private NhanVien_entity nhanVien;
     private DichVu_entity dichVu; // Có thể null theo thiết kế CSDL
-    
+
     private LocalDateTime ngayGio;
     private String lyDo;
     private String trangThai;
@@ -26,9 +26,9 @@ public class LichHen_entity {
         super();
     }
 
-    public LichHen_entity(String maLichHen, ThuCung_entity thuCung, KhachHang khachHang, 
-                          NhanVien_entity nhanVien, DichVu_entity dichVu, LocalDateTime ngayGio, 
-                          String lyDo, String trangThai, String ghiChu, String loaiHen) {
+    public LichHen_entity(String maLichHen, ThuCung_entity thuCung, KhachHang khachHang,
+            NhanVien_entity nhanVien, DichVu_entity dichVu, LocalDateTime ngayGio,
+            String lyDo, String trangThai, String ghiChu, String loaiHen) {
         super();
         this.maLichHen = maLichHen;
         this.thuCung = thuCung;
