@@ -149,6 +149,7 @@ public class DatLichMoiGUI extends JPanel {
         capNhatTomTat();
     }
 
+    //Hàm gốc định hình toàn bộ màn hình, chia giao diện thành phần đầu trang và thân trang
     private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout());
         setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
@@ -173,6 +174,7 @@ public class DatLichMoiGUI extends JPanel {
         add(khungCuonTrang, BorderLayout.CENTER);
     }
 
+    //Tạo tiêu đề "Đặt lịch mới" và nút "Xem lịch" ở góc trên cùng.
     private JPanel taoPhanDauTrang() {
         panelDauTrang = new JPanel(new BorderLayout(0, 8));
         panelDauTrang.setOpaque(false);
@@ -213,6 +215,7 @@ public class DatLichMoiGUI extends JPanel {
         return panelDauTrang;
     }
 
+    //Hàm gom 3 thẻ nhập liệu (Khách hàng, Thú cưng, Lịch khám) vào cột bên trái.
     private JPanel taoCotTrai() {
         panelCotTrai = new JPanel(new GridBagLayout());
         panelCotTrai.setOpaque(false);
@@ -224,6 +227,7 @@ public class DatLichMoiGUI extends JPanel {
         return panelCotTrai;
     }
 
+    //Dựng khu vực nhập số điện thoại, nút Tìm và các ô hiển thị thông tin chủ nuôi (tên, email, địa chỉ).
     private TheBoGoc taoTheKhachHang() {
         JPanel luoi = new JPanel(new GridBagLayout());
         luoi.setOpaque(false);
@@ -254,6 +258,7 @@ public class DatLichMoiGUI extends JPanel {
         return theKhachHang;
     }
 
+    //Dựng khu vực chọn thú cưng (combobox) và các ô hiển thị thông tin thú cưng (giống, giới tính, cân nặng).
     private TheBoGoc taoTheThuCung() {
         JPanel luoi = new JPanel(new GridBagLayout());
         luoi.setOpaque(false);
@@ -276,6 +281,7 @@ public class DatLichMoiGUI extends JPanel {
         return theThuCung;
     }
 
+    //Dựng khu vực chọn ngày, bác sĩ, dịch vụ, lưới các nút chọn giờ (08:00 - 17:00) và ô nhập ghi chú.
     private TheBoGoc taoTheLichKham() {
         JPanel luoi = new JPanel(new GridBagLayout());
         luoi.setOpaque(false);
@@ -322,6 +328,7 @@ public class DatLichMoiGUI extends JPanel {
         return theLichKham;
     }
 
+    //Hàm dựng toàn bộ cột bên phải chứa bảng "Tóm tắt lịch hẹn" và nút "Đặt lịch khám".
     private JPanel taoCotPhai() {
         panelCotPhai = new JPanel(new BorderLayout());
         panelCotPhai.setOpaque(false);
@@ -380,6 +387,8 @@ public class DatLichMoiGUI extends JPanel {
         return panelCotPhai;
     }
 
+    //taoTheNhapLieu(), taoNhomTruong(), taoOVanBan(), taoOVungVanBan(), taoNhanGiaTri(), taoDongTomTat(): 
+    //Đây là nhóm các hàm tiện ích nhỏ dùng để vẽ nhanh các ô nhập, nhãn (label) và nhóm chúng lại cho đều đẹp.
     private TheBoGoc taoTheNhapLieu(String tieuDe, String moTa, JComponent noiDung) {
         TheBoGoc the = new TheBoGoc(BAN_KINH_THE, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
         the.setLayout(new BorderLayout(0, 16));
@@ -470,6 +479,8 @@ public class DatLichMoiGUI extends JPanel {
         return dong;
     }
 
+    //themVaoCot(), themDemCuoiCot(), themVaoLuoi(): 
+    //Các hàm hỗ trợ sắp xếp vị trí (GridBagLayout) cho các thành phần giao diện không bị xô lệch.
     private void themVaoCot(Container cot, Component thanhPhan, int hang, int khoangTren) {
         GridBagConstraints gc = new GridBagConstraints();
         gc.gridx = 0;
@@ -505,6 +516,7 @@ public class DatLichMoiGUI extends JPanel {
         luoi.add(nhom, gc);
     }
 
+    //Lấy danh sách Nhân viên và Dịch vụ từ database để đổ vào các ô chọn (combobox) ngay khi mở màn hình.
     private void taiDuLieuCombobox() {
         try {
             DatLichMoiService.DuLieuTuyChon duLieu = service.taiDuLieuTuyChon();
@@ -534,6 +546,7 @@ public class DatLichMoiGUI extends JPanel {
         }
     }
 
+    //Trung tâm gắn Listener
     private void caiDatSuKien() {
         nutTimKhach.addActionListener(e -> timKhachHangTheoSoDienThoai());
         nutDatLich.addActionListener(e -> datLichKham());
@@ -560,6 +573,8 @@ public class DatLichMoiGUI extends JPanel {
         nutXemLich.addActionListener(e -> moManHinhXemLich());
     }
 
+    //Lấy số điện thoại người dùng nhập, gọi database tìm khách. 
+    //Nếu có sẽ tự điền tên, địa chỉ và gọi tiếp hàm tải thú cưng.
     private void timKhachHangTheoSoDienThoai() {
         try {
             khachHangDuocChon = service.timKhachHangTheoSoDienThoai(txtSoDienThoai.getText());
@@ -587,6 +602,7 @@ public class DatLichMoiGUI extends JPanel {
         }
     }
 
+    //Lấy danh sách tất cả thú cưng của vị khách vừa tìm thấy đổ vào combobox "Chọn thú cưng".
     private void taiThuCungCuaKhachHang() {
         thuCungTheoNhan.clear();
         cboThuCung.removeAllItems();
@@ -611,6 +627,7 @@ public class DatLichMoiGUI extends JPanel {
         }
     }
 
+    //Khi người dùng chọn 1 bé thú cưng trong combobox, hàm này sẽ tự động điền các ô giống, giới tính, cân nặng.
     private void capNhatThongTinThuCung() {
         String nhan = (String) cboThuCung.getSelectedItem();
         ThuCung_entity thuCung = thuCungTheoNhan.get(nhan);
@@ -629,6 +646,7 @@ public class DatLichMoiGUI extends JPanel {
         capNhatTomTat();
     }
 
+    //Gom tất cả dữ liệu trên màn hình (Khách, Thú cưng, Bác sĩ, Giờ, Ghi chú) gửi xuống Service để lưu vào CSDL
     private void datLichKham() {
         String nhanThuCung = (String) cboThuCung.getSelectedItem();
         ThuCung_entity thuCung = thuCungTheoNhan.get(nhanThuCung);
@@ -656,6 +674,7 @@ public class DatLichMoiGUI extends JPanel {
         }
     }
 
+    //Xóa sạch toàn bộ dữ liệu trên màn hình để chuẩn bị đặt một lịch mới.
     private void nhapLaiForm() {
         khachHangDuocChon = null;
         txtSoDienThoai.setText("");
@@ -673,6 +692,8 @@ public class DatLichMoiGUI extends JPanel {
         capNhatTomTat();
     }
 
+    //lamTrongThongTinKhachHang(), lamTrongThongTinThuCung(), xoaDanhSachThuCung()
+    //Nhóm hàm tiện ích dùng để xóa trắng các ô text khi không tìm thấy dữ liệu.
     private void lamTrongThongTinKhachHang() {
         txtTenKhachHang.setText("");
         txtEmailKhachHang.setText("");
@@ -695,6 +716,7 @@ public class DatLichMoiGUI extends JPanel {
         cboThuCung.addItem(DANH_SACH_THU_CUNG[0]);
     }
 
+    //Mỗi khi người dùng gõ phím hay chọn bất cứ thứ gì ở cột trái, hàm này sẽ tự động chạy để cập nhật thông tin hiển thị lên bảng "Tóm tắt lịch hẹn" ở cột phải.
     private void capNhatTomTat() {
         nhanTomTatChuNuoi.setText(khachHangDuocChon == null
                 ? GIA_TRI_TRONG
@@ -727,10 +749,12 @@ public class DatLichMoiGUI extends JPanel {
         nhanTomTatThoiGian.setText(thoiGian);
     }
 
+    //Kiểm tra nếu dữ liệu rỗng thì trả về dấu gạch ngang "—".
     private String giaTriHoacMacDinh(String giaTri) {
         return giaTri == null || giaTri.trim().isEmpty() ? GIA_TRI_TRONG : giaTri;
     }
 
+    //Xử lý sự kiện khi bấm nút "Xem lịch", đóng màn hình hiện tại và sẽ chuyển sang màn hình XemLichGUI.
     private void moManHinhXemLich() {
         java.awt.Window cuaSo = javax.swing.SwingUtilities.getWindowAncestor(this);
         if (cuaSo instanceof javax.swing.JDialog) {
@@ -794,6 +818,8 @@ public class DatLichMoiGUI extends JPanel {
         return vungGhiChu;
     }
 
+    //PanelCuon đến GiaoDienCombo) là các class giao diện tự định nghĩa (Custom UI Component) dùng để làm đẹp (bo góc, tạo nút bấm nổi, cuộn trang).
+    //đóng gói component UI tái sử dụng để code giao diện chính ngắn gọn hơn
     private static class PanelCuon extends JPanel implements Scrollable {
         PanelCuon(java.awt.LayoutManager boCuc) {
             super(boCuc);

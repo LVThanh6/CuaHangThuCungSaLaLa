@@ -33,22 +33,28 @@ public class HoSoThuCungService {
         this.khachHangDao = khachHangDao;
     }
 
+    // Lấy danh sách tất cả thú cưng từ cơ sở dữ liệu.
     public List<ThuCung_entity> taiDanhSach() {
         return thuCungDao.getAllThuCung();
     }
 
+    // Lấy danh sách tất cả khách hàng từ cơ sở dữ liệu.
     public List<KhachHang> taiKhachHang() {
         return khachHangDao.getAlltbKhachHang();
     }
 
+    // Tìm thú cưng theo mã, trả về đối tượng ThuCung_entity hoặc null nếu không tìm thấy.
     public ThuCung_entity timTheoMa(String maThuCung) {
         return thuCungDao.getThuCungTheoMa(maThuCung);
     }
 
+    //Xóa
     public boolean xoa(String maThuCung) {
         return thuCungDao.deleteThuCung(maThuCung);
     }
 
+    // Lưu thông tin thú cưng mới hoặc cập nhật thông tin thú cưng hiện có.
+    //Bắt lỗi bỏ trống các trường bắt buộc (Tên, Loài, Chủ nuôi) và thực hiện lưu dữ liệu (Insert/Update).
     public boolean luu(ThongTinThuCung thongTin) {
         if (thongTin == null || thongTin.khachHang == null
                 || thongTin.ten.trim().isEmpty() || thongTin.loai.trim().isEmpty()
@@ -75,6 +81,7 @@ public class HoSoThuCungService {
         return thongTin.maThuCungMoi ? thuCungDao.createThuCung(thuCung) : thuCungDao.updateThuCung(thuCung);
     }
 
+    //Đọc danh sách hiện tại và dùng biểu thức chính quy (Regex) để tự tạo mã thú cưng mới tiếp theo
     public String phatSinhMa(List<ThuCung_entity> danhSach) {
         int maLonNhat = 0;
         Pattern pattern = Pattern.compile("^TC(\\d+)$", Pattern.CASE_INSENSITIVE);
@@ -87,6 +94,7 @@ public class HoSoThuCungService {
         return String.format(Locale.ROOT, "TC%03d", maLonNhat + 1);
     }
 
+    //Tìm kiếm thú cưng theo mã, tên, loài, chủ nuôi hoặc số điện thoại.
     public List<ThuCung_entity> loc(List<ThuCung_entity> danhSach, String tuKhoa, String loai) {
         String keyword = tuKhoa == null ? "" : tuKhoa.trim().toLowerCase(Locale.ROOT);
         List<ThuCung_entity> ketQua = new ArrayList<>();
@@ -114,6 +122,7 @@ public class HoSoThuCungService {
         return ketQua;
     }
 
+    //Đếm phân loại số lượng Chó và Mèo.
     public ThongKe thongKe(List<ThuCung_entity> danhSach) {
         int cho = 0;
         int meo = 0;
@@ -127,6 +136,7 @@ public class HoSoThuCungService {
         return new ThongKe(danhSach.size(), cho, meo);
     }
 
+    // Xuất danh sách thú cưng ra file CSV, bao gồm tiêu đề và dữ liệu, xử lý mã hóa UTF-8 và dấu phẩy trong dữ liệu.
     public void xuatDanhSach(File file, List<ThuCung_entity> danhSach) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             writer.write('\ufeff');
@@ -143,6 +153,7 @@ public class HoSoThuCungService {
         }
     }
 
+    //Ghi một dòng vào file CSV, tự động thêm dấu ngoặc kép và xử lý dấu phẩy trong dữ liệu.
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
             if (i > 0) writer.write(',');

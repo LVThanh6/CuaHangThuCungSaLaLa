@@ -37,12 +37,10 @@ public class XemLichService {
         this.dichVuDao = dichVuDao;
     }
 
+    //taiDuLieu() / taiNhanVien() / taiDichVu()
+    //Lấy dữ liệu Lịch hẹn, nhân viên, dịch vụ để đổ ra bảng và combobox lọc.
     public DuLieuManHinh taiDuLieu() throws SQLException {
         return new DuLieuManHinh(lichHenDao.getAllLichHen(), nhanVienDao.getAll());
-    }
-
-    public LichHen_entity timTheoMa(String maLichHen) {
-        return lichHenDao.getLichHenTheoMa(maLichHen);
     }
 
     public List<NhanVien_entity> taiNhanVien() throws SQLException {
@@ -52,7 +50,13 @@ public class XemLichService {
     public List<DichVu_entity> taiDichVu() {
         return dichVuDao.getAllDichVu();
     }
+    
+    //Tìm kiếm lịch theo mã
+    public LichHen_entity timTheoMa(String maLichHen) {
+        return lichHenDao.getLichHenTheoMa(maLichHen);
+    }
 
+    //Lọc danh sách lịch hẹn theo nhân viên, trạng thái và khoảng ngày.
     public List<LichHen_entity> loc(List<LichHen_entity> danhSach, String nhanVienChon,
             String trangThaiChon, LocalDate tuNgay, LocalDate denNgay) {
         List<LichHen_entity> ketQua = new ArrayList<>();
@@ -72,6 +76,7 @@ public class XemLichService {
         return ketQua;
     }
 
+    //Thống kê số lượng lịch hẹn trong ngày hôm nay, phân loại theo trạng thái (Tổng, Chờ khám, Đang khám, Đã khám, Đã hủy)
     public ThongKe thongKeHomNay(List<LichHen_entity> danhSach, LocalDate homNay) {
         int tong = 0;
         int choKham = 0;
@@ -89,6 +94,7 @@ public class XemLichService {
         return new ThongKe(tong, choKham, dangKham, daKham, daHuy);
     }
 
+    //Xuất danh sách lịch hẹn ra file CSV, bao gồm tiêu đề và dữ liệu, xử lý mã hóa UTF-8 và dấu phẩy trong dữ liệu.
     public void xuatDanhSach(File file, List<LichHen_entity> danhSach) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             writer.write('\ufeff');
@@ -106,6 +112,7 @@ public class XemLichService {
         }
     }
 
+    //Ghi một dòng vào file CSV, tự động thêm dấu ngoặc kép và xử lý dấu phẩy trong dữ liệu.
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
             if (i > 0) writer.write(',');
@@ -114,6 +121,7 @@ public class XemLichService {
         writer.newLine();
     }
 
+    //Xử lý chuỗi văn bản thành đối tượng ngày tháng để lọc khoảng ngày.
     public KhoangNgay khoangNgay(String tuNgayText, String denNgayText) {
         LocalDate tuNgay = parseNgay(tuNgayText);
         LocalDate denNgay = parseNgay(denNgayText);
@@ -132,6 +140,7 @@ public class XemLichService {
         }
     }
 
+    //Cập nhật thông tin lịch hẹn, bao gồm ngày giờ, nhân viên, lý do, loại hẹn, dịch vụ, trạng thái và ghi chú. Kiểm tra điều kiện: ngày giờ phải ở tương lai, nhân viên, lý do và loại hẹn là bắt buộc.
     public boolean capNhat(LichHen_entity lich, ThongTinCapNhat thongTin) {
         LocalDateTime ngayGio;
         try {
@@ -156,6 +165,7 @@ public class XemLichService {
         return lichHenDao.updateLichHen(lich);
     }
 
+    //Hủy lịch hẹn theo mã, kiểm tra điều kiện: lịch phải tồn tại và chưa bị hủy trước đó. Cập nhật trạng thái thành "Đã hủy" nếu hợp lệ.
     public KetQuaHuyLich huy(String maLichHen) {
         LichHen_entity lich = lichHenDao.getLichHenTheoMa(maLichHen);
         if (lich == null) return KetQuaHuyLich.KHONG_TIM_THAY;

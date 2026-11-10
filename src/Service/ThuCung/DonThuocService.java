@@ -60,23 +60,27 @@ public class DonThuocService {
         this.bacSiDao = bacSiDao;
     }
 
+    //Lấy toàn bộ danh sách đơn thuốc.
     public List<DonThuoc_entity> taiDanhSach() throws SQLException {
         return donThuocDao.getAllDonThuoc();
     }
 
+    //Lấy dữ liệu mồi (Hồ sơ, Thú cưng, Bác sĩ, Thuốc) để đổ vào form kê đơn.
     public DuLieuForm taiDuLieuForm() throws SQLException {
         return new DuLieuForm(hoSoDao.getAllHoSoSucKhoe(), thuCungDao.getAllThuCung(),
                 bacSiDao.getAll(), chiTietDao.getAllThuoc());
     }
 
+    //Tự động phát sinh mã đơn thuốc mới.
     public String maTiepTheo() throws SQLException {
         return donThuocDao.getMaTiepTheo();
     }
-
+    
     public List<ChiTietDonThuoc_entity> taiChiTiet(String maDonThuoc) throws SQLException {
         return chiTietDao.getChiTietTheoMaDon(maDonThuoc);
     }
 
+    //Tìm theo mã
     public DonThuoc_entity timTheoMa(String maDonThuoc) throws SQLException {
         return donThuocDao.getDonThuocTheoMa(maDonThuoc);
     }
@@ -85,10 +89,12 @@ public class DonThuocService {
         return donThuocDao.getChiTietDonThuoc(maDonThuoc);
     }
 
+    //Xóa đơn thuốc theo mã
     public boolean xoa(String maDonThuoc) throws SQLException {
         return donThuocDao.deleteDonThuoc(maDonThuoc);
     }
 
+    //Kiểm tra hợp lệ (ngày giờ, phải có ít nhất 1 thuốc) và thực hiện Thêm mới hoặc Cập nhật đơn thuốc.
     public boolean luu(ThongTinDonThuoc thongTin) throws SQLException {
         if (thongTin.hoSo == null) {
             throw new IllegalArgumentException("Vui lòng chọn hồ sơ khám.");
@@ -110,6 +116,7 @@ public class DonThuocService {
                 : donThuocDao.updateDonThuoc(don, thongTin.chiTiet);
     }
 
+    //Tạo chi tiết đơn thuốc mới, kiểm tra hợp lệ (thuốc không trùng, số lượng và liều lượng phải là số dương).
     public ChiTietDonThuoc_entity taoChiTiet(Thuoc_entity thuoc, String soLuong, String lieuLuong,
             String maDonThuoc, List<ChiTietDonThuoc_entity> chiTietHienTai) {
         if (thuoc == null) {
@@ -136,6 +143,7 @@ public class DonThuocService {
                 soLuongValue, lieuLuongValue);
     }
 
+    // Lọc danh sách đơn thuốc theo từ khóa, trạng thái và khoảng ngày.
     public List<DonThuoc_entity> loc(List<DonThuoc_entity> danhSach, String tuKhoa,
             String trangThai, String khoangThoiGian, LocalDate tuNgay, LocalDate denNgay,
             LocalDate homNay) {
@@ -174,6 +182,7 @@ public class DonThuocService {
         return ketQua;
     }
 
+    //Đếm số lượng đơn thuốc theo trạng thái (đã cấp, chờ lấy) và đếm tổng loại thuốc.
     public ThongKe thongKe(List<DonThuoc_entity> danhSach) {
         int daCap = 0;
         int choLay = 0;
@@ -186,6 +195,7 @@ public class DonThuocService {
         return new ThongKe(danhSach.size(), daCap, choLay, loaiThuoc);
     }
 
+    //Xuất danh sách đơn thuốc ra file CSV.
     public void xuatDanhSach(File file, List<DonThuoc_entity> danhSach) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             writer.write('\ufeff');
@@ -204,6 +214,7 @@ public class DonThuocService {
         }
     }
 
+    //Ghi một dòng vào file CSV, tự động thêm dấu ngoặc kép và xử lý dấu phẩy trong dữ liệu.
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
             if (i > 0) writer.write(',');
@@ -212,6 +223,7 @@ public class DonThuocService {
         writer.newLine();
     }
 
+    //Chuyển đổi chuỗi ngày tháng sang đối tượng LocalDate, kiểm tra hợp lệ và trả về khoảng ngày.
     public KhoangNgay khoangNgay(String tuNgayText, String denNgayText) {
         LocalDate tu = parseNgay(tuNgayText);
         LocalDate den = parseNgay(denNgayText);
@@ -230,6 +242,7 @@ public class DonThuocService {
         }
     }
 
+    //Hàm nghiệp vụ liên kết. Đổi trạng thái đơn thuốc thành "Hoàn thành", tự động trừ kho vật tư và sinh ra một Hóa Đơn mới kèm theo chi tiết tiền thuốc.
     public KetQuaXuatThuoc xuatVaTaoHoaDon(String maDon, NhanVien_entity nhanVien) throws SQLException {
         DonThuoc_entity don = donThuocDao.getDonThuocTheoMa(maDon);
         if (don == null) throw new IllegalArgumentException("Không tìm thấy thông tin đơn thuốc " + maDon);
