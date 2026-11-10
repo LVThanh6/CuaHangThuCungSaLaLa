@@ -22,18 +22,6 @@ import Service.VatTu.NhaCungCapService.SupplierInput;
  */
 public class NhaCungCapGUI extends JPanel {
 
-    // ===== Mau sac =====
-    private static final Color BG = new Color(0xF8FAFC);
-    private static final Color WHITE = Color.WHITE;
-    private static final Color BORDER = new Color(0xE5E7EB);
-    private static final Color TEXT_DARK = new Color(0x111827);
-    private static final Color TEXT_GRAY = new Color(0x6B7280);
-    private static final Color PRIMARY = new Color(0x0F6B5A);
-    private static final Color PRIMARY_BG = new Color(0xDDF3EE);
-    private static final Color GREEN = new Color(0x047857);
-    private static final Color RED = new Color(0xB91C1C);
-    private static final Color GREEN_BG = new Color(0xDCFCE7);
-    private static final Color RED_BG = new Color(0xFEE2E2);
 
     private static final String FONT = "Segoe UI";
 
@@ -48,7 +36,7 @@ public class NhaCungCapGUI extends JPanel {
 
     public NhaCungCapGUI() {
         setLayout(new BorderLayout());
-        setBackground(BG);
+        setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         setBorder(new EmptyBorder(16, 24, 24, 24));
 
         JPanel top = new JPanel();
@@ -75,10 +63,10 @@ public class NhaCungCapGUI extends JPanel {
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         JLabel t = new JLabel("Quan ly Nha cung cap");
         t.setFont(new Font(FONT, Font.BOLD, 18));
-        t.setForeground(TEXT_DARK);
+        t.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         JLabel s = new JLabel("Them, sua, xoa thong tin nha cung cap vat tu");
         s.setFont(new Font(FONT, Font.PLAIN, 12));
-        s.setForeground(TEXT_GRAY);
+        s.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         t.setAlignmentX(LEFT_ALIGNMENT);
         s.setAlignmentX(LEFT_ALIGNMENT);
         left.add(t);
@@ -87,12 +75,12 @@ public class NhaCungCapGUI extends JPanel {
 
         lblTongNCC = new JLabel("0 nha cung cap");
         lblTongNCC.setFont(new Font(FONT, Font.BOLD, 13));
-        lblTongNCC.setForeground(PRIMARY);
+        lblTongNCC.setForeground(RangBuocGiaoDien.MAU_CHU_DAO);
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
         right.add(lblTongNCC);
-        RoundButton btnThem = new RoundButton("Thêm nhà cung cấp", PRIMARY, PRIMARY, WHITE);
+        RoundButton btnThem = new RoundButton("Thêm nhà cung cấp", RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_CHU_DAO, RangBuocGiaoDien.MAU_NEN_THE);
         btnThem.addActionListener(e -> themNhaCungCap());
         right.add(btnThem);
 
@@ -105,7 +93,7 @@ public class NhaCungCapGUI extends JPanel {
     // Bang du lieu
     // =====================================================================
     private JComponent createTablePanel() {
-        RoundedPanel box = new RoundedPanel(12, WHITE, BORDER);
+        RoundedPanel box = new RoundedPanel(12, RangBuocGiaoDien.MAU_NEN_THE, RangBuocGiaoDien.MAU_DUONG_VIEN);
         box.setLayout(new BorderLayout());
 
         // ---- thanh loc ----
@@ -136,10 +124,10 @@ public class NhaCungCapGUI extends JPanel {
         table.setFont(new Font(FONT, Font.PLAIN, 12));
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
-        table.setGridColor(new Color(0xF0F1F3));
+        table.setGridColor(RangBuocGiaoDien.MAU_LUOI_BANG);
         table.setIntercellSpacing(new Dimension(0, 1));
-        table.setSelectionBackground(new Color(0xE8F5F2));
-        table.setSelectionForeground(TEXT_DARK);
+        table.setSelectionBackground(RangBuocGiaoDien.MAU_CHU_DAO_NHAT);
+        table.setSelectionForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         table.setFillsViewportHeight(true);
         table.setFocusable(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -154,15 +142,15 @@ public class NhaCungCapGUI extends JPanel {
         h.setDefaultRenderer(new HeaderRenderer());
 
         // renderer
-        table.getColumnModel().getColumn(0).setCellRenderer(new TextRenderer(PRIMARY, Font.BOLD, SwingConstants.LEFT));
+        table.getColumnModel().getColumn(0).setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_DAO, Font.BOLD, SwingConstants.LEFT));
         table.getColumnModel().getColumn(1)
-                .setCellRenderer(new TextRenderer(TEXT_DARK, Font.BOLD, SwingConstants.LEFT));
+                .setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_CHINH, Font.BOLD, SwingConstants.LEFT));
         table.getColumnModel().getColumn(2)
-                .setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
+                .setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_PHU, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(3)
-                .setCellRenderer(new TextRenderer(TEXT_DARK, Font.PLAIN, SwingConstants.LEFT));
+                .setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_CHINH, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(4)
-                .setCellRenderer(new TextRenderer(TEXT_GRAY, Font.PLAIN, SwingConstants.LEFT));
+                .setCellRenderer(new TextRenderer(RangBuocGiaoDien.MAU_CHU_PHU, Font.PLAIN, SwingConstants.LEFT));
         table.getColumnModel().getColumn(5).setCellRenderer(new ActionRenderer());
 
         int[] widths = { 90, 220, 200, 130, 180, 120 };
@@ -201,7 +189,7 @@ public class NhaCungCapGUI extends JPanel {
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.getViewport().setBackground(WHITE);
+        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
         box.add(filterWrap, BorderLayout.NORTH);
@@ -308,8 +296,8 @@ public class NhaCungCapGUI extends JPanel {
 
         JButton btnLuu = new JButton(isNew ? "Them moi" : "Luu thay doi");
         btnLuu.setFont(new Font(FONT, Font.BOLD, 13));
-        btnLuu.setBackground(PRIMARY);
-        btnLuu.setForeground(WHITE);
+        btnLuu.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
+        btnLuu.setForeground(RangBuocGiaoDien.MAU_NEN_THE);
         btnLuu.setFocusPainted(false);
         btnLuu.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -407,10 +395,10 @@ public class NhaCungCapGUI extends JPanel {
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
             super.getTableCellRendererComponent(t, v, false, false, r, c);
             setFont(new Font(FONT, Font.BOLD, 10));
-            setForeground(TEXT_GRAY);
-            setBackground(new Color(0xF9FAFB));
+            setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+            setBackground(RangBuocGiaoDien.MAU_TIEU_DE_BANG);
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, RangBuocGiaoDien.MAU_DUONG_VIEN),
                     new EmptyBorder(0, 12, 0, 8)));
             return this;
         }
@@ -441,8 +429,8 @@ public class NhaCungCapGUI extends JPanel {
 
         ActionRenderer() {
             panel.setBorder(new EmptyBorder(11, 12, 0, 0));
-            panel.add(link("Sua", PRIMARY));
-            panel.add(link("Xoa", RED));
+            panel.add(link("Sua", RangBuocGiaoDien.MAU_CHU_DAO));
+            panel.add(link("Xoa", RangBuocGiaoDien.MAU_NGUY_HIEM_CHU));
         }
 
         private static JLabel link(String text, Color color) {
@@ -526,7 +514,7 @@ public class NhaCungCapGUI extends JPanel {
             this.hint = hint;
             setFont(new Font(FONT, Font.PLAIN, 12));
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(BORDER, 1, true),
+                    BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1, true),
                     new EmptyBorder(0, 28, 0, 8)));
         }
 
@@ -536,12 +524,12 @@ public class NhaCungCapGUI extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             int cy = getHeight() / 2;
-            g2.setColor(TEXT_GRAY);
+            g2.setColor(RangBuocGiaoDien.MAU_CHU_PHU);
             g2.setStroke(new BasicStroke(1.4f));
             g2.draw(new Ellipse2D.Double(10, cy - 6, 8, 8));
             g2.drawLine(17, cy + 1, 21, cy + 5);
             if (getText().isEmpty()) {
-                g2.setColor(new Color(0x9CA3AF));
+                g2.setColor(RangBuocGiaoDien.MAU_CHU_GOI_Y);
                 g2.setFont(getFont());
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(hint, 28, cy + (fm.getAscent() - fm.getDescent()) / 2);
