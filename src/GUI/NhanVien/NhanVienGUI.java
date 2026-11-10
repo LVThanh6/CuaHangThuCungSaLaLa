@@ -35,7 +35,7 @@ public class NhanVienGUI extends JPanel {
 
     private final List<NhanVien_entity> tatCa = new ArrayList<>();
     private final List<NhanVien_entity> daLoc = new ArrayList<>();
-    private final NhanVienService controller = new NhanVienService();
+    private final NhanVienService service = new NhanVienService();
     private Boolean sapXepTang = null;
 
     private OTimKiem txtTim;
@@ -387,7 +387,7 @@ public class NhanVienGUI extends JPanel {
     }
 
     private void capNhatSoLieu() {
-        NhanVienService.ThongKe thongKe = controller.thongKe(tatCa);
+        NhanVienService.ThongKe thongKe = service.thongKe(tatCa);
         lblSoLieu[0].setText(String.valueOf(thongKe.tongSo));
         lblSoLieu[1].setText(String.valueOf(thongKe.dangLam));
         lblSoLieu[2].setText(String.valueOf(thongKe.ngung));
@@ -400,7 +400,7 @@ public class NhanVienGUI extends JPanel {
         String role = vt == 0 ? null : CHUC_VU[vt - 1];
         String status = tt == 0 ? null : TrangThai.values()[tt - 1].name();
         daLoc.clear();
-        daLoc.addAll(controller.locDanhSach(tatCa, txtTim.getText(), role, status,
+        daLoc.addAll(service.locDanhSach(tatCa, txtTim.getText(), role, status,
                 sapXepTang != null, Boolean.TRUE.equals(sapXepTang)));
         capNhatBang();
     }
@@ -456,7 +456,7 @@ public class NhanVienGUI extends JPanel {
         if (nv.getMaTK() == null)
             return;
         try {
-            controller.doiTrangThai(nv.getMaNhanVien(), trangThai == TrangThai.DANG_LAM);
+            service.doiTrangThai(nv.getMaNhanVien(), trangThai == TrangThai.DANG_LAM);
             taiLai();
         } catch (SQLException ex) {
             baoLoi("Không thể đổi trạng thái", ex);
@@ -471,7 +471,7 @@ public class NhanVienGUI extends JPanel {
         if (kq != JOptionPane.YES_OPTION)
             return;
         try {
-            NhanVienService.KetQuaXoa result = controller.xoa(nv.getMaNhanVien());
+            NhanVienService.KetQuaXoa result = service.xoa(nv.getMaNhanVien());
             if (result.coDuLieuLienQuan) {
                 JOptionPane.showMessageDialog(this,
                         "Nhân viên này đã có dữ liệu liên quan (lịch làm việc, lịch hẹn, hóa đơn, phiếu kho...)\n"
@@ -493,7 +493,7 @@ public class NhanVienGUI extends JPanel {
         String maHienThi;
         if (goc == null) {
             try {
-                maHienThi = controller.taoMaMoi();
+                maHienThi = service.taoMaMoi();
             } catch (SQLException ex) {
                 baoLoi("Không thể tạo mã mới", ex);
                 return;
@@ -534,7 +534,7 @@ public class NhanVienGUI extends JPanel {
         }
 
         try {
-            double totalSalary = controller.tinhTongLuongThang(goc, LocalDate.now());
+            double totalSalary = service.tinhTongLuongThang(goc, LocalDate.now());
             txtTongLuong
                     .setText(Double.isNaN(totalSalary) ? "Chưa áp dụng" : NhanVienService.dinhDangTien(totalSalary));
         } catch (SQLException ex) {
@@ -610,7 +610,7 @@ public class NhanVienGUI extends JPanel {
         dinhDangNut(btnLuu, true);
         btnLuu.addActionListener(e -> {
             try {
-                NhanVienService.KetQuaLuu result = controller.validateAndSave(txtMa.getText(), goc,
+                NhanVienService.KetQuaLuu result = service.validateAndSave(txtMa.getText(), goc,
                         txtTen.getText(), txtSdt.getText(), txtDiaChi.getText(), txtNgay.getText(),
                         (String) cbGT.getSelectedItem(), (String) cbChucVu.getSelectedItem(),
                         txtLuong.getText(), cbTT.getSelectedIndex() == 0);
@@ -659,7 +659,7 @@ public class NhanVienGUI extends JPanel {
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
         try {
-            controller.ghiCsv(fc.getSelectedFile(), daLoc);
+            service.ghiCsv(fc.getSelectedFile(), daLoc);
             JOptionPane.showMessageDialog(this, "Đã xuất " + daLoc.size() + " nhân viên.",
                     "Xuất danh sách", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -670,7 +670,7 @@ public class NhanVienGUI extends JPanel {
 
     private void taiLai() {
         try {
-            List<NhanVien_entity> ds = controller.taiDanhSach();
+            List<NhanVien_entity> ds = service.taiDanhSach();
             tatCa.clear();
             tatCa.addAll(ds);
         } catch (SQLException ex) {

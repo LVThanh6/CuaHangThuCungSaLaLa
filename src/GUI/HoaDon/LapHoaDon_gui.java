@@ -29,7 +29,7 @@ import Service.HoaDon.LapHoaDonService.ValidationError;
 
 public class LapHoaDon_gui extends JPanel {
 
-    private final LapHoaDonService controller = new LapHoaDonService();
+    private final LapHoaDonService service = new LapHoaDonService();
 
     // Nhân viên đang đăng nhập
     private NhanVien_entity nhanVienDangNhap;
@@ -563,7 +563,7 @@ public class LapHoaDon_gui extends JPanel {
 
         cboKhachHang.removeAllItems();
 
-        ArrayList<KhachHang> ds = controller.taiKhachHang();
+        ArrayList<KhachHang> ds = service.taiKhachHang();
 
         for (KhachHang kh : ds) {
             cboKhachHang.addItem(kh);
@@ -585,7 +585,7 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-        ArrayList<ThuCung_entity> ds = controller.taiThuCung(kh.getMaKH());
+        ArrayList<ThuCung_entity> ds = service.taiThuCung(kh.getMaKH());
 
         for (ThuCung_entity tc : ds) {
             cboThuCung.addItem(tc);
@@ -605,10 +605,10 @@ public class LapHoaDon_gui extends JPanel {
         String loai = (String) cboLoai.getSelectedItem();
         if ("Dịch vụ".equals(loai)) {
             try {
-                for (NhanVien_entity nv : controller.taiNhanVienDichVuThucHien()) {
+                for (NhanVien_entity nv : service.taiNhanVienDichVuThucHien()) {
                     cboNguoiThucHien.addItem(nv);
                 }
-                for (BacSi_entity bs : controller.taiBacSiThucHien()) {
+                for (BacSi_entity bs : service.taiBacSiThucHien()) {
                     cboNguoiThucHien.addItem(bs);
                 }
             } catch (SQLException ex) {
@@ -654,13 +654,13 @@ public class LapHoaDon_gui extends JPanel {
 
         if ("Dịch vụ".equals(loai)) {
 
-            for (DichVu_entity dv : controller.taiDichVu()) {
+            for (DichVu_entity dv : service.taiDichVu()) {
                 cboMatHang.addItem(dv);
             }
 
         } else {
 
-            for (VatTu_entity vt : controller.taiVatTu()) {
+            for (VatTu_entity vt : service.taiVatTu()) {
                 cboMatHang.addItem(vt);
             }
         }
@@ -707,7 +707,7 @@ public class LapHoaDon_gui extends JPanel {
         List<String> luaChon = new ArrayList<>();
 
         try {
-            chiTietKhaDung = controller.taiChiTietDonThuocKhaDung(
+            chiTietKhaDung = service.taiChiTietDonThuocKhaDung(
                     thuCung.getMaTC(), vatTu.getMaThuoc().getMaThuoc());
             for (PrescriptionOption option : chiTietKhaDung) {
                 ChiTietDonThuoc_entity chiTiet = option.getChiTiet();
@@ -752,7 +752,7 @@ public class LapHoaDon_gui extends JPanel {
 
         LocalDate homNay = LocalDate.now();
 
-        for (KhuyenMai_Entity km : controller.taiKhuyenMaiHieuLuc(homNay)) {
+        for (KhuyenMai_Entity km : service.taiKhuyenMaiHieuLuc(homNay)) {
             cboKhuyenMai.addItem(km);
         }
     }
@@ -763,7 +763,7 @@ public class LapHoaDon_gui extends JPanel {
 
         cboThue.removeAllItems();
 
-        for (Thue_entity thue : controller.taiThue()) {
+        for (Thue_entity thue : service.taiThue()) {
             cboThue.addItem(thue);
         }
     }
@@ -786,7 +786,7 @@ public class LapHoaDon_gui extends JPanel {
             return;
         }
 
-        if (!controller.laSoLuongHopLe(soLuong)) {
+        if (!service.laSoLuongHopLe(soLuong)) {
             JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương.");
             txtSoLuong.requestFocus();
             return;
@@ -794,17 +794,17 @@ public class LapHoaDon_gui extends JPanel {
 
         InvoiceLine line;
         if (item instanceof DichVu_entity dv) {
-            line = controller.taoDongDichVu(dv, soLuong);
+            line = service.taoDongDichVu(dv, soLuong);
         } else if (item instanceof VatTu_entity vt) {
-            ValidationError stockValidation = controller.kiemTraTonKho(vt, soLuong);
+            ValidationError stockValidation = service.kiemTraTonKho(vt, soLuong);
             if (stockValidation != ValidationError.NONE) {
                 JOptionPane.showMessageDialog(this, stockValidation.getMessage());
                 return;
             }
 
             ChiTietDonThuoc_entity chiTietDon = null;
-            if (controller.laThuocKeDon(vt)) {
-                ValidationError petValidation = controller.kiemTraThuCungBatBuoc(
+            if (service.laThuocKeDon(vt)) {
+                ValidationError petValidation = service.kiemTraThuCungBatBuoc(
                         LoaiMatHang.THUOC, cboThuCung.getSelectedItem() != null);
                 if (petValidation != ValidationError.NONE) {
                     JOptionPane.showMessageDialog(this, petValidation.getMessage());
@@ -815,7 +815,7 @@ public class LapHoaDon_gui extends JPanel {
                     return;
                 }
             }
-            line = controller.taoDongVatTu(vt, chiTietDon, soLuong);
+            line = service.taoDongVatTu(vt, chiTietDon, soLuong);
         } else {
             return;
         }
@@ -827,10 +827,10 @@ public class LapHoaDon_gui extends JPanel {
         BacSi_entity bacSiThucHien = nguoiThucHien instanceof BacSi_entity
                 ? (BacSi_entity) nguoiThucHien
                 : null;
-        line = controller.ganNguoiThucHien(line, nhanVienThucHien, bacSiThucHien);
+        line = service.ganNguoiThucHien(line, nhanVienThucHien, bacSiThucHien);
 
         try {
-            LapHoaDonService.AddLineResult result = controller.themHoacGopMatHang(
+            LapHoaDonService.AddLineResult result = service.themHoacGopMatHang(
                     chiTietHoaDon, line, cboThuCung.getSelectedItem() != null);
 
             if (result.getValidation() != ValidationError.NONE) {
@@ -844,15 +844,15 @@ public class LapHoaDon_gui extends JPanel {
             if (result.isMerged()) {
                 model.setValueAt(savedLine.getSoLuong(), row, 4);
                 model.setValueAt(
-                        dinhDangTien(controller.tinhThanhTienDong(savedLine)), row, 5);
+                        dinhDangTien(service.tinhThanhTienDong(savedLine)), row, 5);
             } else {
                 model.addRow(new Object[] {
                         savedLine.getMaHang(),
                         savedLine.getTenHang(),
-                        controller.layTenLoaiMatHang(savedLine.getLoai()),
+                        service.layTenLoaiMatHang(savedLine.getLoai()),
                         savedLine.getDonGia(),
                         savedLine.getSoLuong(),
-                        dinhDangTien(controller.tinhThanhTienDong(savedLine))
+                        dinhDangTien(service.tinhThanhTienDong(savedLine))
                 });
             }
 
@@ -879,7 +879,7 @@ public class LapHoaDon_gui extends JPanel {
 
         int modelRow = tblChiTiet.convertRowIndexToModel(row);
 
-        if (controller.xoaDongChiTiet(chiTietHoaDon, modelRow)) {
+        if (service.xoaDongChiTiet(chiTietHoaDon, modelRow)) {
             model.removeRow(modelRow);
             capNhatTongTien();
         }
@@ -901,7 +901,7 @@ public class LapHoaDon_gui extends JPanel {
     }
 
     private InvoiceTotals tinhTongTienHienTai() {
-        return controller.tinhTongTien(chiTietHoaDon,
+        return service.tinhTongTien(chiTietHoaDon,
                 (KhuyenMai_Entity) cboKhuyenMai.getSelectedItem(),
                 (Thue_entity) cboThue.getSelectedItem());
     }
@@ -916,7 +916,7 @@ public class LapHoaDon_gui extends JPanel {
 
         if (nhanVienDangNhap == null) {
             try {
-                nhanVienDangNhap = controller.layNhanVienDangNhapHienTai();
+                nhanVienDangNhap = service.layNhanVienDangNhapHienTai();
                 capNhatHienThiNhanVien();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
@@ -924,7 +924,7 @@ public class LapHoaDon_gui extends JPanel {
             }
         }
 
-        ValidationError validation = controller.kiemTraHoaDon(
+        ValidationError validation = service.kiemTraHoaDon(
                 kh, nhanVienDangNhap, chiTietHoaDon, tc != null);
         if (validation != ValidationError.NONE) {
             JOptionPane.showMessageDialog(this, validation.getMessage(),
@@ -952,7 +952,7 @@ public class LapHoaDon_gui extends JPanel {
         String maHD = txtMaHD.getText().trim();
         InvoiceTotals totals;
         try {
-            totals = controller.luuHoaDon(new InvoiceInput(maHD, LocalDate.now(), kh, tc,
+            totals = service.luuHoaDon(new InvoiceInput(maHD, LocalDate.now(), kh, tc,
                     nhanVienDangNhap, km, thue, chiTietHoaDon));
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
@@ -1020,7 +1020,7 @@ public class LapHoaDon_gui extends JPanel {
 
     // ==================== MÃ HÓA ĐƠN ====================
     private String phatSinhMaHD() {
-        return controller.taoMaHoaDonTiepTheo();
+        return service.taoMaHoaDonTiepTheo();
     }
 
     // ==================== ĐỊNH DẠNG TIỀN ====================

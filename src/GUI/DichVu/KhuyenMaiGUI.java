@@ -70,7 +70,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     // ===== Dữ liệu =====
-    private final KhuyenMaiService controller = new KhuyenMaiService();
+    private final KhuyenMaiService service = new KhuyenMaiService();
     private List<KhuyenMai_Entity> tatCa = new ArrayList<>();
     private List<KhuyenMai_Entity> locRa = new ArrayList<>();
     private final List<KhuyenMai_Entity> dongHienTai = new ArrayList<>();
@@ -204,7 +204,7 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private void capNhatThongKe() {
-        KhuyenMaiService.Summary summary = controller.summarize(tatCa);
+        KhuyenMaiService.Summary summary = service.summarize(tatCa);
         lblTong.setText(String.valueOf(summary.total));
         lblDang.setText(String.valueOf(summary.active));
         lblSap.setText(String.valueOf(summary.upcoming));
@@ -379,13 +379,13 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
     /** Đọc lại dữ liệu từ CSDL rồi hiển thị. */
     private void taiLai() {
-        List<KhuyenMai_Entity> ds = controller.load();
+        List<KhuyenMai_Entity> ds = service.load();
         tatCa = new ArrayList<>(ds);
         hienThi(false);
     }
 
     private boolean laPhanTram(KhuyenMai_Entity km) {
-        return controller.isPercentage(km);
+        return service.isPercentage(km);
     }
 
     private static String soThuong(double v) {
@@ -393,11 +393,11 @@ public class KhuyenMaiGUI extends JPanel {
     }
 
     private String hienMuc(KhuyenMai_Entity km) {
-        return controller.formatAmount(km);
+        return service.formatAmount(km);
     }
 
     private void apDungLoc() {
-        locRa = controller.filter(tatCa, txtTim.getText(), cboTrangThai.getSelectedIndex(), tuNgay, denNgay);
+        locRa = service.filter(tatCa, txtTim.getText(), cboTrangThai.getSelectedIndex(), tuNgay, denNgay);
     }
 
     /** Lọc lại, cập nhật thống kê và hiển thị toàn bộ kết quả. */
@@ -419,7 +419,7 @@ public class KhuyenMaiGUI extends JPanel {
                     km.getNgayBatDau() != null ? DF.format(km.getNgayBatDau()) : "",
                     km.getNgayKetThuc() != null ? DF.format(km.getNgayKetThuc()) : "",
                     nz(km.getDieuKien()),
-                    controller.status(km).label,
+                    service.status(km).label,
                     ""
             });
         }
@@ -445,7 +445,7 @@ public class KhuyenMaiGUI extends JPanel {
         if (ok != JOptionPane.OK_OPTION)
             return;
         try {
-            KhuyenMaiService.DateRange range = controller.parseDateRange(tu.getText(), den.getText());
+            KhuyenMaiService.DateRange range = service.parseDateRange(tu.getText(), den.getText());
             tuNgay = range.from;
             denNgay = range.to;
         } catch (IllegalArgumentException ex) {
@@ -470,11 +470,11 @@ public class KhuyenMaiGUI extends JPanel {
     // =====================================================================
 
     private void doiTamDung(KhuyenMai_Entity km) {
-        Status status = controller.status(km);
+        Status status = service.status(km);
         if (status == Status.EXPIRED)
             return;
         if (status == Status.PAUSED) {
-            controller.resume(km.getMaKM());
+            service.resume(km.getMaKM());
         } else {
             int kq = JOptionPane.showConfirmDialog(this,
                     "Tạm dừng khuyến mãi " + km.getTenKM() + " (" + km.getMaKM() + ")?\n"
@@ -482,7 +482,7 @@ public class KhuyenMaiGUI extends JPanel {
                     "Tạm dừng khuyến mãi", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (kq != JOptionPane.YES_OPTION)
                 return;
-            controller.pause(km.getMaKM());
+            service.pause(km.getMaKM());
         }
         hienThi(false);
     }
@@ -497,7 +497,7 @@ public class KhuyenMaiGUI extends JPanel {
             return;
 
         try {
-            Files.write(fc.getSelectedFile().toPath(), controller.toCsv(locRa).getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), service.toCsv(locRa).getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Đã xuất " + locRa.size() + " khuyến mãi ra file.", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -561,7 +561,7 @@ public class KhuyenMaiGUI extends JPanel {
         btnLuu.addActionListener(e -> {
             try {
                 boolean phanTram = cboLoai.getSelectedIndex() == 0;
-                boolean ok = controller.save(txtMa.getText(), txtTen.getText(), phanTram, txtMuc.getText(),
+                boolean ok = service.save(txtMa.getText(), txtTen.getText(), phanTram, txtMuc.getText(),
                         txtBatDau.getText(), txtKetThuc.getText(), txtDieuKien.getText(), tatCa, sua);
                 if (ok) {
                     JOptionPane.showMessageDialog(dlg, "Lưu thành công!");
@@ -594,8 +594,8 @@ public class KhuyenMaiGUI extends JPanel {
                         "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
                 if (kq != JOptionPane.YES_OPTION)
                     return;
-                if (controller.delete(mau.getMaKM())) {
-                    controller.resume(mau.getMaKM());
+                if (service.delete(mau.getMaKM())) {
+                    service.resume(mau.getMaKM());
                     JOptionPane.showMessageDialog(dlg, "Xóa thành công!");
                     dlg.dispose();
                     taiLai();

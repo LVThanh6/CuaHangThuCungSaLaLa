@@ -56,7 +56,7 @@ public class DanhSachKhachHangGUI extends JPanel {
     private Object[][] duLieuKhachHang;
     private String[] danhSachBoLoc;
 
-    private final KhachHangService controller = new KhachHangService();
+    private final KhachHangService service = new KhachHangService();
 
     // =========================================================================
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
@@ -217,9 +217,9 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     private void khoiTaoBangDuLieu() {
-        danhSachCot = controller.layDanhSachCot();
+        danhSachCot = service.layDanhSachCot();
         duLieuKhachHang = new Object[][] {};
-        danhSachBoLoc = new String[] { controller.layLuaChonLocMacDinh() };
+        danhSachBoLoc = new String[] { service.layLuaChonLocMacDinh() };
 
         panelQuanLyTable = new QuanLyTable(
                 danhSachCot,
@@ -239,14 +239,14 @@ public class DanhSachKhachHangGUI extends JPanel {
 
         // 2. Cài đặt Bộ lọc theo Hạng thành viên
         panelQuanLyTable.caiDatBoLoc(0,
-                controller.layDanhSachTuyChonLoc(),
+                service.layDanhSachTuyChonLoc(),
                 luaChon -> {
-                    String regex = controller.taoRegexLoc(luaChon);
+                    String regex = service.taoRegexLoc(luaChon);
                     if (regex == null) {
                         panelQuanLyTable.getRowSorter().setRowFilter(null);
                     } else {
                         panelQuanLyTable.getRowSorter().setRowFilter(
-                                RowFilter.regexFilter(regex, controller.layViTriCotHangThanhVien()));
+                                RowFilter.regexFilter(regex, service.layViTriCotHangThanhVien()));
                     }
                 });
 
@@ -260,7 +260,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         capNhatTrangThaiNut(table);
 
         // Thiết lập renderer cho cột Hạng thành viên
-        table.getColumnModel().getColumn(controller.layViTriCotHangThanhVien())
+        table.getColumnModel().getColumn(service.layViTriCotHangThanhVien())
                 .setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
                     @Override
                     public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel,
@@ -280,7 +280,7 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     private void capNhatTrangThaiNut(JTable table) {
-        boolean coDong = controller.coTheThaoTacDuyNhat(table.getSelectedRowCount());
+        boolean coDong = service.coTheThaoTacDuyNhat(table.getSelectedRowCount());
         btnXemKhachHang.setEnabled(coDong);
         btnSuaKhachHang.setEnabled(coDong);
         btnXoaKhachHang.setEnabled(coDong);
@@ -288,17 +288,17 @@ public class DanhSachKhachHangGUI extends JPanel {
 
     private void thucHienTrenKhachHang(JTable table, int thaoTac) {
         int row = table.getSelectedRow();
-        if (!controller.coTheThaoTacDuyNhat(table.getSelectedRowCount()) || row < 0) {
+        if (!service.coTheThaoTacDuyNhat(table.getSelectedRowCount()) || row < 0) {
             return;
         }
         int modelRow = table.convertRowIndexToModel(row);
-        String maKH = String.valueOf(table.getModel().getValueAt(modelRow, controller.layViTriCotMaKhachHang()));
+        String maKH = String.valueOf(table.getModel().getValueAt(modelRow, service.layViTriCotMaKhachHang()));
         if (thaoTac == 0) {
             hienThiDialogXemChiTiet(maKH);
         } else if (thaoTac == 1) {
             hienThiDialogSuaKhachHang(maKH);
         } else {
-            String hoTen = String.valueOf(table.getModel().getValueAt(modelRow, controller.layViTriCotHoTen()));
+            String hoTen = String.valueOf(table.getModel().getValueAt(modelRow, service.layViTriCotHoTen()));
             xuLyXoaKhachHang(maKH, hoTen);
         }
     }
@@ -307,7 +307,7 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Tải dữ liệu thực tế từ cơ sở dữ liệu SALALA qua KhachHangService
      */
     public void taiDuLieuTuDatabase() {
-        duLieuKhachHang = controller.taiDuLieuBang();
+        duLieuKhachHang = service.taiDuLieuBang();
         if (panelQuanLyTable != null) {
             panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
         }
@@ -318,7 +318,7 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Cập nhật các thẻ thống kê từ CSDL
      */
     public void capNhatThongKe() {
-        CustomerStatistics statistics = controller.layThongKe();
+        CustomerStatistics statistics = service.layThongKe();
         if (lblValTongKH != null)
             lblValTongKH.setText(statistics.layChuoiTongKhachHang());
         if (lblValKhachMoi != null)
@@ -365,7 +365,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelContent.add(Box.createRigidArea(new Dimension(0, 16)));
 
         // Tự động phát sinh mã khách hàng
-        String maGoiY = controller.phatSinhMaMoi();
+        String maGoiY = service.phatSinhMaMoi();
 
         JTextField txtMaKH = taoTextField(maGoiY);
         txtMaKH.setEditable(false);
@@ -413,7 +413,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnLuu.setPreferredSize(new Dimension(140, 38));
 
         btnLuu.addActionListener(e -> {
-            KetQuaXuLyKhachHang ketQua = controller.xuLyThemKhachHang(
+            KetQuaXuLyKhachHang ketQua = service.xuLyThemKhachHang(
                     txtMaKH.getText(), txtHoTen.getText(), txtSDT.getText(),
                     txtEmail.getText(), txtDiaChi.getText());
             if (ketQua.isThanhCong()) {
@@ -457,9 +457,9 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Hộp thoại xem chi tiết khách hàng (kèm thú cưng và lịch sử hóa đơn)
      */
     private void hienThiDialogXemChiTiet(String maKH) {
-        CustomerDetails details = controller.layChiTiet(maKH);
+        CustomerDetails details = service.layChiTiet(maKH);
         if (details == null) {
-            JOptionPane.showMessageDialog(this, controller.layThongDiepKhongTimThayKhachHang(), "Lỗi",
+            JOptionPane.showMessageDialog(this, service.layThongDiepKhongTimThayKhachHang(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -543,9 +543,9 @@ public class DanhSachKhachHangGUI extends JPanel {
      * Hộp thoại chỉnh sửa thông tin khách hàng
      */
     private void hienThiDialogSuaKhachHang(String maKH) {
-        KhachHang kh = controller.layKhachHangTheoMa(maKH);
+        KhachHang kh = service.layKhachHangTheoMa(maKH);
         if (kh == null) {
-            JOptionPane.showMessageDialog(this, controller.layThongDiepKhongTimThayKhachHang(), "Lỗi",
+            JOptionPane.showMessageDialog(this, service.layThongDiepKhongTimThayKhachHang(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -561,7 +561,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelContent.setBackground(Color.WHITE);
         panelContent.setBorder(new EmptyBorder(24, 28, 24, 28));
 
-        JLabel lblHeader = new JLabel(controller.layTieuDeDialogSua(maKH));
+        JLabel lblHeader = new JLabel(service.layTieuDeDialogSua(maKH));
         lblHeader.setFont(RangBuocGiaoDien.fontDam(18));
         lblHeader.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         panelContent.add(lblHeader);
@@ -602,7 +602,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnCapNhat.setForeground(Color.WHITE);
 
         btnCapNhat.addActionListener(e -> {
-            KetQuaXuLyKhachHang ketQua = controller.xuLyCapNhatKhachHang(
+            KetQuaXuLyKhachHang ketQua = service.xuLyCapNhatKhachHang(
                     maKH, txtHoTen.getText(), txtSDT.getText(),
                     txtEmail.getText(), txtDiaChi.getText());
             if (ketQua.isThanhCong()) {
@@ -647,11 +647,11 @@ public class DanhSachKhachHangGUI extends JPanel {
      */
     private void xuLyXoaKhachHang(String maKH, String hoTen) {
         int chon = JOptionPane.showConfirmDialog(this,
-                controller.taoThongDiepXacNhanXoa(hoTen, maKH),
+                service.taoThongDiepXacNhanXoa(hoTen, maKH),
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (chon == JOptionPane.YES_OPTION) {
-            KetQuaXoaKhachHang ketQua = controller.xuLyXoaKhachHang(maKH);
+            KetQuaXoaKhachHang ketQua = service.xuLyXoaKhachHang(maKH);
             if (ketQua.isBiRangBuoc()) {
                 JOptionPane.showMessageDialog(this, ketQua.getThongBao(),
                         "Không thể xóa", JOptionPane.WARNING_MESSAGE);

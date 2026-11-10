@@ -41,10 +41,7 @@ public class DSHoaDonService {
     }
 
     // Tìm kiếm theo mã hóa đơn và lọc theo trạng thái.
-    public ArrayList<HoaDon_entity> locDanhSach(
-            List<HoaDon_entity> danhSach,
-            String tuKhoa,
-            String trangThai) {
+    public ArrayList<HoaDon_entity> locDanhSach(List<HoaDon_entity> danhSach,String tuKhoa,String trangThai) {
 
         String tuKhoaChuanHoa =
                 tuKhoa == null ? "" : tuKhoa.trim().toLowerCase();

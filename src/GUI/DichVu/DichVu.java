@@ -18,7 +18,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 /**
- * Giao diện "Danh sách dịch vụ" hiển thị danh mục SALALA thông qua controller.
+ * Giao diện "Danh sách dịch vụ" hiển thị danh mục SALALA thông qua service.
  */
 public class DichVu extends JPanel {
 
@@ -31,7 +31,7 @@ public class DichVu extends JPanel {
         return new Font("Segoe UI", dam ? Font.BOLD : Font.PLAIN, size);
     }
 
-    private final DichVuService controller = new DichVuService();
+    private final DichVuService service = new DichVuService();
 
     // ===== Dữ liệu hiển thị =====
     private final List<DichVuData> tatCa = new ArrayList<>();
@@ -70,7 +70,7 @@ public class DichVu extends JPanel {
     // ==========================================
     public void napDuLieuTuDatabase() {
         tatCa.clear();
-        tatCa.addAll(controller.load());
+        tatCa.addAll(service.load());
         napNhom();
         napLai(false);
     }
@@ -91,9 +91,9 @@ public class DichVu extends JPanel {
         JButton btnThem = nut("Thêm dịch vụ", true);
         btnThem.setPreferredSize(new Dimension(142, 40));
         btnThem.addActionListener(e -> {
-            DichVuData moi = new DichVuData(controller.nextCode(), "", "Dịch vụ chung", "", 30, 0, true);
+            DichVuData moi = new DichVuData(service.nextCode(), "", "Dịch vụ chung", "", 30, 0, true);
             if (hopThoai(moi, "Thêm dịch vụ mới", true)) {
-                if (controller.create(moi)) {
+                if (service.create(moi)) {
                     JOptionPane.showMessageDialog(this, "Đã thêm dịch vụ " + moi.ma + " thành công!", "Thông báo",
                             JOptionPane.INFORMATION_MESSAGE);
                     napDuLieuTuDatabase();
@@ -142,7 +142,7 @@ public class DichVu extends JPanel {
     }
 
     private void capNhatThongKe() {
-        DichVuService.Statistics stats = controller.statistics(tatCa);
+        DichVuService.Statistics stats = service.statistics(tatCa);
         giaTri[0].setText("" + stats.total);
         phu[0].setText(stats.categoryCount + " nhóm dịch vụ");
         giaTri[1].setText("" + stats.active);
@@ -194,7 +194,7 @@ public class DichVu extends JPanel {
         btnChinhSua.addActionListener(e -> {
             DichVuData d = dichVuDaChon();
             if (d != null && hopThoai(d, "Sửa thông tin dịch vụ", false)) {
-                if (controller.update(d)) {
+                if (service.update(d)) {
                     JOptionPane.showMessageDialog(this, "Đã cập nhật dịch vụ " + d.ma + " thành công!", "Thông báo",
                             JOptionPane.INFORMATION_MESSAGE);
                     napDuLieuTuDatabase();
@@ -295,7 +295,7 @@ public class DichVu extends JPanel {
                 DichVuData d = hienTai.get(r);
                 if (c == 6) {
                     boolean batMoi = !d.bat;
-                    if (controller.updateStatus(d.ma, batMoi)) {
+                    if (service.updateStatus(d.ma, batMoi)) {
                         d.bat = batMoi;
                         napLai(true);
                     } else {
@@ -336,7 +336,7 @@ public class DichVu extends JPanel {
         String nhom = (String) cboNhom.getSelectedItem();
         int tt = cboTrangThai.getSelectedIndex(); // 0: tất cả, 1: đang cung cấp, 2: tạm ẩn
 
-        loc = controller.filter(tatCa, tu, nhom, tt);
+        loc = service.filter(tatCa, tu, nhom, tt);
 
         hienTai = loc;
 
@@ -373,7 +373,7 @@ public class DichVu extends JPanel {
         Object chon = cboNhom.getSelectedItem();
         cboNhom.removeAllItems();
         cboNhom.addItem("Tất cả");
-        controller.categories(tatCa).forEach(cboNhom::addItem);
+        service.categories(tatCa).forEach(cboNhom::addItem);
         cboNhom.setSelectedItem(chon != null ? chon : "Tất cả");
         if (cboNhom.getSelectedItem() == null)
             cboNhom.setSelectedIndex(0);
@@ -405,7 +405,7 @@ public class DichVu extends JPanel {
         while (JOptionPane.showConfirmDialog(this, form, tieuDe, JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             try {
-                DichVuData parsed = controller.parseForm(txtMa.getText(), ten.getText(), mo.getText(),
+                DichVuData parsed = service.parseForm(txtMa.getText(), ten.getText(), mo.getText(),
                         phut.getText(), gia.getText(), "Đang áp dụng".equals(cboTrangThaiDialog.getSelectedItem()));
                 d.ma = parsed.ma;
                 d.ten = parsed.ten;
@@ -427,8 +427,8 @@ public class DichVu extends JPanel {
         if (s == null)
             return;
         try {
-            long giaMoi = controller.parsePrice(s);
-            if (controller.updatePrice(d, giaMoi)) {
+            long giaMoi = service.parsePrice(s);
+            if (service.updatePrice(d, giaMoi)) {
                 d.gia = giaMoi;
                 JOptionPane.showMessageDialog(this, "Đã cập nhật giá dịch vụ thành công!", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -449,7 +449,7 @@ public class DichVu extends JPanel {
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
         if (xacNhan == JOptionPane.YES_OPTION) {
-            if (controller.delete(d.ma)) {
+            if (service.delete(d.ma)) {
                 JOptionPane.showMessageDialog(this, "Đã xóa dịch vụ " + d.ma + " thành công!", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
                 napDuLieuTuDatabase();
@@ -468,7 +468,7 @@ public class DichVu extends JPanel {
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
         try {
-            Files.write(fc.getSelectedFile().toPath(), controller.toCsv(loc).getBytes(StandardCharsets.UTF_8));
+            Files.write(fc.getSelectedFile().toPath(), service.toCsv(loc).getBytes(StandardCharsets.UTF_8));
             JOptionPane.showMessageDialog(this, "Xuất file CSV thành công!", "Thông báo",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
