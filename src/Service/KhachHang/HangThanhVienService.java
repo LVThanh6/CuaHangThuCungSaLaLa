@@ -33,8 +33,9 @@ import entity.KhachHang.KhachHang;
  * 6. CHỨC NĂNG 4: CHUYỂN NHANH HẠNG THÀNH VIÊN (TÍNH LẠI ĐIỂM)
  * 7. CHỨC NĂNG 5: CẤU HÌNH & CẬP NHẬT CHÍNH SÁCH ƯU ĐÃI
  * 8. CHỨC NĂNG 6: GÁN / PHÂN HẠNG CHO KHÁCH HÀNG ĐÃ ĐĂNG KÝ
- * 9. CÁC HÀM TIỆN ÍCH ĐỊNH DẠNG TIỀN TỆ & KHOẢNG CHI TIÊU
- * 10. CÁC LỚP ĐỐI TƯỢNG ĐÓNG GÓI DỮ LIỆU & KẾT QUẢ (DTOs)
+ * 9. CHỨC NĂNG 7: TÍNH TỔNG CHI TIÊU & ĐIỂM TÍCH LŨY TỪ HÓA ĐƠN THỰC TẾ
+ * 10. CÁC HÀM TIỆN ÍCH ĐỊNH DẠNG TIỀN TỆ & KHOẢNG CHI TIÊU
+ * 11. CÁC LỚP ĐỐI TƯỢNG ĐÓNG GÓI DỮ LIỆU & KẾT QUẢ (DTOs)
  * ============================================================================
  */
 public class HangThanhVienService {
