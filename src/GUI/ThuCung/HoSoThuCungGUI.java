@@ -253,6 +253,7 @@ public class HoSoThuCungGUI extends JPanel {
         }
     }
 
+    //Combobox loài, tìm theo mã
     private void locDuLieu() {
         if (bangThuCung == null) return;
         daLoc = service.loc(danhSachThuCung, txtTimKiem.getText(), String.valueOf(cboLoai.getSelectedItem()));
@@ -302,12 +303,13 @@ public class HoSoThuCungGUI extends JPanel {
         return dong < 0 ? -1 : bangThuCung.convertRowIndexToModel(dong);
     }
 
+    //Lấy thú cưng theo mã
     private String layMaThuCungDaChon() {
         int dong = layDongDaChon();
         return dong < 0 ? null : String.valueOf(bangThuCung.getModel().getValueAt(dong, 0));
     }
 
-    //Xem
+    //Xem chi tiết
     private void xemDongDaChon() {
         String maThuCung = layMaThuCungDaChon();
         if (maThuCung == null) return;

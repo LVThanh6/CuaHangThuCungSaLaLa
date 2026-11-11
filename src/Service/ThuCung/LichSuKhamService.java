@@ -60,7 +60,7 @@ public class LichSuKhamService {
         return hoSoDao.getMaTiepTheo();
     }
 
-    //Tìm kiếm lượt khám theo mã
+    //Tìm theo mã
     public HoSoSucKhoe_entity timTheoMa(String maHoSo) throws SQLException {
         return hoSoDao.getHoSoSucKhoeTheoMa(maHoSo);
     }

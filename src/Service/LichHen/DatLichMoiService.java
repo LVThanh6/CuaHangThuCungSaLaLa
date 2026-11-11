@@ -61,7 +61,7 @@ public class DatLichMoiService {
         return new DuLieuTuyChon(nhanVien, dichVu);
     }
 
-    //Nhận số điện thoại nhập vào, lọc bỏ ký tự thừa, tìm và trả về đúng thông tin chủ nuôi.
+    //tìm theo số điện thoại, lọc bỏ ký tự thừa, tìm và trả về đúng thông tin chủ nuôi.
     public KhachHang timKhachHangTheoSoDienThoai(String soDienThoai) {
         String sdtSo = soDienThoai == null ? "" : soDienThoai.trim().replaceAll("[^0-9]", "");
         if (sdtSo.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập số điện thoại khách hàng.");

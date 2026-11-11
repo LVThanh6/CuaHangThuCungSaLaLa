@@ -304,7 +304,7 @@ public class LichSuKhamGUI extends JPanel {
         thanhCuonBang.getVerticalScrollBar().setUnitIncrement(16);
     }
 
-    //Tạo dòng hiển thị tổng số lượt khám ở góc trái dưới cùng của bảng.
+    //Hiển thị số lượng cuối bảng cuối bảng
     private void khoiTaoPhanTrang() {
         panelPhanTrang = new JPanel(new BorderLayout());
         panelPhanTrang.setOpaque(false);
@@ -373,7 +373,7 @@ public class LichSuKhamGUI extends JPanel {
         }
     }
     
-    //Lọc danh sách theo từ khóa, bác sĩ phụ trách, mốc thời gian và khoảng ngày.
+    //tìm theo mã, cboBacSi, cboThoiGian.
     private void locDuLieu() {
         if (bangLichSuKham == null) return;
         String doctor = String.valueOf(cboBacSi.getSelectedItem());
@@ -537,7 +537,7 @@ public class LichSuKhamGUI extends JPanel {
         return dong < 0 ? -1 : bangLichSuKham.convertRowIndexToModel(dong);
     }
 
-    //Xem chi tiết hồ sơ sức khỏe của dòng được chọn, hiển thị thông tin trong một hộp thoại JOptionPane.
+    //Xem chi tiết 
     private void xemDongDaChon() {
         String maHoSo = layMaHoSoDaChon();
         if (maHoSo == null) {
@@ -586,7 +586,7 @@ public class LichSuKhamGUI extends JPanel {
         }
     }
     
-    //Xóa hồ sơ sức khỏe của dòng được chọn, hiển thị hộp thoại xác nhận trước khi xóa. Nếu xóa thành công, nạp lại danh sách hồ sơ.
+    //xóa hồ sơ sức khỏe của dòng được chọn, hiển thị hộp thoại xác nhận trước khi xóa. Nếu xóa thành công, nạp lại danh sách hồ sơ.
     private void xoaDongDaChon() {
         String maHoSo = layMaHoSoDaChon();
         if (maHoSo == null) {

@@ -405,7 +405,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    //Lọc lại bảng danh sách lịch hẹn mỗi khi người dùng thay đổi ngày, đổi nhân viên hoặc đổi trạng thái.
+    //tìm theo ngày, cboBacSi, cboTrangThai.
     private void locDuLieu() {
         if (bangLichKham == null)
             return;
@@ -438,7 +438,7 @@ public class XemLichGUI extends JPanel {
                 thongKe.dangKham, thongKe.daKham, thongKe.daHuy);
     }
 
-    //Mở hộp thoại popup cho phép người dùng nhập từ ngày - đến ngày để lọc lịch.
+    //Mở hộp thoại lọc lịch popup cho phép người dùng nhập từ ngày - đến ngày để lọc lịch.
     private void chonKhoangNgay() {
         JTextField tu = new JTextField(tuNgay == null ? "" : DINH_DANG_NGAY.format(tuNgay));
         JTextField den = new JTextField(denNgay == null ? "" : DINH_DANG_NGAY.format(denNgay));
@@ -605,7 +605,7 @@ public class XemLichGUI extends JPanel {
         }
     }
 
-    //Hiện cảnh báo xác nhận, nếu đồng ý sẽ đổi trạng thái của lịch thành "Đã hủy".
+    //hủy lịch, nếu đồng ý sẽ đổi trạng thái của lịch thành "Đã hủy".
     private void huyLich() {
         LichHen_entity lichChon = layLichHenDaChon();
         if (lichChon == null)

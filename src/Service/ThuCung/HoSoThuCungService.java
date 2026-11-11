@@ -43,7 +43,7 @@ public class HoSoThuCungService {
         return khachHangDao.getAlltbKhachHang();
     }
 
-    // Tìm thú cưng theo mã, trả về đối tượng ThuCung_entity hoặc null nếu không tìm thấy.
+    // Tìm theo mã, trả về đối tượng ThuCung_entity hoặc null nếu không tìm thấy.
     public ThuCung_entity timTheoMa(String maThuCung) {
         return thuCungDao.getThuCungTheoMa(maThuCung);
     }

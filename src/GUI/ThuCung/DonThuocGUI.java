@@ -260,7 +260,7 @@ public class DonThuocGUI extends JPanel {
         }
     }
     
-    //Lọc danh sách theo từ khóa, trạng thái và mốc/khoảng thời gian.
+    //Lọc danh sách theo cbTrangThai, cboThoiGian và tìm theo mã
     private void locDuLieu() {
         String time = String.valueOf(cboThoiGian.getSelectedItem());
         if (!"Tùy chỉnh khoảng ngày...".equals(time)) {
@@ -306,7 +306,7 @@ public class DonThuocGUI extends JPanel {
     	return text == null ? "" : text; 
     }
 
-    //Mở hộp thoại chọn khoảng ngày tùy chỉnh (Từ ngày... Đến ngày...).
+    //lọc theo khoảng ngày
     private void chonKhoangNgay() {
         JTextField tu = new JTextField(tuNgay == null ? "" : DINH_DANG_NGAY.format(tuNgay));
         JTextField den = new JTextField(denNgay == null ? "" : DINH_DANG_NGAY.format(denNgay));
@@ -487,7 +487,7 @@ public class DonThuocGUI extends JPanel {
         }
     }
 
-    //Nghiệp vụ XUẤT THUỐC VÀ TẠO HÓA ĐƠN tự động
+    //Xác nhận xuất thuốc
     //Điểm nối giữa quản lý đơn thuốc và quản lý hóa đơn (chuyển trạng thái đơn + tự động sinh hóa đơn).
     private void xuatThuocVaTaoHoaDon() {
         String maDon = layMaDonDaChon();

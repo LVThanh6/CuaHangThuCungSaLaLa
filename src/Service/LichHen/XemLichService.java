@@ -51,12 +51,12 @@ public class XemLichService {
         return dichVuDao.getAllDichVu();
     }
     
-    //Tìm kiếm lịch theo mã
+    
     public LichHen_entity timTheoMa(String maLichHen) {
         return lichHenDao.getLichHenTheoMa(maLichHen);
     }
 
-    //Lọc danh sách lịch hẹn theo nhân viên, trạng thái và khoảng ngày.
+    //tìm theo ngày, cboBacSi, cboTrangThai.
     public List<LichHen_entity> loc(List<LichHen_entity> danhSach, String nhanVienChon,
             String trangThaiChon, LocalDate tuNgay, LocalDate denNgay) {
         List<LichHen_entity> ketQua = new ArrayList<>();

@@ -65,7 +65,7 @@ public class DonThuocService {
         return donThuocDao.getAllDonThuoc();
     }
 
-    //Lấy dữ liệu mồi (Hồ sơ, Thú cưng, Bác sĩ, Thuốc) để đổ vào form kê đơn.
+    //Lấy dữ liệu cần thiết để hiển thị form Thêm/Cập nhật đơn thuốc (danh sách hồ sơ, thú cưng, bác sĩ, thuốc).
     public DuLieuForm taiDuLieuForm() throws SQLException {
         return new DuLieuForm(hoSoDao.getAllHoSoSucKhoe(), thuCungDao.getAllThuCung(),
                 bacSiDao.getAll(), chiTietDao.getAllThuoc());
@@ -85,6 +85,7 @@ public class DonThuocService {
         return donThuocDao.getDonThuocTheoMa(maDonThuoc);
     }
 
+    //Xem chi tiết đơn thuốc
     public List<ChiTietDonThuoc_entity> taiChiTietDon(String maDonThuoc) throws SQLException {
         return donThuocDao.getChiTietDonThuoc(maDonThuoc);
     }

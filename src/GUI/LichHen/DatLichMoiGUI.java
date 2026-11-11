@@ -573,7 +573,7 @@ public class DatLichMoiGUI extends JPanel {
         nutXemLich.addActionListener(e -> moManHinhXemLich());
     }
 
-    //Lấy số điện thoại người dùng nhập, gọi database tìm khách. 
+    //Tìm theo số điện thoại
     //Nếu có sẽ tự điền tên, địa chỉ và gọi tiếp hàm tải thú cưng.
     private void timKhachHangTheoSoDienThoai() {
         try {
@@ -627,7 +627,7 @@ public class DatLichMoiGUI extends JPanel {
         }
     }
 
-    //Khi người dùng chọn 1 bé thú cưng trong combobox, hàm này sẽ tự động điền các ô giống, giới tính, cân nặng.
+    //Hiển thị thông tin thú cưng khi người dùng chọn một thú cưng trong combobox.
     private void capNhatThongTinThuCung() {
         String nhan = (String) cboThuCung.getSelectedItem();
         ThuCung_entity thuCung = thuCungTheoNhan.get(nhan);
@@ -674,7 +674,7 @@ public class DatLichMoiGUI extends JPanel {
         }
     }
 
-    //Xóa sạch toàn bộ dữ liệu trên màn hình để chuẩn bị đặt một lịch mới.
+    //Sau khi đặt lịch sẽ xóa trắng để đặt lịch mới.
     private void nhapLaiForm() {
         khachHangDuocChon = null;
         txtSoDienThoai.setText("");
@@ -716,7 +716,7 @@ public class DatLichMoiGUI extends JPanel {
         cboThuCung.addItem(DANH_SACH_THU_CUNG[0]);
     }
 
-    //Mỗi khi người dùng gõ phím hay chọn bất cứ thứ gì ở cột trái, hàm này sẽ tự động chạy để cập nhật thông tin hiển thị lên bảng "Tóm tắt lịch hẹn" ở cột phải.
+    //Tóm tắt lịch hẹn
     private void capNhatTomTat() {
         nhanTomTatChuNuoi.setText(khachHangDuocChon == null
                 ? GIA_TRI_TRONG
