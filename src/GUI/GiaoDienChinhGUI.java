@@ -36,6 +36,10 @@ import GUI.VatTu.VatTuGUI;
 public class GiaoDienChinhGUI extends NenAnhPanel {
     private static final NavigationService dieuHuongService = new NavigationService();
 
+    public static void main(String[] args) {
+        DangNhapGUI.main(args);
+    }
+
     // --- CÁC THÀNH PHẦN GIAO DIỆN CHÍNH ---
     private HeaderGUI headerGUI;
     private JPanel panelNoiDung;

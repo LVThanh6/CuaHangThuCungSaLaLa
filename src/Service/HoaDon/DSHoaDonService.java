@@ -23,8 +23,8 @@ public class DSHoaDonService {
             DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private static final String[] TIEU_DE_CSV = {
-        "Mã Hóa Đơn", "Ngày Lập", "Trạng Thái", "Mã Khách Hàng",
-        "Mã Nhân Viên", "Mã Khuyến Mãi", "Mã Thuế", "Mã Thanh Toán"
+        "Mã Hóa Đơn", "Ngày Lập", "Trạng Thái Thanh Toán", "Mã Khách Hàng",
+        "Mã Nhân Viên", "Mã Khuyến Mãi", "Mã Thuế", "Phương Thức Thanh Toán"
     };
 
     public DSHoaDonService() {
@@ -135,8 +135,12 @@ public class DSHoaDonService {
             layMa(hd.getMaNhanVien()),
             layMa(hd.getMaKM()),
             layMa(hd.getMaThue()),
-            layMa(hd.getMaThanhToan())
+            giaTri(hd.getPhuongThucThanhToan())
         };
+    }
+
+    private String giaTri(String value) {
+        return value == null ? "" : value;
     }
 
     // Lấy mã từ đối tượng liên quan (KhachHang, NhanVien, KhuyenMai...).
@@ -151,7 +155,7 @@ public class DSHoaDonService {
 
         String[] cacGetter = {
             "getMaKH", "getMaNhanVien", "getMaKM", "getMaThue",
-            "getMaThanhToan", "getMaNCC", "getMaDV", "getMaVT", "getMa"
+            "getMaNCC", "getMaDV", "getMaVT", "getMa"
         };
 
         for (String tenGetter : cacGetter) {

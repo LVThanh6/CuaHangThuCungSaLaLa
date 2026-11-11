@@ -14,7 +14,6 @@ import entity.HoaDon.HoaDon_entity;
 import entity.KhachHang.KhachHang;
 import entity.DichVu.KhuyenMai_Entity;
 import entity.NhanVien.NhanVien_entity;
-import entity.HoaDon.ThanhToan_entity;
 import entity.DichVu.Thue_entity;
 
 /**
@@ -28,13 +27,12 @@ public class HoaDon_Dao {
             "nv.maNhanVien, nv.maTK AS maTKNV, nv.hoTen AS hoTenNV, nv.chucVu, nv.sdt AS sdtNV, nv.diaChi AS diaChiNV, nv.ngaySinh AS ngaySinhNV, nv.gioiTinh AS gioiTinhNV, nv.luongCoBan, " +
             "km.maKM, km.tenKM, km.mucKM, km.ngayBatDau, km.ngayKetThuc, km.dieuKien, " +
             "th.maThue, th.tenThue, th.mucThue, " +
-            "tt.maThanhToan, tt.soTien, tt.thoiGian, tt.phuongThuc, tt.trangThai AS trangThaiTT " +
+            "h.phuongThucThanhToan " +
             "FROM HoaDon h " +
             "LEFT JOIN KhachHang k ON k.maKH = h.maKH " +
             "LEFT JOIN NhanVien nv ON nv.maNhanVien = h.maNhanVien " +
             "LEFT JOIN KhuyenMai km ON km.maKM = h.maKM " +
-            "LEFT JOIN Thue th ON th.maThue = h.maThue " +
-            "LEFT JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan ";
+            "LEFT JOIN Thue th ON th.maThue = h.maThue ";
 
     /**
      * Lấy toàn bộ danh sách hóa đơn bằng 1 query duy nhất.
@@ -107,11 +105,13 @@ public class HoaDon_Dao {
         boolean coCotMaTC = kiemTraCotTonTai(con, "HoaDon", "maTC");
         String sql;
         if (coCotMaTC) {
-            sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan, maTC) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, "
+                    + "phuongThucThanhToan, maTC) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         } else {
-            sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, maThanhToan) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            sql = "INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maNhanVien, maKM, maThue, "
+                    + "phuongThucThanhToan) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         }
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -125,7 +125,7 @@ public class HoaDon_Dao {
             ps.setString(5, hd.getMaNhanVien() != null ? hd.getMaNhanVien().getMaNhanVien() : null);
             ps.setString(6, hd.getMaKM() != null ? hd.getMaKM().getMaKM() : null);
             ps.setString(7, hd.getMaThue() != null ? hd.getMaThue().getMaThue() : null);
-            ps.setString(8, hd.getMaThanhToan() != null ? hd.getMaThanhToan().getMaThanhToan() : null);
+            ps.setString(8, hd.getPhuongThucThanhToan());
 
             if (coCotMaTC) {
                 if (hd.getMaTC() != null && hd.getMaTC().getMaTC() != null
@@ -194,8 +194,8 @@ public class HoaDon_Dao {
     /**
      * Xác nhận đã thanh toán hóa đơn
      */
-    public boolean xacNhanThanhToan(String maHD, String phuongThuc, double soTien) {
-        if (maHD == null || maHD.isBlank()) {
+    public boolean xacNhanThanhToan(String maHD, String phuongThuc) {
+        if (maHD == null || maHD.isBlank() || phuongThuc == null || phuongThuc.isBlank()) {
             return false;
         }
 
@@ -208,56 +208,20 @@ public class HoaDon_Dao {
             boolean autoCommitCu = con.getAutoCommit();
             try {
                 con.setAutoCommit(false);
-
-                String sqlCheck = "SELECT maThanhToan FROM HoaDon WHERE maHD = ?";
-                String maTT = null;
-                try (PreparedStatement ps = con.prepareStatement(sqlCheck)) {
-                    ps.setString(1, maHD);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            maTT = rs.getString("maThanhToan");
-                        }
-                    }
+                String sql = "UPDATE HoaDon SET trangThai = N'Đã thanh toán', "
+                        + "phuongThucThanhToan = ? "
+                        + "WHERE maHD = ?";
+                int rowsUpdated;
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, phuongThuc.trim());
+                    ps.setString(2, maHD.trim());
+                    rowsUpdated = ps.executeUpdate();
                 }
 
-                if (maTT == null || maTT.isBlank()) {
-                    maTT = "TT" + System.currentTimeMillis();
-                    if (maTT.length() > 20) {
-                        maTT = maTT.substring(0, 20);
-                    }
-
-                    String sqlInsertTT = "INSERT INTO ThanhToan (maThanhToan, soTien, thoiGian, phuongThuc, trangThai) "
-                            + "VALUES (?, ?, CURRENT_TIMESTAMP, ?, N'Đã thanh toán')";
-                    try (PreparedStatement ps = con.prepareStatement(sqlInsertTT)) {
-                        ps.setString(1, maTT);
-                        ps.setDouble(2, Math.max(0, soTien));
-                        ps.setString(3, phuongThuc != null ? phuongThuc : "Tiền mặt");
-                        ps.executeUpdate();
-                    }
-
-                    String sqlUpdateHD = "UPDATE HoaDon SET trangThai = N'Đã thanh toán', maThanhToan = ? WHERE maHD = ?";
-                    try (PreparedStatement ps = con.prepareStatement(sqlUpdateHD)) {
-                        ps.setString(1, maTT);
-                        ps.setString(2, maHD);
-                        ps.executeUpdate();
-                    }
-                } else {
-                    String sqlUpdateTT = "UPDATE ThanhToan SET trangThai = N'Đã thanh toán', soTien = ?, "
-                            + "phuongThuc = ?, thoiGian = CURRENT_TIMESTAMP WHERE maThanhToan = ?";
-                    try (PreparedStatement ps = con.prepareStatement(sqlUpdateTT)) {
-                        ps.setDouble(1, Math.max(0, soTien));
-                        ps.setString(2, phuongThuc != null ? phuongThuc : "Tiền mặt");
-                        ps.setString(3, maTT);
-                        ps.executeUpdate();
-                    }
-
-                    String sqlUpdateHD = "UPDATE HoaDon SET trangThai = N'Đã thanh toán' WHERE maHD = ?";
-                    try (PreparedStatement ps = con.prepareStatement(sqlUpdateHD)) {
-                        ps.setString(1, maHD);
-                        ps.executeUpdate();
-                    }
+                if (rowsUpdated == 0) {
+                    con.rollback();
+                    return false;
                 }
-
                 con.commit();
                 return true;
             } catch (SQLException e) {
@@ -352,20 +316,8 @@ public class HoaDon_Dao {
             );
         }
 
-        String maTT = rs.getString("maThanhToan");
-        ThanhToan_entity tt = null;
-        if (maTT != null) {
-            Date thoiGianTT = rs.getDate("thoiGian");
-            tt = new ThanhToan_entity(
-                    maTT,
-                    rs.getDouble("soTien"),
-                    thoiGianTT != null ? thoiGianTT.toLocalDate() : null,
-                    rs.getString("phuongThuc"),
-                    rs.getString("trangThaiTT")
-            );
-        }
-
-        HoaDon_entity hd = new HoaDon_entity(maHD, ngayLap, trangThai, kh, nv, km, thue, tt);
+        HoaDon_entity hd = new HoaDon_entity(maHD, ngayLap, trangThai, kh, nv, km, thue,
+                rs.getString("phuongThucThanhToan"));
         hd.setMaTC(layMaTC(rs));
         return hd;
     }
