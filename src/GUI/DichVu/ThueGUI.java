@@ -13,13 +13,6 @@ import javax.swing.table.DefaultTableModel;
 
 public class ThueGUI extends JPanel {
 
-    private static final Color XANH = new Color(0x0F6B5C);
-    private static final Color NEN = new Color(0xF8FAFA);
-    private static final Color VIEN = new Color(0xE5E7EB);
-    private static final Color CHU = new Color(0x111827);
-    private static final Color XAM = new Color(0x6B7280);
-    private static final Color DO = new Color(0xDC2626);
-
     private final ThueService service = new ThueService();
     private JTable table;
     private DefaultTableModel model;
@@ -28,7 +21,7 @@ public class ThueGUI extends JPanel {
 
     public ThueGUI() {
         setLayout(new BorderLayout(0, 16));
-        setBackground(NEN);
+        setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         setBorder(new EmptyBorder(16, 20, 20, 20));
 
         add(taoTieuDe(), BorderLayout.NORTH);
@@ -43,10 +36,10 @@ public class ThueGUI extends JPanel {
         trai.setLayout(new BoxLayout(trai, BoxLayout.Y_AXIS));
         JLabel lblSub = new JLabel("Dịch vụ / Thuế");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSub.setForeground(XAM);
+        lblSub.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
         JLabel lblTitle = new JLabel("Quản lý Thuế");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitle.setForeground(CHU);
+        lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         trai.add(lblSub);
         trai.add(Box.createVerticalStrut(4));
         trai.add(lblTitle);
@@ -67,7 +60,7 @@ public class ThueGUI extends JPanel {
 
         btnXoa = new JButton("Xóa");
         dinhDangNut(btnXoa, false);
-        btnXoa.setForeground(DO);
+        btnXoa.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
         btnXoa.setEnabled(false);
         btnXoa.addActionListener(e -> {
             int row = table.getSelectedRow();
@@ -120,8 +113,8 @@ public class ThueGUI extends JPanel {
         });
 
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(new LineBorder(VIEN));
-        sp.getViewport().setBackground(Color.WHITE);
+        sp.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
+        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         return sp;
     }
 
@@ -150,7 +143,7 @@ public class ThueGUI extends JPanel {
 
         JPanel p = new JPanel(new GridBagLayout());
         p.setBorder(new EmptyBorder(16, 20, 16, 20));
-        p.setBackground(Color.WHITE);
+        p.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
         GridBagConstraints gc = new GridBagConstraints();
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.weightx = 1;
@@ -204,11 +197,11 @@ public class ThueGUI extends JPanel {
 
     private void dinhDangNut(JButton b, boolean chinh) {
         b.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        b.setForeground(chinh ? Color.BLACK : CHU);
-        b.setBackground(chinh ? XANH : Color.WHITE);
+        b.setForeground(chinh ? RangBuocGiaoDien.MAU_CHU_CHINH : RangBuocGiaoDien.MAU_CHU_CHINH);
+        b.setBackground(chinh ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_NEN_THE);
         b.setFocusPainted(false);
         b.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(chinh ? XANH : VIEN),
+                new LineBorder(chinh ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_DUONG_VIEN),
                 new EmptyBorder(8, 14, 8, 14)));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }

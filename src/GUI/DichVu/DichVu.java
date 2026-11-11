@@ -1,5 +1,6 @@
 package GUI.DichVu;
 
+import GUI.Chung.RangBuocGiaoDien;
 import Service.DichVu.DichVuService;
 import Service.DichVu.DichVuService.DichVuData;
 
@@ -23,9 +24,6 @@ import javax.swing.table.*;
 public class DichVu extends JPanel {
 
     // ===== Màu sắc & font =====
-    private static final Color XANH = new Color(0x0F6B5C), XANH_NHAT = new Color(0xDDF3EA);
-    private static final Color NEN = new Color(0xF8FAFA), VIEN = new Color(0xE5E7EB);
-    private static final Color CHU = new Color(0x111827), XAM = new Color(0x6B7280), DO = new Color(0xDC2626);
 
     private static Font font(boolean dam, int size) {
         return new Font("Segoe UI", dam ? Font.BOLD : Font.PLAIN, size);
@@ -50,7 +48,7 @@ public class DichVu extends JPanel {
 
     public DichVu() {
         setLayout(new BorderLayout(0, 16));
-        setBackground(NEN);
+        setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
         setBorder(new EmptyBorder(16, 20, 20, 20));
 
         JPanel tren = new JPanel();
@@ -82,11 +80,11 @@ public class DichVu extends JPanel {
         JPanel trai = new JPanel();
         trai.setOpaque(false);
         trai.setLayout(new BoxLayout(trai, BoxLayout.Y_AXIS));
-        trai.add(nhan("Dịch vụ / Danh sách dịch vụ", 12, false, XAM));
+        trai.add(nhan("Dịch vụ / Danh sách dịch vụ", 12, false, RangBuocGiaoDien.MAU_CHU_PHU));
         trai.add(Box.createVerticalStrut(6));
-        trai.add(nhan("Danh sách dịch vụ", 26, true, CHU));
+        trai.add(nhan("Danh sách dịch vụ", 26, true, RangBuocGiaoDien.MAU_CHU_CHINH));
         trai.add(nhan("Quản lý danh mục, giá bán và trạng thái cung cấp dịch vụ tại SALALA (Dữ liệu thật CSDL).", 12,
-                false, XAM));
+                false, RangBuocGiaoDien.MAU_CHU_PHU));
 
         JButton btnThem = nut("Thêm dịch vụ", true);
         btnThem.setPreferredSize(new Dimension(142, 40));
@@ -117,17 +115,17 @@ public class DichVu extends JPanel {
         hang.setOpaque(false);
         hang.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         for (int i = 0; i < 4; i++) {
-            giaTri[i] = nhan("0", 26, true, CHU);
-            phu[i] = nhan(" ", 11, false, XAM);
+            giaTri[i] = nhan("0", 26, true, RangBuocGiaoDien.MAU_CHU_CHINH);
+            phu[i] = nhan(" ", 11, false, RangBuocGiaoDien.MAU_CHU_PHU);
             JPanel the = new JPanel(new GridBagLayout());
-            the.setBackground(Color.WHITE);
-            the.setBorder(new CompoundBorder(new LineBorder(VIEN), new EmptyBorder(10, 16, 10, 16)));
+            the.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
+            the.setBorder(new CompoundBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(10, 16, 10, 16)));
             GridBagConstraints c = new GridBagConstraints();
             c.gridx = 0;
             c.gridy = 0;
             c.gridwidth = 2;
             c.anchor = GridBagConstraints.WEST;
-            the.add(nhan(tieuDe[i], 12, false, XAM), c);
+            the.add(nhan(tieuDe[i], 12, false, RangBuocGiaoDien.MAU_CHU_PHU), c);
             c.gridy = 1;
             c.gridwidth = 1;
             the.add(giaTri[i], c);
@@ -162,7 +160,7 @@ public class DichVu extends JPanel {
         txtTim = new JTextField();
         txtTim.setPreferredSize(new Dimension(280, 38));
         txtTim.setToolTipText("Tìm mã hoặc tên dịch vụ...");
-        txtTim.setBorder(new CompoundBorder(new LineBorder(VIEN), new EmptyBorder(0, 10, 0, 10)));
+        txtTim.setBorder(new CompoundBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN), new EmptyBorder(0, 10, 0, 10)));
         txtTim.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -216,7 +214,7 @@ public class DichVu extends JPanel {
 
         btnXoa = nut("Xóa", false);
         btnXoa.setPreferredSize(new Dimension(80, 38));
-        btnXoa.setForeground(DO);
+        btnXoa.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
         btnXoa.setEnabled(false);
         btnXoa.addActionListener(e -> {
             DichVuData d = dichVuDaChon();
@@ -257,7 +255,7 @@ public class DichVu extends JPanel {
         table = new JTable(model);
         table.setRowHeight(48);
         table.setShowVerticalLines(false);
-        table.setGridColor(new Color(0xF0F1F3));
+        table.setGridColor(RangBuocGiaoDien.MAU_LUOI_BANG);
         table.setRowSelectionAllowed(true);
         table.setColumnSelectionAllowed(false);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -272,9 +270,9 @@ public class DichVu extends JPanel {
         th.setReorderingAllowed(false);
         th.setPreferredSize(new Dimension(100, 40));
         th.setDefaultRenderer((t, v, s, f, r, c) -> {
-            JLabel l = nhan(String.valueOf(v), 12, true, new Color(0x4B5563));
+            JLabel l = nhan(String.valueOf(v), 12, true, RangBuocGiaoDien.MAU_CHU_TIEU_DE_BANG);
             l.setOpaque(true);
-            l.setBackground(new Color(0xF9FAFB));
+            l.setBackground(RangBuocGiaoDien.MAU_TIEU_DE_BANG);
             l.setBorder(new EmptyBorder(0, 10, 0, 14));
             l.setHorizontalAlignment(c == 4 ? SwingConstants.RIGHT : SwingConstants.LEFT);
             return l;
@@ -307,10 +305,10 @@ public class DichVu extends JPanel {
         });
 
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, VIEN));
-        sp.getViewport().setBackground(Color.WHITE);
+        sp.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, RangBuocGiaoDien.MAU_DUONG_VIEN));
+        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_THE);
 
-        lblThongTin = nhan(" ", 12, false, XAM);
+        lblThongTin = nhan(" ", 12, false, RangBuocGiaoDien.MAU_CHU_PHU);
 
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
@@ -318,8 +316,8 @@ public class DichVu extends JPanel {
         footer.add(lblThongTin, BorderLayout.WEST);
 
         JPanel the = new JPanel(new BorderLayout());
-        the.setBackground(Color.WHITE);
-        the.setBorder(new LineBorder(VIEN));
+        the.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
+        the.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
         the.add(toolbar, BorderLayout.NORTH);
         the.add(sp, BorderLayout.CENTER);
         the.add(footer, BorderLayout.SOUTH);
@@ -483,19 +481,19 @@ public class DichVu extends JPanel {
     private static class OBangRenderer implements TableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
-            Color nen = s ? new Color(0xF0FAF6) : Color.WHITE;
+            Color nen = s ? RangBuocGiaoDien.MAU_CHU_DAO_NHAT : RangBuocGiaoDien.MAU_NEN_THE;
             if (c == 0)
-                return o(nhan(String.valueOf(v), 13, false, XANH), nen);
+                return o(nhan(String.valueOf(v), 13, false, RangBuocGiaoDien.MAU_CHU_DAO), nen);
             if (c == 2 || c == 3)
-                return o(nhan(String.valueOf(v), 13, false, CHU), nen);
+                return o(nhan(String.valueOf(v), 13, false, RangBuocGiaoDien.MAU_CHU_CHINH), nen);
             if (c == 4) {
-                JLabel l = nhan(String.valueOf(v), 13, true, CHU);
+                JLabel l = nhan(String.valueOf(v), 13, true, RangBuocGiaoDien.MAU_CHU_CHINH);
                 l.setHorizontalAlignment(SwingConstants.RIGHT);
                 l.setBorder(new EmptyBorder(0, 10, 0, 14));
                 return o(l, nen);
             }
             if (!(v instanceof DichVuData))
-                return o(nhan(String.valueOf(v), 13, false, CHU), nen);
+                return o(nhan(String.valueOf(v), 13, false, RangBuocGiaoDien.MAU_CHU_CHINH), nen);
             DichVuData d = (DichVuData) v;
             JPanel p = new JPanel(new GridBagLayout());
             p.setBackground(nen);
@@ -507,14 +505,14 @@ public class DichVu extends JPanel {
                     JPanel hai = new JPanel(new GridLayout(2, 1));
                     hai.setOpaque(false);
                     hai.setBorder(new EmptyBorder(0, 10, 0, 0));
-                    hai.add(nhan(d.ten, 13, true, CHU));
-                    hai.add(nhan(d.nhom, 11, false, XAM));
+                    hai.add(nhan(d.ten, 13, true, RangBuocGiaoDien.MAU_CHU_CHINH));
+                    hai.add(nhan(d.nhom, 11, false, RangBuocGiaoDien.MAU_CHU_PHU));
                     p.add(hai, g);
                     break;
                 case 5: // trạng thái
-                    JLabel tt = nhan(d.bat ? "Đang áp dụng" : "Tạm ẩn", 11, true, d.bat ? XANH : XAM);
+                    JLabel tt = nhan(d.bat ? "Đang áp dụng" : "Tạm ẩn", 11, true, d.bat ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_PHU);
                     tt.setOpaque(true);
-                    tt.setBackground(d.bat ? XANH_NHAT : new Color(0xEEF0F3));
+                    tt.setBackground(d.bat ? RangBuocGiaoDien.MAU_CHU_DAO_NHAT : RangBuocGiaoDien.MAU_TRUNG_TINH_NEN);
                     tt.setBorder(new EmptyBorder(3, 10, 3, 10));
                     g.insets = new Insets(0, 10, 0, 0);
                     p.add(tt, g);
@@ -525,7 +523,7 @@ public class DichVu extends JPanel {
                     p.add(new Toggle(d.bat), g);
                     g.insets = new Insets(0, 8, 0, 0);
                     g.weightx = 1;
-                    p.add(nhan(d.bat ? "Bật" : "Tắt", 12, false, XAM), g);
+                    p.add(nhan(d.bat ? "Bật" : "Tắt", 12, false, RangBuocGiaoDien.MAU_CHU_PHU), g);
                     break;
             }
             return p;
@@ -552,9 +550,9 @@ public class DichVu extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(bat ? XANH : new Color(0xD1D5DB));
+            g2.setColor(bat ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_CHU_GOI_Y);
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
-            g2.setColor(Color.WHITE);
+            g2.setColor(RangBuocGiaoDien.MAU_NEN_THE);
             g2.fillOval(bat ? getWidth() - getHeight() + 3 : 3, 3, getHeight() - 6, getHeight() - 6);
             g2.dispose();
         }
@@ -576,9 +574,9 @@ public class DichVu extends JPanel {
         b.setFocusPainted(false);
         b.setContentAreaFilled(false);
         b.setOpaque(true);
-        b.setBackground(noiBat ? XANH : Color.WHITE);
-        b.setForeground(noiBat ? Color.WHITE : CHU);
-        b.setBorder(noiBat ? new EmptyBorder(8, 14, 8, 14) : new LineBorder(VIEN));
+        b.setBackground(noiBat ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_NEN_THE);
+        b.setForeground(noiBat ? RangBuocGiaoDien.MAU_NEN_THE : RangBuocGiaoDien.MAU_CHU_CHINH);
+        b.setBorder(noiBat ? new EmptyBorder(8, 14, 8, 14) : new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }

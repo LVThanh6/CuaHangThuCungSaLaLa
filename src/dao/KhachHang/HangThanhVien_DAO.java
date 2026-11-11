@@ -159,21 +159,30 @@ public class HangThanhVien_DAO {
     }
 
     /**
-     * Lấy danh sách thành viên thuộc hạng cụ thể (Đồng, Bạc, Vàng, Kim Cương)
+     * Lấy danh sách thành viên thuộc hạng cụ thể (Đồng, Bạc, Vàng, Kim Cương).
+     * Tổng chi tiêu và điểm tích lũy được TÍNH THỰC TẾ từ bảng HoaDon (hóa đơn đã thanh toán),
+     * không lấy giá trị lưu trữ trong bảng để đảm bảo luôn hiển thị đúng.
      */
     public List<HangThanhVien> getDanhSachThanhVienTheoHang(String tenHang) {
         List<HangThanhVien> ds = new ArrayList<>();
         Connection con = ConnectDB.getCon();
         if (con == null || tenHang == null) return ds;
 
+        // tongChiTieuThucTe: tổng tiền từ hóa đơn ĐÃ THANH TOÁN của khách
+        // diemThucTe: tính theo công thức FLOOR(tongChiTieu / 10000 × diemTichLuy1Van)
         String sql = "SELECT q.maHang, q.maKH, q.tenHang, q.chiTieuToiThieu, q.chiTieuToiDa, " +
-                "q.mucGiamGia, q.diemTichLuy1Van, q.quyenLoi, q.tongChiTieu, q.diemTichLuy, " +
+                "q.mucGiamGia, q.diemTichLuy1Van, q.quyenLoi, " +
+                "ISNULL(hd.tongChiTieuThucTe, 0) AS tongChiTieu, " +
+                "CAST(FLOOR(ISNULL(hd.tongChiTieuThucTe, 0) / 10000.0 * q.diemTichLuy1Van) AS INT) AS diemTichLuy, " +
                 "q.ngayCapNhatHang, q.trangThai, k.hoTen, k.sdt, k.email, ISNULL(tc.soTC, 0) AS soThuCung " +
                 "FROM QuanLyHangThanhVien q " +
                 "JOIN KhachHang k ON q.maKH = k.maKH " +
                 "LEFT JOIN (SELECT maKH, COUNT(*) AS soTC FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
+                "LEFT JOIN (SELECT h.maKH, SUM(tt.soTien) AS tongChiTieuThucTe " +
+                "           FROM HoaDon h JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "           WHERE h.trangThai = N'\u0110\u00e3 thanh to\u00e1n' GROUP BY h.maKH) hd ON hd.maKH = q.maKH " +
                 "WHERE q.tenHang = ? " +
-                "ORDER BY q.tongChiTieu DESC, q.maKH ASC";
+                "ORDER BY tongChiTieu DESC, q.maKH ASC";
 
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setString(1, tenHang.trim());
@@ -204,7 +213,44 @@ public class HangThanhVien_DAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Nếu cột tongThanhToan không tồn tại, fallback về query cũ
+            return getDanhSachThanhVienTheoHangFallback(tenHang, con);
+        }
+        return ds;
+    }
+
+    /**
+     * Query dự phòng: tính tổng chi tiêu từ ChiTietHoaDon nếu cột tongThanhToan không có.
+     */
+    private List<HangThanhVien> getDanhSachThanhVienTheoHangFallback(String tenHang, Connection con) {
+        List<HangThanhVien> ds = new ArrayList<>();
+        String sql = "SELECT q.maHang, q.maKH, q.tenHang, q.chiTieuToiThieu, q.chiTieuToiDa, " +
+                "q.mucGiamGia, q.diemTichLuy1Van, q.quyenLoi, q.tongChiTieu, q.diemTichLuy, " +
+                "q.ngayCapNhatHang, q.trangThai, k.hoTen, k.sdt, k.email, ISNULL(tc.soTC, 0) AS soThuCung " +
+                "FROM QuanLyHangThanhVien q " +
+                "JOIN KhachHang k ON q.maKH = k.maKH " +
+                "LEFT JOIN (SELECT maKH, COUNT(*) AS soTC FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
+                "WHERE q.tenHang = ? ORDER BY q.tongChiTieu DESC, q.maKH ASC";
+        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setString(1, tenHang.trim());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    HangThanhVien htv = new HangThanhVien(
+                            rs.getString("maHang"), rs.getString("maKH"), rs.getString("tenHang"),
+                            rs.getDouble("chiTieuToiThieu"),
+                            rs.getObject("chiTieuToiDa") != null ? rs.getDouble("chiTieuToiDa") : null,
+                            rs.getDouble("mucGiamGia"), rs.getDouble("diemTichLuy1Van"),
+                            rs.getString("quyenLoi"), rs.getDouble("tongChiTieu"),
+                            rs.getInt("diemTichLuy"), rs.getTimestamp("ngayCapNhatHang"), rs.getString("trangThai"));
+                    htv.setHoTenKhachHang(rs.getString("hoTen"));
+                    htv.setSdtKhachHang(rs.getString("sdt"));
+                    htv.setEmailKhachHang(rs.getString("email"));
+                    htv.setSoThuCung(rs.getInt("soThuCung"));
+                    ds.add(htv);
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
         return ds;
     }
@@ -487,6 +533,79 @@ public class HangThanhVien_DAO {
             }
         }
         return 0;
+    }
+
+    /**
+     * Tính tổng chi tiêu thực tế của khách hàng dựa trên các hóa đơn ĐÃ THANH TOÁN trong CSDL.
+     * Công thức: JOIN HoaDon + ThanhToan, lấy SUM(tt.soTien) của các hóa đơn đã thanh toán.
+     *
+     * @param maKH Mã khách hàng cần tính
+     * @return Tổng chi tiêu thực tế (đơn vị: đồng); 0.0 nếu không có hóa đơn
+     */
+    public double tinhTongChiTieuTuHoaDon(String maKH) {
+        if (maKH == null || maKH.isBlank()) return 0.0;
+        Connection con = ConnectDB.getCon();
+        if (con == null) return 0.0;
+
+        // JOIN HoaDon với ThanhToan để lấy số tiền thực tế đã thanh toán
+        String sql = "SELECT ISNULL(SUM(tt.soTien), 0) " +
+                "FROM HoaDon h JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "WHERE h.maKH = ? AND h.trangThai = N'Đã thanh toán'";
+
+        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setString(1, maKH.trim());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble(1);
+                }
+            }
+        } catch (SQLException e) {
+            // Nếu cột tongThanhToan không tồn tại, thử tính từ ChiTietHoaDon
+            String sqlFallback = "SELECT ISNULL(SUM(c.soLuong * c.donGia), 0) " +
+                    "FROM HoaDon h " +
+                    "JOIN ChiTietHoaDon c ON c.maHD = h.maHD " +
+                    "WHERE h.maKH = ? AND h.trangThai = N'Đã thanh toán'";
+            try (PreparedStatement pstmt2 = con.prepareStatement(sqlFallback)) {
+                pstmt2.setString(1, maKH.trim());
+                try (ResultSet rs2 = pstmt2.executeQuery()) {
+                    if (rs2.next()) {
+                        return rs2.getDouble(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Cập nhật lại tổng chi tiêu và điểm tích lũy cho một thành viên
+     * dựa trên dữ liệu hóa đơn thực tế trong CSDL.
+     *
+     * @param maKH         Mã khách hàng cần đồng bộ
+     * @param diemTichLuy1Van Tỷ lệ điểm tích lũy / 10.000đ của hạng hiện tại
+     * @return true nếu cập nhật thành công
+     */
+    public boolean dongBoChiTieuVaDiem(String maKH, double diemTichLuy1Van) {
+        double tongChiTieu = tinhTongChiTieuTuHoaDon(maKH);
+        int diemTichLuy = (int) Math.floor(tongChiTieu / 10_000.0 * diemTichLuy1Van);
+
+        Connection con = ConnectDB.getCon();
+        if (con == null) return false;
+
+        String sql = "UPDATE QuanLyHangThanhVien " +
+                "SET tongChiTieu = ?, diemTichLuy = ?, ngayCapNhatHang = SYSDATETIME() " +
+                "WHERE maKH = ?";
+        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setDouble(1, tongChiTieu);
+            pstmt.setInt(2, diemTichLuy);
+            pstmt.setString(3, maKH.trim());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**

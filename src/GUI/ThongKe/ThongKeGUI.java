@@ -8,12 +8,15 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -60,6 +63,8 @@ public class ThongKeGUI extends JPanel {
     private final ThongKeService thongKeService = new ThongKeService();
     private int maYeuCauDuLieu;
     private ThongKeService.DuLieuBaoCao duLieuThongKe;
+    private LocalDate tuDaTai;
+    private LocalDate denDaTai;
 
     public ThongKeGUI() {
         khoiTaoGiaoDien();
@@ -130,6 +135,13 @@ public class ThongKeGUI extends JPanel {
         btnTaoBieuDo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnTaoBieuDo.addActionListener(suKien -> moDialogTaoBieuDo());
         dieuKhien.add(btnTaoBieuDo);
+
+        JButton btnXuatCsv = new JButton("Xuất CSV");
+        btnXuatCsv.setFont(RangBuocGiaoDien.fontDam(12));
+        btnXuatCsv.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnXuatCsv.setToolTipText("Xuất bảng số liệu đang hiển thị ra file CSV");
+        btnXuatCsv.addActionListener(suKien -> xuatCsv());
+        dieuKhien.add(btnXuatCsv);
         tong.add(dieuKhien, BorderLayout.EAST);
         return tong;
     }
@@ -319,6 +331,8 @@ public class ThongKeGUI extends JPanel {
                         return;
                     }
                     capNhatDuLieu(ketQua.getBaoCao());
+                    tuDaTai = tu;
+                    denDaTai = den;
                     lblMoTa.setText("Từ " + DINH_DANG_NGAY.format(tu) + " đến " + DINH_DANG_NGAY.format(den)
                             + " · Dữ liệu " + ThongKeService.moTaNhomThoiGian(tu, den) + ".");
                     lblTrangThai.setText(" ");
@@ -427,6 +441,66 @@ public class ThongKeGUI extends JPanel {
         } else {
             modelBang.addRow(
                     new Object[] { "Tổng cộng (" + soDong + " kết quả)", dinhDang.format(tongHienThi) + hauTo });
+        }
+    }
+
+    private void xuatCsv() {
+        ChiSo chiSo = (ChiSo) cboChiSo.getSelectedItem();
+        if (chiSo == null || chiSo.nhan.length == 0 || chiSo.giaTri.length == 0) {
+            JOptionPane.showMessageDialog(this, "Chưa có dữ liệu để xuất.", "Xuất CSV",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Dùng cùng bộ lọc với bảng đang hiển thị
+        boolean laNhomNhanSu = cboNhomChiSo.getSelectedItem() == ThongKeService.DanhMuc.NHAN_SU;
+        String tuKhoa = laNhomNhanSu ? txtTimNhanVien.getText().trim() : "";
+        List<String[]> dong = new java.util.ArrayList<>();
+        double tongHienThi = 0;
+        for (int i = 0; i < chiSo.nhan.length; i++) {
+            if (!tuKhoa.isEmpty() && !thongKeService.khopTuKhoaNhanVien(tuKhoa, chiSo.nhan[i])) {
+                continue;
+            }
+            dong.add(new String[] { ThongKeService.vanBanChoCsv(chiSo.nhan[i]),
+                    ThongKeService.soChoCsv(chiSo.giaTri[0][i]), chiSo.hauTo });
+            tongHienThi += chiSo.giaTri[0][i];
+        }
+        if (dong.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dòng nào khớp bộ lọc để xuất.", "Xuất CSV",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        int soDong = dong.size();
+        dong.add(new String[] {
+                tuKhoa.isEmpty() ? "Tổng cộng" : "Tổng cộng (" + soDong + " kết quả)",
+                ThongKeService.soChoCsv(tuKhoa.isEmpty() ? chiSo.tong : tongHienThi), chiSo.hauTo });
+
+        JFileChooser hopChonTep = new JFileChooser();
+        hopChonTep.setDialogTitle("Xuất dữ liệu thống kê ra CSV");
+        hopChonTep.setFileFilter(new FileNameExtensionFilter("Tệp CSV (*.csv)", "csv"));
+        hopChonTep.setSelectedFile(new File(ThongKeService.tenTepCsv(chiSo.ma, tuDaTai, denDaTai)));
+        if (hopChonTep.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File tapTin = hopChonTep.getSelectedFile();
+        if (!tapTin.getName().toLowerCase(Locale.ROOT).endsWith(".csv")) {
+            tapTin = new File(tapTin.getParentFile(), tapTin.getName() + ".csv");
+        }
+        if (tapTin.exists() && JOptionPane.showConfirmDialog(this,
+                "Tệp \"" + tapTin.getName() + "\" đã tồn tại. Bạn có muốn ghi đè không?",
+                "Xác nhận ghi đè", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        boolean theoThoiGian = ThongKeService.laChuoiThoiGian(chiSo.ma);
+        try {
+            thongKeService.xuatCSV(tapTin,
+                    new String[] { theoThoiGian ? "Thời gian" : "Danh mục", "Số liệu", "Đơn vị" }, dong);
+            JOptionPane.showMessageDialog(this, "Đã xuất " + soDong + " dòng ra:\n" + tapTin.getAbsolutePath(),
+                    "Xuất CSV", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException loi) {
+            JOptionPane.showMessageDialog(this, "Không thể ghi tệp CSV: " + loi.getMessage(), "Lỗi xuất CSV",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

@@ -41,6 +41,8 @@ public class LichSuKhamService {
         this.bacSiDao = bacSiDao;
     }
 
+    //taiDuLieu() / taiThuCung() / taiBacSi()
+    //Nạp dữ liệu các bảng liên quan (Hồ sơ khám, Thú cưng, Bác sĩ) lên màn hình.
     public DuLieuManHinh taiDuLieu() throws SQLException {
         return new DuLieuManHinh(hoSoDao.getAllHoSoSucKhoe(), bacSiDao.getAll());
     }
@@ -53,18 +55,22 @@ public class LichSuKhamService {
         return bacSiDao.getAll();
     }
 
+    //Phát sinh mã tự động
     public String maTiepTheo() throws SQLException {
         return hoSoDao.getMaTiepTheo();
     }
 
+    //Tìm kiếm lượt khám theo mã
     public HoSoSucKhoe_entity timTheoMa(String maHoSo) throws SQLException {
         return hoSoDao.getHoSoSucKhoeTheoMa(maHoSo);
     }
 
+    //Xóa hồ sơ khám theo mã
     public boolean xoa(String maHoSo) throws SQLException {
         return hoSoDao.deleteHoSoSucKhoe(maHoSo);
     }
 
+    //Validate dữ liệu rất chặt (triệu chứng/chẩn đoán không quá 500 ký tự, cân nặng > 0, ngày khám đúng định dạng) trước khi lưu.
     public boolean luu(ThongTinHoSo thongTin) throws SQLException {
         if (thongTin.thuCung == null || thongTin.bacSi == null
                 || thongTin.trieuChung.trim().isEmpty() || thongTin.chuanDoan.trim().isEmpty()
@@ -96,6 +102,7 @@ public class LichSuKhamService {
         return thongTin.maHoSoMoi ? hoSoDao.createHoSoSucKhoe(hoSo) : hoSoDao.updateHoSoSucKhoe(hoSo);
     }
 
+    //Lọc hồ sơ khám theo từ khóa, bác sĩ phụ trách và thời gian (Hôm nay, 7 ngày qua, Tháng này...).
     public List<HoSoSucKhoe_entity> loc(List<HoSoSucKhoe_entity> danhSach, String tuKhoa,
             String bacSiLuaChon, String thoiGianLuaChon, LocalDate tuNgayTuyChinh,
             LocalDate denNgayTuyChinh, LocalDate ngayHienTai) {
@@ -135,6 +142,7 @@ public class LichSuKhamService {
         return ketQua;
     }
 
+    //Đếm số lượt khám trong ngày, số lượt khám trong tháng và số lượng bác sĩ tham gia khám.
     public ThongKe thongKe(List<HoSoSucKhoe_entity> danhSach, LocalDate ngayHienTai) {
         int ngay = 0;
         int thang = 0;
@@ -151,6 +159,7 @@ public class LichSuKhamService {
         return new ThongKe(danhSach.size(), ngay, thang, bacSi.size());
     }
 
+    // Xuất danh sách hồ sơ khám ra file CSV, bao gồm tiêu đề và dữ liệu, xử lý mã hóa UTF-8 và dấu phẩy trong dữ liệu.
     public void xuatDanhSach(File file, List<HoSoSucKhoe_entity> danhSach) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             writer.write('\ufeff');
@@ -169,6 +178,7 @@ public class LichSuKhamService {
         }
     }
 
+    //Ghi một dòng vào file CSV, tự động thêm dấu ngoặc kép và xử lý dấu phẩy trong dữ liệu.
     private void ghiDong(BufferedWriter writer, String... values) throws IOException {
         for (int i = 0; i < values.length; i++) {
             if (i > 0) writer.write(',');
@@ -177,6 +187,7 @@ public class LichSuKhamService {
         writer.newLine();
     }
 
+    //Xử lý chuỗi văn bản thành đối tượng ngày tháng để lọc khoảng ngày.
     public KhoangNgay khoangNgay(String tuNgayText, String denNgayText) {
         LocalDate tu = parseNgay(tuNgayText);
         LocalDate den = parseNgay(denNgayText);
