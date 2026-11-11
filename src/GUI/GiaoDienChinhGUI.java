@@ -470,33 +470,4 @@ public class GiaoDienChinhGUI extends NenAnhPanel {
             xuLyChonTab(tenTab);
         }
     }
-
-    // ==========================================
-    // MAIN KHỞI ĐỘNG CHƯƠNG TRÌNH
-    // ==========================================
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        SwingUtilities.invokeLater(() -> {
-            // 1. Khởi tạo kết nối CSDL SALALA
-            try {
-                connectDB.ConnectDB.getInstance().connect();
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Không thể kết nối cơ sở dữ liệu SALALA: " + e.getMessage(),
-                        "Lỗi kết nối",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // 2. Chạy ứng dụng: Gọi giao diện Đăng Nhập đầu tiên
-            DangNhapGUI login = new DangNhapGUI();
-            login.setVisible(true);
-        });
-    }
 }

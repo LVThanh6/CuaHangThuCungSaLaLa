@@ -356,8 +356,8 @@ public class LichLamViecGUI extends JPanel {
             btnNgay.setToolTipText(soCa + " ca làm việc");
 
             if (ngayLich.equals(ngayDangChon)) {
-                btnNgay.setBackground(RangBuocGiaoDien.MAU_CHU_DAO);
-                btnNgay.setForeground(Color.WHITE);
+                btnNgay.setBackground(new Color(186, 230, 253));
+                btnNgay.setForeground(Color.BLACK);
                 btnNgay.setBorder(new LineBorder(RangBuocGiaoDien.MAU_CHU_DAO, 2, true));
             } else if (ngayLich.equals(LocalDate.now())) {
                 btnNgay.setBackground(new Color(220, 244, 238));
@@ -389,7 +389,7 @@ public class LichLamViecGUI extends JPanel {
 
     private String taoNhanNgay(int ngay, int soCa) {
         LocalDate ngayHienThi = LocalDate.of(ngayDangChon.getYear(), ngayDangChon.getMonthValue(), ngay);
-        String mauSoCa = ngayHienThi.equals(ngayDangChon) ? "#ffffff" : "#64748b";
+        String mauSoCa = ngayHienThi.equals(ngayDangChon) ? "#000000" : "#64748b";
         String dongSoCa = soCa == 0 ? " " : soCa + " ca";
         return "<html><center><b>" + ngay + "</b><br><span style='font-size:9px;color:"
                 + mauSoCa + "'>" + dongSoCa + "</span></center></html>";
