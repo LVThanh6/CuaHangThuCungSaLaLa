@@ -178,8 +178,8 @@ public class HangThanhVien_DAO {
                 "FROM QuanLyHangThanhVien q " +
                 "JOIN KhachHang k ON q.maKH = k.maKH " +
                 "LEFT JOIN (SELECT maKH, COUNT(*) AS soTC FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
-                "LEFT JOIN (SELECT h.maKH, SUM(tt.soTien) AS tongChiTieuThucTe " +
-                "           FROM HoaDon h JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "LEFT JOIN (SELECT h.maKH, SUM(v.tongThanhToan) AS tongChiTieuThucTe " +
+                "           FROM HoaDon h JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD " +
                 "           WHERE h.trangThai = N'\u0110\u00e3 thanh to\u00e1n' GROUP BY h.maKH) hd ON hd.maKH = q.maKH " +
                 "WHERE q.tenHang = ? " +
                 "ORDER BY tongChiTieu DESC, q.maKH ASC";
@@ -537,7 +537,7 @@ public class HangThanhVien_DAO {
 
     /**
      * Tính tổng chi tiêu thực tế của khách hàng dựa trên các hóa đơn ĐÃ THANH TOÁN trong CSDL.
-     * Công thức: JOIN HoaDon + ThanhToan, lấy SUM(tt.soTien) của các hóa đơn đã thanh toán.
+     * Tính từ tổng tiền hóa đơn, chỉ tính các hóa đơn đã thanh toán.
      *
      * @param maKH Mã khách hàng cần tính
      * @return Tổng chi tiêu thực tế (đơn vị: đồng); 0.0 nếu không có hóa đơn
@@ -547,9 +547,8 @@ public class HangThanhVien_DAO {
         Connection con = ConnectDB.getCon();
         if (con == null) return 0.0;
 
-        // JOIN HoaDon với ThanhToan để lấy số tiền thực tế đã thanh toán
-        String sql = "SELECT ISNULL(SUM(tt.soTien), 0) " +
-                "FROM HoaDon h JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+        String sql = "SELECT ISNULL(SUM(v.tongThanhToan), 0) " +
+                "FROM HoaDon h JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD " +
                 "WHERE h.maKH = ? AND h.trangThai = N'Đã thanh toán'";
 
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {

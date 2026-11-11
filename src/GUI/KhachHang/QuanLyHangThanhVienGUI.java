@@ -475,7 +475,7 @@ public class QuanLyHangThanhVienGUI extends JPanel {
      * Mục đích: Cho phép xem, tìm kiếm nhanh và quản lý thành viên trong từng nhóm hạng.
      * Luồng hoạt động:
      *   1. Gọi service.taiDuLieuBangThanhVien(tenHang) → lấy dữ liệu từ DB.
-     *      (Tổng chi tiêu và điểm tích lũy được TÍNH THỰC TẾ từ JOIN HoaDon + ThanhToan)
+     *      (Tổng chi tiêu và điểm tích lũy được tính từ các hóa đơn đã thanh toán)
      *   2. Dựng bảng JTable (readonly) với các cột:
      *      Mã hạng | Mã KH | Họ tên | SĐT | Email | Thú cưng | Chi tiêu | Điểm | Ngày cập nhật.
      *   3. Thêm ô tìm kiếm nhanh phía trên — lọc realtime theo regex trên toàn bộ bảng.

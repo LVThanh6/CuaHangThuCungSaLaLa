@@ -300,21 +300,7 @@ CREATE TABLE Thue
 );
 GO
 
--- 16. THANH TOÁN
-CREATE TABLE ThanhToan
-(
-    maThanhToan  VARCHAR(20)   NOT NULL,
-    soTien       DECIMAL(18,2) NOT NULL,
-    thoiGian     DATETIME2,
-    phuongThuc   NVARCHAR(50)  NOT NULL,
-    trangThai    NVARCHAR(50)  NOT NULL,
-
-    CONSTRAINT PK_ThanhToan PRIMARY KEY (maThanhToan),
-    CONSTRAINT CK_ThanhToan_SoTien CHECK (soTien >= 0)
-);
-GO
-
--- 17. HÓA ĐƠN
+-- 16. HÓA ĐƠN
 CREATE TABLE HoaDon
 (
     maHD         VARCHAR(20)  NOT NULL,
@@ -325,7 +311,7 @@ CREATE TABLE HoaDon
     maNhanVien   VARCHAR(20)  NOT NULL,
     maKM         VARCHAR(20)  NULL,
     maThue       VARCHAR(20)  NULL,
-    maThanhToan  VARCHAR(20)  NULL,
+    phuongThucThanhToan NVARCHAR(50) NULL,
 
     CONSTRAINT PK_HoaDon PRIMARY KEY (maHD),
     CONSTRAINT UQ_HoaDon_maHD_maKH UNIQUE (maHD, maKH),
@@ -333,8 +319,7 @@ CREATE TABLE HoaDon
     CONSTRAINT FK_HoaDon_ThuCung_KhachHang FOREIGN KEY (maKH, maTC) REFERENCES ThuCung(maKH, maTC),
     CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
     CONSTRAINT FK_HoaDon_KhuyenMai FOREIGN KEY (maKM) REFERENCES KhuyenMai(maKM),
-    CONSTRAINT FK_HoaDon_Thue FOREIGN KEY (maThue) REFERENCES Thue(maThue),
-    CONSTRAINT FK_HoaDon_ThanhToan FOREIGN KEY (maThanhToan) REFERENCES ThanhToan(maThanhToan)
+    CONSTRAINT FK_HoaDon_Thue FOREIGN KEY (maThue) REFERENCES Thue(maThue)
 );
 GO
 
@@ -1031,14 +1016,9 @@ VALUES
 ('TX015',N'Mẫu thuế 15 - 8%',8.00);
 GO
 
--- 17. THANH TOÁN VÀ HÓA ĐƠN (75 bản ghi mỗi bảng)
-INSERT INTO ThanhToan (maThanhToan, soTien, thoiGian, phuongThuc, trangThai)
-SELECT 'TT' + dbo.fn_C3(n), 0,
-       DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')),
-       CHOOSE((n % 3) + 1, N'Tiền mặt', N'Chuyển khoản', N'Ví điện tử'), N'Đã thanh toán'
-FROM #N WHERE n <= 75;
-
-INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maTC, maNhanVien, maKM, maThue, maThanhToan)
+-- 16. HÓA ĐƠN (75 bản ghi mẫu)
+INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maTC, maNhanVien, maKM, maThue,
+                    phuongThucThanhToan)
 SELECT 'HD' + dbo.fn_C3(n),
        DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')),
        N'Đã thanh toán',
@@ -1047,7 +1027,7 @@ SELECT 'HD' + dbo.fn_C3(n),
        'NV' + dbo.fn_C3(((n - 1) % 15) + 1),
        'KM' + dbo.fn_C3(((n - 1) % 15) + 1),
        'TX' + dbo.fn_C3(((n - 1) % 15) + 1),
-       'TT' + dbo.fn_C3(n)
+       CHOOSE((n % 3) + 1, N'Tiền mặt', N'Chuyển khoản', N'Ví điện tử')
 FROM #N WHERE n <= 75;
 
 -- Chi tiết dịch vụ: 75 dòng
@@ -1068,13 +1048,6 @@ SELECT 'HD' + dbo.fn_C3(n),
        'NV' + dbo.fn_C3(((n - 1) % 15) + 1), NULL,
        (n % 3) + 1, 50000 + (n % 4) * 25000
 FROM #N WHERE n <= 37;
-GO
-
-UPDATE tt
-SET tt.soTien = v.tongThanhToan
-FROM ThanhToan tt
-JOIN HoaDon h ON h.maThanhToan = tt.maThanhToan
-JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD;
 GO
 
 -- 18. PHIẾU XUẤT KHO VÀ CHI TIẾT (15 phiếu, 30 dòng chi tiết)
@@ -1124,6 +1097,7 @@ OUTER APPLY (
            MAX(h.ngayLap) AS ngayGanNhat
     FROM HoaDon h JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD
     WHERE h.maKH = k.maKH
+      AND h.trangThai = N'Đã thanh toán'
 ) c
 JOIN (VALUES
     (N'Đồng',CAST(0 AS DECIMAL(18,2)),CAST(5000000 AS DECIMAL(18,2)),2.00,1.0,N'Giảm 2%, tích điểm và nhắc lịch tiêm'),

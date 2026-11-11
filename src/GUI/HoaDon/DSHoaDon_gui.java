@@ -46,12 +46,12 @@ public class DSHoaDon_gui extends JPanel {
             new String[] {
                     "Mã Hóa Đơn",
                     "Ngày Lập",
-                    "Trạng Thái",
+                    "Trạng Thái Thanh Toán",
                     "Mã Khách Hàng",
                     "Mã Nhân Viên",
                     "Mã Khuyến Mãi",
                     "Mã Thuế",
-                    "Mã Thanh Toán"
+                    "Phương Thức Thanh Toán"
             }, 0) {
 
         @Override
