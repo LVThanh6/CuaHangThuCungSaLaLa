@@ -1,7 +1,12 @@
 package GUI.KhachHang;
 
-import dao.KhachHang_DAO;
-import entity.KhachHang;
+import Service.KhachHang.KhachHangService;
+import Service.KhachHang.KhachHangService.ChiTietKhachHang;
+import Service.KhachHang.KhachHangService.ThongKeKhachHang;
+import Service.KhachHang.KhachHangService.KetQuaXoaKhachHang;
+import Service.KhachHang.KhachHangService.KetQuaXuLyKhachHang;
+import Service.KhachHang.KhachHangService.KetQuaXuatFile;
+import entity.KhachHang.KhachHang;
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.QuanLyTable;
 
@@ -10,12 +15,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Giao diện Danh sách khách hàng:
- * Hiển thị thẻ thống kê, thanh tìm kiếm, bộ lọc, bảng dữ liệu và phân trang.
+ * Hiển thị thẻ thống kê, thanh tìm kiếm, bộ lọc và toàn bộ bảng dữ liệu.
  * Tích hợp toàn bộ chức năng Thêm, Xem chi tiết, Chỉnh sửa, Xóa, Lọc, Xuất CSV
  * từ CSDL SALALA.
  */
@@ -34,6 +37,8 @@ public class DanhSachKhachHangGUI extends JPanel {
     private JButton btnXemKhachHang;
     private JButton btnSuaKhachHang;
     private JButton btnXoaKhachHang;
+    // Nút xuất danh sách khách hàng ra file CSV (gắn vào thanh công cụ của QuanLyTable)
+    private JButton btnXuatDanhSach;
 
     // Các thẻ thống kê số liệu
     private JPanel panelThongKe;
@@ -54,14 +59,12 @@ public class DanhSachKhachHangGUI extends JPanel {
     private Object[][] duLieuKhachHang;
     private String[] danhSachBoLoc;
 
-    // Đối tượng DAO xử lý dữ liệu từ database SALALA
-    private KhachHang_DAO khachHangDAO;
+    private final KhachHangService service = new KhachHangService();
 
     // =========================================================================
     // 2. HÀM KHỞI TẠO (CONSTRUCTOR)
     // =========================================================================
     public DanhSachKhachHangGUI() {
-        khachHangDAO = new KhachHang_DAO();
         khoiTaoGiaoDien();
         caiDatCacChucNang();
         taiDuLieuTuDatabase();
@@ -70,6 +73,16 @@ public class DanhSachKhachHangGUI extends JPanel {
     // =========================================================================
     // 3. CÁC HÀM XÂY DỰNG GIAO DIỆN
     // =========================================================================
+    /**
+     * Khởi tạo toàn bộ bố cục giao diện chính của màn hình Danh Sách Khách Hàng.
+     *
+     * Mục đích: Lắp ráp các khối giao diện thành layout hoàn chỉnh để hiển thị.
+     * Luồng hoạt động:
+     *   1. Đặt layout BorderLayout, màu nền trắng, padding 16px mỗi cạnh.
+     *   2. Gọi khoiTaoPhanTren() → tạo khối phía trên (tiêu đề + 4 thẻ thống kê).
+     *   3. Gọi khoiTaoBangDuLieu() → tạo bảng dữ liệu khách hàng.
+     *   4. Gắn 2 khối vào layout: NORTH (phía trên) và CENTER (bảng).
+     */
     private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout(0, 16));
         setBackground(RangBuocGiaoDien.MAU_NEN_TRANG);
@@ -84,6 +97,18 @@ public class DanhSachKhachHangGUI extends JPanel {
         add(panelQuanLyTable, BorderLayout.CENTER);
     }
 
+    /**
+     * Xây dựng khối giao diện phía trên màn hình gồm 2 hàng:
+     *   - Hàng 1: Breadcrumb đường dẫn + Tiêu đề + 4 nút thao tác (Xem, Sửa, Xóa, Thêm).
+     *   - Hàng 2: 4 thẻ thống kê số liệu (Tổng KH, KH mới, Tổng thú cưng, Thành viên Vàng+).
+     *
+     * Mục đích: Tổ chức phần tiêu đề và số liệu tổng quan để người dùng nắm bắt nhanh tình hình.
+     * Luồng hoạt động:
+     *   1. Tạo panelTrai: Breadcrumb + Tên màn hình + Mô tả ngắn (canh trái).
+     *   2. Tạo panelPhai: 4 nút thao tác xếp hàng ngang (canh phải).
+     *   3. Tạo panelThongKe: 4 thẻ thống kê xếp dạng lưới 1×4.
+     *   4. Ghép lại vào panelPhanTren theo thứ tự từ trên xuống.
+     */
     private void khoiTaoPhanTren() {
         panelPhanTren = new JPanel();
         panelPhanTren.setLayout(new BoxLayout(panelPhanTren, BoxLayout.Y_AXIS));
@@ -148,11 +173,11 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelThongKe = new JPanel(new GridLayout(1, 4, 16, 0));
         panelThongKe.setOpaque(false);
 
-        lblValTongKH = new JLabel("15");
-        lblValKhachMoi = new JLabel("5");
-        lblValTongTC = new JLabel("15");
-        lblValVang = new JLabel("3");
-        lblDescTC = new JLabel("1.0 thú cưng / khách");
+        lblValTongKH = new JLabel("0");
+        lblValKhachMoi = new JLabel("0");
+        lblValTongTC = new JLabel("0");
+        lblValVang = new JLabel("0");
+        lblDescTC = new JLabel("0.0 thú cưng / khách");
 
         theTongKhachHang = taoTheThongKe("Tổng khách hàng", lblValTongKH, new JLabel("Toàn bộ hồ sơ"));
         theKhachHangMoi = taoTheThongKe("Khách hàng mới", lblValKhachMoi, new JLabel("Gần đây"));
@@ -167,18 +192,39 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelPhanTren.add(panelThongKe);
     }
 
+    /**
+     * Tạo nút thao tác chuẩn (Xem chi tiết / Chỉnh sửa / Xóa) với giao diện thống nhất.
+     *
+     * Mục đích: Đảm bảo các nút có cùng kiểu dáng (font, viền, padding), tránh lặp code.
+     * @param text    Tên hiển thị trên nút (vd: "Xem chi tiết", "Chỉnh sửa").
+     * @param noiBat  true = nút nổi bật (nền màu chủ đạo, chữ trắng);
+     *                false = nút phụ (nền trắng, chữ màu chủ đạo).
+     * @return JButton đã được định dạng sẵn, chỉ cần addActionListener.
+     */
     private JButton taoNutThaoTac(String text, boolean noiBat) {
-        JButton button = new JButton(text);
-        button.setFont(RangBuocGiaoDien.fontThuong(12));
-        button.setForeground(noiBat ? Color.WHITE : RangBuocGiaoDien.MAU_CHU_DAO);
-        button.setBackground(noiBat ? RangBuocGiaoDien.MAU_CHU_DAO : Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createCompoundBorder(
+        JButton nut = new JButton(text);
+        nut.setFont(RangBuocGiaoDien.fontThuong(12));
+        nut.setForeground(noiBat ? Color.WHITE : RangBuocGiaoDien.MAU_CHU_DAO);
+        nut.setBackground(noiBat ? RangBuocGiaoDien.MAU_CHU_DAO : Color.WHITE);
+        nut.setFocusPainted(false);
+        nut.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-        return button;
+        return nut;
     }
 
+    /**
+     * Tạo một thẻ thống kê số liệu (card) hiển thị một chỉ số tổng quan.
+     *
+     * Mục đích: Tái sử dụng component thẻ cho 4 chỉ số: Tổng KH, KH mới, Thú cưng, VIP.
+     * Cấu trúc thẻ:
+     *   - Dòng 1: Tên chỉ số (font nhỏ, màu phụ).
+     *   - Dòng 2: Số chính (font to, in đậm) + Ghi chú phụ bên cạnh (font nhỏ).
+     * @param tieuDe     Tên chỉ số hiển thị phía trên (vd: "Tổng khách hàng").
+     * @param lblSoChinh JLabel được cập nhật số liệu động từ database.
+     * @param lblGhiChu  JLabel chú thích thêm (vd: "Gần đây", "Toàn bộ hồ sơ").
+     * @return JPanel hoàn chỉnh đã có style sẵn.
+     */
     private JPanel taoTheThongKe(String tieuDe, JLabel lblSoChinh, JLabel lblGhiChu) {
         JPanel the = new JPanel(new BorderLayout());
         the.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
@@ -216,14 +262,20 @@ public class DanhSachKhachHangGUI extends JPanel {
         return the;
     }
 
+    /**
+     * Khởi tạo bảng dữ liệu khách hàng sử dụng component QuanLyTable dùng chung.
+     *
+     * Mục đích: Tạo bảng có sẵn tính năng tìm kiếm, lọc, sắp xếp cột và nút xuất CSV.
+     * Luồng hoạt động:
+     *   1. Lấy danh sách tên cột và lựa chọn lọc mặc định từ KhachHangService.
+     *   2. Khởi tạo QuanLyTable với placeholder tìm kiếm phù hợp.
+     *   3. Tạo nút "Xuất danh sách" và gắn vào thanh công cụ phía phải của bảng.
+     * Lưu ý: Bảng được khởi tạo rỗng; dữ liệu thực được nạp bởi taiDuLieuTuDatabase().
+     */
     private void khoiTaoBangDuLieu() {
-        danhSachCot = new String[] {
-                "Mã khách hàng", "Họ tên", "Số điện thoại", "Email",
-                "Địa chỉ", "Hạng thành viên"
-        };
-
+        danhSachCot = service.layDanhSachCot();
         duLieuKhachHang = new Object[][] {};
-        danhSachBoLoc = new String[] { "Hạng thành viên: Tất cả" };
+        danhSachBoLoc = new String[] { service.layLuaChonLocMacDinh() };
 
         panelQuanLyTable = new QuanLyTable(
                 danhSachCot,
@@ -231,25 +283,41 @@ public class DanhSachKhachHangGUI extends JPanel {
                 "Tìm theo tên, mã khách hàng, số điện thoại...",
                 danhSachBoLoc);
 
-        panelQuanLyTable.anPhanTrang();
         panelQuanLyTable.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        // Tạo nút "Xuất danh sách" và gắn vào thanh công cụ của QuanLyTable
+        btnXuatDanhSach = taoNutXuatDanhSach();
+        panelQuanLyTable.datNutCongCuPhai(btnXuatDanhSach);
     }
 
     // =========================================================================
     // 4. CÀI ĐẶT CÁC SỰ KIỆN & CHỨC NĂNG NGHIỆP VỤ
     // =========================================================================
+    /**
+     * Cài đặt toàn bộ sự kiện và chức năng tương tác cho giao diện.
+     *
+     * Mục đích: Kết nối các nút bấm và bộ lọc với logic nghiệp vụ từ KhachHangService.
+     * Các chức năng được cài đặt:
+     *   1. Nút "Thêm khách hàng"  → mở hienThiDialogThemKhachHang().
+     *   2. Bộ lọc theo Hạng thành viên → lọc bảng theo cột hạng bằng regex realtime.
+     *   3. Nút Xem / Sửa / Xóa   → chỉ kích hoạt khi chọn đúng 1 dòng trong bảng.
+     *   4. Nút "Xuất danh sách"   → mở hộp thoại chọn file CSV để xuất toàn bộ.
+     *   5. Renderer cột Hạng      → tô màu chữ theo hạng (Vàng=vàng, Kim Cương=tím...).
+     */
     private void caiDatCacChucNang() {
         // 1. Sự kiện nút "+ Thêm khách hàng"
         btnThemKhachHang.addActionListener(e -> hienThiDialogThemKhachHang());
 
         // 2. Cài đặt Bộ lọc theo Hạng thành viên
         panelQuanLyTable.caiDatBoLoc(0,
-                new String[] { "Hạng thành viên: Tất cả", "Đồng", "Bạc", "Vàng", "Kim cương" },
+                service.layDanhSachTuyChonLoc(),
                 luaChon -> {
-                    if (luaChon == null || luaChon.equals("Hạng thành viên: Tất cả")) {
+                    String regex = service.taoRegexLoc(luaChon);
+                    if (regex == null) {
                         panelQuanLyTable.getRowSorter().setRowFilter(null);
                     } else {
-                        panelQuanLyTable.getRowSorter().setRowFilter(RowFilter.regexFilter(luaChon, 5));
+                        panelQuanLyTable.getRowSorter().setRowFilter(
+                                RowFilter.regexFilter(regex, service.layViTriCotHangThanhVien()));
                     }
                 });
 
@@ -262,105 +330,170 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnXoaKhachHang.addActionListener(e -> thucHienTrenKhachHang(table, 2));
         capNhatTrangThaiNut(table);
 
-        // Thiết lập renderer cho cột Hạng thành viên
-        try {
-            table.getColumnModel().getColumn(5).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel, boolean hasFoc,
-                        int r, int c) {
-                    JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
-                    lbl.setFont(RangBuocGiaoDien.fontDam(12));
-                    String valStr = val != null ? val.toString() : "";
-                    if (valStr.contains("Kim cương")) {
-                        lbl.setForeground(new Color(2, 132, 199));
-                    } else if (valStr.contains("Vàng")) {
-                        lbl.setForeground(new Color(217, 119, 6));
-                    } else if (valStr.contains("Bạc")) {
-                        lbl.setForeground(new Color(100, 116, 139));
-                    } else {
-                        lbl.setForeground(new Color(180, 83, 9));
-                    }
-                    lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
-                    if (!isSel) {
-                        lbl.setBackground(r % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
-                    }
-                    return lbl;
-                }
-            });
+        // 4. Nút xuất danh sách khách hàng ra file CSV
+        btnXuatDanhSach.addActionListener(e -> xuLyXuatDanhSach());
 
-        } catch (Exception ignored) {
-        }
+        // Thiết lập renderer cho cột Hạng thành viên
+        table.getColumnModel().getColumn(service.layViTriCotHangThanhVien())
+                .setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+                    @Override
+                    public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isSel,
+                            boolean hasFoc,
+                            int r, int c) {
+                        JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, val, isSel, hasFoc, r, c);
+                        lbl.setFont(RangBuocGiaoDien.fontDam(12));
+                        String valStr = val != null ? val.toString() : "";
+                        lbl.setForeground(KhachHangService.layMauHang(valStr));
+                        lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
+                        if (!isSel) {
+                            lbl.setBackground(KhachHangService.layMauNenDong(r));
+                        }
+                        return lbl;
+                    }
+                });
     }
 
+    /**
+     * Cập nhật trạng thái kích hoạt (enabled/disabled) của 3 nút thao tác.
+     *
+     * Mục đích: Chỉ cho phép Xem/Sửa/Xóa khi người dùng chọn đúng 1 dòng trong bảng.
+     *   - Chưa chọn hoặc chọn nhiều hơn 1 dòng → 3 nút bị vô hiệu hóa (mờ).
+     *   - Chọn đúng 1 dòng → 3 nút được kích hoạt.
+     * Hàm này được gắn vào ListSelectionListener của bảng để tự động cập nhật.
+     * @param table Bảng dữ liệu đang hiển thị danh sách khách hàng.
+     */
     private void capNhatTrangThaiNut(JTable table) {
-        boolean coDong = table.getSelectedRowCount() == 1;
+        boolean coDong = service.coTheThaoTacDuyNhat(table.getSelectedRowCount());
         btnXemKhachHang.setEnabled(coDong);
         btnSuaKhachHang.setEnabled(coDong);
         btnXoaKhachHang.setEnabled(coDong);
     }
 
+    /**
+     * Tạo nút "Xuất danh sách" với giao diện thống nhất cùng phong cách toàn bộ ứng dụng.
+     * Nút sẽ được gắn vào thanh công cụ của QuanLyTable qua datNutCongCuPhai().
+     */
+    private JButton taoNutXuatDanhSach() {
+        JButton btn = new JButton("Xuất danh sách");
+        btn.setPreferredSize(new Dimension(145, 38));
+        btn.setFont(RangBuocGiaoDien.fontDam(12));
+        btn.setForeground(new Color(30, 41, 59));
+        btn.setBackground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    /**
+     * Xử lý sự kiện khi người dùng nhấn nút "Xuất danh sách":
+     * 1. Mở hộp thoại chọn vị trí lưu file (JFileChooser).
+     * 2. Gọi service.xuatDanhSachKhachHangRaCSV() để thực thi logic xuất.
+     * 3. Hiển thị thông báo kết quả thành công / lỗi cho người dùng.
+     */
+    private void xuLyXuatDanhSach() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu danh sách khách hàng");
+        fileChooser.setSelectedFile(new java.io.File(service.layTenFileCSVMacDinh()));
+
+        int luaChon = fileChooser.showSaveDialog(this);
+        if (luaChon != JFileChooser.APPROVE_OPTION) {
+            return; // Người dùng huỷ, không làm gì cả
+        }
+
+        java.io.File file = fileChooser.getSelectedFile();
+        // Tự động thêm đuôi .csv nếu người dùng quên
+        if (!file.getName().toLowerCase().endsWith(".csv")) {
+            file = new java.io.File(file.getAbsolutePath() + ".csv");
+        }
+
+        KetQuaXuatFile ketQua = service.xuatDanhSachKhachHangRaCSV(file, panelQuanLyTable.getBangDuLieu());
+
+        if (ketQua.isThanhCong()) {
+            JOptionPane.showMessageDialog(this,
+                    ketQua.getThongBao(),
+                    "Xuất file thành công",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    ketQua.getThongBao(),
+                    "Lỗi xuất file",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Điều phối thao tác (Xem / Sửa / Xóa) dựa trên dòng đang được chọn trong bảng.
+     *
+     * Mục đích: Tập trung logic đọc dòng đã chọn và điều hướng sang đúng chức năng.
+     * Luồng hoạt động:
+     *   1. Kiểm tra có đúng 1 dòng được chọn không, nếu không thì thoát sớm.
+     *   2. Chuyển đổi chỉ số dòng từ View sang Model (hỗ trợ sắp xếp/lọc bảng).
+     *   3. Lấy mã khách hàng (maKH) từ cột tương ứng trong model.
+     *   4. Điều phối theo thaoTac:
+     *        0 = Xem chi tiết → hienThiDialogXemChiTiet(maKH)
+     *        1 = Chỉnh sửa   → hienThiDialogSuaKhachHang(maKH)
+     *        2 = Xóa         → xuLyXoaKhachHang(maKH, hoTen)
+     * @param table   Bảng dữ liệu khách hàng đang hiển thị.
+     * @param thaoTac Loại thao tác: 0=Xem, 1=Sửa, 2=Xóa.
+     */
     private void thucHienTrenKhachHang(JTable table, int thaoTac) {
         int row = table.getSelectedRow();
-        if (row < 0 || table.getSelectedRowCount() != 1) {
+        if (!service.coTheThaoTacDuyNhat(table.getSelectedRowCount()) || row < 0) {
             return;
         }
         int modelRow = table.convertRowIndexToModel(row);
-        String maKH = String.valueOf(table.getModel().getValueAt(modelRow, 0));
+        String maKH = String.valueOf(table.getModel().getValueAt(modelRow, service.layViTriCotMaKhachHang()));
         if (thaoTac == 0) {
             hienThiDialogXemChiTiet(maKH);
         } else if (thaoTac == 1) {
             hienThiDialogSuaKhachHang(maKH);
         } else {
-            xuLyXoaKhachHang(maKH, String.valueOf(table.getModel().getValueAt(modelRow, 1)));
+            String hoTen = String.valueOf(table.getModel().getValueAt(modelRow, service.layViTriCotHoTen()));
+            xuLyXoaKhachHang(maKH, hoTen);
         }
     }
 
     /**
-     * Tải dữ liệu thực tế từ cơ sở dữ liệu SALALA qua KhachHang_DAO
+     * Tải dữ liệu thực tế từ cơ sở dữ liệu SALALA và làm mới toàn bộ bảng + thẻ thống kê.
+     *
+     * Mục đích: Đây là hàm làm mới (refresh) chính — được gọi sau mỗi thao tác Thêm/Sửa/Xóa
+     *           để giao diện luôn đồng bộ với dữ liệu thực trong CSDL.
+     * Luồng hoạt động:
+     *   1. Gọi service.taiDuLieuBang() → truy vấn toàn bộ danh sách khách từ DB.
+     *   2. Cập nhật dữ liệu vào bảng QuanLyTable qua capNhatDuLieu().
+     *   3. Gọi capNhatThongKe() để cập nhật 4 thẻ số liệu phía trên.
      */
     public void taiDuLieuTuDatabase() {
-        try {
-            ArrayList<KhachHang> ds = khachHangDAO.getAllKhachHangDayDu();
-            if (ds != null && !ds.isEmpty()) {
-                duLieuKhachHang = new Object[ds.size()][6];
-                for (int i = 0; i < ds.size(); i++) {
-                    KhachHang kh = ds.get(i);
-                    duLieuKhachHang[i][0] = kh.getMaKH();
-                    duLieuKhachHang[i][1] = kh.getHoTen();
-                    duLieuKhachHang[i][2] = kh.getSdt();
-                    duLieuKhachHang[i][3] = kh.getEmail();
-                    duLieuKhachHang[i][4] = kh.getDiaChi() != null ? kh.getDiaChi() : "";
-                    duLieuKhachHang[i][5] = (kh.getHangThanhVien() != null ? kh.getHangThanhVien() : "Đồng");
-                }
-                if (panelQuanLyTable != null) {
-                    panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
-                }
-            }
-            capNhatThongKe();
-        } catch (Exception e) {
-            e.printStackTrace();
+        duLieuKhachHang = service.taiDuLieuBang();
+        if (panelQuanLyTable != null) {
+            panelQuanLyTable.capNhatDuLieu(duLieuKhachHang);
         }
+        capNhatThongKe();
     }
 
     /**
-     * Cập nhật các thẻ thống kê từ CSDL
+     * Cập nhật giá trị hiển thị trên 4 thẻ thống kê phía trên từ CSDL.
+     *
+     * Mục đích: Đảm bảo các chỉ số tổng quan luôn chính xác sau mỗi thao tác dữ liệu.
+     * Các chỉ số được cập nhật:
+     *   - Tổng khách hàng: Tổng số hồ sơ trong bảng KhachHang.
+     *   - Khách hàng mới: Số KH được thêm gần đây.
+     *   - Tổng thú cưng: Tổng số thú cưng + trung bình/khách.
+     *   - Thành viên Vàng trở lên: KH ở hạng Vàng hoặc Kim Cương.
      */
     public void capNhatThongKe() {
-        int tongKH = khachHangDAO.getTongSoKhachHang();
-        int tongTC = khachHangDAO.getTongSoThuCung();
-        int soVang = khachHangDAO.getSoLuongThanhVienVangTroLen();
-        int soMoi = khachHangDAO.getSoLuongKhachHangMoi();
-
+        ThongKeKhachHang statistics = service.layThongKe();
         if (lblValTongKH != null)
-            lblValTongKH.setText(String.valueOf(tongKH));
+            lblValTongKH.setText(statistics.layChuoiTongKhachHang());
         if (lblValKhachMoi != null)
-            lblValKhachMoi.setText(String.valueOf(soMoi));
+            lblValKhachMoi.setText(statistics.layChuoiKhachHangMoi());
         if (lblValTongTC != null)
-            lblValTongTC.setText(String.valueOf(tongTC));
+            lblValTongTC.setText(statistics.layChuoiTongThuCung());
         if (lblValVang != null)
-            lblValVang.setText(String.valueOf(soVang));
-        if (lblDescTC != null && tongKH > 0) {
-            lblDescTC.setText(String.format("%.1f thú cưng / khách", (double) tongTC / tongKH));
+            lblValVang.setText(statistics.layChuoiThanhVienVang());
+        if (lblDescTC != null) {
+            lblDescTC.setText(statistics.layChuoiMoTaThuCung());
         }
     }
 
@@ -369,7 +502,15 @@ public class DanhSachKhachHangGUI extends JPanel {
     // =========================================================================
 
     /**
-     * Hộp thoại thêm khách hàng mới
+     * Hộp thoại nhập thông tin để tạo khách hàng mới trong CSDL.
+     *
+     * Mục đích: Cho phép nhân viên nhập đầy đủ thông tin và lưu ngay vào database.
+     * Luồng hoạt động:
+     *   1. Tự động phát sinh mã KH mới (vd: KH013) qua service.phatSinhMaMoi().
+     *   2. Hiển thị form nhập: Mã KH (readonly), Họ tên (*), SĐT (*), Email (*), Địa chỉ.
+     *   3. Nhấn "Lưu khách hàng" → gọi service.xuLyThemKhachHang() để validate + lưu DB.
+     *   4. Nếu lỗi nhập liệu → hiển thị cảnh báo và focus vào trường lỗi cụ thể.
+     *   5. Nếu thành công → đóng dialog + tải lại bảng + thẻ thống kê.
      */
     private void hienThiDialogThemKhachHang() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Khách Hàng Mới", true);
@@ -397,7 +538,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelContent.add(Box.createRigidArea(new Dimension(0, 16)));
 
         // Tự động phát sinh mã khách hàng
-        String maGoiY = khachHangDAO.phatSinhMaKHMoi();
+        String maGoiY = service.phatSinhMaMoi();
 
         JTextField txtMaKH = taoTextField(maGoiY);
         txtMaKH.setEditable(false);
@@ -445,47 +586,35 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnLuu.setPreferredSize(new Dimension(140, 38));
 
         btnLuu.addActionListener(e -> {
-            String ma = txtMaKH.getText().trim();
-            String ten = txtHoTen.getText().trim();
-            String sdt = txtSDT.getText().trim();
-            String email = txtEmail.getText().trim();
-            String diaChi = txtDiaChi.getText().trim();
-
-            if (ma.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập mã khách hàng!", "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
-                txtMaKH.requestFocus();
-                return;
-            }
-            if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập họ và tên khách hàng!", "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
-                txtHoTen.requestFocus();
-                return;
-            }
-            if (!sdt.matches("^0\\d{9}$")) {
-                JOptionPane.showMessageDialog(dialog, "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0!",
-                        "Lỗi định dạng", JOptionPane.WARNING_MESSAGE);
-                txtSDT.requestFocus();
-                return;
-            }
-            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                JOptionPane.showMessageDialog(dialog, "Email không đúng định dạng (ví dụ: ten@gmail.com)!",
-                        "Lỗi định dạng", JOptionPane.WARNING_MESSAGE);
-                txtEmail.requestFocus();
-                return;
-            }
-
-            KhachHang khMoi = new KhachHang(ma, ten, sdt, email, diaChi);
-            boolean thanhCong = khachHangDAO.createKhachHang(khMoi);
-            if (thanhCong) {
-                JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!", "Thành công",
+            KetQuaXuLyKhachHang ketQua = service.xuLyThemKhachHang(
+                    txtMaKH.getText(), txtHoTen.getText(), txtSDT.getText(),
+                    txtEmail.getText(), txtDiaChi.getText());
+            if (ketQua.isThanhCong()) {
+                JOptionPane.showMessageDialog(this, ketQua.getThongBao(), "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
                 dialog.dispose();
                 taiDuLieuTuDatabase();
+            } else if (ketQua.isLoiNhapLieu()) {
+                JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi định dạng",
+                        JOptionPane.WARNING_MESSAGE);
+                switch (ketQua.getTruongLoi()) {
+                    case MA_KHACH_HANG:
+                        txtMaKH.requestFocus();
+                        break;
+                    case HO_TEN:
+                        txtHoTen.requestFocus();
+                        break;
+                    case SO_DIEN_THOAI:
+                        txtSDT.requestFocus();
+                        break;
+                    case EMAIL:
+                        txtEmail.requestFocus();
+                        break;
+                    default:
+                        break;
+                }
             } else {
-                JOptionPane.showMessageDialog(dialog,
-                        "Thêm thất bại! Vui lòng kiểm tra xem Mã khách hàng đã tồn tại chưa.", "Lỗi",
+                JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",
                         JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -498,18 +627,28 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     /**
-     * Hộp thoại xem chi tiết khách hàng (kèm thú cưng và lịch sử hóa đơn)
+     * Hộp thoại xem chi tiết toàn bộ hồ sơ của một khách hàng.
+     *
+     * Mục đích: Cho phép xem nhanh thông tin cá nhân, thú cưng và lịch sử hóa đơn.
+     * Luồng hoạt động:
+     *   1. Gọi service.layChiTiet(maKH) để lấy dữ liệu tổng hợp từ DB.
+     *   2. Hiển thị 3 khối:
+     *      - Thông tin cá nhân (mã, họ tên, SĐT, email, địa chỉ).
+     *      - Danh sách thú cưng của khách (bảng readonly, tên + loài + giống + tuổi).
+     *      - Lịch sử hóa đơn (bảng readonly, mã HD + ngày + trạng thái + số tiền).
+     *   3. Nút "Đóng" để thoát dialog.
+     * @param maKH Mã khách hàng cần xem chi tiết.
      */
     private void hienThiDialogXemChiTiet(String maKH) {
-        KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
-        if (kh == null) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin khách hàng!", "Lỗi",
+        ChiTietKhachHang chiTietKH = service.layChiTiet(maKH);
+        if (chiTietKH == null) {
+            JOptionPane.showMessageDialog(this, service.layThongDiepKhongTimThayKhachHang(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                "Hồ Sơ Chi Tiết Khách Hàng - " + maKH, true);
+                chiTietKH.layTieuDeDialogChiTiet(), true);
         dialog.setSize(680, 560);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
@@ -526,52 +665,34 @@ public class DanhSachKhachHangGUI extends JPanel {
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
                 " Thông tin cá nhân ", 0, 0, RangBuocGiaoDien.fontDam(13), RangBuocGiaoDien.MAU_CHU_DAO));
 
-        panelInfo.add(new JLabel("Mã KH: " + kh.getMaKH()));
-        panelInfo.add(new JLabel("Họ tên: " + kh.getHoTen()));
-        panelInfo.add(new JLabel("Điện thoại: " + kh.getSdt()));
-        panelInfo.add(new JLabel("Email: " + kh.getEmail()));
-        panelInfo.add(new JLabel("Địa chỉ: " + (kh.getDiaChi() != null ? kh.getDiaChi() : "Chưa cập nhật")));
+        panelInfo.add(new JLabel(chiTietKH.layThongTinMaKH()));
+        panelInfo.add(new JLabel(chiTietKH.layThongTinHoTen()));
+        panelInfo.add(new JLabel(chiTietKH.layThongTinSDT()));
+        panelInfo.add(new JLabel(chiTietKH.layThongTinEmail()));
+        panelInfo.add(new JLabel(chiTietKH.layThongTinDiaChi()));
         panelBody.add(panelInfo);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // 2. Danh sách thú cưng của khách
-        List<Object[]> dsThuCung = khachHangDAO.getDanhSachThuCungCuaKhachHang(maKH);
-        String[] cotThuCung = { "Mã TC", "Tên thú cưng", "Loài", "Giới tính", "Ngày sinh", "Đặc điểm" };
-        Object[][] dataTC = new Object[dsThuCung.size()][6];
-        for (int i = 0; i < dsThuCung.size(); i++) {
-            dataTC[i] = dsThuCung.get(i);
-        }
-
-        JTable tableTC = new JTable(new DefaultTableModel(dataTC, cotThuCung) {
-            @Override
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
-        });
+        JTable tableTC = new JTable(
+                new DefaultTableModel(chiTietKH.layDuLieuBangThuCung(), ChiTietKhachHang.COT_THU_CUNG) {
+                    @Override
+                    public boolean isCellEditable(int r, int c) {
+                        return false;
+                    }
+                });
         tableTC.setRowHeight(30);
         JScrollPane scrollTC = new JScrollPane(tableTC);
         scrollTC.setPreferredSize(new Dimension(0, 120));
         scrollTC.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Thú cưng sở hữu (" + dsThuCung.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                chiTietKH.layTieuDeThuCung(), 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollTC);
         panelBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
         // 3. Lịch sử hóa đơn của khách
-        List<Object[]> dsHoaDon = khachHangDAO.getDanhSachHoaDonCuaKhachHang(maKH);
-        String[] cotHoaDon = { "Mã HĐ", "Ngày lập", "Trạng thái", "Số tiền (₫)", "Hình thức" };
-        Object[][] dataHD = new Object[dsHoaDon.size()][5];
-        for (int i = 0; i < dsHoaDon.size(); i++) {
-            Object[] row = dsHoaDon.get(i);
-            dataHD[i][0] = row[0];
-            dataHD[i][1] = row[1];
-            dataHD[i][2] = row[2];
-            dataHD[i][3] = String.format("%,.0f ₫", (Double) row[3]).replace(',', '.');
-            dataHD[i][4] = row[4];
-        }
-
-        JTable tableHD = new JTable(new DefaultTableModel(dataHD, cotHoaDon) {
+        JTable tableHD = new JTable(new DefaultTableModel(chiTietKH.layDuLieuBangHoaDon(), ChiTietKhachHang.COT_HOA_DON) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -582,7 +703,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         scrollHD.setPreferredSize(new Dimension(0, 130));
         scrollHD.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN, 1),
-                " Lịch sử hóa đơn giao dịch (" + dsHoaDon.size() + ") ", 0, 0, RangBuocGiaoDien.fontDam(13),
+                chiTietKH.layTieuDeHoaDon(), 0, 0, RangBuocGiaoDien.fontDam(13),
                 RangBuocGiaoDien.MAU_CHU_DAO));
         panelBody.add(scrollHD);
 
@@ -602,17 +723,27 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     /**
-     * Hộp thoại chỉnh sửa thông tin khách hàng
+     * Hộp thoại chỉnh sửa thông tin cá nhân của một khách hàng.
+     *
+     * Mục đích: Cho phép cập nhật Họ tên, SĐT, Email, Địa chỉ — không đổi được Mã KH.
+     * Luồng hoạt động:
+     *   1. Gọi service.layKhachHangTheoMa(maKH) để nạp dữ liệu hiện tại vào form.
+     *   2. Hiển thị form với Mã KH (readonly) và các trường có thể sửa.
+     *   3. Nhấn "Lưu thay đổi" → gọi service.xuLyCapNhatKhachHang() → validate + UPDATE DB.
+     *   4. Nếu lỗi nhập liệu → cảnh báo + focus vào trường lỗi cụ thể.
+     *   5. Nếu thành công → đóng dialog + tải lại bảng.
+     * @param maKH Mã khách hàng cần chỉnh sửa.
      */
     private void hienThiDialogSuaKhachHang(String maKH) {
-        KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
+        KhachHang kh = service.layKhachHangTheoMa(maKH);
         if (kh == null) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, service.layThongDiepKhongTimThayKhachHang(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Cập Nhật Thông Tin Khách Hàng",
-                true);
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                "Cập Nhật Thông Tin Khách Hàng", true);
         dialog.setSize(520, 460);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
@@ -622,7 +753,7 @@ public class DanhSachKhachHangGUI extends JPanel {
         panelContent.setBackground(Color.WHITE);
         panelContent.setBorder(new EmptyBorder(24, 28, 24, 28));
 
-        JLabel lblHeader = new JLabel("Chỉnh sửa thông tin - " + maKH);
+        JLabel lblHeader = new JLabel(service.layTieuDeDialogSua(maKH));
         lblHeader.setFont(RangBuocGiaoDien.fontDam(18));
         lblHeader.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
         panelContent.add(lblHeader);
@@ -663,36 +794,36 @@ public class DanhSachKhachHangGUI extends JPanel {
         btnCapNhat.setForeground(Color.WHITE);
 
         btnCapNhat.addActionListener(e -> {
-            String ten = txtHoTen.getText().trim();
-            String sdt = txtSDT.getText().trim();
-            String email = txtEmail.getText().trim();
-            String diaChi = txtDiaChi.getText().trim();
-
-            if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Họ và tên không được để trống!", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (!sdt.matches("^0\\d{9}$")) {
-                JOptionPane.showMessageDialog(dialog, "Số điện thoại phải có 10 chữ số bắt đầu bằng 0!", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                JOptionPane.showMessageDialog(dialog, "Email không đúng định dạng!", "Lỗi",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            KhachHang khCapNhat = new KhachHang(maKH, ten, sdt, email, diaChi);
-            boolean ok = khachHangDAO.updateKhachHang(khCapNhat);
-            if (ok) {
-                JOptionPane.showMessageDialog(this, "Cập nhật thông tin khách hàng thành công!", "Thông báo",
+            KetQuaXuLyKhachHang ketQua = service.xuLyCapNhatKhachHang(
+                    maKH, txtHoTen.getText(), txtSDT.getText(),
+                    txtEmail.getText(), txtDiaChi.getText());
+            if (ketQua.isThanhCong()) {
+                JOptionPane.showMessageDialog(this, ketQua.getThongBao(), "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
                 dialog.dispose();
                 taiDuLieuTuDatabase();
+            } else if (ketQua.isLoiNhapLieu()) {
+                JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",
+                        JOptionPane.WARNING_MESSAGE);
+                switch (ketQua.getTruongLoi()) {
+                    case MA_KHACH_HANG:
+                        txtMaKH.requestFocus();
+                        break;
+                    case HO_TEN:
+                        txtHoTen.requestFocus();
+                        break;
+                    case SO_DIEN_THOAI:
+                        txtSDT.requestFocus();
+                        break;
+                    case EMAIL:
+                        txtEmail.requestFocus();
+                        break;
+                    default:
+                        break;
+                }
             } else {
-                JOptionPane.showMessageDialog(dialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, ketQua.getThongBao(), "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -704,35 +835,51 @@ public class DanhSachKhachHangGUI extends JPanel {
     }
 
     /**
-     * Xử lý xóa khách hàng
+     * Xử lý xóa một khách hàng ra khỏi CSDL sau khi người dùng xác nhận.
+     *
+     * Mục đích: Bảo vệ dữ liệu bằng cách hiển thị hộp thoại xác nhận trước khi xóa.
+     * Luồng hoạt động:
+     *   1. Hiển thị hộp thoại cảnh báo xác nhận (tên + mã KH).
+     *   2. Nếu người dùng chọn "Có" → gọi service.xuLyXoaKhachHang(maKH).
+     *   3. Nếu KH có ràng buộc dữ liệu (hóa đơn, thú cưng...) → thông báo "Không thể xóa".
+     *   4. Nếu xóa thành công → thông báo + tải lại bảng.
+     *   5. Nếu người dùng chọn "Không" → thoát, không thực hiện gì.
+     * @param maKH  Mã khách hàng cần xóa.
+     * @param hoTen Tên đầy đủ của khách hàng (hiển thị trong thông báo xác nhận).
      */
     private void xuLyXoaKhachHang(String maKH, String hoTen) {
         int chon = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc chắn muốn xóa khách hàng:\n" + hoTen + " (Mã: " + maKH + ") không?",
+                service.taoThongDiepXacNhanXoa(hoTen, maKH),
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (chon == JOptionPane.YES_OPTION) {
-            // Kiểm tra ràng buộc trước khi xóa
-            if (khachHangDAO.kiemTraRangBuoc(maKH)) {
-                JOptionPane.showMessageDialog(this,
-                        "Khách hàng " + maKH + " đang có dữ liệu thú cưng hoặc hóa đơn liên quan trong hệ thống.\n" +
-                                "Để đảm bảo tính toàn vẹn dữ liệu kế toán, không thể xóa khách hàng này!",
+            KetQuaXoaKhachHang ketQua = service.xuLyXoaKhachHang(maKH);
+            if (ketQua.isBiRangBuoc()) {
+                JOptionPane.showMessageDialog(this, ketQua.getThongBao(),
                         "Không thể xóa", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            boolean ok = khachHangDAO.deleteKhachHang(maKH);
-            if (ok) {
-                JOptionPane.showMessageDialog(this, "Đã xóa khách hàng " + maKH + " thành công!", "Thông báo",
+            if (ketQua.isThanhCong()) {
+                JOptionPane.showMessageDialog(this, ketQua.getThongBao(), "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
                 taiDuLieuTuDatabase();
             } else {
-                JOptionPane.showMessageDialog(this, "Xóa khách hàng thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ketQua.getThongBao(), "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     // Tiện ích tạo dòng nhập liệu
+    /**
+     * Tạo một hàng nhập liệu gồm nhãn (label) bên trái và ô text bên phải.
+     *
+     * Mục đích: Tái sử dụng layout nhất quán cho các dòng trong form nhập/sửa thông tin.
+     * @param nhan Tên nhãn hiển thị bên trái (vd: "Họ và tên (*):").
+     * @param txt  Ô nhập liệu JTextField.
+     * @return JPanel chứa nhãn + ô nhập liệu đã được định dạng và căn chỉnh.
+     */
     private JPanel taoHangNhapLieu(String nhan, JTextField txt) {
         JPanel p = new JPanel(new BorderLayout(8, 0));
         p.setOpaque(false);
@@ -745,6 +892,13 @@ public class DanhSachKhachHangGUI extends JPanel {
         return p;
     }
 
+    /**
+     * Tạo ô nhập liệu (JTextField) chuẩn với font và viền thống nhất toàn ứng dụng.
+     *
+     * Mục đích: Đảm bảo tất cả text field trong form đều có cùng kiểu dáng (font 13, viền xám).
+     * @param text Giá trị mặc định hiển thị trong ô (truyền "" nếu để trống).
+     * @return JTextField đã định dạng sẵn, chỉ cần setEditable(false) nếu cần readonly.
+     */
     private JTextField taoTextField(String text) {
         JTextField txt = new JTextField(text);
         txt.setPreferredSize(new Dimension(0, 36));
@@ -755,7 +909,4 @@ public class DanhSachKhachHangGUI extends JPanel {
         return txt;
     }
 
-    public KhachHang_DAO getKhachHangDAO() {
-        return khachHangDAO;
-    }
 }

@@ -11,7 +11,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
- * Lớp PanelQuanLyMau: Tích hợp TableMau cùng Thanh tìm kiếm, Bộ lọc, Nút xuất file và Phân trang chuẩn giao diện SALALA.
+ * Lớp PanelQuanLyMau: Tích hợp TableMau cùng thanh tìm kiếm, bộ lọc và nút xuất
+ * file.
  */
 public class QuanLyTable extends JPanel {
 
@@ -19,9 +20,9 @@ public class QuanLyTable extends JPanel {
     private JTextField txtTimKiem;
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> rowSorter;
-    private JLabel lblThongTinTrang;
-    private JPanel panelPhanTrang;
     private java.util.List<JComboBox<String>> listComboBoxBoLoc = new java.util.ArrayList<>();
+    // Panel bên phải của thanh công cụ — để giao diện bên ngoài gắn nút tùy biến vào
+    private JPanel panelPhaiCongCu;
 
     public QuanLyTable(String[] tenCot, Object[][] duLieu, String placeholderTimKiem, String[] danhSachBoLoc) {
         setLayout(new BorderLayout(0, 16));
@@ -42,9 +43,8 @@ public class QuanLyTable extends JPanel {
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtTimKiem.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-        
+                BorderFactory.createEmptyBorder(0, 12, 0, 12)));
+
         // Hiệu ứng Placeholder cho ô tìm kiếm
         txtTimKiem.setText(placeholderTimKiem);
         txtTimKiem.setForeground(new Color(148, 163, 184));
@@ -55,6 +55,7 @@ public class QuanLyTable extends JPanel {
                     txtTimKiem.setForeground(new Color(30, 41, 59));
                 }
             }
+
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (txtTimKiem.getText().isEmpty()) {
                     txtTimKiem.setText(placeholderTimKiem);
@@ -67,7 +68,8 @@ public class QuanLyTable extends JPanel {
         // Các ComboBox bộ lọc truyền vào
         if (danhSachBoLoc != null) {
             for (String boLocTitle : danhSachBoLoc) {
-                JComboBox<String> cb = new JComboBox<>(new String[]{boLocTitle, "Tất cả", "Lựa chọn 1", "Lựa chọn 2"});
+                JComboBox<String> cb = new JComboBox<>(
+                        new String[] { boLocTitle, "Tất cả", "Lựa chọn 1", "Lựa chọn 2" });
                 cb.setPreferredSize(new Dimension(170, 38));
                 cb.setFont(new Font("Segoe UI", Font.PLAIN, 12));
                 cb.setBackground(Color.WHITE);
@@ -77,27 +79,17 @@ public class QuanLyTable extends JPanel {
         }
         panelThanhCongCu.add(panelTrai, BorderLayout.CENTER);
 
-        // Bên phải: Nút Xuất danh sách
-        JPanel panelPhai = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        panelPhai.setOpaque(false);
-        JButton btnXuat = new JButton("Xuất danh sách");
-        btnXuat.setPreferredSize(new Dimension(145, 38));
-        btnXuat.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnXuat.setForeground(new Color(30, 41, 59));
-        btnXuat.setBackground(Color.WHITE);
-        btnXuat.setFocusPainted(false);
-        btnXuat.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
-        btnXuat.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnXuat.addActionListener(e -> xuatFileCSV(this));
-        panelPhai.add(btnXuat);
-        panelThanhCongCu.add(panelPhai, BorderLayout.EAST);
+        // Bên phải: Vùng chứa nút tùy biến (giao diện bên ngoài gắn vào qua datNutCongCuPhai)
+        panelPhaiCongCu = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        panelPhaiCongCu.setOpaque(false);
+        panelThanhCongCu.add(panelPhaiCongCu, BorderLayout.EAST);
 
         add(panelThanhCongCu, BorderLayout.NORTH);
 
         // 2. KHUNG CHỨA BẢNG DỮ LIỆU Ở GIỮA
         bangDuLieu = new TableMau(tenCot, duLieu);
         model = (DefaultTableModel) bangDuLieu.getModel();
-        
+
         // Hỗ trợ lọc tìm kiếm tự động trên bảng
         rowSorter = new TableRowSorter<>(model);
         bangDuLieu.setRowSorter(rowSorter);
@@ -124,57 +116,7 @@ public class QuanLyTable extends JPanel {
         panelCardBang.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
         panelCardBang.add(scrollPane, BorderLayout.CENTER);
 
-        // 3. THANH PHÂN TRANG PHÍA DƯỚI
-        panelPhanTrang = new JPanel(new BorderLayout());
-        panelPhanTrang.setOpaque(false);
-        panelPhanTrang.setBorder(new EmptyBorder(12, 16, 12, 16));
-
-        lblThongTinTrang = new JLabel("Hiển thị 1–" + (duLieu != null ? duLieu.length : 0) + " trong " + (duLieu != null ? duLieu.length : 0) + " bản ghi");
-        lblThongTinTrang.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblThongTinTrang.setForeground(new Color(100, 116, 139));
-        panelPhanTrang.add(lblThongTinTrang, BorderLayout.WEST);
-
-        JPanel panelNutTrang = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        panelNutTrang.setOpaque(false);
-        
-        JLabel lblSoDong = new JLabel("Số dòng / trang");
-        lblSoDong.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSoDong.setForeground(new Color(100, 116, 139));
-        panelNutTrang.add(lblSoDong);
-
-        JComboBox<String> cbSoDong = new JComboBox<>(new String[]{"8", "10", "15", "20"});
-        cbSoDong.setPreferredSize(new Dimension(60, 32));
-        panelNutTrang.add(cbSoDong);
-
-        panelNutTrang.add(taoNutPhanTrang("‹", false));
-        panelNutTrang.add(taoNutPhanTrang("1", true)); // Trang đang chọn
-        panelNutTrang.add(taoNutPhanTrang("2", false));
-        panelNutTrang.add(taoNutPhanTrang("3", false));
-        panelNutTrang.add(taoNutPhanTrang("›", false));
-
-        panelPhanTrang.add(panelNutTrang, BorderLayout.EAST);
-        panelCardBang.add(panelPhanTrang, BorderLayout.SOUTH);
-
         add(panelCardBang, BorderLayout.CENTER);
-    }
-
-    // Hàm phụ trợ tạo nút phân trang phong cách hiện đại
-    private JButton taoNutPhanTrang(String text, boolean dangChon) {
-        JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(32, 32));
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        if (dangChon) {
-            btn.setBackground(new Color(14, 116, 101)); // Màu chủ đạo SALALA
-            btn.setForeground(Color.WHITE);
-            btn.setBorder(BorderFactory.createLineBorder(new Color(14, 116, 101), 1));
-        } else {
-            btn.setBackground(Color.WHITE);
-            btn.setForeground(new Color(30, 41, 59));
-            btn.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1));
-        }
-        return btn;
     }
 
     public DefaultTableModel getModel() {
@@ -213,39 +155,22 @@ public class QuanLyTable extends JPanel {
         }
     }
 
-    public void xuatFileCSV(Component parent) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Lưu danh sách ra file CSV");
-        chooser.setSelectedFile(new java.io.File("DanhSach.csv"));
-        if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
-            java.io.File file = chooser.getSelectedFile();
-            try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
-                    new java.io.FileOutputStream(file), java.nio.charset.StandardCharsets.UTF_8)) {
-                // Ghi UTF-8 BOM để Excel hiển thị đúng tiếng Việt có dấu
-                writer.write('\ufeff');
-                int colCount = model.getColumnCount();
-                int exportCols = colCount;
-                for (int c = 0; c < exportCols; c++) {
-                    writer.write("\"" + model.getColumnName(c) + "\"" + (c < exportCols - 1 ? "," : ""));
-                }
-                writer.write("\r\n");
-                int rowCount = bangDuLieu.getRowCount();
-                for (int r = 0; r < rowCount; r++) {
-                    for (int c = 0; c < exportCols; c++) {
-                        Object val = bangDuLieu.getValueAt(r, c);
-                        String str = val != null ? val.toString().replace("\"", "\"\"") : "";
-                        writer.write("\"" + str + "\"" + (c < exportCols - 1 ? "," : ""));
-                    }
-                    writer.write("\r\n");
-                }
-                JOptionPane.showMessageDialog(parent, "Xuất file thành công: " + file.getAbsolutePath(), "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(parent, "Lỗi khi xuất file: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+    /**
+     * Gắn một component (thường là JButton) vào vùng bên phải của thanh công cụ.
+     * Giao diện cụ thể (DanhSachKhachHangGUI, v.v.) gọi hàm này để tùy biến nút
+     * mà không phải sửa vào QuanLyTable.
+     *
+     * @param comp Component cần gắn (ví dụ: btnXuatDanhSach)
+     */
+    public void datNutCongCuPhai(JComponent comp) {
+        panelPhaiCongCu.removeAll();
+        if (comp != null) {
+            panelPhaiCongCu.add(comp);
         }
+        panelPhaiCongCu.revalidate();
+        panelPhaiCongCu.repaint();
     }
+
 
     public void capNhatDuLieu(Object[][] duLieuMoi) {
         if (model != null) {
@@ -255,33 +180,7 @@ public class QuanLyTable extends JPanel {
                     model.addRow(row);
                 }
             }
-            if (lblThongTinTrang != null) {
-                int total = model.getRowCount();
-                lblThongTinTrang.setText("Hiển thị 1–" + total + " trong " + total + " bản ghi");
-            }
         }
-    }
-
-    public void setHienThiPhanTrang(boolean hienThi) {
-        if (panelPhanTrang != null) {
-            panelPhanTrang.setVisible(hienThi);
-        }
-    }
-
-    public void anPhanTrang() {
-        if (panelPhanTrang != null) {
-            panelPhanTrang.setVisible(false);
-            Container parent = panelPhanTrang.getParent();
-            if (parent != null) {
-                parent.remove(panelPhanTrang);
-                parent.revalidate();
-                parent.repaint();
-            }
-        }
-    }
-
-    public JPanel getPanelPhanTrang() {
-        return panelPhanTrang;
     }
 
     // --- TÍCH HỢP CLASS TableMau ---
@@ -320,7 +219,8 @@ public class QuanLyTable extends JPanel {
 
             setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
                 @Override
-                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                        boolean hasFocus, int row, int column) {
                     Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                     if (c instanceof JLabel) {
                         JLabel label = (JLabel) c;
@@ -339,7 +239,8 @@ public class QuanLyTable extends JPanel {
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Quản Lý Nhân Viên - SALALA Pet Shop");
@@ -348,26 +249,25 @@ public class QuanLyTable extends JPanel {
             frame.setLocationRelativeTo(null);
 
             // Dữ liệu mẫu chuẩn
-            String[] tieuDe = {"Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái"};
+            String[] tieuDe = { "Mã nhân viên", "Họ và tên", "Vai trò", "Liên hệ", "Ngày vào làm", "Trạng thái" };
             Object[][] duLieu = {
-                {"NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc"},
-                {"NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc"},
-                {"NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc"},
-                {"NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc"},
-                {"NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ"},
-                {"NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc"}
+                    { "NV001", "Lê Minh", "Bác sĩ thú y", "0901 234 567", "12/03/2022", "Đang làm việc" },
+                    { "NV002", "Nguyễn Thu Hà", "Quản lý cửa hàng", "0912 345 678", "01/06/2022", "Đang làm việc" },
+                    { "NV003", "Trần Quốc Huy", "Nhân viên bán hàng", "0933 456 789", "15/08/2023", "Đang làm việc" },
+                    { "NV004", "Phạm Ngọc Mai", "Chăm sóc thú cưng", "0944 567 890", "02/10/2023", "Đang làm việc" },
+                    { "NV005", "Võ Hoàng Nam", "Quản lý kho", "0965 678 901", "08/01/2024", "Tạm nghỉ" },
+                    { "NV006", "Đặng Thanh Trúc", "Lễ tân", "0976 789 012", "20/02/2024", "Đang làm việc" }
             };
 
             // Tiêu đề các bộ lọc thả xuống
-            String[] danhSachBoLoc = {"Vai trò: Tất cả", "Trạng thái: Tất cả"};
+            String[] danhSachBoLoc = { "Vai trò: Tất cả", "Trạng thái: Tất cả" };
 
             // Khởi tạo Panel quản lý hoàn chỉnh
             QuanLyTable panel = new QuanLyTable(
-                    tieuDe, 
-                    duLieu, 
-                    "Tìm theo tên, mã nhân viên, số điện thoại...", 
-                    danhSachBoLoc
-            );
+                    tieuDe,
+                    duLieu,
+                    "Tìm theo tên, mã nhân viên, số điện thoại...",
+                    danhSachBoLoc);
 
             frame.add(panel);
             frame.setVisible(true);

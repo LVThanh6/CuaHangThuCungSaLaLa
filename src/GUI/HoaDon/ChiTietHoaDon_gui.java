@@ -1,28 +1,23 @@
 package GUI.HoaDon;
 
-import dao.ChiTietHoaDon_DAO;
+import GUI.Chung.LamMoNen;
 
-import dao.HoaDon_Dao;
+import GUI.Chung.NenAnhPanel;
 
-import dao.KhachHang_DAO;
+import GUI.Chung.TamNenNoiDung;
 
-import dao.ThuCung_DAO;
+import Service.HoaDon.ChiTietHoaDonService;
 
-import entity.ChiTietHoaDon_entity;
+import entity.HoaDon.ChiTietHoaDon_entity;
 
-import entity.HoaDon_entity;
+import entity.HoaDon.HoaDon_entity;
 
-import entity.KhachHang;
+import entity.KhachHang.KhachHang;
 
-import entity.KhuyenMai_Entity;
+import entity.NhanVien.NhanVien_entity;
 
-import entity.NhanVien_entity;
 
-import entity.ThanhToan_entity;
-
-import entity.ThuCung_entity;
-
-import entity.Thue_entity;
+import entity.ThuCung.ThuCung_entity;
 
 import javax.swing.*;
 
@@ -44,6 +39,8 @@ import java.awt.print.PrinterException;
 
 import java.awt.print.PrinterJob;
 
+import java.awt.image.BufferedImage;
+
 import java.text.DecimalFormat;
 
 import java.text.DecimalFormatSymbols;
@@ -53,18 +50,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 /**
-
+ * 
  * Màn hình chi tiết hóa đơn.
-
- * Dùng các DAO có sẵn: HoaDon_Dao, ChiTietHoaDon_DAO, ThuCung_DAO, KhachHang_DAO.
-
- *
-
  * Mở bằng: ChiTietHoaDon_gui.hienThi(this, maHD);
-
+ * 
  */
 
 public class ChiTietHoaDon_gui extends JPanel {
+    private final ChiTietHoaDonService service;
 
     private static final Color XANH = Color.decode("#0F766E");
 
@@ -109,6 +102,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     private final JButton btnIn = new JButton("In/xuất hóa đơn");
 
+    private boolean dangXuLyIn;
+
     private JPanel pnlHangThanhToan;
 
     // Các số liệu tổng hợp
@@ -135,7 +130,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     public static void hienThi(Component cha, String maHD, DSHoaDon_gui dsHoaDon) {
 
-        HoaDon_entity hd = new HoaDon_Dao().getHDTheoMa(maHD);
+        ChiTietHoaDonService service = new ChiTietHoaDonService();
+        ChiTietHoaDonService.DuLieuChiTiet duLieu = service.taiDuLieu(maHD);
+        HoaDon_entity hd = duLieu == null ? null : duLieu.getHoaDon();
 
         if (hd == null) {
 
@@ -155,21 +152,10 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         }
 
-        ArrayList<ChiTietHoaDon_entity> dong =
-
-                new ChiTietHoaDon_DAO().getChiTietHoaDonTheoMaHD(maHD);
-
-        KhachHang kh = hd.getMaKH();
-
-        ArrayList<ThuCung_entity> thuCung = kh == null
-
-                ? new ArrayList<>()
-
-                : new ThuCung_DAO().getThuCungTheoMaKH(kh.getMaKH());
-
         Window chu = cha == null
 
-                ? null : SwingUtilities.getWindowAncestor(cha);
+                ? null
+                : SwingUtilities.getWindowAncestor(cha);
 
         JDialog dlg = new JDialog(chu,
 
@@ -177,7 +163,19 @@ public class ChiTietHoaDon_gui extends JPanel {
 
                 Dialog.ModalityType.APPLICATION_MODAL);
 
-        dlg.setContentPane(new ChiTietHoaDon_gui(hd, dong, thuCung, dsHoaDon));
+        ChiTietHoaDon_gui chiTiet = new ChiTietHoaDon_gui(service, duLieu, dsHoaDon);
+
+        // Cửa sổ chi tiết cũng dùng ảnh nền + tấm nền kem mờ giống màn hình chính
+        NenAnhPanel nen = new NenAnhPanel();
+        if (nen.coAnh()) {
+            TamNenNoiDung tam = new TamNenNoiDung(new BorderLayout());
+            tam.add(chiTiet, BorderLayout.CENTER);
+            nen.add(tam, BorderLayout.CENTER);
+            LamMoNen.apDung(chiTiet);
+            dlg.setContentPane(nen);
+        } else {
+            dlg.setContentPane(chiTiet);
+        }
 
         // Nhấn ESC để đóng
 
@@ -203,21 +201,22 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== KHỞI TẠO ====================
 
-    public ChiTietHoaDon_gui(HoaDon_entity hd,
-                            ArrayList<ChiTietHoaDon_entity> dong,
-                            ArrayList<ThuCung_entity> thuCung,
-                            DSHoaDon_gui dsHoaDon) {
+    public ChiTietHoaDon_gui(ChiTietHoaDonService service,
+            ChiTietHoaDonService.DuLieuChiTiet duLieu,
+            DSHoaDon_gui dsHoaDon) {
 
-        this.hd = hd;
+        this.service = service;
 
-        this.dong = dong == null ? new ArrayList<>() : dong;
+        this.hd = duLieu.getHoaDon();
 
-        this.thuCung = thuCung == null ? new ArrayList<>() : thuCung;
+        this.dong = duLieu.getCacDong();
+
+        this.thuCung = duLieu.getThuCung();
         this.dsHoaDon = dsHoaDon;
 
-        this.hangThanhVien = layHang(hd.getMaKH());
+        this.hangThanhVien = duLieu.getHangThanhVien();
 
-        tinhTien();
+        apDungTongTien(service.tinhTongTien(hd, this.dong));
 
         setLayout(new BorderLayout());
 
@@ -269,84 +268,15 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     // ==================== TÍNH TIỀN ====================
 
-    private void tinhTien() {
-
-        KhuyenMai_Entity km = hd.getMaKM();
-
-        Thue_entity thue = hd.getMaThue();
-
-        mucKM = km == null ? 0 : km.getMucKM();
-
-        mucThue = thue == null ? 0 : thue.getMucThue();
-
-        tongTien = 0;
-
-        for (ChiTietHoaDon_entity c : dong) {
-
-            tongTien += c.getSoLuong() * c.getDonGia();
-
-        }
-
-        tienKM = tongTien * mucKM / 100.0;
-
-        double sauKM = tongTien - tienKM;
-
-        tienThue = sauKM * mucThue / 100.0;
-
-        thanhTien = sauKM + tienThue;
-
-        ThanhToan_entity tt = hd.getMaThanhToan();
-
-        daThanhToan = tt != null && laDaThanhToan(tt.getTrangThai())
-
-                ? tt.getSoTien() : 0;
-
-        conPhaiThu = Math.max(0, thanhTien - daThanhToan);
-
-        if (conPhaiThu < 0.5) {
-
-            conPhaiThu = 0;
-
-        }
-
-    }
-
-    /** Hạng thành viên được tính trong KhachHang_DAO (dựa trên tổng chi tiêu). */
-
-    private static String layHang(KhachHang kh) {
-
-        if (kh == null || kh.getMaKH() == null) {
-
-            return null;
-
-        }
-
-        try {
-
-            for (KhachHang k : new KhachHang_DAO()
-
-                    .timKiemTongHop(kh.getMaKH())) {
-
-                if (!kh.getMaKH().equals(k.getMaKH())) {
-
-                    continue;
-
-                }
-
-                // KhachHang_DAO.timKiemTongHop đã tính sẵn hạng thành viên
-
-                return k.getHangThanhVien();
-
-            }
-
-        } catch (Exception ignored) {
-
-            // Không lấy được hạng thì bỏ qua dòng này
-
-        }
-
-        return null;
-
+    private void apDungTongTien(ChiTietHoaDonService.TongTien tong) {
+        mucKM = tong.getMucKhuyenMai();
+        mucThue = tong.getMucThue();
+        tongTien = tong.getTongTien();
+        tienKM = tong.getTienKhuyenMai();
+        tienThue = tong.getTienThue();
+        thanhTien = tong.getThanhTien();
+        daThanhToan = tong.getDaThanhToan();
+        conPhaiThu = tong.getConPhaiThu();
     }
 
     // ==================== TIÊU ĐỀ ====================
@@ -385,7 +315,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         String ngay = hd.getNgayLap() == null
 
-                ? "—" : hd.getNgayLap().format(NGAY);
+                ? "—"
+                : hd.getNgayLap().format(NGAY);
 
         NhanVien_entity nv = hd.getMaNhanVien();
 
@@ -469,29 +400,29 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         ArrayList<String[]> cap = new ArrayList<>();
 
-        cap.add(new String[]{"Khách hàng",
+        cap.add(new String[] { "Khách hàng",
 
                 kh == null ? "—"
 
                         : giaTri(kh.getMaKH()) + " — "
 
-                        + giaTri(kh.getHoTen())});
+                                + giaTri(kh.getHoTen()) });
 
-        cap.add(new String[]{"Số điện thoại",
+        cap.add(new String[] { "Số điện thoại",
 
-                giaTri(kh == null ? null : kh.getSdt())});
+                giaTri(kh == null ? null : kh.getSdt()) });
 
-        cap.add(new String[]{"Email",
+        cap.add(new String[] { "Email",
 
-                giaTri(kh == null ? null : kh.getEmail())});
+                giaTri(kh == null ? null : kh.getEmail()) });
 
-        cap.add(new String[]{"Địa chỉ",
+        cap.add(new String[] { "Địa chỉ",
 
-                giaTri(kh == null ? null : kh.getDiaChi())});
+                giaTri(kh == null ? null : kh.getDiaChi()) });
 
         if (hangThanhVien != null) {
 
-            cap.add(new String[]{"Hạng thành viên", hangThanhVien});
+            cap.add(new String[] { "Hạng thành viên", hangThanhVien });
 
         }
 
@@ -507,11 +438,9 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         JPanel the = taoThe("Thú cưng", null);
 
-        if (thuCung.isEmpty()) {
+        if (hd.getMaTC() == null) {
 
-            JLabel lbl = new JLabel(
-
-                    "Khách hàng chưa có hồ sơ thú cưng.");
+            JLabel lbl = new JLabel("Hóa đơn vật tư thông thường không gắn với thú cưng.");
 
             lbl.setFont(new Font("Arial", Font.PLAIN, 12));
 
@@ -523,13 +452,28 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         }
 
-        // Hóa đơn không lưu mã thú cưng nên hiển thị thú cưng đầu tiên
+        if (thuCung.isEmpty()) {
+
+            JLabel lbl = new JLabel(
+
+                    "Không tìm thấy hồ sơ thú cưng của hóa đơn.");
+
+            lbl.setFont(new Font("Arial", Font.PLAIN, 12));
+
+            lbl.setForeground(XAM);
+
+            the.add(lbl, BorderLayout.CENTER);
+
+            return the;
+
+        }
 
         ThuCung_entity tc = thuCung.get(0);
 
         String ngaySinh = tc.getNgaySinh() == null
 
-                ? "—" : tc.getNgaySinh().format(NGAY);
+                ? "—"
+                : tc.getNgaySinh().format(NGAY);
 
         JPanel noi = new JPanel();
 
@@ -537,39 +481,21 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         noi.setOpaque(false);
 
-        noi.add(taoDanhSachDong(new String[][]{
+        noi.add(taoDanhSachDong(new String[][] {
 
-                {"Hồ sơ", giaTri(tc.getMaTC()) + " — "
+                { "Hồ sơ", giaTri(tc.getMaTC()) + " — "
 
-                        + giaTri(tc.getTenTC())},
+                        + giaTri(tc.getTenTC()) },
 
-                {"Loài", giaTri(tc.getLoai())},
+                { "Loài", giaTri(tc.getLoai()) },
 
-                {"Giới tính", giaTri(tc.getGioiTinh())},
+                { "Giới tính", giaTri(tc.getGioiTinh()) },
 
-                {"Ngày sinh", ngaySinh},
+                { "Ngày sinh", ngaySinh },
 
-                {"Đặc điểm", giaTri(tc.getDacDiemNhanDien())}
+                { "Đặc điểm", giaTri(tc.getDacDiemNhanDien()) }
 
         }));
-
-        if (thuCung.size() > 1) {
-
-            JLabel ghiChu = new JLabel(
-
-                    "Khách hàng có " + thuCung.size()
-
-                            + " thú cưng, đang hiển thị thú cưng đầu tiên.");
-
-            ghiChu.setFont(new Font("Arial", Font.ITALIC, 11));
-
-            ghiChu.setForeground(XAM);
-
-            ghiChu.setBorder(new EmptyBorder(4, 0, 0, 0));
-
-            noi.add(ghiChu);
-
-        }
 
         the.add(noi, BorderLayout.CENTER);
 
@@ -577,17 +503,17 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     }
 
-    // ==================== DỊCH VỤ VÀ VẬT TƯ ====================
+    // ==================== DỊCH VỤ, VẬT TƯ VÀ THUỐC ====================
 
     private JPanel taoTheDichVu() {
 
-        JPanel the = taoThe("Dịch vụ và vật tư",
+        JPanel the = taoThe("Dịch vụ, vật tư và thuốc",
 
                 dong.size() + " khoản mục · Đơn vị tiền tệ: VNĐ");
 
         String[] cot = {
 
-                "Mã", "Dịch vụ / Vật tư", "Loại",
+                "Mã", "Dịch vụ / Vật tư / Thuốc", "Loại",
 
                 "Số lượng", "Đơn giá", "Khuyến mãi", "Tổng tiền"
 
@@ -606,61 +532,14 @@ public class ChiTietHoaDon_gui extends JPanel {
         };
 
         for (ChiTietHoaDon_entity c : dong) {
+            Object[] duLieuDong = service.taoDongChiTietHienThi(c, mucKM);
 
-            String ma;
+            // Định dạng các cột tiền theo cách trình bày của GUI.
+            duLieuDong[4] = tien((double) duLieuDong[4]);
+            duLieuDong[5] = tien((double) duLieuDong[5]);
+            duLieuDong[6] = tien((double) duLieuDong[6]);
 
-            String ten;
-
-            String loai;
-
-            if (c.getMaDV() != null) {
-
-                ma = c.getMaDV().getMaDV();
-
-                ten = c.getMaDV().getTenDV();
-
-                loai = "Dịch vụ";
-
-            } else if (c.getMaVT() != null) {
-
-                ma = c.getMaVT().getMaVT();
-
-                ten = c.getMaVT().getTenVT();
-
-                loai = "Vật tư";
-
-            } else {
-
-                ma = null;
-
-                ten = null;
-
-                loai = "—";
-
-            }
-
-            double goc = c.getSoLuong() * c.getDonGia();
-
-            double km = goc * mucKM / 100.0;
-
-            model.addRow(new Object[]{
-
-                    giaTri(ma),
-
-                    giaTri(ten),
-
-                    loai,
-
-                    c.getSoLuong(),
-
-                    tien(c.getDonGia()),
-
-                    tien(km),
-
-                    tien(goc - km)
-
-            });
-
+            model.addRow(duLieuDong);
         }
 
         JTable bang = new JTable(model);
@@ -687,7 +566,7 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         bang.getTableHeader().setPreferredSize(new Dimension(0, 36));
 
-        int[] rong = {80, 260, 100, 80, 110, 110, 120};
+        int[] rong = { 80, 260, 100, 80, 110, 110, 120 };
 
         for (int i = 0; i < cot.length; i++) {
 
@@ -773,7 +652,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
     private void napTheThanhToanVaTongTien() {
 
-        if (pnlHangThanhToan == null) return;
+        if (pnlHangThanhToan == null)
+            return;
 
         pnlHangThanhToan.removeAll();
 
@@ -809,35 +689,22 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         JPanel the = taoThe("Thanh toán", null);
 
-        ThanhToan_entity tt = hd.getMaThanhToan();
+        String trangThai = service.layTrangThaiThanhToan(hd);
 
-        String trangThai = tt != null && tt.getTrangThai() != null
-
-                ? tt.getTrangThai() : hd.getTrangThai();
-
-        boolean daTT = laDaThanhToan(trangThai);
+        boolean daTT = service.laHoaDonDaThanhToan(hd);
 
         Chip chip = daTT
 
-                ? new Chip("● Đã thanh toán",
+                ? new Chip("Đã thanh toán",
 
                         new Color(21, 128, 61), new Color(220, 252, 231))
 
-                : new Chip("● " + (trangThai == null
+                : new Chip((trangThai == null
 
-                                ? "Chưa thanh toán" : trangThai),
+                        ? "Chưa thanh toán"
+                        : trangThai),
 
                         new Color(180, 83, 9), new Color(254, 243, 199));
-
-        JLabel lblNgay = new JLabel(
-
-                tt == null || tt.getThoiGian() == null
-
-                        ? "" : tt.getThoiGian().format(NGAY));
-
-        lblNgay.setFont(new Font("Arial", Font.PLAIN, 12));
-
-        lblNgay.setForeground(XAM);
 
         JPanel hangChip = new JPanel(
 
@@ -847,19 +714,13 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         hangChip.add(chip);
 
-        hangChip.add(lblNgay);
-
         hangChip.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel cacDong = taoDanhSachDong(new String[][]{
+        JPanel cacDong = taoDanhSachDong(new String[][] {
 
-                {"Phương thức thanh toán",
+                { "Phương thức thanh toán",
 
-                        giaTri(tt == null ? null : tt.getPhuongThuc())},
-
-                {"Mã giao dịch",
-
-                        giaTri(tt == null ? null : tt.getMaThanhToan())}
+                        giaTri(hd.getPhuongThucThanhToan()) }
 
         });
 
@@ -1096,228 +957,190 @@ public class ChiTietHoaDon_gui extends JPanel {
     // ==================== IN / XUẤT HÓA ĐƠN ====================
 
     private boolean isHoaDonDaThanhToan() {
-
-        if (hd == null) return false;
-
-        if (laDaThanhToan(hd.getTrangThai())) return true;
-
-        ThanhToan_entity tt = hd.getMaThanhToan();
-
-        return tt != null && laDaThanhToan(tt.getTrangThai());
-
+        return service.laHoaDonDaThanhToan(hd);
     }
 
     private void inHoaDon() {
-
-
-        // Hóa đơn chưa thanh toán: chỉ hiện 1 hộp thoại duy nhất để xác nhận
-
-        // thanh toán; đồng ý thì lưu thanh toán rồi tiếp tục in.
-
-        if (!isHoaDonDaThanhToan() && !xuLyXacNhanThanhToan()) {
-
-
-        // Hóa đơn chưa thanh toán: chỉ hiện một thông báo duy nhất và không cho in.
-        if (!isHoaDonDaThanhToan()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Hóa đơn " + hd.getMaHD() + " chưa được thanh toán nên không thể in.",
-                    "Chưa thanh toán",
-                    JOptionPane.WARNING_MESSAGE
-            );
-
+        if (dangXuLyIn) {
             return;
-
         }
 
-        PrinterJob job = PrinterJob.getPrinterJob();
-
-        job.setJobName("Hoa don " + hd.getMaHD());
-
-        job.setPrintable((g, pf, trang) -> {
-
-            if (trang > 0) {
-
-                return Printable.NO_SUCH_PAGE;
-
-            }
-
-            Graphics2D g2 = (Graphics2D) g;
-
-            g2.translate(pf.getImageableX(), pf.getImageableY());
-
-            double w = noiDung.getWidth();
-
-            double h = noiDung.getHeight();
-
-            double tiLe = Math.min(
-
-                    pf.getImageableWidth() / w,
-
-                    pf.getImageableHeight() / h);
-
-            g2.scale(tiLe, tiLe);
-
-            noiDung.printAll(g2);
-
-            return Printable.PAGE_EXISTS;
-
-        });
-
-        if (!job.printDialog()) {
-
+        if (isHoaDonDaThanhToan()) {
+            batDauIn(null);
             return;
-
         }
-
-        // Ẩn các nút khi in cho gọn
-
-        btnIn.setVisible(false);
-
-        try {
-
-            job.print();
-
-        } catch (PrinterException ex) {
-
-            JOptionPane.showMessageDialog(
-
-                    this,
-
-                    "Không thể in hóa đơn: " + ex.getMessage(),
-
-                    "Lỗi",
-
-                    JOptionPane.ERROR_MESSAGE
-
-            );
-
-        } finally {
-
-            btnIn.setVisible(true);
-
-        }
-
-    }
-
-
-    private boolean xuLyXacNhanThanhToan() {
 
         String[] ptOptions = { "Tiền mặt", "Chuyển khoản", "Thẻ tín dụng" };
-
         JComboBox<String> cboPT = new JComboBox<>(ptOptions);
-
         Object[] thongBao = {
-
-            "Hóa đơn " + hd.getMaHD() + " chưa thanh toán.",
-
-            "Tổng số tiền cần thu: " + tien(thanhTien),
-
-            "Xác nhận khách đã thanh toán và in hóa đơn?",
-
-            "Phương thức thanh toán:", cboPT
-
+                "Hóa đơn " + hd.getMaHD() + " chưa thanh toán.",
+                "Tổng số tiền cần thu: " + tien(thanhTien),
+                "Xác nhận khách đã thanh toán và in hóa đơn?",
+                "Phương thức thanh toán:", cboPT
         };
-
         int opt = JOptionPane.showConfirmDialog(
-
-            this,
-
-            thongBao,
-
-            "Hóa đơn chưa thanh toán",
-
-            JOptionPane.OK_CANCEL_OPTION,
-
-            JOptionPane.QUESTION_MESSAGE
-
-        );
-
-        if (opt != JOptionPane.OK_OPTION) {
-
-            return false;
-
+                this, thongBao, "Hóa đơn chưa thanh toán",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (opt == JOptionPane.OK_OPTION) {
+            String pt = (String) cboPT.getSelectedItem();
+            batDauIn(pt != null ? pt : "Tiền mặt");
         }
-
-        String pt = (String) cboPT.getSelectedItem();
-
-        boolean ok = new HoaDon_Dao().xacNhanThanhToan(hd.getMaHD(), pt, thanhTien);
-
-        if (ok) {
-
-            hd.setTrangThai("Đã thanh toán");
-
-            ThanhToan_entity tt = hd.getMaThanhToan();
-
-            if (tt == null) {
-
-                tt = new ThanhToan_entity("TT" + System.currentTimeMillis(), thanhTien, java.time.LocalDate.now(), pt, "Đã thanh toán");
-
-                hd.setMaThanhToan(tt);
-
-            } else {
-
-                tt.setTrangThai("Đã thanh toán");
-
-                tt.setSoTien(thanhTien);
-
-                tt.setPhuongThuc(pt);
-
-                tt.setThoiGian(java.time.LocalDate.now());
-
-            }
-
-            daThanhToan = thanhTien;
-
-            conPhaiThu = 0;
-
-            napTheThanhToanVaTongTien();
-
-            noiDung.validate();
-
-            // Cập nhật lại danh sách hóa đơn sau khi thanh toán thành công.
-            if (dsHoaDon != null) {
-                dsHoaDon.taiDuLieu();
-            }
-
-            return true;
-
-        } else {
-
-            JOptionPane.showMessageDialog(
-
-                this,
-
-                "Không thể lưu trạng thái thanh toán vào CSDL!",
-
-                "Lỗi",
-
-                JOptionPane.ERROR_MESSAGE
-
-            );
-
-            return false;
-
-        }
-
     }
 
+    private void batDauIn(String phuongThucThanhToan) {
+        dangXuLyIn = true;
+        btnIn.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        SwingWorker<Boolean, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Boolean doInBackground() {
+                return phuongThucThanhToan == null
+                        || service.xacNhanThanhToan(hd, phuongThucThanhToan);
+            }
+
+            @Override
+            protected void done() {
+                boolean daKhoiDongIn = false;
+                try {
+                    if (!get()) {
+                        JOptionPane.showMessageDialog(
+                                ChiTietHoaDon_gui.this,
+                                "Không thể lưu trạng thái thanh toán vào CSDL!",
+                                "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    if (phuongThucThanhToan != null) {
+                        capNhatHienThiSauThanhToan();
+                    }
+                    daKhoiDongIn = hienHopThoaiIn();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    JOptionPane.showMessageDialog(
+                            ChiTietHoaDon_gui.this,
+                            "Đã dừng xử lý in hóa đơn.",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    JOptionPane.showMessageDialog(
+                            ChiTietHoaDon_gui.this,
+                            "Không thể xác nhận thanh toán: " + ex.getCause().getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    if (!daKhoiDongIn) {
+                        ketThucXuLyIn();
+                    }
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private boolean hienHopThoaiIn() {
+        try {
+            Dimension kichThuoc = noiDung.getSize();
+            if (kichThuoc.width <= 0 || kichThuoc.height <= 0) {
+                kichThuoc = noiDung.getPreferredSize();
+            }
+            if (kichThuoc.width <= 0 || kichThuoc.height <= 0) {
+                throw new PrinterException("Không xác định được kích thước nội dung hóa đơn.");
+            }
+
+            BufferedImage anhHoaDon = new BufferedImage(
+                    kichThuoc.width, kichThuoc.height, BufferedImage.TYPE_INT_RGB);
+            Dimension kichThuocBanDau = noiDung.getSize();
+            Graphics2D anhG2 = anhHoaDon.createGraphics();
+            try {
+                anhG2.setColor(Color.WHITE);
+                anhG2.fillRect(0, 0, kichThuoc.width, kichThuoc.height);
+                noiDung.setSize(kichThuoc);
+                noiDung.doLayout();
+                noiDung.printAll(anhG2);
+            } finally {
+                anhG2.dispose();
+                noiDung.setSize(kichThuocBanDau);
+                noiDung.doLayout();
+            }
+
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setJobName("Hoa don " + hd.getMaHD());
+            job.setPrintable((g, pf, trang) -> {
+                if (trang > 0) {
+                    return Printable.NO_SUCH_PAGE;
+                }
+                Graphics2D g2 = (Graphics2D) g.create();
+                try {
+                    double tiLe = Math.min(
+                            pf.getImageableWidth() / anhHoaDon.getWidth(),
+                            pf.getImageableHeight() / anhHoaDon.getHeight());
+                    g2.translate(pf.getImageableX(), pf.getImageableY());
+                    g2.scale(tiLe, tiLe);
+                    g2.drawImage(anhHoaDon, 0, 0, null);
+                    return Printable.PAGE_EXISTS;
+                } finally {
+                    g2.dispose();
+                }
+            });
+
+            if (!job.printDialog()) {
+                return false;
+            }
+
+            btnIn.setText("Đang in...");
+            SwingWorker<Void, Void> printWorker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws PrinterException {
+                    job.print();
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                        JOptionPane.showMessageDialog(
+                                ChiTietHoaDon_gui.this,
+                                "Đã dừng in hóa đơn.",
+                                "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    } catch (java.util.concurrent.ExecutionException ex) {
+                        Throwable cause = ex.getCause();
+                        JOptionPane.showMessageDialog(
+                                ChiTietHoaDon_gui.this,
+                                "Không thể in hóa đơn: " + cause.getMessage(),
+                                "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    } finally {
+                        ketThucXuLyIn();
+                    }
+                }
+            };
+            printWorker.execute();
+            return true;
+        } catch (PrinterException ex) {
+            JOptionPane.showMessageDialog(
+                    this, "Không thể chuẩn bị hóa đơn để in: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private void ketThucXuLyIn() {
+        dangXuLyIn = false;
+        btnIn.setText("In/xuất hóa đơn");
+        btnIn.setEnabled(true);
+        setCursor(Cursor.getDefaultCursor());
+    }
+
+    private void capNhatHienThiSauThanhToan() {
+        apDungTongTien(service.tinhTongTien(hd, dong));
+        napTheThanhToanVaTongTien();
+        noiDung.validate();
+        if (dsHoaDon != null) {
+            dsHoaDon.taiDuLieu();
+        }
+    }
 
     // ==================== HÀM TIỆN ÍCH ====================
-
-    private static boolean laDaThanhToan(String trangThai) {
-
-        if (trangThai == null) {
-
-            return false;
-
-        }
-
-        return trangThai.equalsIgnoreCase("Đã thanh toán")
-
-                || trangThai.equalsIgnoreCase("Paid");
-
-    }
 
     private static String tien(double v) {
 
@@ -1373,7 +1196,8 @@ public class ChiTietHoaDon_gui extends JPanel {
 
             return huong == SwingConstants.VERTICAL
 
-                    ? r.height - 40 : r.width;
+                    ? r.height - 40
+                    : r.width;
 
         }
 
