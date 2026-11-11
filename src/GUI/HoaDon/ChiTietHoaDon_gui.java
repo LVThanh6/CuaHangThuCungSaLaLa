@@ -16,7 +16,6 @@ import entity.KhachHang.KhachHang;
 
 import entity.NhanVien.NhanVien_entity;
 
-import entity.HoaDon.ThanhToan_entity;
 
 import entity.ThuCung.ThuCung_entity;
 
@@ -690,8 +689,6 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         JPanel the = taoThe("Thanh toán", null);
 
-        ThanhToan_entity tt = hd.getMaThanhToan();
-
         String trangThai = service.layTrangThaiThanhToan(hd);
 
         boolean daTT = service.laHoaDonDaThanhToan(hd);
@@ -709,17 +706,6 @@ public class ChiTietHoaDon_gui extends JPanel {
 
                         new Color(180, 83, 9), new Color(254, 243, 199));
 
-        JLabel lblNgay = new JLabel(
-
-                tt == null || tt.getThoiGian() == null
-
-                        ? ""
-                        : tt.getThoiGian().format(NGAY));
-
-        lblNgay.setFont(new Font("Arial", Font.PLAIN, 12));
-
-        lblNgay.setForeground(XAM);
-
         JPanel hangChip = new JPanel(
 
                 new FlowLayout(FlowLayout.LEFT, 8, 0));
@@ -728,19 +714,13 @@ public class ChiTietHoaDon_gui extends JPanel {
 
         hangChip.add(chip);
 
-        hangChip.add(lblNgay);
-
         hangChip.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel cacDong = taoDanhSachDong(new String[][] {
 
                 { "Phương thức thanh toán",
 
-                        giaTri(tt == null ? null : tt.getPhuongThuc()) },
-
-                { "Mã giao dịch",
-
-                        giaTri(tt == null ? null : tt.getMaThanhToan()) }
+                        giaTri(hd.getPhuongThucThanhToan()) }
 
         });
 
@@ -1016,7 +996,7 @@ public class ChiTietHoaDon_gui extends JPanel {
             @Override
             protected Boolean doInBackground() {
                 return phuongThucThanhToan == null
-                        || service.xacNhanThanhToan(hd, phuongThucThanhToan, thanhTien);
+                        || service.xacNhanThanhToan(hd, phuongThucThanhToan);
             }
 
             @Override

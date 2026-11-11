@@ -22,7 +22,7 @@ public class HoaDon_entity {
     private NhanVien_entity maNhanVien;
     private KhuyenMai_Entity maKM;
     private Thue_entity maThue;
-    private ThanhToan_entity maThanhToan;
+    private String phuongThucThanhToan;
 
     public HoaDon_entity() {
         super();
@@ -33,12 +33,14 @@ public class HoaDon_entity {
     }
 
     public HoaDon_entity(String maHD, LocalDate ngayLap, String trangThai, KhachHang maKH, NhanVien_entity maNhanVien,
-            KhuyenMai_Entity maKM, Thue_entity maThue, ThanhToan_entity maThanhToan) {
-        this(maHD, ngayLap, trangThai, maKH, null, maNhanVien, maKM, maThue, maThanhToan);
+            KhuyenMai_Entity maKM, Thue_entity maThue, String phuongThucThanhToan) {
+        this(maHD, ngayLap, trangThai, maKH, null, maNhanVien, maKM, maThue,
+                phuongThucThanhToan);
     }
 
     public HoaDon_entity(String maHD, LocalDate ngayLap, String trangThai, KhachHang maKH, ThuCung_entity maTC,
-            NhanVien_entity maNhanVien, KhuyenMai_Entity maKM, Thue_entity maThue, ThanhToan_entity maThanhToan) {
+            NhanVien_entity maNhanVien, KhuyenMai_Entity maKM, Thue_entity maThue,
+            String phuongThucThanhToan) {
         super();
         this.maHD = maHD;
         this.ngayLap = ngayLap;
@@ -48,7 +50,7 @@ public class HoaDon_entity {
         this.maNhanVien = maNhanVien;
         this.maKM = maKM;
         this.maThue = maThue;
-        this.maThanhToan = maThanhToan;
+        this.phuongThucThanhToan = phuongThucThanhToan;
     }
 
     public String getMaHD() {
@@ -119,16 +121,12 @@ public class HoaDon_entity {
         this.maThue = maThue != null ? new Thue_entity(maThue, "", 0) : null;
     }
 
-    public ThanhToan_entity getMaThanhToan() {
-        return maThanhToan;
+    public String getPhuongThucThanhToan() {
+        return phuongThucThanhToan;
     }
 
-    public void setMaThanhToan(ThanhToan_entity maThanhToan) {
-        this.maThanhToan = maThanhToan;
-    }
-
-    public void setMaThanhToan(String maTT) {
-        this.maThanhToan = maTT != null ? new ThanhToan_entity(maTT, 0, null, "", "") : null;
+    public void setPhuongThucThanhToan(String phuongThucThanhToan) {
+        this.phuongThucThanhToan = phuongThucThanhToan;
     }
 
     public LocalDate getNgayLap() {

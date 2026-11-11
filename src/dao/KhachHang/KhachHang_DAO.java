@@ -68,9 +68,10 @@ public class KhachHang_DAO {
                 "LEFT JOIN QuanLyHangThanhVien q ON q.maKH = k.maKH " +
                 "LEFT JOIN (SELECT maKH, COUNT(*) AS soThuCung FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
                 "LEFT JOIN (" +
-                "    SELECT h.maKH, SUM(tt.soTien) AS tongChiTieu " +
+                "    SELECT h.maKH, SUM(v.tongThanhToan) AS tongChiTieu " +
                 "    FROM HoaDon h " +
-                "    JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "    JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD " +
+                "    WHERE h.trangThai = N'Đã thanh toán' " +
                 "    GROUP BY h.maKH" +
                 ") hd ON hd.maKH = k.maKH " +
                 "ORDER BY k.maKH";
@@ -262,9 +263,10 @@ public class KhachHang_DAO {
                 "LEFT JOIN QuanLyHangThanhVien q ON q.maKH = k.maKH " +
                 "LEFT JOIN (SELECT maKH, COUNT(*) AS soThuCung FROM ThuCung GROUP BY maKH) tc ON tc.maKH = k.maKH " +
                 "LEFT JOIN (" +
-                "    SELECT h.maKH, SUM(tt.soTien) AS tongChiTieu " +
+                "    SELECT h.maKH, SUM(v.tongThanhToan) AS tongChiTieu " +
                 "    FROM HoaDon h " +
-                "    JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "    JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD " +
+                "    WHERE h.trangThai = N'Đã thanh toán' " +
                 "    GROUP BY h.maKH" +
                 ") hd ON hd.maKH = k.maKH " +
                 "WHERE k.maKH LIKE ? OR k.hoTen LIKE ? OR k.sdt LIKE ? " +
@@ -473,9 +475,10 @@ public class KhachHang_DAO {
         if (con == null || maKH == null) {
             return ds;
         }
-        String sql = "SELECT h.maHD, h.ngayLap, h.trangThai, ISNULL(tt.soTien, 0) AS soTien, ISNULL(tt.phuongThuc, N'Tiền mặt') AS phuongThuc " +
+        String sql = "SELECT h.maHD, h.ngayLap, h.trangThai, "
+                + "ISNULL(v.tongThanhToan, 0) AS soTien, h.phuongThucThanhToan AS phuongThuc " +
                 "FROM HoaDon h " +
-                "LEFT JOIN ThanhToan tt ON tt.maThanhToan = h.maThanhToan " +
+                "LEFT JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD " +
                 "WHERE h.maKH = ? ORDER BY h.ngayLap DESC";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maKH);

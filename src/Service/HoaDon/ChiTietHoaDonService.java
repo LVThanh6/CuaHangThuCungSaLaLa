@@ -8,7 +8,6 @@ import dao.KhachHang.HangThanhVien_DAO;
 import dao.ThuCung.ThuCung_DAO;
 import entity.HoaDon.ChiTietHoaDon_entity;
 import entity.HoaDon.HoaDon_entity;
-import entity.HoaDon.ThanhToan_entity;
 import entity.KhachHang.HangThanhVien;
 import entity.KhachHang.KhachHang;
 import entity.ThuCung.ThuCung_entity;
@@ -90,10 +89,8 @@ public class ChiTietHoaDonService {
         double tienThue = (tongTien - tienKhuyenMai) * mucThue / 100.0;
         double thanhTien = tongTien - tienKhuyenMai + tienThue;
 
-        ThanhToan_entity thanhToan = hoaDon.getMaThanhToan();
-        double daThanhToan = thanhToan != null
-                && laDaThanhToan(thanhToan.getTrangThai())
-                ? thanhToan.getSoTien() : 0;
+        double daThanhToan = laDaThanhToan(hoaDon.getTrangThai())
+                ? thanhTien : 0;
 
         double conPhaiThu = Math.max(0, thanhTien - daThanhToan);
         if (conPhaiThu < 0.5) {
@@ -147,60 +144,38 @@ public class ChiTietHoaDonService {
     }
 
     /*
-     * Lấy trạng thái thanh toán thống nhất từ hóa đơn và thông tin thanh toán.
+     * Lấy trạng thái thanh toán từ hóa đơn.
      */
     public String layTrangThaiThanhToan(HoaDon_entity hoaDon) {
         if (hoaDon == null) {
             return null;
         }
 
-        ThanhToan_entity thanhToan = hoaDon.getMaThanhToan();
-        if (thanhToan != null && thanhToan.getTrangThai() != null) {
-            return thanhToan.getTrangThai();
-        }
         return hoaDon.getTrangThai();
     }
 
     // Lưu xác nhận thanh toán vào CSDL và cập nhật entity đang được hiển thị.
     public boolean xacNhanThanhToan(
-            HoaDon_entity hoaDon, String phuongThuc, double soTien) {
+            HoaDon_entity hoaDon, String phuongThuc) {
 
         if (hoaDon == null || phuongThuc == null || phuongThuc.trim().isEmpty()
-                || soTien < 0) {
+                || laHoaDonDaThanhToan(hoaDon)) {
             return false;
         }
 
         if (!hoaDonDao.xacNhanThanhToan(
-                hoaDon.getMaHD(), phuongThuc, soTien)) {
+                hoaDon.getMaHD(), phuongThuc)) {
             return false;
         }
 
         hoaDon.setTrangThai("Đã thanh toán");
-
-        ThanhToan_entity thanhToan = hoaDon.getMaThanhToan();
-        if (thanhToan == null) {
-            thanhToan = new ThanhToan_entity(
-                    "TT" + System.currentTimeMillis(),
-                    soTien,
-                    java.time.LocalDate.now(),
-                    phuongThuc,
-                    "Đã thanh toán");
-            hoaDon.setMaThanhToan(thanhToan);
-        } else {
-            thanhToan.setTrangThai("Đã thanh toán");
-            thanhToan.setSoTien(soTien);
-            thanhToan.setPhuongThuc(phuongThuc);
-            thanhToan.setThoiGian(java.time.LocalDate.now());
-        }
-
+        hoaDon.setPhuongThucThanhToan(phuongThuc.trim());
         return true;
     }
 
     public boolean laHoaDonDaThanhToan(HoaDon_entity hoaDon) {
         return hoaDon != null
-                && (laDaThanhToan(hoaDon.getTrangThai())
-                || (hoaDon.getMaThanhToan() != null
-                && laDaThanhToan(hoaDon.getMaThanhToan().getTrangThai())));
+                && laDaThanhToan(hoaDon.getTrangThai());
     }
 
     public static boolean laDaThanhToan(String trangThai) {
