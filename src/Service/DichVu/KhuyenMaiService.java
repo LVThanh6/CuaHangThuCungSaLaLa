@@ -15,14 +15,14 @@ import dao.DichVu.KhuyenMai_DAO;
 import entity.DichVu.KhuyenMai_Entity;
 
 public class KhuyenMaiService {
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final Set<String> PAUSED = new HashSet<>();
-    private static final DecimalFormat MONEY;
+    private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final Set<String> DANH_SACH_TAM_DUNG = new HashSet<>();
+    private static final DecimalFormat DINH_DANG_TIEN;
 
     static {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-        symbols.setGroupingSeparator('.');
-        MONEY = new DecimalFormat("#,##0", symbols);
+        DecimalFormatSymbols kyHieu = new DecimalFormatSymbols(Locale.US);
+        kyHieu.setGroupingSeparator('.');
+        DINH_DANG_TIEN = new DecimalFormat("#,##0", kyHieu);
     }
 
     private final KhuyenMai_DAO dao;
@@ -35,224 +35,224 @@ public class KhuyenMaiService {
         this.dao = dao;
     }
 
-    public List<KhuyenMai_Entity> load() {
+    public List<KhuyenMai_Entity> taiDanhSach() {
         return java.util.Objects.requireNonNull(dao.getAllKhuyenMai(),
                 "Promotion data was not returned by the DAO");
     }
 
-    public Status status(KhuyenMai_Entity promotion) {
-        LocalDate today = LocalDate.now();
-        if (promotion.getNgayKetThuc() != null && promotion.getNgayKetThuc().isBefore(today)) return Status.EXPIRED;
-        if (PAUSED.contains(promotion.getMaKM())) return Status.PAUSED;
-        if (promotion.getNgayBatDau() != null && promotion.getNgayBatDau().isAfter(today)) return Status.UPCOMING;
-        return Status.ACTIVE;
+    public Status trangThai(KhuyenMai_Entity khuyenMai) {
+        LocalDate homNay = LocalDate.now();
+        if (khuyenMai.getNgayKetThuc() != null && khuyenMai.getNgayKetThuc().isBefore(homNay)) return Status.HET_HAN;
+        if (DANH_SACH_TAM_DUNG.contains(khuyenMai.getMaKM())) return Status.TAM_DUNG;
+        if (khuyenMai.getNgayBatDau() != null && khuyenMai.getNgayBatDau().isAfter(homNay)) return Status.SAP_DIEN_RA;
+        return Status.DANG_AP_DUNG;
     }
 
-    public boolean isPaused(String code) {
-        return PAUSED.contains(code);
+    public boolean dangTamDung(String ma) {
+        return DANH_SACH_TAM_DUNG.contains(ma);
     }
 
-    public DateRange parseDateRange(String fromText, String toText) {
+    public DateRange phanTichKhoangNgay(String chuoiTu, String chuoiDen) {
         try {
-            LocalDate from = fromText.trim().isEmpty() ? null : LocalDate.parse(fromText.trim(), DATE_FORMAT);
-            LocalDate to = toText.trim().isEmpty() ? null : LocalDate.parse(toText.trim(), DATE_FORMAT);
-            if (from != null && to != null && from.isAfter(to)) {
+            LocalDate tuNgay = chuoiTu.trim().isEmpty() ? null : LocalDate.parse(chuoiTu.trim(), DINH_DANG_NGAY);
+            LocalDate denNgay = chuoiDen.trim().isEmpty() ? null : LocalDate.parse(chuoiDen.trim(), DINH_DANG_NGAY);
+            if (tuNgay != null && denNgay != null && tuNgay.isAfter(denNgay)) {
                 throw new IllegalArgumentException("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.");
             }
-            return new DateRange(from, to);
-        } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("Ngày không hợp lệ (định dạng dd/MM/yyyy).", ex);
+            return new DateRange(tuNgay, denNgay);
+        } catch (DateTimeParseException loi) {
+            throw new IllegalArgumentException("Ngày không hợp lệ (định dạng dd/MM/yyyy).", loi);
         }
     }
 
-    public void pause(String code) {
-        PAUSED.add(code);
+    public void tamDung(String ma) {
+        DANH_SACH_TAM_DUNG.add(ma);
     }
 
-    public void resume(String code) {
-        PAUSED.remove(code);
+    public void tiepTuc(String ma) {
+        DANH_SACH_TAM_DUNG.remove(ma);
     }
 
-    public static boolean isPausedPromotion(String code) {
-        return PAUSED.contains(code);
+    public static boolean laKhuyenMaiTamDung(String ma) {
+        return DANH_SACH_TAM_DUNG.contains(ma);
     }
 
-    public boolean isPercentage(KhuyenMai_Entity promotion) {
-        return promotion.getMucKM() <= 100;
+    public boolean laPhanTram(KhuyenMai_Entity khuyenMai) {
+        return khuyenMai.getMucKM() <= 100;
     }
 
-    public static boolean isPercentageValue(double amount) {
-        return amount <= 100;
+    public static boolean laGiaTriPhanTram(double muc) {
+        return muc <= 100;
     }
 
-    public static String formatNumber(double amount) {
-        return plainNumber(amount);
+    public static String dinhDangSo(double muc) {
+        return soThuan(muc);
     }
 
-    public String formatAmount(KhuyenMai_Entity promotion) {
-        double amount = promotion.getMucKM();
-        return amount <= 100 ? plainNumber(amount) + "%" : MONEY.format((long) amount) + " ₫";
+    public String dinhDangMuc(KhuyenMai_Entity khuyenMai) {
+        double muc = khuyenMai.getMucKM();
+        return muc <= 100 ? soThuan(muc) + "%" : DINH_DANG_TIEN.format((long) muc) + " ₫";
     }
 
-    public List<KhuyenMai_Entity> filter(List<KhuyenMai_Entity> promotions, String keyword, int statusIndex,
-            LocalDate from, LocalDate to) {
-        String normalizedKeyword = keyword.trim().toLowerCase();
-        Status[] statuses = {null, Status.ACTIVE, Status.UPCOMING, Status.PAUSED, Status.EXPIRED};
-        List<KhuyenMai_Entity> filtered = new ArrayList<>();
-        for (KhuyenMai_Entity promotion : promotions) {
-            if (!normalizedKeyword.isEmpty()
-                    && !safe(promotion.getMaKM()).toLowerCase().contains(normalizedKeyword)
-                    && !safe(promotion.getTenKM()).toLowerCase().contains(normalizedKeyword)) continue;
-            if (statusIndex > 0 && status(promotion) != statuses[statusIndex]) continue;
-            if (from != null && promotion.getNgayKetThuc() != null
-                    && promotion.getNgayKetThuc().isBefore(from)) continue;
-            if (to != null && promotion.getNgayBatDau() != null
-                    && promotion.getNgayBatDau().isAfter(to)) continue;
-            filtered.add(promotion);
+    public List<KhuyenMai_Entity> loc(List<KhuyenMai_Entity> danhSach, String tuKhoa, int statusIndex,
+            LocalDate tuNgay, LocalDate denNgay) {
+        String tuKhoaDaChuanHoa = tuKhoa.trim().toLowerCase();
+        Status[] cacTrangThai = {null, Status.DANG_AP_DUNG, Status.SAP_DIEN_RA, Status.TAM_DUNG, Status.HET_HAN};
+        List<KhuyenMai_Entity> ketQua = new ArrayList<>();
+        for (KhuyenMai_Entity khuyenMai : danhSach) {
+            if (!tuKhoaDaChuanHoa.isEmpty()
+                    && !anToan(khuyenMai.getMaKM()).toLowerCase().contains(tuKhoaDaChuanHoa)
+                    && !anToan(khuyenMai.getTenKM()).toLowerCase().contains(tuKhoaDaChuanHoa)) continue;
+            if (statusIndex > 0 && trangThai(khuyenMai) != cacTrangThai[statusIndex]) continue;
+            if (tuNgay != null && khuyenMai.getNgayKetThuc() != null
+                    && khuyenMai.getNgayKetThuc().isBefore(tuNgay)) continue;
+            if (denNgay != null && khuyenMai.getNgayBatDau() != null
+                    && khuyenMai.getNgayBatDau().isAfter(denNgay)) continue;
+            ketQua.add(khuyenMai);
         }
-        return filtered;
+        return ketQua;
     }
 
-    public Summary summarize(List<KhuyenMai_Entity> promotions) {
-        LocalDate today = LocalDate.now();
-        int active = 0;
-        int upcoming = 0;
-        int paused = 0;
-        int expired = 0;
-        for (KhuyenMai_Entity promotion : promotions) {
-            switch (status(promotion)) {
-                case ACTIVE:
-                    active++;
+    public Summary tomTat(List<KhuyenMai_Entity> danhSach) {
+        LocalDate homNay = LocalDate.now();
+        int soDangApDung = 0;
+        int soSapDienRa = 0;
+        int soTamDung = 0;
+        int soHetHan = 0;
+        for (KhuyenMai_Entity khuyenMai : danhSach) {
+            switch (trangThai(khuyenMai)) {
+                case DANG_AP_DUNG:
+                    soDangApDung++;
                     break;
-                case UPCOMING:
-                    if (promotion.getNgayBatDau() == null
-                            || !promotion.getNgayBatDau().isAfter(today.plusDays(30))) upcoming++;
+                case SAP_DIEN_RA:
+                    if (khuyenMai.getNgayBatDau() == null
+                            || !khuyenMai.getNgayBatDau().isAfter(homNay.plusDays(30))) soSapDienRa++;
                     break;
-                case PAUSED:
-                    paused++;
+                case TAM_DUNG:
+                    soTamDung++;
                     break;
-                case EXPIRED:
-                    expired++;
+                case HET_HAN:
+                    soHetHan++;
                     break;
                 default:
                     throw new IllegalStateException("Unknown promotion status");
             }
         }
-        return new Summary(promotions.size(), active, upcoming, paused, expired);
+        return new Summary(danhSach.size(), soDangApDung, soSapDienRa, soTamDung, soHetHan);
     }
 
-    public boolean save(String code, String name, boolean percentage, String amountText, String startText,
-            String endText, String condition, List<KhuyenMai_Entity> existing, boolean update) {
-        String normalizedCode = code.trim();
-        String normalizedName = name.trim();
-        if (normalizedCode.isEmpty()) throw new IllegalArgumentException("Mã khuyến mãi không được để trống!");
-        if (normalizedName.isEmpty()) throw new IllegalArgumentException("Tên khuyến mãi không được để trống!");
+    public boolean luu(String ma, String ten, boolean theoPhanTram, String chuoiMuc, String chuoiBatDau,
+            String chuoiKetThuc, String dieuKien, List<KhuyenMai_Entity> daCo, boolean capNhat) {
+        String maDaChuanHoa = ma.trim();
+        String tenDaChuanHoa = ten.trim();
+        if (maDaChuanHoa.isEmpty()) throw new IllegalArgumentException("Mã khuyến mãi không được để trống!");
+        if (tenDaChuanHoa.isEmpty()) throw new IllegalArgumentException("Tên khuyến mãi không được để trống!");
 
-        double amount;
-        LocalDate start;
-        LocalDate end;
+        double muc;
+        LocalDate ngayBatDau;
+        LocalDate ngayKetThuc;
         try {
-            amount = percentage
-                    ? Double.parseDouble(amountText.trim().replace(",", "."))
-                    : Double.parseDouble(amountText.trim().replace(".", "").replace(",", ""));
-            start = LocalDate.parse(startText.trim(), DATE_FORMAT);
-            end = LocalDate.parse(endText.trim(), DATE_FORMAT);
-        } catch (NumberFormatException | DateTimeParseException ex) {
+            muc = theoPhanTram
+                    ? Double.parseDouble(chuoiMuc.trim().replace(",", "."))
+                    : Double.parseDouble(chuoiMuc.trim().replace(".", "").replace(",", ""));
+            ngayBatDau = LocalDate.parse(chuoiBatDau.trim(), DINH_DANG_NGAY);
+            ngayKetThuc = LocalDate.parse(chuoiKetThuc.trim(), DINH_DANG_NGAY);
+        } catch (NumberFormatException | DateTimeParseException loi) {
             throw new IllegalArgumentException(
-                    "Dữ liệu nhập không hợp lệ (kiểm tra định dạng số và ngày dd/MM/yyyy).", ex);
+                    "Dữ liệu nhập không hợp lệ (kiểm tra định dạng số và ngày dd/MM/yyyy).", loi);
         }
 
-        if (percentage && (amount <= 0 || amount > 100)) {
+        if (theoPhanTram && (muc <= 0 || muc > 100)) {
             throw new IllegalArgumentException("Mức giảm theo phần trăm phải trong khoảng (0, 100].");
         }
-        if (!percentage && amount <= 100) {
+        if (!theoPhanTram && muc <= 100) {
             throw new IllegalArgumentException("Mức giảm theo số tiền phải lớn hơn 100 ₫.");
         }
-        if (end.isBefore(start)) {
+        if (ngayKetThuc.isBefore(ngayBatDau)) {
             throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.");
         }
-        if (!update) {
-            for (KhuyenMai_Entity promotion : existing) {
-                if (normalizedCode.equalsIgnoreCase(promotion.getMaKM())) {
+        if (!capNhat) {
+            for (KhuyenMai_Entity khuyenMai : daCo) {
+                if (maDaChuanHoa.equalsIgnoreCase(khuyenMai.getMaKM())) {
                     throw new IllegalArgumentException("Mã khuyến mãi đã tồn tại!");
                 }
             }
         }
 
-        KhuyenMai_Entity promotion = new KhuyenMai_Entity(
-                normalizedCode, normalizedName, amount, start, end, condition.trim());
-        return update ? dao.updateKhuyenMai(promotion) : dao.createKhuyenMai(promotion);
+        KhuyenMai_Entity khuyenMai = new KhuyenMai_Entity(
+                maDaChuanHoa, tenDaChuanHoa, muc, ngayBatDau, ngayKetThuc, dieuKien.trim());
+        return capNhat ? dao.updateKhuyenMai(khuyenMai) : dao.createKhuyenMai(khuyenMai);
     }
 
-    public boolean delete(String code) {
-        return dao.deleteKhuyenMai(code);
+    public boolean xoa(String ma) {
+        return dao.deleteKhuyenMai(ma);
     }
 
-    public String toCsv(List<KhuyenMai_Entity> promotions) {
-        StringBuilder csv = new StringBuilder("\uFEFF");
-        csv.append("Mã khuyến mãi,Tên khuyến mãi,Mức giảm,Loại giảm,Ngày bắt đầu,Ngày kết thúc,Điều kiện,Trạng thái\r\n");
-        for (KhuyenMai_Entity promotion : promotions) {
-            csv.append(csv(promotion.getMaKM())).append(',')
-                    .append(csv(promotion.getTenKM())).append(',')
-                    .append(csv(formatAmount(promotion))).append(',')
-                    .append(csv(isPercentage(promotion) ? "Phần trăm" : "Số tiền")).append(',')
-                    .append(csv(formatDate(promotion.getNgayBatDau()))).append(',')
-                    .append(csv(formatDate(promotion.getNgayKetThuc()))).append(',')
-                    .append(csv(safe(promotion.getDieuKien()))).append(',')
-                    .append(csv(status(promotion).label)).append("\r\n");
+    public String taoCsv(List<KhuyenMai_Entity> danhSach) {
+        StringBuilder noiDungCsv = new StringBuilder("\uFEFF");
+        noiDungCsv.append("Mã khuyến mãi,Tên khuyến mãi,Mức giảm,Loại giảm,Ngày bắt đầu,Ngày kết thúc,Điều kiện,Trạng thái\r\n");
+        for (KhuyenMai_Entity khuyenMai : danhSach) {
+            noiDungCsv.append(trichDanCsv(khuyenMai.getMaKM())).append(',')
+                    .append(trichDanCsv(khuyenMai.getTenKM())).append(',')
+                    .append(trichDanCsv(dinhDangMuc(khuyenMai))).append(',')
+                    .append(trichDanCsv(laPhanTram(khuyenMai) ? "Phần trăm" : "Số tiền")).append(',')
+                    .append(trichDanCsv(dinhDangNgay(khuyenMai.getNgayBatDau()))).append(',')
+                    .append(trichDanCsv(dinhDangNgay(khuyenMai.getNgayKetThuc()))).append(',')
+                    .append(trichDanCsv(anToan(khuyenMai.getDieuKien()))).append(',')
+                    .append(trichDanCsv(trangThai(khuyenMai).nhan)).append("\r\n");
         }
-        return csv.toString();
+        return noiDungCsv.toString();
     }
 
-    private static String formatDate(LocalDate date) {
-        return date == null ? "" : DATE_FORMAT.format(date);
+    private static String dinhDangNgay(LocalDate ngay) {
+        return ngay == null ? "" : DINH_DANG_NGAY.format(ngay);
     }
 
-    private static String csv(String value) {
-        return "\"" + safe(value).replace("\"", "\"\"") + "\"";
+    private static String trichDanCsv(String giaTri) {
+        return "\"" + anToan(giaTri).replace("\"", "\"\"") + "\"";
     }
 
-    private static String plainNumber(double value) {
-        return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(value);
+    private static String soThuan(double giaTri) {
+        return giaTri == Math.rint(giaTri) ? String.valueOf((long) giaTri) : String.valueOf(giaTri);
     }
 
-    private static String safe(String value) {
-        return value == null ? "" : value;
+    private static String anToan(String giaTri) {
+        return giaTri == null ? "" : giaTri;
     }
 
     public enum Status {
-        ACTIVE("Đang áp dụng"), UPCOMING("Sắp diễn ra"), PAUSED("Tạm dừng"), EXPIRED("Hết hạn");
+        DANG_AP_DUNG("Đang áp dụng"), SAP_DIEN_RA("Sắp diễn ra"), TAM_DUNG("Tạm dừng"), HET_HAN("Hết hạn");
 
-        public final String label;
+        public final String nhan;
 
-        Status(String label) {
-            this.label = label;
+        Status(String nhan) {
+            this.nhan = nhan;
         }
     }
 
     public static final class DateRange {
-        public final LocalDate from;
-        public final LocalDate to;
+        public final LocalDate tuNgay;
+        public final LocalDate denNgay;
 
-        private DateRange(LocalDate from, LocalDate to) {
-            this.from = from;
-            this.to = to;
+        private DateRange(LocalDate tuNgay, LocalDate denNgay) {
+            this.tuNgay = tuNgay;
+            this.denNgay = denNgay;
         }
     }
 
     public static final class Summary {
-        public final int total;
-        public final int active;
-        public final int upcoming;
-        public final int paused;
-        public final int expired;
+        public final int tong;
+        public final int soDangApDung;
+        public final int soSapDienRa;
+        public final int soTamDung;
+        public final int soHetHan;
 
-        private Summary(int total, int active, int upcoming, int paused, int expired) {
-            this.total = total;
-            this.active = active;
-            this.upcoming = upcoming;
-            this.paused = paused;
-            this.expired = expired;
+        private Summary(int tong, int soDangApDung, int soSapDienRa, int soTamDung, int soHetHan) {
+            this.tong = tong;
+            this.soDangApDung = soDangApDung;
+            this.soSapDienRa = soSapDienRa;
+            this.soTamDung = soTamDung;
+            this.soHetHan = soHetHan;
         }
     }
 }

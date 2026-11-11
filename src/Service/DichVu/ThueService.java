@@ -16,11 +16,11 @@ public class ThueService {
         this.dao = dao;
     }
 
-    public List<Thue_entity> getAll() {
+    public List<Thue_entity> layTatCa() {
         return java.util.Objects.requireNonNull(dao.getAllThue(), "Tax data was not returned by the DAO");
     }
 
-    public boolean save(String ma, String ten, String muc, boolean create) {
+    public boolean luu(String ma, String ten, String muc, boolean taoMoi) {
         String tenDaChuanHoa = ten.trim();
         if (tenDaChuanHoa.isEmpty()) {
             throw new IllegalArgumentException("Tên thuế không được để trống!");
@@ -28,15 +28,15 @@ public class ThueService {
         double mucThue;
         try {
             mucThue = Double.parseDouble(muc.trim().replace(",", "."));
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Mức thuế phải là số hợp lệ.", ex);
+        } catch (NumberFormatException loi) {
+            throw new IllegalArgumentException("Mức thuế phải là số hợp lệ.", loi);
         }
 
         Thue_entity thue = new Thue_entity(ma.trim(), tenDaChuanHoa, mucThue);
-        return create ? dao.createThue(thue) : dao.updateThue(thue);
+        return taoMoi ? dao.createThue(thue) : dao.updateThue(thue);
     }
 
-    public boolean delete(String ma) {
+    public boolean xoa(String ma) {
         return dao.deleteThue(ma);
     }
 }
