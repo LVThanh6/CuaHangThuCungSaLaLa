@@ -13,9 +13,9 @@ import javax.swing.table.DefaultTableModel;
 
 public class ThueGUI extends JPanel {
 
-    private final ThueService service = new ThueService();
-    private JTable table;
-    private DefaultTableModel model;
+    private final ThueService thueService = new ThueService();
+    private JTable bangThue;
+    private DefaultTableModel moHinhBang;
     private JButton btnSua, btnXoa;
     private List<Thue_entity> danhSach;
 
@@ -34,27 +34,27 @@ public class ThueGUI extends JPanel {
         JPanel trai = new JPanel();
         trai.setOpaque(false);
         trai.setLayout(new BoxLayout(trai, BoxLayout.Y_AXIS));
-        JLabel lblSub = new JLabel("Dịch vụ / Thuế");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSub.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
-        JLabel lblTitle = new JLabel("Quản lý Thuế");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitle.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
-        trai.add(lblSub);
+        JLabel lblPhu = new JLabel("Dịch vụ / Thuế");
+        lblPhu.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblPhu.setForeground(RangBuocGiaoDien.MAU_CHU_PHU);
+        JLabel lblTieuDe = new JLabel("Quản lý Thuế");
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTieuDe.setForeground(RangBuocGiaoDien.MAU_CHU_CHINH);
+        trai.add(lblPhu);
         trai.add(Box.createVerticalStrut(4));
-        trai.add(lblTitle);
+        trai.add(lblTieuDe);
 
         JButton btnThem = new JButton("Thêm thuế");
         dinhDangNut(btnThem, true);
-        btnThem.addActionListener(e -> moForm(null));
+        btnThem.addActionListener(suKien -> moBieuMau(null));
 
         btnSua = new JButton("Chỉnh sửa");
         dinhDangNut(btnSua, false);
         btnSua.setEnabled(false);
-        btnSua.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row >= 0 && danhSach != null && row < danhSach.size()) {
-                moForm(danhSach.get(row));
+        btnSua.addActionListener(suKien -> {
+            int chiSoDong = bangThue.getSelectedRow();
+            if (chiSoDong >= 0 && danhSach != null && chiSoDong < danhSach.size()) {
+                moBieuMau(danhSach.get(chiSoDong));
             }
         });
 
@@ -62,15 +62,15 @@ public class ThueGUI extends JPanel {
         dinhDangNut(btnXoa, false);
         btnXoa.setForeground(RangBuocGiaoDien.MAU_CANH_BAO_DO);
         btnXoa.setEnabled(false);
-        btnXoa.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row >= 0 && danhSach != null && row < danhSach.size()) {
-                Thue_entity thue = danhSach.get(row);
+        btnXoa.addActionListener(suKien -> {
+            int chiSoDong = bangThue.getSelectedRow();
+            if (chiSoDong >= 0 && danhSach != null && chiSoDong < danhSach.size()) {
+                Thue_entity thue = danhSach.get(chiSoDong);
                 int kq = JOptionPane.showConfirmDialog(this,
                         "Xóa loại thuế " + thue.getTenThue() + " (" + thue.getMaThue() + ")?", "Xác nhận xóa",
                         JOptionPane.YES_NO_OPTION);
                 if (kq == JOptionPane.YES_OPTION) {
-                    if (service.delete(thue.getMaThue())) {
+                    if (thueService.xoa(thue.getMaThue())) {
                         JOptionPane.showMessageDialog(this, "Xóa thành công!");
                         taiLai();
                     } else {
@@ -87,46 +87,46 @@ public class ThueGUI extends JPanel {
         phai.add(btnXoa);
         phai.add(btnThem);
 
-        JPanel p = new JPanel(new BorderLayout());
-        p.setOpaque(false);
-        p.add(trai, BorderLayout.WEST);
-        p.add(phai, BorderLayout.EAST);
-        return p;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
+        panel.add(trai, BorderLayout.WEST);
+        panel.add(phai, BorderLayout.EAST);
+        return panel;
     }
 
     private JComponent taoBang() {
         String[] cot = { "Mã thuế", "Tên loại thuế", "Mức thuế (%)" };
-        model = new DefaultTableModel(cot, 0) {
+        moHinhBang = new DefaultTableModel(cot, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int chiSoDong, int chiSoCot) {
                 return false;
             }
         };
-        table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setRowHeight(32);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getSelectionModel().addListSelectionListener(e -> {
-            boolean coChon = table.getSelectedRow() >= 0;
+        bangThue = new JTable(moHinhBang);
+        bangThue.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        bangThue.setRowHeight(32);
+        bangThue.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        bangThue.getSelectionModel().addListSelectionListener(suKien -> {
+            boolean coChon = bangThue.getSelectedRow() >= 0;
             btnSua.setEnabled(coChon);
             btnXoa.setEnabled(coChon);
         });
 
-        JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
-        sp.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_THE);
-        return sp;
+        JScrollPane cuonBang = new JScrollPane(bangThue);
+        cuonBang.setBorder(new LineBorder(RangBuocGiaoDien.MAU_DUONG_VIEN));
+        cuonBang.getViewport().setBackground(RangBuocGiaoDien.MAU_NEN_THE);
+        return cuonBang;
     }
 
     private void taiLai() {
-        model.setRowCount(0);
-        danhSach = service.getAll();
+        moHinhBang.setRowCount(0);
+        danhSach = thueService.layTatCa();
         if (danhSach != null) {
-            for (Thue_entity t : danhSach) {
-                model.addRow(new Object[] {
-                        t.getMaThue(),
-                        t.getTenThue(),
-                        t.getMucThue() + "%"
+            for (Thue_entity thue : danhSach) {
+                moHinhBang.addRow(new Object[] {
+                        thue.getMaThue(),
+                        thue.getTenThue(),
+                        thue.getMucThue() + "%"
                 });
             }
         }
@@ -134,79 +134,79 @@ public class ThueGUI extends JPanel {
         btnXoa.setEnabled(false);
     }
 
-    private void moForm(Thue_entity goc) {
+    private void moBieuMau(Thue_entity goc) {
         Window cha = SwingUtilities.getWindowAncestor(this);
-        JDialog dlg = new JDialog(cha, goc == null ? "Thêm loại thuế" : "Chỉnh sửa thuế",
+        JDialog hopThoai = new JDialog(cha, goc == null ? "Thêm loại thuế" : "Chỉnh sửa thuế",
                 Dialog.ModalityType.APPLICATION_MODAL);
-        dlg.setSize(400, 280);
-        dlg.setLocationRelativeTo(this);
+        hopThoai.setSize(400, 280);
+        hopThoai.setLocationRelativeTo(this);
 
-        JPanel p = new JPanel(new GridBagLayout());
-        p.setBorder(new EmptyBorder(16, 20, 16, 20));
-        p.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
-        GridBagConstraints gc = new GridBagConstraints();
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        gc.weightx = 1;
-        gc.insets = new Insets(0, 0, 8, 0);
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(new EmptyBorder(16, 20, 16, 20));
+        panel.setBackground(RangBuocGiaoDien.MAU_NEN_THE);
+        GridBagConstraints rangBuoc = new GridBagConstraints();
+        rangBuoc.fill = GridBagConstraints.HORIZONTAL;
+        rangBuoc.weightx = 1;
+        rangBuoc.insets = new Insets(0, 0, 8, 0);
 
         JTextField txtMa = new JTextField(goc == null ? "TX" + System.currentTimeMillis() % 100000 : goc.getMaThue());
         if (goc != null)
             txtMa.setEditable(false);
-        JTextField txtTen = new JTextField(goc == null ? "" : nz(goc.getTenThue()));
+        JTextField txtTen = new JTextField(goc == null ? "" : khongNull(goc.getTenThue()));
         JTextField txtMuc = new JTextField(goc == null ? "10" : String.valueOf(goc.getMucThue()));
 
         String[] nhan = { "Mã thuế", "Tên loại thuế", "Mức thuế (%)" };
         JComponent[] truong = { txtMa, txtTen, txtMuc };
 
-        for (int i = 0; i < nhan.length; i++) {
-            gc.gridy = i * 2;
-            p.add(new JLabel(nhan[i]), gc);
-            gc.gridy = i * 2 + 1;
-            gc.insets = new Insets(0, 0, 12, 0);
-            p.add(truong[i], gc);
+        for (int chiSo = 0; chiSo < nhan.length; chiSo++) {
+            rangBuoc.gridy = chiSo * 2;
+            panel.add(new JLabel(nhan[chiSo]), rangBuoc);
+            rangBuoc.gridy = chiSo * 2 + 1;
+            rangBuoc.insets = new Insets(0, 0, 12, 0);
+            panel.add(truong[chiSo], rangBuoc);
         }
 
         JButton btnLuu = new JButton("Lưu");
         dinhDangNut(btnLuu, true);
-        btnLuu.addActionListener(e -> {
+        btnLuu.addActionListener(suKien -> {
             try {
-                boolean ok = service.save(
+                boolean daLuu = thueService.luu(
                         txtMa.getText(), txtTen.getText(), txtMuc.getText(), goc == null);
 
-                if (ok) {
-                    JOptionPane.showMessageDialog(dlg, "Lưu thành công!");
-                    dlg.dispose();
+                if (daLuu) {
+                    JOptionPane.showMessageDialog(hopThoai, "Lưu thành công!");
+                    hopThoai.dispose();
                     taiLai(); // Load lại dữ liệu mới ngay lập tức
                 } else {
-                    JOptionPane.showMessageDialog(dlg, "Không thể lưu thuế vào CSDL.", "Lỗi",
+                    JOptionPane.showMessageDialog(hopThoai, "Không thể lưu thuế vào CSDL.", "Lỗi",
                             JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException loi) {
+                JOptionPane.showMessageDialog(hopThoai, loi.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        JPanel pBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pBtn.setOpaque(false);
-        pBtn.add(btnLuu);
+        JPanel panelNut = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelNut.setOpaque(false);
+        panelNut.add(btnLuu);
 
-        dlg.add(p, BorderLayout.CENTER);
-        dlg.add(pBtn, BorderLayout.SOUTH);
-        dlg.setVisible(true);
+        hopThoai.add(panel, BorderLayout.CENTER);
+        hopThoai.add(panelNut, BorderLayout.SOUTH);
+        hopThoai.setVisible(true);
     }
 
-    private void dinhDangNut(JButton b, boolean chinh) {
-        b.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        b.setForeground(chinh ? RangBuocGiaoDien.MAU_CHU_CHINH : RangBuocGiaoDien.MAU_CHU_CHINH);
-        b.setBackground(chinh ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_NEN_THE);
-        b.setFocusPainted(false);
-        b.setBorder(BorderFactory.createCompoundBorder(
+    private void dinhDangNut(JButton nutBam, boolean chinh) {
+        nutBam.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        nutBam.setForeground(chinh ? RangBuocGiaoDien.MAU_CHU_CHINH : RangBuocGiaoDien.MAU_CHU_CHINH);
+        nutBam.setBackground(chinh ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_NEN_THE);
+        nutBam.setFocusPainted(false);
+        nutBam.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(chinh ? RangBuocGiaoDien.MAU_CHU_DAO : RangBuocGiaoDien.MAU_DUONG_VIEN),
                 new EmptyBorder(8, 14, 8, 14)));
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        nutBam.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
-    private static String nz(String s) {
-        return s == null ? "" : s;
+    private static String khongNull(String chuoi) {
+        return chuoi == null ? "" : chuoi;
     }
 }
