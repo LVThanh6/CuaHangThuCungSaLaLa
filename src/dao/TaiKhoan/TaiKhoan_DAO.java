@@ -414,23 +414,22 @@ public class TaiKhoan_DAO {
      * Tự động phát sinh mã tài khoản tiếp theo dạng TK046, TK047...
      */
     public String phatSinhMaTK() {
+        String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maTK, 3, LEN(maTK)) AS INT)), 0) "
+                   + "FROM TaiKhoan WHERE maTK LIKE 'TK%'";
+                   
         Connection con = ConnectDB.getInstance().getConnection();
         if (con != null) {
-            String sql = "SELECT TOP 1 maTK FROM TaiKhoan ORDER BY maTK DESC";
             try (Statement stmt = con.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
                 if (rs.next()) {
-                    String lastMa = rs.getString(1);
-                    if (lastMa != null && lastMa.startsWith("TK")) {
-                        try {
-                            int num = Integer.parseInt(lastMa.substring(2));
-                            return String.format("TK%03d", num + 1);
-                        } catch (NumberFormatException ignored) {}
-                    }
+                    int nextNum = rs.getInt(1) + 1;
+                    return String.format("TK%03d", nextNum);
                 }
-            } catch (SQLException ignored) {}
+            } catch (SQLException e) {
+                System.err.println("Lỗi phát sinh mã tài khoản: " + e.getMessage());
+            }
         }
-        return "TK046";
+        return "TK001"; // Mặc định chuẩn cho dữ liệu đầu tiên
     }
 
     /**
