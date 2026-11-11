@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import dao.TaiKhoan.DangNhap_DAO;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 public class NavigationService {
     public enum ManHinh {
@@ -64,7 +64,7 @@ public class NavigationService {
         return DangNhap_DAO.getVaiTro();
     }
 
-    public TaiKhoan getTaiKhoanHienTai() {
+    public TaiKhoan_entity getTaiKhoanHienTai() {
         return DangNhap_DAO.getTaiKhoanHienTai();
     }
 
@@ -73,7 +73,7 @@ public class NavigationService {
     }
 
     public VaiTroHeThong xacDinhVaiTro(String vaiTro) {
-        TaiKhoan taiKhoan = DangNhap_DAO.getTaiKhoanHienTai();
+        TaiKhoan_entity taiKhoan = DangNhap_DAO.getTaiKhoanHienTai();
         if (DangNhap_DAO.isDaDangNhap()
                 && taiKhoan != null
                 && "admin".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {

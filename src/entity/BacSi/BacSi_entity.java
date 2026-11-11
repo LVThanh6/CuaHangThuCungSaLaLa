@@ -1,13 +1,13 @@
 package entity.BacSi;
 
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 public class BacSi_entity {
     private String maBacSi;
-    private TaiKhoan maTK;
+    private TaiKhoan_entity maTK;
     private String hoTen;
     private String gioiTinh;
     private String sdt;
@@ -26,17 +26,17 @@ public class BacSi_entity {
         this.maBacSi = maBacSi;
     }
 
-    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+    public BacSi_entity(String maBacSi, TaiKhoan_entity maTK, String hoTen, String gioiTinh, String sdt,
             ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh) {
         this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, 0, null);
     }
 
-    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+    public BacSi_entity(String maBacSi, TaiKhoan_entity maTK, String hoTen, String gioiTinh, String sdt,
             ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, int soCaKham, Boolean trangThaiTK) {
         this(maBacSi, maTK, hoTen, gioiTinh, sdt, chuyenNganh, email, ngaySinh, 0, soCaKham, trangThaiTK);
     }
 
-    public BacSi_entity(String maBacSi, TaiKhoan maTK, String hoTen, String gioiTinh, String sdt,
+    public BacSi_entity(String maBacSi, TaiKhoan_entity maTK, String hoTen, String gioiTinh, String sdt,
             ChuyenNganh_entity chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
             int soCaKham, Boolean trangThaiTK) {
         super();
@@ -56,7 +56,7 @@ public class BacSi_entity {
     public BacSi_entity(String maBacSi, String maTK, String hoTen, String gioiTinh, String sdt,
             String chuyenNganh, String email, LocalDate ngaySinh, double luongThang,
             int soCaKham, Boolean trangThaiTK) {
-        this(maBacSi, maTK != null ? new TaiKhoan(maTK) : null, hoTen, gioiTinh, sdt,
+        this(maBacSi, maTK != null ? new TaiKhoan_entity(maTK) : null, hoTen, gioiTinh, sdt,
                 chuyenNganh != null ? new ChuyenNganh_entity(chuyenNganh, chuyenNganh) : null,
                 email, ngaySinh, luongThang, soCaKham, trangThaiTK);
     }
@@ -69,16 +69,16 @@ public class BacSi_entity {
         this.maBacSi = maBacSi;
     }
 
-    public TaiKhoan getMaTK() {
+    public TaiKhoan_entity getMaTK() {
         return maTK;
     }
 
-    public void setMaTK(TaiKhoan maTK) {
+    public void setMaTK(TaiKhoan_entity maTK) {
         this.maTK = maTK;
     }
 
     public void setMaTK(String maTK) {
-        this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
+        this.maTK = maTK != null ? new TaiKhoan_entity(maTK) : null;
     }
 
     public String getHoTen() {

@@ -1,7 +1,7 @@
 package dao.TaiKhoan;
 
 
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 /**
  * Lớp Session quản lý phiên làm việc của người dùng hiện tại sau khi đăng nhập thành công.
@@ -9,7 +9,7 @@ import entity.TaiKhoan.TaiKhoan;
  * các chức năng khác trong hệ thống SALALA Pet Shop.
  */
 public class DangNhap_DAO {
-    private static TaiKhoan taiKhoanHienTai;
+    private static TaiKhoan_entity taiKhoanHienTai;
     private static String tenNguoiDung;
     private static String maDoiTuong; // Mã nhân viên, mã bác sĩ hoặc mã quản lý
     private static String vaiTro;
@@ -20,7 +20,7 @@ public class DangNhap_DAO {
      * @param ten Tên hiển thị của người dùng (Họ và tên thực tế)
      * @param maDT Mã đối tượng tham chiếu trong CSDL (Ví dụ: NV001, BS002, QL01)
      */
-    public static void dangNhap(TaiKhoan tk, String ten, String maDT) {
+    public static void dangNhap(TaiKhoan_entity tk, String ten, String maDT) {
         taiKhoanHienTai = tk;
         tenNguoiDung = ten;
         maDoiTuong = maDT;
@@ -48,7 +48,7 @@ public class DangNhap_DAO {
     // GETTERS ĐỂ CÁC MÀN HÌNH KHÁC TRUY XUẤT
     // ==========================================
     
-    public static TaiKhoan getTaiKhoanHienTai() {
+    public static TaiKhoan_entity getTaiKhoanHienTai() {
         return taiKhoanHienTai;
     }
 

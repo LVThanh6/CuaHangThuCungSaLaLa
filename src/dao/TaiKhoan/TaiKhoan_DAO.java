@@ -1,7 +1,7 @@
 package dao.TaiKhoan;
 
 import connectDB.ConnectDB;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -50,11 +50,11 @@ public class TaiKhoan_DAO {
     public static class KetQuaDangNhap {
         private boolean thanhCong;
         private String thongBao;
-        private TaiKhoan taiKhoan;
+        private TaiKhoan_entity taiKhoan;
         private String tenNguoiDung;
         private String maDoiTuong;
 
-        public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan taiKhoan, String tenNguoiDung, String maDoiTuong) {
+        public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan_entity taiKhoan, String tenNguoiDung, String maDoiTuong) {
             this.thanhCong = thanhCong;
             this.thongBao = thongBao;
             this.taiKhoan = taiKhoan;
@@ -64,7 +64,7 @@ public class TaiKhoan_DAO {
 
         public boolean isThanhCong() { return thanhCong; }
         public String getThongBao() { return thongBao; }
-        public TaiKhoan getTaiKhoan() { return taiKhoan; }
+        public TaiKhoan_entity getTaiKhoan() { return taiKhoan; }
         public String getTenNguoiDung() { return tenNguoiDung; }
         public String getMaDoiTuong() { return maDoiTuong; }
     }
@@ -105,7 +105,7 @@ public class TaiKhoan_DAO {
                         return new KetQuaDangNhap(false, "Tài khoản này đang bị khóa. Vui lòng liên hệ Quản lý!", null, null, null);
                     }
 
-                    TaiKhoan tk = new TaiKhoan(
+                    TaiKhoan_entity tk = new TaiKhoan_entity(
                             rs.getString("maTK"),
                             rs.getString("tenDangNhap"),
                             dbMatKhau,
@@ -260,7 +260,7 @@ public class TaiKhoan_DAO {
     /**
      * Thêm tài khoản mới, hỗ trợ băm mật khẩu và liên kết trực tiếp đối tượng
      */
-    public boolean themTaiKhoan(TaiKhoan tk, String loaiDoiTuong, String maDoiTuong) {
+    public boolean themTaiKhoan(TaiKhoan_entity tk, String loaiDoiTuong, String maDoiTuong) {
         Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 
@@ -317,7 +317,7 @@ public class TaiKhoan_DAO {
     /**
      * Cập nhật thông tin vai trò, trạng thái và quản lý của tài khoản
      */
-    public boolean capNhatTaiKhoan(TaiKhoan tk) {
+    public boolean capNhatTaiKhoan(TaiKhoan_entity tk) {
         Connection con = ConnectDB.getInstance().getConnection();
         if (con == null) return false;
 

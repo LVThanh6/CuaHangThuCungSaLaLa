@@ -317,7 +317,7 @@ public class ChiTietHoaDon_DAO {
             Date ngaySinhNV = rs.getDate("ngaySinhNV");
             nv = new NhanVien_entity(
                     maNhanVien,
-                    rs.getString("maTKNV") != null ? new entity.TaiKhoan.TaiKhoan(rs.getString("maTKNV")) : null,
+                    rs.getString("maTKNV") != null ? new entity.TaiKhoan.TaiKhoan_entity(rs.getString("maTKNV")) : null,
                     rs.getString("hoTenNV"),
                     rs.getString("chucVu"),
                     rs.getString("sdtNV"),

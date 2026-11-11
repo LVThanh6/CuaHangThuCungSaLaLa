@@ -1,13 +1,13 @@
 package entity.NhanVien;
 
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 public class NhanVien_entity {
 	private String maNhanVien;
-	private TaiKhoan maTK;
+	private TaiKhoan_entity maTK;
 	private String hoTen;
 	private String chucVu;
 	private String sdt;
@@ -26,13 +26,13 @@ public class NhanVien_entity {
 	}
 
 	// Constructor 9 tham số
-	public NhanVien_entity(String maNhanVien, TaiKhoan maTK, String hoTen, String chucVu, String sdt, String diaChi,
+	public NhanVien_entity(String maNhanVien, TaiKhoan_entity maTK, String hoTen, String chucVu, String sdt, String diaChi,
 			LocalDate ngaySinh, String gioiTinh, double luongCoBan) {
 		this(maNhanVien, maTK, hoTen, chucVu, sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, null);
 	}
 
 	// Constructor 10 tham số
-	public NhanVien_entity(String maNhanVien, TaiKhoan maTK, String hoTen, String chucVu, String sdt, String diaChi,
+	public NhanVien_entity(String maNhanVien, TaiKhoan_entity maTK, String hoTen, String chucVu, String sdt, String diaChi,
 			LocalDate ngaySinh, String gioiTinh, double luongCoBan, Boolean trangThaiTK) {
 		super();
 		this.maNhanVien = maNhanVien;
@@ -55,16 +55,16 @@ public class NhanVien_entity {
 		this.maNhanVien = maNhanVien;
 	}
 
-	public TaiKhoan getMaTK() {
+	public TaiKhoan_entity getMaTK() {
 		return maTK;
 	}
 
-	public void setMaTK(TaiKhoan maTK) {
+	public void setMaTK(TaiKhoan_entity maTK) {
 		this.maTK = maTK;
 	}
 
 	public void setMaTK(String maTK) {
-		this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
+		this.maTK = maTK != null ? new TaiKhoan_entity(maTK) : null;
 	}
 
 	public String getHoTen() {

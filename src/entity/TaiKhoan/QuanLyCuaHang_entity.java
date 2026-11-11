@@ -7,11 +7,11 @@ import java.util.Objects;
 /**
  * Entity đại diện cho bảng QuanLyCuaHang trong CSDL SALALA.
  */
-public class QuanLyCuaHang implements Serializable {
+public class QuanLyCuaHang_entity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String maQuanLy;
-    private TaiKhoan maTK;
+    private TaiKhoan_entity maTK;
     private String hoTenQuanLy;
     private String sdt;
     private String diaChi;
@@ -19,14 +19,14 @@ public class QuanLyCuaHang implements Serializable {
     private String gioiTinh;
     private double luongCoBan;
 
-    public QuanLyCuaHang() {
+    public QuanLyCuaHang_entity() {
     }
 
-    public QuanLyCuaHang(String maQuanLy) {
+    public QuanLyCuaHang_entity(String maQuanLy) {
         this.maQuanLy = maQuanLy;
     }
 
-    public QuanLyCuaHang(String maQuanLy, TaiKhoan maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
+    public QuanLyCuaHang_entity(String maQuanLy, TaiKhoan_entity maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
             String gioiTinh, double luongCoBan) {
         this.maQuanLy = maQuanLy;
         this.maTK = maTK;
@@ -38,9 +38,9 @@ public class QuanLyCuaHang implements Serializable {
         this.luongCoBan = luongCoBan;
     }
 
-    public QuanLyCuaHang(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
+    public QuanLyCuaHang_entity(String maQuanLy, String maTK, String hoTenQuanLy, String sdt, String diaChi, Date ngaySinh,
             String gioiTinh, double luongCoBan) {
-        this(maQuanLy, maTK != null ? new TaiKhoan(maTK) : null, hoTenQuanLy, sdt, diaChi, ngaySinh, gioiTinh,
+        this(maQuanLy, maTK != null ? new TaiKhoan_entity(maTK) : null, hoTenQuanLy, sdt, diaChi, ngaySinh, gioiTinh,
                 luongCoBan);
     }
 
@@ -52,16 +52,16 @@ public class QuanLyCuaHang implements Serializable {
         this.maQuanLy = maQuanLy;
     }
 
-    public TaiKhoan getMaTK() {
+    public TaiKhoan_entity getMaTK() {
         return maTK;
     }
 
-    public void setMaTK(TaiKhoan maTK) {
+    public void setMaTK(TaiKhoan_entity maTK) {
         this.maTK = maTK;
     }
 
     public void setMaTK(String maTK) {
-        this.maTK = maTK != null ? new TaiKhoan(maTK) : null;
+        this.maTK = maTK != null ? new TaiKhoan_entity(maTK) : null;
     }
 
     public String getHoTenQuanLy() {
@@ -118,7 +118,7 @@ public class QuanLyCuaHang implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        QuanLyCuaHang that = (QuanLyCuaHang) o;
+        QuanLyCuaHang_entity that = (QuanLyCuaHang_entity) o;
         return Objects.equals(maQuanLy, that.maQuanLy);
     }
 
