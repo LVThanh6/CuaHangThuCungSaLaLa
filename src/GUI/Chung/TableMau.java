@@ -7,11 +7,11 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 
 /**
- * Lớp TableMau: Component bảng dữ liệu hiện đại, sạch sẽ, 
+ * Lớp TableMau: Component bảng dữ liệu hiện đại, sạch sẽ,
  * dễ dàng truyền biến và nhúng vào các chức năng khác nhau.
  */
 public class TableMau extends JTable {
-    
+
     private DefaultTableModel model;
 
     // Constructor khởi tạo với tiêu đề cột và dữ liệu mẫu
@@ -54,14 +54,17 @@ public class TableMau extends JTable {
         header.setBackground(new Color(248, 250, 252));
         header.setReorderingAllowed(false); // Không cho kéo dịch chuyển cột
 
-        // Tùy chỉnh renderer mặc định để tạo hiệu ứng dòng xen kẽ và khoảng đệm (padding)
+        // Tùy chỉnh renderer mặc định để tạo hiệu ứng dòng xen kẽ và khoảng đệm
+        // (padding)
         setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (c instanceof JLabel) {
                     JLabel label = (JLabel) c;
-                    label.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12)); // Tạo khoảng cách lề cho chữ trong ô
+                    label.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12)); // Tạo khoảng cách lề cho chữ trong
+                                                                                    // ô
                     if (!isSelected) {
                         // Màu xen kẽ giữa các dòng (Dòng chẵn trắng, dòng lẻ xám nhẹ)
                         c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
@@ -94,12 +97,13 @@ public class TableMau extends JTable {
     public void datLaiDuLieu(Object[][] duLieuMoi, String[] tenCotMoi) {
         model.setDataVector(duLieuMoi, tenCotMoi);
     }
-    
+
     // --- HÀM MAIN CHẠY THỬ ĐỘC LẬP ---
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Kiểm thử độc lập - TableMau");
@@ -108,11 +112,11 @@ public class TableMau extends JTable {
             frame.setLocationRelativeTo(null);
 
             // 1. Chuẩn bị dữ liệu mẫu
-            String[] tieuDe = {"Mã NV", "Họ và tên", "Chức vụ", "Trạng thái"};
+            String[] tieuDe = { "Mã NV", "Họ và tên", "Chức vụ", "Trạng thái" };
             Object[][] duLieu = {
-                {"NV001", "Lê Văn Thành", "Quản lý", "Đang làm việc"},
-                {"NV002", "Nguyễn Văn A", "Nhân viên", "Tạm nghỉ"},
-                {"NV003", "Trần Thị B", "Lễ tân", "Đang làm việc"}
+                    { "NV001", "Lê Văn Thành", "Quản lý", "Đang làm việc" },
+                    { "NV002", "Nguyễn Văn A", "Nhân viên", "Tạm nghỉ" },
+                    { "NV003", "Trần Thị B", "Lễ tân", "Đang làm việc" }
             };
 
             // 2. Khởi tạo TableMau
