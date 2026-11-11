@@ -7,6 +7,8 @@
 USE master;
 GO
 
+-- Thông báo 'Nonqualified transactions are being rolled back' khi xóa DB cũ
+-- là thông báo tiến trình của SQL Server, không phải lỗi cú pháp của script.
 IF DB_ID('SALALA') IS NOT NULL
 BEGIN
     ALTER DATABASE SALALA SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
@@ -741,276 +743,331 @@ CREATE FUNCTION dbo.fn_C3(@n INT) RETURNS VARCHAR(3)
 AS BEGIN RETURN RIGHT('000' + CAST(@n AS VARCHAR(3)), 3); END
 GO
 
--- Bảng đếm tạo Hóa đơn
+-- Bảng đếm dùng chung cho dữ liệu mẫu (tối đa 200 bản ghi)
 CREATE TABLE #N (n INT PRIMARY KEY);
-WITH x AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM x WHERE n < 200)
-INSERT INTO #N SELECT n FROM x OPTION (MAXRECURSION 0);
+WITH x AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n + 1 FROM x WHERE n < 200
+)
+INSERT INTO #N(n)
+SELECT n FROM x OPTION (MAXRECURSION 0);
 GO
 
--- 1. TÀI KHOẢN (16 tài khoản: 1 Admin, 2 Quản lý, 10 Nhân viên, 3 Bác sĩ)
+-- 1. TÀI KHOẢN (46 tài khoản: 1 Admin, 15 Quản lý, 15 Nhân viên, 15 Bác sĩ)
 INSERT INTO TaiKhoan (maTK, tenDangNhap, matKhau, vaiTro, trangThai, maQuanLy)
-SELECT 'TK' + dbo.fn_C3(n),
-       CASE
-            WHEN n = 1 THEN 'admin'
-            WHEN n <= 3 THEN 'quanly' + dbo.fn_C3(n - 1)
-            WHEN n <= 13 THEN 'nhanvien' + dbo.fn_C3(n - 3)
-            ELSE 'bacsi' + dbo.fn_C3(n - 13)
-       END,
-       CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', '123456'), 2),
-       CASE
-            WHEN n = 1 THEN N'Admin'
-            WHEN n <= 3 THEN N'Quản lý'
-            WHEN n <= 7 THEN N'Nhân viên bán hàng'
-            WHEN n <= 10 THEN N'Nhân viên dịch vụ'
-            WHEN n <= 13 THEN N'Nhân viên quản lý kho'
-            ELSE N'Bác sĩ'
-       END,
-       1,
-       NULL
-FROM #N
-WHERE n <= 16;
+SELECT
+    'TK' + dbo.fn_C3(n),
+    CASE
+        WHEN n = 1 THEN 'admin'
+        WHEN n <= 16 THEN 'quanly' + dbo.fn_C3(n - 1)
+        WHEN n <= 31 THEN 'nhanvien' + dbo.fn_C3(n - 16)
+        ELSE 'bacsi' + dbo.fn_C3(n - 31)
+    END,
+    CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', '123456'), 2),
+    CASE
+        WHEN n = 1 THEN N'Admin'
+        WHEN n <= 16 THEN N'Quản lý'
+        WHEN n <= 21 THEN N'Nhân viên bán hàng'
+        WHEN n <= 26 THEN N'Nhân viên dịch vụ'
+        WHEN n <= 31 THEN N'Nhân viên quản lý kho'
+        ELSE N'Bác sĩ'
+    END,
+    1, NULL
+FROM #N WHERE n <= 46;
 GO
 
--- 2. QUẢN LÝ CỬA HÀNG 
+-- 2. QUẢN LÝ CỬA HÀNG (15 quản lý)
 INSERT INTO QuanLyCuaHang (maQuanLy, maTK, hoTenQuanLy, sdt, diaChi, ngaySinh, gioiTinh, luongCoBan)
-SELECT 'QL' + dbo.fn_C3(n), 'TK' + dbo.fn_C3(n),
-       CHOOSE(n, N'Lê Văn Thành', N'Nguyễn Văn An', N'Trần Thị Bình'),
-       '0901000' + dbo.fn_C3(n),
-       N'Quận Gò Vấp, TP.HCM',
-       DATEADD(DAY, n * 150, '19850510'),
-       CASE WHEN n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
-       18000000 -- Lương tháng cho quản lý
-FROM #N WHERE n <= 3;
+SELECT 'QL' + dbo.fn_C3(nums.n), 'TK' + dbo.fn_C3(nums.n + 1), v.hoTen,
+       '0901000' + dbo.fn_C3(nums.n), N'Quận Gò Vấp, TP.HCM',
+       DATEADD(DAY, nums.n * 150, '19850510'),
+       CASE WHEN nums.n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
+       18000000 + nums.n * 250000
+FROM #N AS nums
+JOIN (VALUES
+ (1,N'Lê Văn Thành'),(2,N'Nguyễn Văn An'),(3,N'Trần Thị Bình'),
+ (4,N'Phạm Minh Cường'),(5,N'Võ Thị Diễm'),(6,N'Đặng Quốc Đạt'),
+ (7,N'Bùi Ngọc Hà'),(8,N'Hồ Thanh Hùng'),(9,N'Ngô Thị Lan'),
+ (10,N'Dương Minh Long'),(11,N'Lý Thị Mai'),(12,N'Phan Quốc Nam'),
+ (13,N'Hoàng Thu Phương'),(14,N'Đỗ Văn Quân'),(15,N'Vũ Thị Trang')
+) v(n, hoTen) ON v.n = nums.n
+WHERE nums.n <= 15;
 GO
 
+-- Gán người quản lý phụ trách cho Admin và các tài khoản nhân viên/bác sĩ
 UPDATE TaiKhoan
-SET maQuanLy = 'QL002'
-WHERE vaiTro <> N'Quản lý' OR tenDangNhap = 'admin';
+SET maQuanLy = 'QL001'
+WHERE maTK = 'TK001' OR vaiTro LIKE N'Nhân viên%' OR vaiTro = N'Bác sĩ';
 GO
 
--- 3. NHÂN VIÊN (10 nhân viên: 4 bán hàng, 3 dịch vụ, 3 quản lý kho)
+-- 3. NHÂN VIÊN (15 nhân viên: 5 bán hàng, 5 dịch vụ, 5 quản lý kho)
 WITH NhanVien_Temp AS (
     SELECT n,
-           CASE
-                WHEN n <= 4 THEN N'Nhân viên bán hàng'
-                WHEN n <= 7 THEN N'Nhân viên dịch vụ'
-                ELSE N'Nhân viên quản lý kho'
-           END AS chucVu
-    FROM #N
-    WHERE n <= 10
+           CASE WHEN n <= 5 THEN N'Nhân viên bán hàng'
+                WHEN n <= 10 THEN N'Nhân viên dịch vụ'
+                ELSE N'Nhân viên quản lý kho' END AS chucVu
+    FROM #N WHERE n <= 15
 )
 INSERT INTO NhanVien (maNhanVien, maTK, hoTen, chucVu, sdt, diaChi, ngaySinh, gioiTinh, luongCoBan)
-SELECT 'NV' + dbo.fn_C3(nvt.n),
-       'TK' + dbo.fn_C3(nvt.n + 3),
-       CHOOSE(nvt.n,
-              N'Trần Quốc Bảo', N'Nguyễn Thị Cẩm', N'Lê Văn Dũng', N'Phạm Hồng Em', N'Võ Văn Phúc',
-              N'Đặng Thị Giang', N'Bùi Minh Hải', N'Hồ Thị Hạnh', N'Ngô Văn Khoa', N'Dương Thị Linh'),
-       nvt.chucVu,
-       '0902000' + dbo.fn_C3(nvt.n),
-       N'Quận Gò Vấp, TP.HCM',
-       DATEADD(DAY, nvt.n * 263, '19950115'),
-       CASE WHEN nvt.n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
-       CASE nvt.chucVu
-            WHEN N'Nhân viên bán hàng' THEN 45000
-            WHEN N'Nhân viên dịch vụ' THEN 60000
-            WHEN N'Nhân viên quản lý kho' THEN 13500000
-       END
-FROM NhanVien_Temp nvt;
+SELECT 'NV' + dbo.fn_C3(t.n), 'TK' + dbo.fn_C3(t.n + 16), v.hoTen, t.chucVu,
+       '0902000' + dbo.fn_C3(t.n), N'Quận Gò Vấp, TP.HCM',
+       DATEADD(DAY, t.n * 263, '19950115'),
+       CASE WHEN t.n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
+       CASE t.chucVu WHEN N'Nhân viên bán hàng' THEN 45000
+                     WHEN N'Nhân viên dịch vụ' THEN 60000
+                     ELSE 13500000 END
+FROM NhanVien_Temp t
+JOIN (VALUES
+ (1,N'Trần Quốc Bảo'),(2,N'Nguyễn Thị Cẩm'),(3,N'Lê Văn Dũng'),
+ (4,N'Phạm Hồng Em'),(5,N'Võ Văn Phúc'),(6,N'Đặng Thị Giang'),
+ (7,N'Bùi Minh Hải'),(8,N'Hồ Thị Hạnh'),(9,N'Ngô Văn Khoa'),
+ (10,N'Dương Thị Linh'),(11,N'Lý Quang Minh'),(12,N'Phan Thị Ngân'),
+ (13,N'Hoàng Anh Tuấn'),(14,N'Đỗ Ngọc Yến'),(15,N'Vũ Thành Đạt')
+) v(n, hoTen) ON v.n = t.n;
 GO
 
--- THÊM DỮ LIỆU CHUYÊN NGÀNH BÁC SĨ
+-- 4. CHUYÊN NGÀNH BÁC SĨ (15 chuyên ngành mẫu)
 INSERT INTO ChuyenNganh (maChuyenNganh, tenChuyenNganh)
-VALUES 
-('CN001', N'Nội khoa'),
-('CN002', N'Ngoại khoa'),
-('CN003', N'Da liễu thú y'),
-('CN004', N'Răng hàm mặt'),
-('CN005', N'Sản khoa');
+VALUES
+('CN001',N'Nội khoa'),('CN002',N'Ngoại khoa'),('CN003',N'Da liễu thú y'),
+('CN004',N'Răng hàm mặt'),('CN005',N'Sản khoa'),('CN006',N'Nhãn khoa'),
+('CN007',N'Tim mạch'),('CN008',N'Tiêu hóa'),('CN009',N'Tai mũi họng'),
+('CN010',N'Thần kinh'),('CN011',N'Dinh dưỡng thú y'),('CN012',N'Truyền nhiễm'),
+('CN013',N'Chẩn đoán hình ảnh'),('CN014',N'Hồi sức cấp cứu'),('CN015',N'Tiêm chủng và phòng bệnh');
 GO
 
--- 4. BÁC SĨ THÚ Y (3 bác sĩ)
+-- 5. BÁC SĨ THÚ Y (15 bác sĩ)
 INSERT INTO BacSyThuY (maBacSi, maTK, maChuyenNganh, hoTen, gioiTinh, sdt, email, ngaySinh, luongThang)
-SELECT 'BS' + dbo.fn_C3(n),
-       'TK' + dbo.fn_C3(n + 13),
-       'CN' + dbo.fn_C3(n),
-       CHOOSE(n, N'Nguyễn Hữu Tài', N'Trần Thị Uyên', N'Lê Minh Vinh'),
-       CASE WHEN n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
-       '0903000' + dbo.fn_C3(n),
-       'bacsi' + dbo.fn_C3(n) + '@salala.vn',
-       DATEADD(DAY, n * 301, '19900301'),
-       16000000 + n * 1000000
-FROM #N
-WHERE n <= 3;
+SELECT 'BS' + dbo.fn_C3(nums.n), 'TK' + dbo.fn_C3(nums.n + 31),
+       'CN' + dbo.fn_C3(nums.n), v.hoTen,
+       CASE WHEN nums.n % 2 = 1 THEN N'Nam' ELSE N'Nữ' END,
+       '0903000' + dbo.fn_C3(nums.n), 'bacsi' + dbo.fn_C3(nums.n) + '@salala.vn',
+       DATEADD(DAY, nums.n * 301, '19900301'), 16000000 + nums.n * 1000000
+FROM #N AS nums
+JOIN (VALUES
+ (1,N'Nguyễn Hữu Tài'),(2,N'Trần Thị Uyên'),(3,N'Lê Minh Vinh'),
+ (4,N'Phạm Quốc Bảo'),(5,N'Võ Ngọc Anh'),(6,N'Đặng Minh Khoa'),
+ (7,N'Bùi Thị Thu'),(8,N'Hồ Quốc Việt'),(9,N'Ngô Thanh Tâm'),
+ (10,N'Dương Hoàng Phúc'),(11,N'Lý Minh Châu'),(12,N'Phan Văn Khánh'),
+ (13,N'Hoàng Thị Như'),(14,N'Đỗ Thành Công'),(15,N'Vũ Ngọc Diệp')
+) v(n, hoTen) ON v.n = nums.n
+WHERE nums.n <= 15;
 GO
 
--- 5. Khách hàng 
+-- 6. KHÁCH HÀNG (15 khách hàng)
 INSERT INTO KhachHang (maKH, hoTen, sdt, email, diaChi)
-SELECT 'KH' + dbo.fn_C3(n),
-       CHOOSE(n, N'Nguyễn Thị Hoa', N'Trần Văn Hùng', N'Lê Thị Kim', N'Phạm Văn Lâm', N'Võ Thị My',
-                 N'Đặng Văn Nghĩa', N'Bùi Thị Oanh', N'Hồ Văn Phong', N'Ngô Thị Quyên', N'Dương Văn Sĩ'),
-       '0904000' + dbo.fn_C3(n),
-       'khachhang' + dbo.fn_C3(n) + '@gmail.com',
+SELECT 'KH' + dbo.fn_C3(nums.n), v.hoTen,
+       '0904000' + dbo.fn_C3(nums.n), 'khachhang' + dbo.fn_C3(nums.n) + '@gmail.com',
        N'Đường Nguyễn Oanh, Gò Vấp, TP.HCM'
-FROM #N WHERE n <= 10;
+FROM #N AS nums
+JOIN (VALUES
+ (1,N'Nguyễn Thị Hoa'),(2,N'Trần Văn Hùng'),(3,N'Lê Thị Kim'),
+ (4,N'Phạm Văn Lâm'),(5,N'Võ Thị My'),(6,N'Đặng Văn Nghĩa'),
+ (7,N'Bùi Thị Oanh'),(8,N'Hồ Văn Phong'),(9,N'Ngô Thị Quyên'),
+ (10,N'Dương Văn Sĩ'),(11,N'Lý Minh Tâm'),(12,N'Phan Thị Vân'),
+ (13,N'Hoàng Quốc Việt'),(14,N'Đỗ Thu Hà'),(15,N'Vũ Thành Trung')
+) v(n, hoTen) ON v.n = nums.n
+WHERE nums.n <= 15;
 GO
 
--- 6. Thú cưng 
+-- 7. THÚ CƯNG (15 thú cưng)
 INSERT INTO ThuCung (maTC, maKH, tenTC, loai, gioiTinh, ngaySinh, chuHo, dacDiemNhanDien)
-SELECT 'TC' + dbo.fn_C3(n), k.maKH,
-       CHOOSE(n, N'Mimi', N'Lucky', N'Bông', N'Milo', N'Kitty', N'Boss', N'Susu', N'Nâu', N'Tom', N'Mực'),
-       CHOOSE(n % 4 + 1, N'Chó', N'Mèo', N'Thỏ', N'Hamster'),
-       CASE WHEN n % 2 = 1 THEN N'Đực' ELSE N'Cái' END,
-       DATEADD(MONTH, -n * 5, '20251001'),
-       k.hoTen,
-       N'Lông khỏe mạnh, lanh lợi'
-FROM #N
-JOIN KhachHang k ON k.maKH = 'KH' + dbo.fn_C3(((n - 1) % 10) + 1)
-WHERE n <= 10;
+SELECT 'TC' + dbo.fn_C3(nums.n), k.maKH, v.tenTC,
+       CHOOSE(nums.n % 4 + 1, N'Chó', N'Mèo', N'Thỏ', N'Hamster'),
+       CASE WHEN nums.n % 2 = 1 THEN N'Đực' ELSE N'Cái' END,
+       DATEADD(MONTH, -nums.n * 3, '20251001'), k.hoTen, N'Lông khỏe mạnh, lanh lợi'
+FROM #N AS nums
+JOIN KhachHang k ON k.maKH = 'KH' + dbo.fn_C3(nums.n)
+JOIN (VALUES
+ (1,N'Mimi'),(2,N'Lucky'),(3,N'Bông'),(4,N'Milo'),(5,N'Kitty'),
+ (6,N'Boss'),(7,N'Susu'),(8,N'Nâu'),(9,N'Tom'),(10,N'Mực'),
+ (11,N'Bắp'),(12,N'Đậu'),(13,N'Kem'),(14,N'Na'),(15,N'Cookie')
+) v(n, tenTC) ON v.n = nums.n
+WHERE nums.n <= 15;
 GO
 
--- 7. LỊCH LÀM VIỆC NHÂN VIÊN TRONG THÁNG 10/2026 
+-- 8. LỊCH LÀM VIỆC (450 ca của 15 nhân viên trong 30 ngày)
 INSERT INTO LichLamViec (maLLV, maNhanVien, ngay, gioBatDau, gioKetThuc, trangThai)
-SELECT 'LLV' + RIGHT('000' + CAST(ROW_NUMBER() OVER (ORDER BY nv.maNhanVien, d.n) AS VARCHAR(4)), 4),
-       nv.maNhanVien,
-       DATEADD(DAY, d.n - 1, '2026-10-01'),
-       CAST('08:00' AS TIME),
-       CAST('17:00' AS TIME),
-       N'Hoàn thành'
-FROM NhanVien nv
-CROSS JOIN (SELECT n FROM #N WHERE n <= 30) d;
+SELECT 'LLV' + RIGHT('0000' + CAST(ROW_NUMBER() OVER (ORDER BY nv.maNhanVien, d.n) AS VARCHAR(4)), 4),
+       nv.maNhanVien, DATEADD(DAY, d.n - 1, '2026-10-01'),
+       CAST('08:00' AS TIME), CAST('17:00' AS TIME), N'Hoàn thành'
+FROM NhanVien nv CROSS JOIN (SELECT n FROM #N WHERE n <= 30) d;
 GO
 
--- 8. Dịch vụ 
+-- 9. DỊCH VỤ (15 dịch vụ)
 INSERT INTO DichVu (maDV, tenDV, moTa, giaDV, thoiGian, trangThai)
-SELECT 'DV' + dbo.fn_C3(v.n), v.ten, N'Dịch vụ chuyên nghiệp: ' + v.ten,
-       v.gia, CAST('00:30:00' AS TIME), N'Đang áp dụng'
+SELECT 'DV' + dbo.fn_C3(n), tenDV, N'Dịch vụ chăm sóc thú cưng: ' + tenDV,
+       giaDV, thoiGian, N'Đang áp dụng'
 FROM (VALUES
- (1, N'Khám tổng quát', 150000), 
- (2, N'Tiêm phòng dại', 120000), 
- (3, N'Tắm vệ sinh thú cưng', 100000),
- (4, N'Cắt tỉa lông', 200000), 
- (5, N'Cạo vôi răng', 300000)
-) v(n, ten, gia);
+ (1,N'Khám tổng quát',150000,CAST('00:30:00' AS TIME)),
+ (2,N'Tiêm phòng dại',120000,CAST('00:20:00' AS TIME)),
+ (3,N'Tắm vệ sinh thú cưng',100000,CAST('01:00:00' AS TIME)),
+ (4,N'Cắt tỉa lông',200000,CAST('01:00:00' AS TIME)),
+ (5,N'Cạo vôi răng',300000,CAST('00:45:00' AS TIME)),
+ (6,N'Khám da liễu',180000,CAST('00:40:00' AS TIME)),
+ (7,N'Siêu âm',250000,CAST('00:30:00' AS TIME)),
+ (8,N'Xét nghiệm máu',350000,CAST('00:45:00' AS TIME)),
+ (9,N'Vệ sinh tai',80000,CAST('00:20:00' AS TIME)),
+ (10,N'Cắt móng',50000,CAST('00:15:00' AS TIME)),
+ (11,N'Tẩy giun',90000,CAST('00:20:00' AS TIME)),
+ (12,N'Lưu chuồng theo ngày',180000,CAST('01:00:00' AS TIME)),
+ (13,N'Chăm sóc hậu phẫu',220000,CAST('00:45:00' AS TIME)),
+ (14,N'Tư vấn dinh dưỡng',100000,CAST('00:30:00' AS TIME)),
+ (15,N'Vệ sinh răng miệng',160000,CAST('00:30:00' AS TIME))
+) v(n,tenDV,giaDV,thoiGian);
 GO
 
--- 9. Nhà cung cấp 
+-- 10. NHÀ CUNG CẤP (15 nhà cung cấp)
 INSERT INTO NhaCungCap (maNCC, tenNCC, diaChi, sdt, email)
-SELECT 'NCC' + dbo.fn_C3(v.n), v.ten, N'KCN Tân Bình, TP.HCM', '0283800' + dbo.fn_C3(v.n), 'lienhe@ncc.vn'
+SELECT 'NCC' + dbo.fn_C3(n), tenNCC, diaChi,
+       '0283800' + dbo.fn_C3(n), 'lienhe' + dbo.fn_C3(n) + '@ncc.vn'
 FROM (VALUES
- (1, N'Royal Canin Việt Nam'), 
- (2, N'PetCare Sài Gòn'), 
- (3, N'Thú Y Xanh')
-) v(n, ten);
+ (1,N'Royal Canin Việt Nam',N'Quận 1, TP.HCM'),(2,N'PetCare Sài Gòn',N'Quận 3, TP.HCM'),
+ (3,N'Thú Y Xanh',N'Quận 5, TP.HCM'),(4,N'VietPet Supply',N'Tân Bình, TP.HCM'),
+ (5,N'An Phú Veterinary',N'Bình Thạnh, TP.HCM'),(6,N'Happy Paws',N'Gò Vấp, TP.HCM'),
+ (7,N'Pet Nutrition Việt',N'Thủ Đức, TP.HCM'),(8,N'Nam Việt Pharma',N'Quận 10, TP.HCM'),
+ (9,N'Thiết Bị Thú Y Á Châu',N'Quận 7, TP.HCM'),(10,N'Green Pet',N'Phú Nhuận, TP.HCM'),
+ (11,N'Vật Tư Chăn Nuôi Minh Tâm',N'Bình Tân, TP.HCM'),(12,N'BioVet',N'Tân Phú, TP.HCM'),
+ (13,N'Pet House',N'Quận 6, TP.HCM'),(14,N'CareVet',N'Quận 11, TP.HCM'),
+ (15,N'Thú Cưng Đại Phát',N'Bình Chánh, TP.HCM')
+) v(n,tenNCC,diaChi);
 GO
 
--- 10. Vật tư 
-INSERT INTO VatTu (maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap)
-SELECT 'VT' + dbo.fn_C3(v.n), 'NCC00' + CAST(((v.n - 1) % 3) + 1 AS VARCHAR(1)),
-       v.ten, 50, N'Còn hàng', v.giaBan, v.giaNhap
-FROM (VALUES
- (1, N'Thức ăn hạt cho chó 2kg', 250000, 200000),
- (2, N'Thức ăn hạt cho mèo 1.5kg', 220000, 180000),
- (3, N'Sữa tắm thú cưng 500ml', 150000, 110000),
- (4, N'Pate mèo 85g', 25000, 18000),
- (5, N'Xương gặm sạch răng', 60000, 45000)
-) v(n, ten, giaBan, giaNhap);
-GO
-
--- 11. Hồ sơ sức khỏe (Tháng 10/2026)
-INSERT INTO HoSoSucKhoe (maHSSK, maTC, maBacSi, ngayKham, trieuChung, chuanDoan, canNang)
-SELECT 'HS' + dbo.fn_C3(n), 'TC' + dbo.fn_C3((n % 10) + 1), 'BS' + dbo.fn_C3(((n - 1) % 3) + 1),
-       DATEADD(DAY, (n % 28), '2026-10-01'),
-       N'Mệt mỏi, biếng ăn', N'Rối loạn tiêu hóa nhẹ', 4.5
-FROM #N WHERE n <= 10;
-GO
-
--- 12. Thuốc
+-- 11. THUỐC (15 loại thuốc)
 INSERT INTO Thuoc (maThuoc, tenThuoc, donViTinh, huongDanSuDung)
-SELECT 'TH' + dbo.fn_C3(v.n), v.ten, N'Viên', N'Uống ngày 2 lần'
+SELECT 'TH' + dbo.fn_C3(n), tenThuoc, donViTinh, huongDan
 FROM (VALUES
- (1, N'Amoxicillin 250mg'), (2, N'Cefalexin 500mg'), 
- (3, N'Men tiêu hóa Probiotic'), (4, N'Vitamin B Complex'), (5, N'Ivermectin 1%')
-) v(n, ten);
+ (1,N'Amoxicillin 250mg',N'Viên',N'Dùng theo chỉ định bác sĩ'),
+ (2,N'Cefalexin 500mg',N'Viên',N'Dùng theo chỉ định bác sĩ'),
+ (3,N'Men tiêu hóa Probiotic',N'Gói',N'Trộn cùng thức ăn'),
+ (4,N'Vitamin B Complex',N'Viên',N'Dùng theo chỉ định bác sĩ'),
+ (5,N'Ivermectin 1%',N'Ml',N'Dùng theo cân nặng'),
+ (6,N'Prednisolone 5mg',N'Viên',N'Dùng theo chỉ định bác sĩ'),
+ (7,N'Metronidazole 250mg',N'Viên',N'Dùng theo chỉ định bác sĩ'),
+ (8,N'Enrofloxacin 50mg',N'Viên',N'Dùng theo chỉ định bác sĩ'),
+ (9,N'Vitamin C thú y',N'Viên',N'Dùng theo hướng dẫn'),
+ (10,N'Canxi bổ sung',N'Viên',N'Dùng theo hướng dẫn'),
+ (11,N'Thuốc nhỏ mắt thú y',N'Lọ',N'Nhỏ theo chỉ định'),
+ (12,N'Dung dịch sát khuẩn',N'Chai',N'Dùng ngoài da'),
+ (13,N'Thuốc trị ve rận',N'Ống',N'Dùng theo cân nặng'),
+ (14,N'Điện giải thú y',N'Gói',N'Pha theo hướng dẫn'),
+ (15,N'Thuốc hỗ trợ gan',N'Viên',N'Dùng theo chỉ định bác sĩ')
+) v(n,tenThuoc,donViTinh,huongDan);
 GO
+
+-- 12. VẬT TƯ (15 hàng hóa thông thường + 15 mặt hàng thuốc = 30)
+INSERT INTO VatTu (maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc)
+SELECT 'VT' + dbo.fn_C3(n), 'NCC' + dbo.fn_C3(((n - 1) % 15) + 1), tenVT,
+       50 + n * 3, N'Còn hàng', giaBan, giaNhap, NULL
+FROM (VALUES
+ (1,N'Thức ăn hạt cho chó 2kg',250000,200000),(2,N'Thức ăn hạt cho mèo 1.5kg',220000,180000),
+ (3,N'Sữa tắm thú cưng 500ml',150000,110000),(4,N'Pate mèo 85g',25000,18000),
+ (5,N'Xương gặm sạch răng',60000,45000),(6,N'Vòng cổ chó mèo',85000,55000),
+ (7,N'Dây dắt thú cưng',120000,80000),(8,N'Khay vệ sinh mèo',180000,130000),
+ (9,N'Cát vệ sinh mèo 5kg',95000,70000),(10,N'Balo vận chuyển thú cưng',450000,350000),
+ (11,N'Bát ăn inox',70000,45000),(12,N'Đồ chơi bóng cao su',45000,25000),
+ (13,N'Lược chải lông',65000,40000),(14,N'Tã lót thú cưng',110000,80000),
+ (15,N'Chuồng vận chuyển mini',550000,430000)
+) v(n,tenVT,giaBan,giaNhap);
 
 INSERT INTO VatTu (maVT, maNCC, tenVT, soLuongTon, trangThai, giaBanCoBan, giaNhap, maThuoc)
-VALUES
-('VT006', 'NCC001', N'Amoxicillin 250mg', 100, N'Còn hàng', 5000, 3500, 'TH001'),
-('VT007', 'NCC001', N'Cefalexin 500mg', 100, N'Còn hàng', 7000, 5000, 'TH002'),
-('VT008', 'NCC002', N'Men tiêu hóa Probiotic', 100, N'Còn hàng', 6000, 4000, 'TH003'),
-('VT009', 'NCC002', N'Vitamin B Complex', 100, N'Còn hàng', 5000, 3000, 'TH004'),
-('VT010', 'NCC003', N'Ivermectin 1%', 100, N'Còn hàng', 15000, 10000, 'TH005');
+SELECT 'VT' + dbo.fn_C3(nums.n + 15), 'NCC' + dbo.fn_C3(((nums.n - 1) % 15) + 1),
+       t.tenThuoc, 100, N'Còn hàng', 5000 + nums.n * 2500, 3000 + nums.n * 1500,
+       'TH' + dbo.fn_C3(nums.n)
+FROM #N AS nums JOIN Thuoc t ON t.maThuoc = 'TH' + dbo.fn_C3(nums.n)
+WHERE nums.n <= 15;
 GO
 
--- 13. Đơn thuốc & Chi tiết đơn thuốc
+-- 13. HỒ SƠ SỨC KHỎE (15 hồ sơ)
+INSERT INTO HoSoSucKhoe (maHSSK, maTC, maBacSi, ngayKham, trieuChung, chuanDoan, canNang)
+SELECT 'HS' + dbo.fn_C3(n), 'TC' + dbo.fn_C3(n), 'BS' + dbo.fn_C3(n),
+       DATEADD(DAY, n, '2026-10-01'), N'Mệt mỏi, biếng ăn', N'Cần theo dõi và tái khám', 2.5 + n * 0.7
+FROM #N WHERE n <= 15;
+GO
+
+-- 14. ĐƠN THUỐC VÀ CHI TIẾT ĐƠN THUỐC (mỗi bảng 15 bản ghi)
 INSERT INTO DonThuoc (maDonThuoc, maTC, maBacSi, maHSSK, ngayKeDon, ghiChu, trangThai)
-SELECT 'DT' + dbo.fn_C3(n), 'TC' + dbo.fn_C3((n % 10) + 1), 'BS001', 'HS' + dbo.fn_C3(n), '2026-10-02', N'Uống đủ liều', N'Hoàn thành'
-FROM #N WHERE n <= 10;
+SELECT 'DT' + dbo.fn_C3(n), 'TC' + dbo.fn_C3(n), 'BS' + dbo.fn_C3(n),
+       'HS' + dbo.fn_C3(n), DATEADD(DAY, n, '2026-10-02'), N'Uống đủ liều theo chỉ định', N'Hoàn thành'
+FROM #N WHERE n <= 15;
 
 INSERT INTO ChiTietDonThuoc (maCTDT, maDonThuoc, maThuoc, soLuong, lieuLuong)
-SELECT 'CTDT' + dbo.fn_C3(n), 'DT' + dbo.fn_C3(n), 'TH' + dbo.fn_C3((n % 5) + 1), 10, 2
-FROM #N WHERE n <= 10;
+SELECT 'CTDT' + dbo.fn_C3(n), 'DT' + dbo.fn_C3(n), 'TH' + dbo.fn_C3(n), 10, 2
+FROM #N WHERE n <= 15;
 GO
 
--- 14. KHUYẾN MÃI (Hoạt động đến hết 31/12/2026)
+-- 15. KHUYẾN MÃI (15 chương trình mẫu; thời gian áp dụng trong năm 2026)
 INSERT INTO KhuyenMai (maKM, tenKM, mucKM, ngayBatDau, ngayKetThuc, dieuKien)
-VALUES 
-('KM001', N'Ưu đãi tháng 10 đơn hàng trên 200k', 10.00, '2026-10-01', '2026-12-31', N'Áp dụng cho hóa đơn từ 200.000đ trở lên'),
-('KM002', N'Đặc quyền khách hàng hạng Vàng và Kim Cương', 15.00, '2026-10-01', '2026-12-31', N'Áp dụng cho khách hàng thành viên từ hạng Vàng trở lên'),
-('KM003', N'Tri ân cuối năm đơn hàng trên 500k', 20.00, '2026-10-15', '2026-12-31', N'Áp dụng cho hóa đơn giá trị từ 500.000đ trở lên');
+VALUES
+('KM001',N'Ưu đãi khách mới',5,'2026-01-01','2026-12-31',N'Áp dụng cho khách hàng lần đầu'),
+('KM002',N'Ưu đãi hóa đơn từ 200 nghìn',10,'2026-01-01','2026-12-31',N'Áp dụng cho hóa đơn từ 200.000 đồng'),
+('KM003',N'Tri ân hóa đơn từ 500 nghìn',15,'2026-01-01','2026-12-31',N'Áp dụng cho hóa đơn từ 500.000 đồng'),
+('KM004',N'Ưu đãi khách hàng thành viên',8,'2026-02-01','2026-12-31',N'Áp dụng cho khách hàng thành viên'),
+('KM005',N'Ưu đãi thức ăn thú cưng',7,'2026-03-01','2026-12-31',N'Áp dụng cho nhóm thức ăn'),
+('KM006',N'Ưu đãi phụ kiện',10,'2026-04-01','2026-12-31',N'Áp dụng cho nhóm phụ kiện'),
+('KM007',N'Ưu đãi dịch vụ tắm',12,'2026-05-01','2026-12-31',N'Áp dụng cho dịch vụ tắm vệ sinh'),
+('KM008',N'Ưu đãi tiêm phòng',5,'2026-06-01','2026-12-31',N'Áp dụng cho dịch vụ tiêm phòng'),
+('KM009',N'Ưu đãi khám tổng quát',10,'2026-07-01','2026-12-31',N'Áp dụng cho dịch vụ khám tổng quát'),
+('KM010',N'Ưu đãi sinh nhật thú cưng',15,'2026-08-01','2026-12-31',N'Áp dụng trong tháng sinh nhật thú cưng'),
+('KM011',N'Ưu đãi khách hàng thân thiết',18,'2026-09-01','2026-12-31',N'Áp dụng cho khách hàng thân thiết'),
+('KM012',N'Ưu đãi cuối tuần',6,'2026-09-01','2026-12-31',N'Áp dụng vào thứ Bảy và Chủ nhật'),
+('KM013',N'Ưu đãi combo chăm sóc',20,'2026-10-01','2026-12-31',N'Áp dụng cho combo dịch vụ'),
+('KM014',N'Ưu đãi mua hàng số lượng lớn',10,'2026-10-01','2026-12-31',N'Áp dụng cho đơn hàng số lượng lớn'),
+('KM015',N'Khuyến mãi chào năm mới',25,'2026-11-01','2027-01-15',N'Chương trình ưu đãi cuối năm');
 GO
 
--- 15. Thuế
+-- 16. THUẾ (15 hồ sơ thuế mẫu để kiểm thử nhiều cấu hình mức thuế)
+-- Lưu ý: đây là dữ liệu giả lập phục vụ kiểm thử phần mềm, không phải bảng tư vấn thuế/phân loại thuế pháp lý.
 INSERT INTO Thue (maThue, tenThue, mucThue)
-VALUES ('TX001', N'GTGT 10%', 10.00);
+VALUES
+('TX001',N'Mẫu thuế 01 - 0%',0.00),('TX002',N'Mẫu thuế 02 - 5%',5.00),
+('TX003',N'Mẫu thuế 03 - 8%',8.00),('TX004',N'Mẫu thuế 04 - 10%',10.00),
+('TX005',N'Mẫu thuế 05 - 0%',0.00),('TX006',N'Mẫu thuế 06 - 5%',5.00),
+('TX007',N'Mẫu thuế 07 - 8%',8.00),('TX008',N'Mẫu thuế 08 - 10%',10.00),
+('TX009',N'Mẫu thuế 09 - 0%',0.00),('TX010',N'Mẫu thuế 10 - 5%',5.00),
+('TX011',N'Mẫu thuế 11 - 8%',8.00),('TX012',N'Mẫu thuế 12 - 10%',10.00),
+('TX013',N'Mẫu thuế 13 - 0%',0.00),('TX014',N'Mẫu thuế 14 - 5%',5.00),
+('TX015',N'Mẫu thuế 15 - 8%',8.00);
 GO
 
-
--- 16. HÓA ĐƠN & THANH TOÁN (75 HÓA ĐƠN TRONG THÁNG 10)
+-- 17. THANH TOÁN VÀ HÓA ĐƠN (75 bản ghi mỗi bảng)
 INSERT INTO ThanhToan (maThanhToan, soTien, thoiGian, phuongThuc, trangThai)
-SELECT 'TT' + dbo.fn_C3(n), 
-       0, 
-       DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')), 
-       CHOOSE((n % 3) + 1, N'Tiền mặt', N'Chuyển khoản', N'Ví MoMo'), 
-       N'Đã thanh toán'
+SELECT 'TT' + dbo.fn_C3(n), 0,
+       DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')),
+       CHOOSE((n % 3) + 1, N'Tiền mặt', N'Chuyển khoản', N'Ví điện tử'), N'Đã thanh toán'
 FROM #N WHERE n <= 75;
 
 INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maTC, maNhanVien, maKM, maThue, maThanhToan)
 SELECT 'HD' + dbo.fn_C3(n),
-       DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')), 
-       N'Đã thanh toán', 
-       'KH' + dbo.fn_C3((n % 10) + 1), 
-       'TC' + dbo.fn_C3((n % 10) + 1),
-       'NV' + dbo.fn_C3((n % 5) + 1),  
-       CHOOSE((n % 4) + 1, 'KM001', 'KM002', 'KM003', NULL), 
-       'TX001', 
+       DATEADD(HOUR, 8 + (n % 10), DATEADD(DAY, n % 31, '2026-10-01')),
+       N'Đã thanh toán',
+       'KH' + dbo.fn_C3(((n - 1) % 15) + 1),
+       'TC' + dbo.fn_C3(((n - 1) % 15) + 1),
+       'NV' + dbo.fn_C3(((n - 1) % 15) + 1),
+       'KM' + dbo.fn_C3(((n - 1) % 15) + 1),
+       'TX' + dbo.fn_C3(((n - 1) % 15) + 1),
        'TT' + dbo.fn_C3(n)
 FROM #N WHERE n <= 75;
 
--- Khởi tạo chi tiết hóa đơn (Dịch vụ)
+-- Chi tiết dịch vụ: 75 dòng
 INSERT INTO ChiTietHoaDon (maHD, maKH, soDong, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
 SELECT 'HD' + dbo.fn_C3(n),
-       'KH' + dbo.fn_C3((n % 10) + 1), -- Lấy khớp với maKH đã gen ở bảng HoaDon
-       1,
-       'DV' + dbo.fn_C3((n % 5) + 1),
-       NULL,
-       'NV' + dbo.fn_C3((n % 5) + 6),
-       'BS' + dbo.fn_C3((n % 3) + 1),
-       1,
-       150000 + (n % 3) * 50000
+       'KH' + dbo.fn_C3(((n - 1) % 15) + 1), 1,
+       'DV' + dbo.fn_C3(((n - 1) % 15) + 1), NULL,
+       'NV' + dbo.fn_C3(((n - 1) % 15) + 1),
+       'BS' + dbo.fn_C3(((n - 1) % 15) + 1), 1,
+       100000 + (n % 5) * 50000
 FROM #N WHERE n <= 75;
 
+-- Chi tiết hàng hóa: 37 dòng, dùng VT001-VT015 (nhóm hàng không phải thuốc)
 INSERT INTO ChiTietHoaDon (maHD, maKH, soDong, maDV, maVT, maNhanVien, maBacSi, soLuong, donGia)
 SELECT 'HD' + dbo.fn_C3(n),
-       'KH' + dbo.fn_C3((n % 10) + 1),
-       2,
-       NULL,
-       'VT' + dbo.fn_C3((n % 5) + 1),
-       'NV' + dbo.fn_C3((n % 5) + 1),
-       NULL,
-       (n % 3) + 1,
-       100000 + (n % 2) * 50000
-FROM #N WHERE n <= 75 AND n % 2 = 0;
+       'KH' + dbo.fn_C3(((n - 1) % 15) + 1), 2, NULL,
+       'VT' + dbo.fn_C3(((n - 1) % 15) + 1),
+       'NV' + dbo.fn_C3(((n - 1) % 15) + 1), NULL,
+       (n % 3) + 1, 50000 + (n % 4) * 25000
+FROM #N WHERE n <= 37;
 GO
 
 UPDATE tt
@@ -1020,103 +1077,115 @@ JOIN HoaDon h ON h.maThanhToan = tt.maThanhToan
 JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD;
 GO
 
-
--- 17. PHIẾU XUẤT KHO & CHI TIẾT
+-- 18. PHIẾU XUẤT KHO VÀ CHI TIẾT (15 phiếu, 30 dòng chi tiết)
 INSERT INTO PhieuXuatKho (maPXK, ngayXuat, ghiChu, trangThai, maNhanVien)
-VALUES 
-('PXK001', '2026-10-06 09:00:00', N'Xuất bán lẻ vật tư thú cưng', N'Hoàn thành', 'NV009'),
-('PXK002', '2026-10-10 14:00:00', N'Xuất dùng cho phòng khám dịch vụ', N'Hoàn thành', 'NV010');
+SELECT 'PXK' + dbo.fn_C3(n), DATEADD(DAY,n,'2026-10-01'),
+       N'Xuất kho phục vụ bán hàng và hoạt động phòng khám', N'Hoàn thành',
+       'NV' + dbo.fn_C3(n)
+FROM #N WHERE n <= 15;
 
 INSERT INTO ChiTietPhieuXuatKho (maCTPXK, maPXK, maVT, soLuong)
-VALUES 
-('CTPXK01', 'PXK001', 'VT001', 5),
-('CTPXK02', 'PXK001', 'VT002', 3),
-('CTPXK03', 'PXK002', 'VT003', 2);
+SELECT 'CTPXK' + dbo.fn_C3((p.n - 1) * 2 + d.stt),
+       'PXK' + dbo.fn_C3(p.n),
+       'VT' + dbo.fn_C3(((p.n + d.stt - 2) % 30) + 1), 1 + d.stt
+FROM #N p CROSS JOIN (VALUES (1),(2)) d(stt)
+WHERE p.n <= 15;
 GO
 
--- 18. PHIẾU NHẬP KHO & CHI TIẾT
+-- 19. PHIẾU NHẬP KHO VÀ CHI TIẾT (15 phiếu, 30 dòng chi tiết)
 INSERT INTO PhieuNhapKho (maPNK, ngayNhap, ghiChu, trangThai, maNhanVien, maNCC)
-VALUES 
-('PNK001', '2026-10-02 08:30:00', N'Nhập hàng định kỳ đầu tháng', N'Hoàn thành', 'NV009', 'NCC001'),
-('PNK002', '2026-10-12 10:00:00', N'Nhập bổ sung thức ăn và sữa tắm', N'Hoàn thành', 'NV010', 'NCC002');
+SELECT 'PNK' + dbo.fn_C3(n), DATEADD(DAY,n,'2026-10-01'),
+       N'Nhập hàng bổ sung định kỳ', N'Hoàn thành',
+       'NV' + dbo.fn_C3(n), 'NCC' + dbo.fn_C3(n)
+FROM #N WHERE n <= 15;
 
 INSERT INTO ChiTietPhieuNhapKho (maCTPNK, maPNK, maVT, donGia, soLuong)
-VALUES 
-('CTPNK01', 'PNK001', 'VT001', 200000, 20),
-('CTPNK02', 'PNK001', 'VT002', 180000, 15),
-('CTPNK03', 'PNK002', 'VT003', 110000, 30);
+SELECT 'CTPNK' + dbo.fn_C3((p.n - 1) * 2 + d.stt),
+       'PNK' + dbo.fn_C3(p.n),
+       'VT' + dbo.fn_C3(((p.n + d.stt - 2) % 30) + 1),
+       30000 + p.n * 5000, 10 + d.stt
+FROM #N p CROSS JOIN (VALUES (1),(2)) d(stt)
+WHERE p.n <= 15;
 GO
 
-
--- 19. Quản lý hạng thành viên
+-- 20. QUẢN LÝ HẠNG THÀNH VIÊN (15 khách hàng; 4 hạng được phân bổ theo chi tiêu)
 INSERT INTO QuanLyHangThanhVien
        (maHang, maKH, tenHang, chiTieuToiThieu, chiTieuToiDa, mucGiamGia, diemTichLuy1Van,
         quyenLoi, tongChiTieu, diemTichLuy, ngayCapNhatHang, trangThai)
-SELECT 'HTV' + dbo.fn_C3(n),
-       k.maKH,
+SELECT 'HTV' + dbo.fn_C3(n), k.maKH,
        t.tenHang, t.chiTieuToiThieu, t.chiTieuToiDa, t.mucGiamGia, t.diemTichLuy1Van,
-       t.quyenLoi,
-       c.tongChiTieu,
+       t.quyenLoi, c.tongChiTieu,
        CAST(FLOOR(c.tongChiTieu / 10000.0 * t.diemTichLuy1Van) AS INT),
-       ISNULL(c.ngayGanNhat, CAST('2026-10-01' AS DATETIME2)),
-       N'Đang áp dụng'
+       ISNULL(c.ngayGanNhat, CAST('2026-10-01' AS DATETIME2)), N'Đang áp dụng'
 FROM #N
 JOIN KhachHang k ON k.maKH = 'KH' + dbo.fn_C3(n)
 OUTER APPLY (
     SELECT ISNULL(SUM(v.tongThanhToan), 0) AS tongChiTieu,
-           MAX(h.ngayLap)                  AS ngayGanNhat
-    FROM HoaDon h
-    JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD
+           MAX(h.ngayLap) AS ngayGanNhat
+    FROM HoaDon h JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD
     WHERE h.maKH = k.maKH
 ) c
 JOIN (VALUES
-    (N'Đồng',      CAST(0        AS DECIMAL(18,2)), CAST(5000000  AS DECIMAL(18,2)),  2.00, 1.0,
-        N'Giảm 2% hóa đơn dịch vụ' + CHAR(10) + N'Tích 1 điểm / 10.000 ₫' + CHAR(10) + N'Nhắc lịch tiêm và tái khám' + CHAR(10) + N'Ưu đãi sinh nhật thú cưng'),
-    (N'Bạc',       CAST(5000000  AS DECIMAL(18,2)), CAST(15000000 AS DECIMAL(18,2)),  5.00, 1.2,
-        N'Giảm 5% hóa đơn dịch vụ' + CHAR(10) + N'Tích 1,2 điểm / 10.000 ₫' + CHAR(10) + N'01 lần vệ sinh tai miễn phí / quý' + CHAR(10) + N'Ưu tiên khung giờ khám'),
-    (N'Vàng',      CAST(15000000 AS DECIMAL(18,2)), CAST(30000000 AS DECIMAL(18,2)), 10.00, 1.5,
-        N'Giảm 10% hóa đơn dịch vụ' + CHAR(10) + N'Tích 1,5 điểm / 10.000 ₫' + CHAR(10) + N'01 lần khám tổng quát / năm' + CHAR(10) + N'Miễn phí giao hàng nội thành'),
-    (N'Kim cương', CAST(30000000 AS DECIMAL(18,2)), CAST(NULL     AS DECIMAL(18,2)), 15.00, 2.0,
-        N'Giảm 15% hóa đơn dịch vụ' + CHAR(10) + N'Tích 2 điểm / 10.000 ₫' + CHAR(10) + N'02 lần khám tổng quát / năm' + CHAR(10) + N'Hotline bác sĩ ưu tiên 24/7')
-) t(tenHang, chiTieuToiThieu, chiTieuToiDa, mucGiamGia, diemTichLuy1Van, quyenLoi)
+    (N'Đồng',CAST(0 AS DECIMAL(18,2)),CAST(5000000 AS DECIMAL(18,2)),2.00,1.0,N'Giảm 2%, tích điểm và nhắc lịch tiêm'),
+    (N'Bạc',CAST(5000000 AS DECIMAL(18,2)),CAST(15000000 AS DECIMAL(18,2)),5.00,1.2,N'Giảm 5%, ưu tiên lịch hẹn và vệ sinh tai'),
+    (N'Vàng',CAST(15000000 AS DECIMAL(18,2)),CAST(30000000 AS DECIMAL(18,2)),10.00,1.5,N'Giảm 10%, khám tổng quát và giao hàng ưu đãi'),
+    (N'Kim cương',CAST(30000000 AS DECIMAL(18,2)),CAST(NULL AS DECIMAL(18,2)),15.00,2.0,N'Giảm 15%, ưu tiên hotline và khám tổng quát')
+) t(tenHang,chiTieuToiThieu,chiTieuToiDa,mucGiamGia,diemTichLuy1Van,quyenLoi)
   ON c.tongChiTieu >= t.chiTieuToiThieu
  AND (t.chiTieuToiDa IS NULL OR c.tongChiTieu < t.chiTieuToiDa)
-WHERE n <= 10;
+WHERE n <= 15;
 GO
 
 DROP TABLE #N;
 DROP FUNCTION dbo.fn_C3;
 GO
 
--- 20. DỮ LIỆU MẪU LỊCH HẸN (THÁNG 11/2026)
+-- 21. DỮ LIỆU MẪU LỊCH HẸN (15 lịch hẹn)
 INSERT INTO LichHen (maLichHen, maTC, maKH, maNhanVien, maDV, ngayGio, lyDo, trangThai, ghiChu, loaiHen)
-VALUES 
--- Lịch ngày hôm qua (01/11)
-('LH001', 'TC001', 'KH001', 'NV006', 'DV001', '2026-11-01 08:30:00', N'Khám tổng quát', N'Đã khám', NULL, N'Khám bệnh'),
-('LH002', 'TC002', 'KH002', 'NV007', 'DV002', '2026-11-01 10:00:00', N'Tiêm phòng dại', N'Đã khám', NULL, N'Khám bệnh'),
-
--- Lịch ngày hôm nay (02/11/2026) - Giúp hiển thị số liệu lên 4 thẻ thống kê ở đầu giao diện
-('LH003', 'TC003', 'KH003', 'NV008', 'DV003', '2026-11-02 09:00:00', N'Tắm vệ sinh', N'Đã khám', N'Khách đến sớm', N'Dịch vụ'),
-('LH004', 'TC004', 'KH004', 'NV009', 'DV004', '2026-11-02 10:30:00', N'Cắt tỉa lông', N'Đang khám', NULL, N'Dịch vụ'),
-('LH005', 'TC005', 'KH005', 'NV010', 'DV005', '2026-11-02 14:00:00', N'Cạo vôi răng', N'Chờ khám', N'Bé hơi nhát', N'Khám bệnh'),
-('LH006', 'TC006', 'KH006', 'NV006', 'DV001', '2026-11-02 15:30:00', N'Khám tiêu hóa', N'Chờ khám', NULL, N'Khám bệnh'),
-('LH007', 'TC007', 'KH007', 'NV007', NULL,    '2026-11-02 16:30:00', N'Tái khám', N'Đã hủy', N'Khách bận đột xuất', N'Khám bệnh'),
-
--- Lịch hẹn cho các ngày tiếp theo trong tháng 11
-('LH008', 'TC008', 'KH008', 'NV008', 'DV002', '2026-11-03 08:30:00', N'Tiêm vắc xin', N'Chờ khám', NULL, N'Khám bệnh'),
-('LH009', 'TC009', 'KH009', 'NV009', 'DV003', '2026-11-04 09:30:00', N'Tắm vệ sinh', N'Chờ khám', NULL, N'Dịch vụ'),
-('LH010', 'TC010', 'KH010', 'NV010', 'DV001', '2026-11-05 10:00:00', N'Khám da liễu', N'Chờ khám', N'Bé bị rụng lông nhiều', N'Khám bệnh'),
-('LH011', 'TC001', 'KH001', 'NV006', 'DV004', '2026-11-06 14:30:00', N'Cắt tỉa lông', N'Chờ khám', NULL, N'Dịch vụ'),
-('LH012', 'TC002', 'KH002', 'NV007', 'DV001', '2026-11-08 15:00:00', N'Khám định kỳ', N'Chờ khám', NULL, N'Khám bệnh');
+VALUES
+('LH001','TC001','KH001','NV001','DV001','2026-11-01 08:30:00',N'Khám tổng quát',N'Đã khám',NULL,N'Khám bệnh'),
+('LH002','TC002','KH002','NV002','DV002','2026-11-01 10:00:00',N'Tiêm phòng dại',N'Đã khám',NULL,N'Khám bệnh'),
+('LH003','TC003','KH003','NV003','DV003','2026-11-02 09:00:00',N'Tắm vệ sinh',N'Đã khám',N'Khách đến sớm',N'Dịch vụ'),
+('LH004','TC004','KH004','NV004','DV004','2026-11-02 10:30:00',N'Cắt tỉa lông',N'Đang khám',NULL,N'Dịch vụ'),
+('LH005','TC005','KH005','NV005','DV005','2026-11-02 14:00:00',N'Cạo vôi răng',N'Chờ khám',N'Bé hơi nhát',N'Khám bệnh'),
+('LH006','TC006','KH006','NV006','DV006','2026-11-02 15:30:00',N'Khám tiêu hóa',N'Chờ khám',NULL,N'Khám bệnh'),
+('LH007','TC007','KH007','NV007',NULL,'2026-11-02 16:30:00',N'Tái khám',N'Đã hủy',N'Khách bận đột xuất',N'Khám bệnh'),
+('LH008','TC008','KH008','NV008','DV008','2026-11-03 08:30:00',N'Tiêm vắc xin',N'Chờ khám',NULL,N'Khám bệnh'),
+('LH009','TC009','KH009','NV009','DV009','2026-11-04 09:30:00',N'Vệ sinh tai',N'Chờ khám',NULL,N'Dịch vụ'),
+('LH010','TC010','KH010','NV010','DV010','2026-11-05 10:00:00',N'Cắt móng',N'Chờ khám',N'Bé cần làm quen',N'Dịch vụ'),
+('LH011','TC011','KH011','NV011','DV011','2026-11-06 14:30:00',N'Tẩy giun',N'Chờ khám',NULL,N'Khám bệnh'),
+('LH012','TC012','KH012','NV012','DV012','2026-11-08 15:00:00',N'Lưu chuồng',N'Chờ khám',NULL,N'Dịch vụ'),
+('LH013','TC013','KH013','NV013','DV013','2026-11-09 09:00:00',N'Chăm sóc hậu phẫu',N'Chờ khám',NULL,N'Dịch vụ'),
+('LH014','TC014','KH014','NV014','DV014','2026-11-10 10:00:00',N'Tư vấn dinh dưỡng',N'Chờ khám',NULL,N'Dịch vụ'),
+('LH015','TC015','KH015','NV015','DV015','2026-11-11 14:00:00',N'Vệ sinh răng miệng',N'Chờ khám',NULL,N'Dịch vụ');
+GO
 
 /* =========================================================
    KIỂM TRA DỮ LIỆU CÁC BẢNG
    ========================================================= */
-SELECT t.name AS TenBang, SUM(p.rows) AS SoDong
-FROM sys.tables t
-JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1)
-GROUP BY t.name
-ORDER BY t.name;
+;WITH DemDong AS (
+    SELECT t.name AS TenBang, SUM(p.rows) AS SoDong
+    FROM sys.tables t
+    JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1)
+    WHERE t.is_ms_shipped = 0
+    GROUP BY t.name
+)
+SELECT TenBang, SoDong,
+       CASE WHEN SoDong >= 15 THEN N'ĐẠT' ELSE N'CHƯA ĐẠT' END AS KiemTra
+FROM DemDong
+ORDER BY TenBang;
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.tables t
+    JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1)
+    WHERE t.is_ms_shipped = 0
+    GROUP BY t.object_id
+    HAVING SUM(p.rows) < 15
+)
+BEGIN
+    ;THROW 51020, N'Còn bảng có ít hơn 15 bản ghi. Vui lòng kiểm tra dữ liệu mẫu.', 1;
+END;
 GO
 
 PRINT '========================================================';
