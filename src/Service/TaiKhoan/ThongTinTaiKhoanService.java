@@ -1,7 +1,7 @@
 package Service.TaiKhoan;
 
 import dao.TaiKhoan.TaiKhoan_DAO;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +57,7 @@ public class ThongTinTaiKhoanService {
         }
     }
 
-    public ThongTinHoSo taoThongTin(TaiKhoan tk, String tenHienThi) {
+    public ThongTinHoSo taoThongTin(TaiKhoan_entity tk, String tenHienThi) {
         String ten = (tenHienThi == null || tenHienThi.trim().isEmpty()) ? "Người dùng" : tenHienThi.trim();
         return new ThongTinHoSo(
                 layChuCaiDau(ten),
@@ -102,7 +102,7 @@ public class ThongTinTaiKhoanService {
         public TruongNhap getTruongNhap() { return truongNhap; }
     }
 
-    public KetQuaDoiMatKhau doiMatKhau(TaiKhoan tk, String matKhauCu, String matKhauMoi, String xacNhan) {
+    public KetQuaDoiMatKhau doiMatKhau(TaiKhoan_entity tk, String matKhauCu, String matKhauMoi, String xacNhan) {
         if (tk == null) {
             return new KetQuaDoiMatKhau(false, "Không xác định được tài khoản cần đổi mật khẩu!", TruongNhap.KHONG);
         }
@@ -357,7 +357,7 @@ public class ThongTinTaiKhoanService {
                     "Mật khẩu phải có tối thiểu " + DO_DAI_MAT_KHAU_TOI_THIEU + " ký tự!");
         }
 
-        TaiKhoan tk = new TaiKhoan(tt.maTK, user, pass, tt.vaiTro, tt.kichHoat, tt.maQuanLy);
+        TaiKhoan_entity tk = new TaiKhoan_entity(tt.maTK, user, pass, tt.vaiTro, tt.kichHoat, tt.maQuanLy);
         String loai = tt.doiTuong != null ? tt.doiTuong.loai : null;
         String maDoiTuong = tt.doiTuong != null ? tt.doiTuong.ma : null;
         if (!dao.themTaiKhoan(tk, loai, maDoiTuong)) {
@@ -368,7 +368,7 @@ public class ThongTinTaiKhoanService {
 
     public boolean capNhatTaiKhoan(String maTK, String tenDangNhap, String vaiTro,
                                    boolean trangThai, String maQuanLy) {
-        TaiKhoan tk = new TaiKhoan(maTK, tenDangNhap, "", vaiTro, trangThai, maQuanLy);
+        TaiKhoan_entity tk = new TaiKhoan_entity(maTK, tenDangNhap, "", vaiTro, trangThai, maQuanLy);
         return dao.capNhatTaiKhoan(tk);
     }
 

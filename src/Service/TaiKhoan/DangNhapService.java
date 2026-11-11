@@ -3,7 +3,7 @@ package Service.TaiKhoan;
 import connectDB.ConnectDB;
 import dao.TaiKhoan.DangNhap_DAO;
 import dao.TaiKhoan.TaiKhoan_DAO;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 /**
  * Service xử lý nghiệp vụ đăng nhập: kiểm tra đầu vào, xác thực (SHA-256 qua TaiKhoan_DAO),
@@ -21,12 +21,12 @@ public class DangNhapService {
     public static class KetQuaDangNhap {
         private final boolean thanhCong;
         private final String thongBao;
-        private final TaiKhoan taiKhoan;
+        private final TaiKhoan_entity taiKhoan;
         private final String tenNguoiDung;
         private final String maDoiTuong;
         private final TruongNhap truongLoi;
 
-        public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan taiKhoan,
+        public KetQuaDangNhap(boolean thanhCong, String thongBao, TaiKhoan_entity taiKhoan,
                               String tenNguoiDung, String maDoiTuong, TruongNhap truongLoi) {
             this.thanhCong = thanhCong;
             this.thongBao = thongBao;
@@ -38,7 +38,7 @@ public class DangNhapService {
 
         public boolean isThanhCong() { return thanhCong; }
         public String getThongBao() { return thongBao; }
-        public TaiKhoan getTaiKhoan() { return taiKhoan; }
+        public TaiKhoan_entity getTaiKhoan() { return taiKhoan; }
         public String getTenNguoiDung() { return tenNguoiDung; }
         public String getMaDoiTuong() { return maDoiTuong; }
         public TruongNhap getTruongLoi() { return truongLoi; }

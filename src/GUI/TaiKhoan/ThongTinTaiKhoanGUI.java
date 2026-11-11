@@ -4,7 +4,7 @@ import GUI.Chung.RangBuocGiaoDien;
 import GUI.Chung.TableMau;
 
 import Service.TaiKhoan.ThongTinTaiKhoanService;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -732,7 +732,7 @@ public class ThongTinTaiKhoanGUI extends JPanel {
     public static class ThongTinTaiKhoanDialog extends JDialog {
         private static final long serialVersionUID = 1L;
 
-        public ThongTinTaiKhoanDialog(Frame parent, TaiKhoan tk, String tenHienThi) {
+        public ThongTinTaiKhoanDialog(Frame parent, TaiKhoan_entity tk, String tenHienThi) {
             super(parent, "Thông tin tài khoản", true);
             ThongTinTaiKhoanService.ThongTinHoSo thongTin = new ThongTinTaiKhoanService().taoThongTin(tk,
                     tenHienThi);
@@ -844,10 +844,10 @@ public class ThongTinTaiKhoanGUI extends JPanel {
         private JPasswordField txtMatKhauMoi;
         private JPasswordField txtXacNhanMatKhau;
         private JLabel lblLoi;
-        private final TaiKhoan taiKhoan;
+        private final TaiKhoan_entity taiKhoan;
         private final ThongTinTaiKhoanService service = new ThongTinTaiKhoanService();
 
-        public DoiMatKhauDialog(Frame parent, TaiKhoan taiKhoan) {
+        public DoiMatKhauDialog(Frame parent, TaiKhoan_entity taiKhoan) {
             super(parent, "Đổi mật khẩu tài khoản", true);
             this.taiKhoan = taiKhoan;
             khoiTaoGiaoDien();

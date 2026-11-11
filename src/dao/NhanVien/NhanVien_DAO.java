@@ -67,7 +67,7 @@ public class NhanVien_DAO {
                 }
 
                 NhanVien_entity nv = new NhanVien_entity(
-                        maNhanVien, maTK != null ? new entity.TaiKhoan.TaiKhoan(maTK) : null, hoTen, chucVu,
+                        maNhanVien, maTK != null ? new entity.TaiKhoan.TaiKhoan_entity(maTK) : null, hoTen, chucVu,
                         sdt, diaChi, ngaySinh, gioiTinh, luongCoBan, trangThaiTK
                 );
 
@@ -190,7 +190,7 @@ public class NhanVien_DAO {
 
                     return new NhanVien_entity(
                             rs.getString("maNhanVien"),
-                            rs.getString("maTK") != null ? new entity.TaiKhoan.TaiKhoan(rs.getString("maTK")) : null,
+                            rs.getString("maTK") != null ? new entity.TaiKhoan.TaiKhoan_entity(rs.getString("maTK")) : null,
                             rs.getString("hoTen"),
                             rs.getString("chucVu"),
                             rs.getString("sdt"),

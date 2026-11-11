@@ -30,7 +30,7 @@ import entity.HoaDon.ChiTietHoaDon_entity;
 import entity.HoaDon.HoaDon_entity;
 import entity.KhachHang.KhachHang;
 import entity.NhanVien.NhanVien_entity;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 import entity.ThuCung.ChiTietDonThuoc_entity;
 import entity.ThuCung.DonThuoc_entity;
 import entity.ThuCung.ThuCung_entity;
@@ -140,7 +140,7 @@ public class LapHoaDonService {
             }
         }
 
-        TaiKhoan taiKhoan = DangNhap_DAO.getTaiKhoanHienTai();
+        TaiKhoan_entity taiKhoan = DangNhap_DAO.getTaiKhoanHienTai();
         ArrayList<NhanVien_entity> danhSach = nhanVienDao.getAll();
         if (taiKhoan != null && taiKhoan.getMaTK() != null) {
             for (NhanVien_entity nhanVien : danhSach) {

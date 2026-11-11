@@ -1,7 +1,7 @@
 package GUI.TaiKhoan;
 
 import Service.TaiKhoan.DangNhapService;
-import entity.TaiKhoan.TaiKhoan;
+import entity.TaiKhoan.TaiKhoan_entity;
 
 import GUI.Chung.RangBuocGiaoDien;
 import GUI.GiaoDienChinhGUI;
@@ -273,7 +273,7 @@ public class DangNhapGUI extends JFrame {
             DangNhapService.KetQuaDangNhap result = service.dangNhap(username, password);
             if (result.isThanhCong()) {
                 lblThongBaoLoi.setText(" ");
-                TaiKhoan tk = result.getTaiKhoan();
+                TaiKhoan_entity tk = result.getTaiKhoan();
 
                 // Khuyến nghị đổi mật khẩu nếu đang dùng mật khẩu mặc định
                 if (service.nenKhuyenNghiDoiMatKhau(password)) {
