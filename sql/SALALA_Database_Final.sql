@@ -1,7 +1,7 @@
 ﻿/* =========================================================
    DATABASE: SALALA
    HỆ THỐNG QUẢN LÝ CỬA HÀNG THÚ CƯNG / PHÒNG KHÁM THÚ Y
-   (Cập nhật: Xóa bỏ bảng LuongChucVu, gán lương cơ bản trực tiếp, cập nhật khóa chính ChiTietHoaDon)
+   (Cập nhật: Xóa bỏ bảng LuongChucVu, gán lương cơ bản trực tiếp, cập nhật khóa chính ChiTietHoaDon, xóa bảng ThanhToan và thêm phuongThucThanhToan vào HoaDon)
    ========================================================= */
 
 USE master;
@@ -300,7 +300,7 @@ CREATE TABLE Thue
 );
 GO
 
--- 16. HÓA ĐƠN
+-- 17. HÓA ĐƠN
 CREATE TABLE HoaDon
 (
     maHD         VARCHAR(20)  NOT NULL,
@@ -311,7 +311,7 @@ CREATE TABLE HoaDon
     maNhanVien   VARCHAR(20)  NOT NULL,
     maKM         VARCHAR(20)  NULL,
     maThue       VARCHAR(20)  NULL,
-    phuongThucThanhToan NVARCHAR(50) NULL,
+    phuongThucThanhToan  NVARCHAR(50) NULL,
 
     CONSTRAINT PK_HoaDon PRIMARY KEY (maHD),
     CONSTRAINT UQ_HoaDon_maHD_maKH UNIQUE (maHD, maKH),
@@ -1016,7 +1016,7 @@ VALUES
 ('TX015',N'Mẫu thuế 15 - 8%',8.00);
 GO
 
--- 16. HÓA ĐƠN (75 bản ghi mẫu)
+-- 17. HÓA ĐƠN (75 bản ghi)
 INSERT INTO HoaDon (maHD, ngayLap, trangThai, maKH, maTC, maNhanVien, maKM, maThue,
                     phuongThucThanhToan)
 SELECT 'HD' + dbo.fn_C3(n),
@@ -1097,7 +1097,6 @@ OUTER APPLY (
            MAX(h.ngayLap) AS ngayGanNhat
     FROM HoaDon h JOIN vw_TongTienHoaDon v ON v.maHD = h.maHD
     WHERE h.maKH = k.maKH
-      AND h.trangThai = N'Đã thanh toán'
 ) c
 JOIN (VALUES
     (N'Đồng',CAST(0 AS DECIMAL(18,2)),CAST(5000000 AS DECIMAL(18,2)),2.00,1.0,N'Giảm 2%, tích điểm và nhắc lịch tiêm'),
